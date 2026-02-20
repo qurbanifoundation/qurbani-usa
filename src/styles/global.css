@@ -1,1 +1,38 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #ef7c01;
+  --color-primary-light: #fab20b;
+  --color-primary-dark: #d96e00;
+  --color-dark: #312e2b;
+  --color-beige: #f1efea;
+  --color-teal: #255764;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 124, 1, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 124, 1, 0.4);
+}
+
+.donation-card {
+  transition: all 0.3s ease;
+}
+
+.donation-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}

@@ -1,0 +1,22 @@
+---
+const stats = [
+  { value: '500K+', label: 'People Reached', icon: '👥' },
+  { value: '15+', label: 'Countries Served', icon: '🌍' },
+  { value: '50K+', label: 'Qurbanis Performed', icon: '🐑' },
+  { value: '10+', label: 'Years of Service', icon: '📅' }
+];
+---
+
+<section class="py-16 bg-gradient-to-r from-[#ef7c01] to-[#fab20b]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      {stats.map((stat) => (
+        <div class="text-center text-white">
+          <div class="text-4xl mb-2">{stat.icon}</div>
+          <div class="text-3xl md:text-4xl font-bold mb-1">{stat.value}</div>
+          <div class="text-white/80 text-sm md:text-base">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

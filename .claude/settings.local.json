@@ -5,7 +5,20 @@
       "Bash(npx astro add:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh repo create:*)",
+      "Bash(brew install:*)",
+      "Bash(curl:*)",
+      "Bash(tar:*)",
+      "Bash(/tmp/gh_2.45.0_macOS_arm64/bin/gh:*)",
+      "Bash(npm install:*)",
+      "Bash(gh:*)",
+      "Bash(/tmp/gh_extracted/gh_2.67.0_macOS_arm64/bin/gh --version)",
+      "Bash(/tmp/gh_extracted/gh_2.67.0_macOS_arm64/bin/gh auth status)",
+      "Bash(/tmp/gh_extracted/gh_2.67.0_macOS_arm64/bin/gh auth login --with-token)",
+      "Bash(/tmp/gh_extracted/gh_2.67.0_macOS_arm64/bin/gh repo create:*)",
+      "WebFetch(domain:www.staging9.qurbani.com)",
+      "Bash(npm run build:*)"
     ]
   }
 }

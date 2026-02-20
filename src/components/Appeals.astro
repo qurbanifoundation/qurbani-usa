@@ -1,0 +1,81 @@
+---
+const appeals = [
+  {
+    title: 'Gaza Emergency',
+    description: 'Provide urgent food relief to families in Gaza',
+    image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400&h=300&fit=crop',
+    raised: 125000,
+    goal: 200000
+  },
+  {
+    title: 'Yemen Food Crisis',
+    description: 'Help feed starving families in Yemen',
+    image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&h=300&fit=crop',
+    raised: 85000,
+    goal: 150000
+  },
+  {
+    title: 'Orphan Sponsorship',
+    description: 'Support orphaned children with food and education',
+    image: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=400&h=300&fit=crop',
+    raised: 95000,
+    goal: 120000
+  }
+];
+---
+
+<section id="appeals" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4">
+        EMERGENCY APPEALS
+      </span>
+      <h2 class="text-3xl md:text-4xl font-bold text-[#312e2b] mb-4">Other Ways to Help</h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        Beyond Qurbani, support our emergency relief efforts around the world
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      {appeals.map((appeal) => (
+        <div class="donation-card bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+          <div class="relative">
+            <img
+              src={appeal.image}
+              alt={appeal.title}
+              class="w-full h-48 object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <h3 class="absolute bottom-4 left-4 text-white font-bold text-xl">{appeal.title}</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-gray-600 mb-4">{appeal.description}</p>
+
+            <!-- Progress Bar -->
+            <div class="mb-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-[#ef7c01] font-semibold">${appeal.raised.toLocaleString()} raised</span>
+                <span class="text-gray-500">of ${appeal.goal.toLocaleString()}</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  class="bg-gradient-to-r from-[#ef7c01] to-[#fab20b] h-2 rounded-full"
+                  style={`width: ${(appeal.raised / appeal.goal) * 100}%`}
+                ></div>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <button class="flex-1 bg-[#ef7c01] hover:bg-[#d96e00] text-white font-semibold py-2 rounded-lg transition">
+                Donate
+              </button>
+              <button class="px-4 border-2 border-[#ef7c01] text-[#ef7c01] hover:bg-[#ef7c01] hover:text-white font-semibold py-2 rounded-lg transition">
+                Learn More
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

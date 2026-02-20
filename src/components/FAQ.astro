@@ -1,0 +1,71 @@
+---
+const faqs = [
+  {
+    question: "When is the last day to give Qurbani?",
+    answer: "Qurbani must be performed during the days of Eid al-Adha, starting after Eid prayer on the 10th of Dhul Hijjah and ending before sunset on the 13th of Dhul Hijjah. We recommend donating early to ensure proper processing."
+  },
+  {
+    question: "Who is obligated to give Qurbani?",
+    answer: "Qurbani is obligatory (Wajib) for every sane Muslim who has reached puberty and possesses wealth equal to or above the nisab threshold (approximately $5,200 USD in savings). This applies to both men and women."
+  },
+  {
+    question: "Can I give Qurbani on behalf of someone else?",
+    answer: "Yes, you can give Qurbani on behalf of deceased relatives, family members, or the Prophet Muhammad (PBUH). Many donors give multiple Qurbanis to include their loved ones."
+  },
+  {
+    question: "How is the meat distributed?",
+    answer: "Our local partners distribute the sacrificed meat fresh to families in need within 24-48 hours. We prioritize communities with limited access to protein and nutritious food, including refugee camps and impoverished villages."
+  },
+  {
+    question: "Which countries do you serve?",
+    answer: "We distribute Qurbani meat in over 15 countries including Pakistan, Bangladesh, Yemen, Syria, Somalia, Afghanistan, Palestine, Sudan, and other regions where poverty and food insecurity are prevalent."
+  },
+  {
+    question: "Will I receive confirmation of my Qurbani?",
+    answer: "Yes! You'll receive an email confirmation immediately after donating. After Eid, we send a detailed report with photos and information about the distribution in your selected region."
+  }
+];
+---
+
+<section id="faq" class="py-20 bg-white">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4">
+        FAQ
+      </span>
+      <h2 class="text-3xl md:text-4xl font-bold text-[#312e2b] mb-4">Frequently Asked Questions</h2>
+      <p class="text-lg text-gray-600">Everything you need to know about Qurbani</p>
+    </div>
+
+    <div class="space-y-4">
+      {faqs.map((faq, index) => (
+        <details class="group bg-[#f1efea] rounded-xl overflow-hidden">
+          <summary class="flex justify-between items-center cursor-pointer p-6 font-semibold text-[#312e2b] hover:text-[#ef7c01] transition">
+            <span class="pr-4">{faq.question}</span>
+            <span class="flex-shrink-0 w-8 h-8 bg-[#ef7c01] text-white rounded-full flex items-center justify-center group-open:rotate-180 transition-transform">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </span>
+          </summary>
+          <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+            {faq.answer}
+          </div>
+        </details>
+      ))}
+    </div>
+
+    <div class="mt-12 text-center bg-gradient-to-r from-[#ef7c01] to-[#fab20b] rounded-2xl p-8 text-white">
+      <h3 class="text-2xl font-bold mb-2">Still have questions?</h3>
+      <p class="mb-6 text-white/90">Our team is here to help you with any questions about Qurbani</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="mailto:info@qurbaniusa.org" class="bg-white text-[#ef7c01] font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition">
+          Email Us
+        </a>
+        <a href="tel:1-800-QURBANI" class="border-2 border-white text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/10 transition">
+          Call 1-800-QURBANI
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

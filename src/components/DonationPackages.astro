@@ -1,0 +1,134 @@
+---
+const packages = [
+  {
+    id: 'goat',
+    name: 'Goat / Sheep',
+    price: 150,
+    description: 'One whole goat or sheep sacrificed according to Islamic guidelines',
+    feeds: '4-5 families',
+    location: 'Asia & Africa',
+    popular: false,
+    image: 'https://images.unsplash.com/photo-1484557985045-edf25e08da73?w=400&h=250&fit=crop'
+  },
+  {
+    id: 'cow-share',
+    name: 'Cow Share (1/7)',
+    price: 195,
+    description: 'One-seventh share of a cow, perfect for individuals',
+    feeds: '2-3 families',
+    location: 'Worldwide',
+    popular: true,
+    image: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=400&h=250&fit=crop'
+  },
+  {
+    id: 'cow-full',
+    name: 'Full Cow',
+    price: 1350,
+    description: 'Entire cow sacrifice, equivalent to 7 Qurbanis',
+    feeds: '15-20 families',
+    location: 'Worldwide',
+    popular: false,
+    image: 'https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?w=400&h=250&fit=crop'
+  },
+  {
+    id: 'premium',
+    name: 'Premium Qurbani',
+    price: 295,
+    description: 'Premium quality animal with expedited distribution',
+    feeds: '5-7 families',
+    location: 'Select Regions',
+    popular: false,
+    image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=250&fit=crop'
+  }
+];
+---
+
+<section id="packages" class="py-20 bg-[#f1efea]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4">
+        QURBANI 2026
+      </span>
+      <h2 class="text-3xl md:text-4xl font-bold text-[#312e2b] mb-4">Choose Your Qurbani Package</h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        All animals are sacrificed according to Islamic Shariah guidelines. Fresh meat is distributed to families in need within 24-48 hours.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {packages.map((pkg) => (
+        <div class={`donation-card relative bg-white rounded-2xl overflow-hidden shadow-lg ${pkg.popular ? 'ring-2 ring-[#ef7c01]' : ''}`}>
+          {pkg.popular && (
+            <div class="absolute top-4 right-4 bg-[#ef7c01] text-white text-xs font-bold px-3 py-1 rounded-full z-10">
+              MOST POPULAR
+            </div>
+          )}
+          <img
+            src={pkg.image}
+            alt={pkg.name}
+            class="w-full h-40 object-cover"
+          />
+          <div class="p-5">
+            <h3 class="text-xl font-bold text-[#312e2b] mb-2">{pkg.name}</h3>
+            <p class="text-gray-600 text-sm mb-3 min-h-[40px]">{pkg.description}</p>
+
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              {pkg.location}
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              Feeds {pkg.feeds}
+            </div>
+
+            <div class="border-t pt-4">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <span class="text-3xl font-bold text-[#ef7c01]">${pkg.price}</span>
+                  <span class="text-gray-500 text-sm ml-1">USD</span>
+                </div>
+              </div>
+              <button
+                class="w-full bg-[#ef7c01] hover:bg-[#d96e00] text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
+                data-package={pkg.id}
+                data-price={pkg.price}
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Add Donation
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Quick Donate Section -->
+    <div class="mt-12 bg-white rounded-2xl p-8 shadow-lg">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+          <h3 class="text-2xl font-bold text-[#312e2b] mb-2">Custom Amount</h3>
+          <p class="text-gray-600">Want to give a different amount? Enter your custom donation below.</p>
+        </div>
+        <div class="flex gap-4">
+          <input
+            type="number"
+            placeholder="Enter amount"
+            class="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-lg focus:border-[#ef7c01] focus:outline-none"
+            min="10"
+          />
+          <button class="btn-primary whitespace-nowrap">
+            Donate Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

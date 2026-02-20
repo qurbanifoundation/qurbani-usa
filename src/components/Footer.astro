@@ -1,0 +1,90 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-[#312e2b] text-gray-300">
+  <!-- Main Footer -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <!-- About -->
+      <div class="lg:col-span-1">
+        <a href="/" class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-[#ef7c01] to-[#fab20b] rounded-full flex items-center justify-center">
+            <span class="text-white text-lg">🐑</span>
+          </div>
+          <div>
+            <span class="font-bold text-white block leading-tight">QURBANI</span>
+            <span class="text-xs text-[#ef7c01] font-semibold">FOUNDATION USA</span>
+          </div>
+        </a>
+        <p class="text-sm leading-relaxed mb-4">
+          A Muslim charity dedicated to fulfilling the Islamic obligation of Qurbani while providing fresh, nutritious meat to families in need worldwide.
+        </p>
+        <p class="text-[#ef7c01] font-semibold text-sm">
+          100% Donation Policy
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h4 class="text-white font-bold mb-4 text-lg">Quick Links</h4>
+        <ul class="space-y-3 text-sm">
+          <li><a href="#packages" class="hover:text-[#ef7c01] transition">Qurbani Packages</a></li>
+          <li><a href="#appeals" class="hover:text-[#ef7c01] transition">Emergency Appeals</a></li>
+          <li><a href="#about" class="hover:text-[#ef7c01] transition">About Qurbani</a></li>
+          <li><a href="#faq" class="hover:text-[#ef7c01] transition">FAQ</a></li>
+          <li><a href="#" class="hover:text-[#ef7c01] transition">Zakat Calculator</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h4 class="text-white font-bold mb-4 text-lg">Contact Us</h4>
+        <ul class="space-y-3 text-sm">
+          <li class="flex items-center gap-2">
+            <span class="text-[#ef7c01]">📞</span>
+            1-800-QURBANI
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-[#ef7c01]">✉️</span>
+            info@qurbaniusa.org
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[#ef7c01]">📍</span>
+            <span>123 Charity Lane<br/>New York, NY 10001</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Newsletter -->
+      <div>
+        <h4 class="text-white font-bold mb-4 text-lg">Stay Updated</h4>
+        <p class="text-sm mb-4">Subscribe to receive updates about our work and upcoming appeals.</p>
+        <form class="space-y-3">
+          <input
+            type="email"
+            placeholder="Your email address"
+            class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-gray-400 focus:outline-none focus:border-[#ef7c01]"
+          />
+          <button class="w-full bg-[#ef7c01] hover:bg-[#d96e00] text-white font-semibold py-3 rounded-lg transition">
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="border-t border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+        <p>© {currentYear} Qurbani Foundation USA. All rights reserved.</p>
+        <div class="flex items-center gap-6">
+          <a href="#" class="hover:text-[#ef7c01] transition">Privacy Policy</a>
+          <a href="#" class="hover:text-[#ef7c01] transition">Terms of Service</a>
+          <span class="text-[#ef7c01]">501(c)(3) Nonprofit</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
