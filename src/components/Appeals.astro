@@ -1,81 +1,213 @@
 ---
 const appeals = [
   {
-    title: 'Gaza Emergency',
-    description: 'Provide urgent food relief to families in Gaza',
-    image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400&h=300&fit=crop',
-    raised: 125000,
-    goal: 200000
+    id: 1,
+    title: "Water for Life",
+    description: "Provide clean drinking water to communities in need. A single well can serve hundreds of families for generations.",
+    image: "https://images.unsplash.com/photo-1541544741670-34a0a5ad10da?w=600&h=400&fit=crop",
+    raised: 45000,
+    goal: 100000,
+    category: "Water"
   },
   {
-    title: 'Yemen Food Crisis',
-    description: 'Help feed starving families in Yemen',
-    image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&h=300&fit=crop',
-    raised: 85000,
-    goal: 150000
+    id: 2,
+    title: "Sponsor a Hafiz",
+    description: "Support a student's journey to memorize the Holy Quran. Your sponsorship covers education, housing, and food.",
+    image: "https://images.unsplash.com/photo-1585036156171-384164a8c675?w=600&h=400&fit=crop",
+    raised: 28000,
+    goal: 50000,
+    category: "Education"
   },
   {
-    title: 'Orphan Sponsorship',
-    description: 'Support orphaned children with food and education',
-    image: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=400&h=300&fit=crop',
-    raised: 95000,
-    goal: 120000
+    id: 3,
+    title: "Orphan Sponsorship",
+    description: "Give an orphan hope for a brighter future. Your monthly support provides food, education, healthcare, and love.",
+    image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop",
+    raised: 67000,
+    goal: 80000,
+    category: "Orphans"
+  },
+  {
+    id: 4,
+    title: "Yemen Emergency",
+    description: "Help families affected by the humanitarian crisis in Yemen with food, medicine, and emergency supplies.",
+    image: "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=600&h=400&fit=crop",
+    raised: 120000,
+    goal: 200000,
+    category: "Emergency"
+  },
+  {
+    id: 5,
+    title: "Gaza Emergency Appeal",
+    description: "Provide urgent humanitarian aid to families affected by the crisis in Gaza. Your donation saves lives.",
+    image: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=600&h=400&fit=crop",
+    raised: 185000,
+    goal: 250000,
+    category: "Emergency"
+  },
+  {
+    id: 6,
+    title: "Food Pack Distribution",
+    description: "Feed a family for a month with essential food supplies. Help fight hunger in vulnerable communities.",
+    image: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600&h=400&fit=crop",
+    raised: 35000,
+    goal: 60000,
+    category: "Food"
   }
 ];
 ---
 
-<section id="appeals" class="py-20 bg-white">
+<section id="appeals" class="py-16 bg-gray-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
     <div class="text-center mb-12">
       <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4">
-        EMERGENCY APPEALS
+        APPEALS
       </span>
-      <h2 class="text-3xl md:text-4xl font-bold text-[#312e2b] mb-4">Other Ways to Help</h2>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-        Beyond Qurbani, support our emergency relief efforts around the world
+      <h2 class="text-3xl md:text-4xl font-bold text-[#0b3741] mb-4">
+        Support Our Active Appeals
+      </h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Your donations are changing lives. Choose an appeal that speaks to your heart and make a difference today.
       </p>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-8">
-      {appeals.map((appeal) => (
-        <div class="donation-card bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-          <div class="relative">
-            <img
-              src={appeal.image}
-              alt={appeal.title}
-              class="w-full h-48 object-cover"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <h3 class="absolute bottom-4 left-4 text-white font-bold text-xl">{appeal.title}</h3>
-          </div>
-          <div class="p-5">
-            <p class="text-gray-600 mb-4">{appeal.description}</p>
+    <!-- Appeals Carousel -->
+    <div class="relative">
+      <div class="overflow-hidden" id="appeals-carousel">
+        <div class="flex transition-transform duration-500 ease-out" id="appeals-track">
+          {appeals.map((appeal) => (
+            <div class="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
+              <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition group h-full">
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src={appeal.image}
+                    alt={appeal.title}
+                    class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                  <span class="absolute top-4 left-4 bg-[#0b3741] text-white text-xs font-bold px-3 py-1 rounded-full">
+                    {appeal.category}
+                  </span>
+                </div>
+                <div class="p-6">
+                  <h3 class="text-xl font-bold text-[#0b3741] mb-2">{appeal.title}</h3>
+                  <p class="text-gray-600 text-sm mb-4 line-clamp-2">{appeal.description}</p>
 
-            <!-- Progress Bar -->
-            <div class="mb-4">
-              <div class="flex justify-between text-sm mb-2">
-                <span class="text-[#ef7c01] font-semibold">${appeal.raised.toLocaleString()} raised</span>
-                <span class="text-gray-500">of ${appeal.goal.toLocaleString()}</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  class="bg-gradient-to-r from-[#ef7c01] to-[#fab20b] h-2 rounded-full"
-                  style={`width: ${(appeal.raised / appeal.goal) * 100}%`}
-                ></div>
+                  <!-- Progress Bar -->
+                  <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-2">
+                      <span class="font-semibold text-[#ef7c01]">${appeal.raised.toLocaleString()} raised</span>
+                      <span class="text-gray-500">of ${appeal.goal.toLocaleString()}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        class="bg-gradient-to-r from-[#ef7c01] to-[#fdc448] h-2 rounded-full transition-all duration-500"
+                        style={`width: ${Math.min((appeal.raised / appeal.goal) * 100, 100)}%`}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <a
+                    href="#"
+                    class="block w-full bg-[#0b3741] hover:bg-[#0a2f38] text-white font-bold py-3 rounded-lg text-center transition"
+                  >
+                    Donate Now
+                  </a>
+                </div>
               </div>
             </div>
-
-            <div class="flex gap-3">
-              <button class="flex-1 bg-[#ef7c01] hover:bg-[#d96e00] text-white font-semibold py-2 rounded-lg transition">
-                Donate
-              </button>
-              <button class="px-4 border-2 border-[#ef7c01] text-[#ef7c01] hover:bg-[#ef7c01] hover:text-white font-semibold py-2 rounded-lg transition">
-                Learn More
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
+      </div>
+
+      <!-- Navigation Arrows -->
+      <button
+        id="prev-btn"
+        class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-[#0b3741] hover:bg-[#ef7c01] hover:text-white transition z-10"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <button
+        id="next-btn"
+        class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-[#0b3741] hover:bg-[#ef7c01] hover:text-white transition z-10"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Dots Navigation -->
+    <div class="flex justify-center gap-2 mt-8" id="dots-container">
+      {appeals.map((_, i) => (
+        <button
+          class={`w-3 h-3 rounded-full transition ${i === 0 ? 'bg-[#ef7c01]' : 'bg-gray-300 hover:bg-gray-400'}`}
+          data-index={i}
+        ></button>
       ))}
     </div>
   </div>
 </section>
+
+<script>
+  const track = document.getElementById('appeals-track');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const dotsContainer = document.getElementById('dots-container');
+  const dots = dotsContainer?.querySelectorAll('button');
+
+  let currentIndex = 0;
+  const totalItems = 6;
+
+  function getItemsPerView() {
+    if (window.innerWidth >= 1024) return 3;
+    if (window.innerWidth >= 768) return 2;
+    return 1;
+  }
+
+  function updateCarousel() {
+    const itemsPerView = getItemsPerView();
+    const maxIndex = totalItems - itemsPerView;
+    currentIndex = Math.min(currentIndex, maxIndex);
+    currentIndex = Math.max(currentIndex, 0);
+
+    const translateX = -(currentIndex * (100 / itemsPerView));
+    if (track) {
+      track.style.transform = `translateX(${translateX}%)`;
+    }
+
+    dots?.forEach((dot, i) => {
+      if (i === currentIndex) {
+        dot.classList.add('bg-[#ef7c01]');
+        dot.classList.remove('bg-gray-300');
+      } else {
+        dot.classList.remove('bg-[#ef7c01]');
+        dot.classList.add('bg-gray-300');
+      }
+    });
+  }
+
+  prevBtn?.addEventListener('click', () => {
+    currentIndex = Math.max(currentIndex - 1, 0);
+    updateCarousel();
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    const itemsPerView = getItemsPerView();
+    const maxIndex = totalItems - itemsPerView;
+    currentIndex = Math.min(currentIndex + 1, maxIndex);
+    updateCarousel();
+  });
+
+  dots?.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      currentIndex = i;
+      updateCarousel();
+    });
+  });
+
+  window.addEventListener('resize', updateCarousel);
+  updateCarousel();
+</script>

@@ -22,7 +22,8 @@
       "Bash(git push:*)",
       "Bash(npx wrangler:*)",
       "Bash(export:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(CLOUDFLARE_API_TOKEN=dyfQYdXsjNe9U39mKPocWSwsMFFQ9a_ivj5HiCbw npx wrangler:*)"
     ]
   }
 }

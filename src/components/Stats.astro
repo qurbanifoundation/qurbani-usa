@@ -1,20 +1,97 @@
 ---
 const stats = [
-  { value: '500K+', label: 'People Reached', icon: '👥' },
-  { value: '15+', label: 'Countries Served', icon: '🌍' },
-  { value: '50K+', label: 'Qurbanis Performed', icon: '🐑' },
-  { value: '10+', label: 'Years of Service', icon: '📅' }
+  { value: '500K+', label: 'People Reached', icon: 'users' },
+  { value: '15+', label: 'Countries Served', icon: 'globe' },
+  { value: '50K+', label: 'Qurbanis Performed', icon: 'heart' },
+  { value: '10+', label: 'Years of Service', icon: 'calendar' }
 ];
 ---
 
-<section class="py-16 bg-gradient-to-r from-[#ef7c01] to-[#fab20b]">
+<!-- Change Lives Section with Video -->
+<section class="py-16 bg-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Video/Image Section -->
+      <div class="relative group cursor-pointer">
+        <img
+          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&h=500&fit=crop"
+          alt="Charity work"
+          class="rounded-2xl shadow-2xl w-full"
+        />
+        <!-- Play Button Overlay -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-20 h-20 bg-[#ef7c01] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+            <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Content -->
+      <div>
+        <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4">
+          OUR IMPACT
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold text-[#0b3741] mb-6">
+          Change Lives with Your Generosity
+        </h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">
+          For over 10 years, Qurbani Foundation USA has been dedicated to serving humanity. From distributing fresh Qurbani meat to providing clean water and supporting orphans, your donations make a real difference.
+        </p>
+        <p class="text-gray-600 mb-8 leading-relaxed">
+          Watch our video to see the impact of your generosity and how together we're transforming communities around the world.
+        </p>
+        <a href="#packages" class="inline-flex items-center gap-2 bg-[#fdc448] hover:bg-[#efb000] text-[#0b3741] font-bold px-8 py-4 rounded-lg transition shadow-lg">
+          Donate Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Achievement Highlights -->
+<section class="py-16 bg-gradient-to-r from-[#0b3741] to-[#1a5c6a]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+        Achievement Highlights
+      </h2>
+      <p class="text-gray-300 max-w-2xl mx-auto">
+        Together, we've made an incredible impact across the globe
+      </p>
+    </div>
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
       {stats.map((stat) => (
-        <div class="text-center text-white">
-          <div class="text-4xl mb-2">{stat.icon}</div>
-          <div class="text-3xl md:text-4xl font-bold mb-1">{stat.value}</div>
-          <div class="text-white/80 text-sm md:text-base">{stat.label}</div>
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto mb-4 bg-[#ef7c01] rounded-full flex items-center justify-center">
+            {stat.icon === 'users' && (
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+            )}
+            {stat.icon === 'globe' && (
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            )}
+            {stat.icon === 'heart' && (
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+            )}
+            {stat.icon === 'calendar' && (
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            )}
+          </div>
+          <div class="text-4xl md:text-5xl font-bold text-white mb-2">{stat.value}</div>
+          <div class="text-gray-300">{stat.label}</div>
         </div>
       ))}
     </div>
