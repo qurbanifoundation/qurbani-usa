@@ -1,7 +1,7 @@
 ---
 ---
 
-<section class="relative min-h-[600px] md:min-h-[700px] overflow-hidden">
+<section class="relative min-h-[700px] md:min-h-[800px] overflow-hidden pt-28 md:pt-32">
   <!-- Hero Background Image -->
   <div class="absolute inset-0">
     <img
@@ -59,25 +59,25 @@
       <div class="bg-white rounded-lg p-6 md:p-8 shadow-2xl max-w-md mx-auto lg:mx-0 lg:ml-auto" style="font-family: 'Signika', sans-serif;">
         <!-- Toggle: One-off / Monthly -->
         <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
-          <button class="flex-1 py-3 px-4 rounded-md bg-[#ef7c01] text-white font-bold text-sm transition" id="one-off-btn">
+          <button class="flex-1 py-3 px-4 rounded-md bg-[#ef7c01] text-white font-bold text-sm transition" id="one-off-btn" type="button">
             One Off
           </button>
-          <button class="flex-1 py-3 px-4 rounded-md text-gray-600 font-bold text-sm transition hover:bg-gray-200" id="monthly-btn">
+          <button class="flex-1 py-3 px-4 rounded-md text-gray-600 font-bold text-sm transition hover:bg-gray-200" id="monthly-btn" type="button">
             Monthly
           </button>
         </div>
 
         <!-- One-off Amounts -->
         <div id="oneoff-amounts" class="grid grid-cols-3 gap-3 mb-6">
-          <button class="amount-btn py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="360">
+          <button class="amount-btn py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="360" type="button">
             <span class="text-xl font-bold text-[#333]">$360</span>
             <span class="text-xs text-gray-500 mt-1">1 Orphan</span>
           </button>
-          <button class="amount-btn py-4 px-2 border-2 border-[#ef7c01] bg-[#ef7c01]/10 rounded-lg font-bold text-lg flex flex-col items-center" data-amount="720">
+          <button class="amount-btn py-4 px-2 border-2 border-[#ef7c01] bg-[#ef7c01]/10 rounded-lg font-bold text-lg flex flex-col items-center selected" data-amount="720" type="button">
             <span class="text-xl font-bold text-[#ef7c01]">$720</span>
             <span class="text-xs text-gray-500 mt-1">2 Orphans</span>
           </button>
-          <button class="amount-btn py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="1800">
+          <button class="amount-btn py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="1800" type="button">
             <span class="text-xl font-bold text-[#333]">$1,800</span>
             <span class="text-xs text-gray-500 mt-1">5 Orphans</span>
           </button>
@@ -85,15 +85,15 @@
 
         <!-- Monthly Amounts (Hidden by default) -->
         <div id="monthly-amounts" class="hidden grid grid-cols-3 gap-3 mb-6">
-          <button class="amount-btn-monthly py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="30">
+          <button class="amount-btn-monthly py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="30" type="button">
             <span class="text-xl font-bold text-[#333]">$30</span>
             <span class="text-xs text-gray-500 mt-1">/month</span>
           </button>
-          <button class="amount-btn-monthly py-4 px-2 border-2 border-[#ef7c01] bg-[#ef7c01]/10 rounded-lg font-bold text-lg flex flex-col items-center" data-amount="60">
+          <button class="amount-btn-monthly py-4 px-2 border-2 border-[#ef7c01] bg-[#ef7c01]/10 rounded-lg font-bold text-lg flex flex-col items-center selected" data-amount="60" type="button">
             <span class="text-xl font-bold text-[#ef7c01]">$60</span>
             <span class="text-xs text-gray-500 mt-1">/month</span>
           </button>
-          <button class="amount-btn-monthly py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="150">
+          <button class="amount-btn-monthly py-4 px-2 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#ef7c01] hover:bg-[#ef7c01]/5 transition flex flex-col items-center" data-amount="150" type="button">
             <span class="text-xl font-bold text-[#333]">$150</span>
             <span class="text-xs text-gray-500 mt-1">/month</span>
           </button>
@@ -114,7 +114,7 @@
         </div>
 
         <!-- Donate Button -->
-        <button id="donate-btn" class="w-full bg-[#fdc448] hover:bg-[#efb000] text-[#61470e] font-bold py-4 rounded-lg transition text-lg flex items-center justify-center gap-2 uppercase tracking-wide" style="box-shadow: 3px 4px 0 rgba(0,0,0,0.15);">
+        <button id="donate-btn" type="button" class="w-full bg-[#fdc448] hover:bg-[#efb000] text-[#61470e] font-bold py-4 rounded-lg transition text-lg flex items-center justify-center gap-2 uppercase tracking-wide" style="box-shadow: 3px 4px 0 rgba(0,0,0,0.15);">
           <span>Add Donation</span>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -154,87 +154,116 @@
 </section>
 
 <script>
-  // Amount selection logic
-  const amountBtns = document.querySelectorAll('.amount-btn');
-  const amountBtnsMonthly = document.querySelectorAll('.amount-btn-monthly');
-  const customInput = document.getElementById('custom-amount') as HTMLInputElement;
-  const oneOffBtn = document.getElementById('one-off-btn');
-  const monthlyBtn = document.getElementById('monthly-btn');
-  const oneoffAmounts = document.getElementById('oneoff-amounts');
-  const monthlyAmounts = document.getElementById('monthly-amounts');
+  document.addEventListener('DOMContentLoaded', () => {
+    // Elements
+    const amountBtns = document.querySelectorAll('.amount-btn');
+    const amountBtnsMonthly = document.querySelectorAll('.amount-btn-monthly');
+    const customInput = document.getElementById('custom-amount') as HTMLInputElement;
+    const oneOffBtn = document.getElementById('one-off-btn');
+    const monthlyBtn = document.getElementById('monthly-btn');
+    const oneoffAmounts = document.getElementById('oneoff-amounts');
+    const monthlyAmounts = document.getElementById('monthly-amounts');
+    const donateBtn = document.getElementById('donate-btn');
 
-  let selectedAmount = 720;
-  let isMonthly = false;
+    let selectedAmount = 720;
+    let isMonthly = false;
 
-  function setupAmountButtons(buttons: NodeListOf<Element>) {
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        buttons.forEach(b => {
-          b.classList.remove('border-[#ef7c01]', 'bg-[#ef7c01]/10');
-          b.classList.add('border-gray-200');
-          const span = b.querySelector('span:first-child');
-          if (span) {
-            span.classList.remove('text-[#ef7c01]');
-            span.classList.add('text-[#333]');
-          }
-        });
+    // Function to update button styles
+    function updateButtonStyle(btn: Element, isSelected: boolean) {
+      const span = btn.querySelector('span:first-child');
+      if (isSelected) {
         btn.classList.remove('border-gray-200');
         btn.classList.add('border-[#ef7c01]', 'bg-[#ef7c01]/10');
-        const span = btn.querySelector('span:first-child');
         if (span) {
           span.classList.remove('text-[#333]');
           span.classList.add('text-[#ef7c01]');
         }
-        selectedAmount = parseInt(btn.getAttribute('data-amount') || '720');
-        customInput.value = '';
-      });
-    });
-  }
-
-  setupAmountButtons(amountBtns);
-  setupAmountButtons(amountBtnsMonthly);
-
-  customInput?.addEventListener('input', () => {
-    if (customInput.value) {
-      const allBtns = [...amountBtns, ...amountBtnsMonthly];
-      allBtns.forEach(b => {
-        b.classList.remove('border-[#ef7c01]', 'bg-[#ef7c01]/10');
-        b.classList.add('border-gray-200');
-        const span = b.querySelector('span:first-child');
+      } else {
+        btn.classList.remove('border-[#ef7c01]', 'bg-[#ef7c01]/10');
+        btn.classList.add('border-gray-200');
         if (span) {
           span.classList.remove('text-[#ef7c01]');
           span.classList.add('text-[#333]');
         }
+      }
+    }
+
+    // Setup amount button click handlers
+    function setupAmountButtons(buttons: NodeListOf<Element>) {
+      buttons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Deselect all buttons
+          buttons.forEach(b => updateButtonStyle(b, false));
+          // Select clicked button
+          updateButtonStyle(btn, true);
+          // Update selected amount
+          selectedAmount = parseInt(btn.getAttribute('data-amount') || '720');
+          // Clear custom input
+          if (customInput) customInput.value = '';
+          console.log('Selected amount:', selectedAmount);
+        });
       });
-      selectedAmount = parseInt(customInput.value) || 0;
     }
-  });
 
-  // Toggle buttons
-  oneOffBtn?.addEventListener('click', () => {
-    isMonthly = false;
-    oneOffBtn.classList.add('bg-[#ef7c01]', 'text-white');
-    oneOffBtn.classList.remove('text-gray-600');
-    monthlyBtn?.classList.remove('bg-[#ef7c01]', 'text-white');
-    monthlyBtn?.classList.add('text-gray-600');
-    oneoffAmounts?.classList.remove('hidden');
-    monthlyAmounts?.classList.add('hidden');
-  });
+    setupAmountButtons(amountBtns);
+    setupAmountButtons(amountBtnsMonthly);
 
-  monthlyBtn?.addEventListener('click', () => {
-    isMonthly = true;
-    monthlyBtn.classList.add('bg-[#ef7c01]', 'text-white');
-    monthlyBtn.classList.remove('text-gray-600');
-    oneOffBtn?.classList.remove('bg-[#ef7c01]', 'text-white');
-    oneOffBtn?.classList.add('text-gray-600');
-    oneoffAmounts?.classList.add('hidden');
-    monthlyAmounts?.classList.remove('hidden');
-  });
+    // Custom amount input
+    customInput?.addEventListener('input', () => {
+      if (customInput.value) {
+        // Deselect all preset buttons
+        amountBtns.forEach(b => updateButtonStyle(b, false));
+        amountBtnsMonthly.forEach(b => updateButtonStyle(b, false));
+        selectedAmount = parseInt(customInput.value) || 0;
+        console.log('Custom amount:', selectedAmount);
+      }
+    });
 
-  // Donate button
-  document.getElementById('donate-btn')?.addEventListener('click', () => {
-    if (selectedAmount > 0) {
-      window.location.href = `#packages?amount=${selectedAmount}&recurring=${isMonthly}`;
-    }
+    // One-off button click
+    oneOffBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      isMonthly = false;
+      oneOffBtn.classList.add('bg-[#ef7c01]', 'text-white');
+      oneOffBtn.classList.remove('text-gray-600');
+      monthlyBtn?.classList.remove('bg-[#ef7c01]', 'text-white');
+      monthlyBtn?.classList.add('text-gray-600');
+      oneoffAmounts?.classList.remove('hidden');
+      monthlyAmounts?.classList.add('hidden');
+      selectedAmount = 720; // Reset to default one-off amount
+      console.log('Switched to one-off');
+    });
+
+    // Monthly button click
+    monthlyBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      isMonthly = true;
+      monthlyBtn.classList.add('bg-[#ef7c01]', 'text-white');
+      monthlyBtn.classList.remove('text-gray-600');
+      oneOffBtn?.classList.remove('bg-[#ef7c01]', 'text-white');
+      oneOffBtn?.classList.add('text-gray-600');
+      oneoffAmounts?.classList.add('hidden');
+      monthlyAmounts?.classList.remove('hidden');
+      selectedAmount = 60; // Reset to default monthly amount
+      console.log('Switched to monthly');
+    });
+
+    // Donate button click
+    donateBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (selectedAmount > 0) {
+        const checkoutUrl = `/api/checkout?amount=${selectedAmount}&recurring=${isMonthly}`;
+        console.log('Redirecting to checkout:', checkoutUrl);
+        // For now, scroll to packages section
+        const packagesSection = document.getElementById('packages');
+        if (packagesSection) {
+          packagesSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        // Alert for demonstration
+        alert(`Donation: $${selectedAmount} (${isMonthly ? 'Monthly' : 'One-time'})\n\nThis will redirect to Stripe checkout.`);
+      } else {
+        alert('Please select an amount');
+      }
+    });
   });
 </script>

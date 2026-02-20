@@ -1,9 +1,9 @@
 ---
 ---
 
-<header class="sticky top-0 z-50">
+<header class="absolute top-0 left-0 right-0 z-50">
   <!-- Top Bar -->
-  <div class="bg-[#1a1a1a] text-white text-sm py-2">
+  <div class="bg-[#1a1a1a]/80 backdrop-blur-sm text-white text-sm py-2">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
       <div class="flex items-center gap-6">
         <a href="tel:+17035964900" class="flex items-center gap-2 hover:text-[#fdc448] transition">
@@ -18,7 +18,6 @@
         </a>
       </div>
       <div class="flex items-center gap-4">
-        <!-- Language Selector -->
         <div class="flex items-center gap-2 text-xs">
           <button class="hover:text-[#fdc448] transition flex items-center gap-1">
             <span>EN</span>
@@ -33,7 +32,7 @@
   </div>
 
   <!-- Main Nav -->
-  <nav class="bg-white shadow-md">
+  <nav class="bg-white/95 backdrop-blur-sm shadow-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-20">
         <!-- Logo -->
@@ -47,7 +46,7 @@
 
         <!-- Desktop Nav -->
         <div class="hidden lg:flex items-center gap-1">
-          <!-- Appeals Dropdown -->
+          <!-- Appeals Mega Menu -->
           <div class="relative group">
             <button class="flex items-center gap-1 text-[#333] hover:text-[#ef7c01] font-semibold text-sm uppercase tracking-wide transition px-4 py-6">
               Appeals
@@ -55,14 +54,140 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </button>
-            <div class="absolute top-full left-0 bg-white shadow-xl rounded-b-lg py-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border-t-4 border-[#ef7c01]">
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Sight Restoration</a>
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Water</a>
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Orphan Sponsorship</a>
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Education</a>
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Zakat & Sadaqah</a>
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Food Aid</a>
-              <a href="#appeals" class="block px-4 py-2 text-gray-700 hover:bg-[#ef7c01] hover:text-white transition">Disaster Relief</a>
+
+            <!-- Mega Menu Dropdown -->
+            <div class="absolute top-full left-1/2 -translate-x-1/2 bg-[#f5f3ef] shadow-2xl rounded-b-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-[900px] border-t-4 border-[#0b5d3a]">
+              <div class="grid grid-cols-3 gap-0">
+                <!-- Left Column - Categories -->
+                <div class="bg-white p-6 rounded-bl-lg">
+                  <div class="space-y-1">
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#c41e3a] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Emergencies</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#0b5d3a] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Sight Restoration Programme</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#0b5d3a] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Water for Life</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#0b5d3a] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3z"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Food Aid</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#8b5a2b] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Orphan Sponsorship</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#d4a84b] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Education</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#0b5d3a] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">Sadaqah Jariyah Gifting</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group/item">
+                      <div class="w-10 h-10 bg-[#6b7280] rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                      </div>
+                      <span class="font-semibold text-[#333] group-hover/item:text-[#0b5d3a]">More Appeals</span>
+                      <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Middle Column - Popular Appeals -->
+                <div class="p-6">
+                  <p class="text-xs font-semibold text-gray-500 mb-4">POPULAR APPEALS & PROJECTS IN <span class="text-[#333]">DISASTER & EMERGENCY RELIEF</span></p>
+                  <div class="grid grid-cols-2 gap-3">
+                    <a href="#" class="flex items-center gap-3 bg-white p-3 rounded-lg hover:shadow-md transition">
+                      <img src="https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-18615-836cedcc4a03eb7b1613f878a6a17ce5.jpg" alt="Gaza" class="w-16 h-12 object-cover rounded" />
+                      <span class="text-sm font-semibold text-[#333]">Gaza Emergency Appeal</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 bg-white p-3 rounded-lg hover:shadow-md transition">
+                      <img src="https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-17257-f5c3d0b466ee323de219637b60f47254.jpg" alt="Yemen" class="w-16 h-12 object-cover rounded" />
+                      <span class="text-sm font-semibold text-[#333]">Yemen Emergency Appeal</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 bg-white p-3 rounded-lg hover:shadow-md transition">
+                      <img src="https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-19634-f1113f878ac61e934b3692536bfba72b.jpg" alt="Lebanon" class="w-16 h-12 object-cover rounded" />
+                      <span class="text-sm font-semibold text-[#333]">Lebanon Emergency Appeal</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 bg-white p-3 rounded-lg hover:shadow-md transition">
+                      <img src="https://www.staging9.qurbani.com/wp-content/uploads/2025/06/zsdf.jpg" alt="Syria" class="w-16 h-12 object-cover rounded" />
+                      <span class="text-sm font-semibold text-[#333]">Syria Emergency Appeal</span>
+                    </a>
+                  </div>
+                  <a href="#appeals" class="mt-4 block w-full bg-[#0b5d3a] hover:bg-[#094a2e] text-white font-bold py-3 rounded-lg text-center transition text-sm">
+                    All Projects & Appeals in Emergencies
+                  </a>
+                </div>
+
+                <!-- Right Column - Donate Form -->
+                <div class="bg-[#f5f3ef] p-6 rounded-br-lg">
+                  <p class="text-xs text-[#0b5d3a] font-semibold text-center mb-2">Donate Now</p>
+                  <h4 class="text-lg font-bold text-[#333] text-center mb-4">Most Needed</h4>
+
+                  <!-- Toggle -->
+                  <div class="flex bg-[#0b5d3a] rounded-lg p-1 mb-4">
+                    <button class="flex-1 py-2 px-3 rounded-md bg-[#0b5d3a] text-white font-semibold text-xs transition mega-single-btn">
+                      Single Payment
+                    </button>
+                    <button class="flex-1 py-2 px-3 rounded-md text-white/70 font-semibold text-xs transition hover:text-white mega-monthly-btn">
+                      Monthly Payment
+                    </button>
+                  </div>
+
+                  <!-- Amounts -->
+                  <div class="grid grid-cols-3 gap-2 mb-4">
+                    <button class="mega-amount-btn py-2 border-2 border-[#0b5d3a] rounded text-[#0b5d3a] font-bold text-sm hover:bg-[#0b5d3a] hover:text-white transition" data-amount="40">$40</button>
+                    <button class="mega-amount-btn py-2 border-2 border-[#0b5d3a] rounded text-[#0b5d3a] font-bold text-sm hover:bg-[#0b5d3a] hover:text-white transition" data-amount="50">$50</button>
+                    <button class="mega-amount-btn py-2 border-2 border-[#0b5d3a] bg-[#0b5d3a] text-white rounded font-bold text-sm" data-amount="100">$100</button>
+                  </div>
+
+                  <!-- Other Amount -->
+                  <div class="relative mb-4">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                    <input type="number" placeholder="Other amount" class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded text-sm focus:border-[#0b5d3a] focus:outline-none mega-custom-amount" />
+                  </div>
+
+                  <!-- Select -->
+                  <select class="w-full p-2 border border-gray-300 rounded text-sm mb-4 focus:border-[#0b5d3a] focus:outline-none">
+                    <option>General Donation</option>
+                    <option>Emergency Relief</option>
+                    <option>Orphan Support</option>
+                    <option>Water Projects</option>
+                  </select>
+
+                  <!-- Donate Button -->
+                  <button class="w-full bg-[#c41e3a] hover:bg-[#a31830] text-white font-bold py-3 rounded transition text-sm mega-donate-btn">
+                    Donate Now &gt;
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -165,5 +290,18 @@
   const menu = document.getElementById('mobile-menu');
   btn?.addEventListener('click', () => {
     menu?.classList.toggle('hidden');
+  });
+
+  // Mega menu amount buttons
+  const megaAmountBtns = document.querySelectorAll('.mega-amount-btn');
+  megaAmountBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      megaAmountBtns.forEach(b => {
+        b.classList.remove('bg-[#0b5d3a]', 'text-white');
+        b.classList.add('text-[#0b5d3a]');
+      });
+      btn.classList.add('bg-[#0b5d3a]', 'text-white');
+      btn.classList.remove('text-[#0b5d3a]');
+    });
   });
 </script>
