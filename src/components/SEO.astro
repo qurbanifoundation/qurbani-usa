@@ -1,0 +1,110 @@
+---
+/**
+ * SEO Component
+ * Renders meta tags for SEO, Open Graph, and Twitter Cards
+ * Can use campaign-specific data or fall back to global defaults
+ */
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  // Campaign data (if page is campaign-specific)
+  campaign?: {
+    meta_title?: string;
+    meta_description?: string;
+    og_image_url?: string;
+    canonical_url?: string;
+  };
+}
+
+// Default SEO settings
+const defaults = {
+  siteName: 'Qurbani Foundation USA',
+  title: 'Qurbani Foundation USA - Fulfill Your Qurbani Obligation',
+  description: 'Fulfill your Qurbani obligation with Qurbani Foundation USA. We distribute fresh meat to families in need across 15+ countries worldwide.',
+  ogImage: '/og-image.jpg', // Default OG image
+  twitterHandle: '@qurbaniusa',
+  siteUrl: 'https://qurbani-usa.pages.dev'
+};
+
+const {
+  title,
+  description,
+  ogImage,
+  canonicalUrl,
+  type = 'website',
+  noindex = false,
+  campaign
+} = Astro.props;
+
+// Determine final values (campaign > props > defaults)
+const finalTitle = campaign?.meta_title || title || defaults.title;
+const finalDescription = campaign?.meta_description || description || defaults.description;
+const finalOgImage = campaign?.og_image_url || ogImage || defaults.ogImage;
+const finalCanonical = campaign?.canonical_url || canonicalUrl || Astro.url.href;
+
+// Ensure OG image is absolute URL
+const absoluteOgImage = finalOgImage.startsWith('http')
+  ? finalOgImage
+  : `${defaults.siteUrl}${finalOgImage}`;
+
+// Format title with site name
+const formattedTitle = finalTitle.includes(defaults.siteName)
+  ? finalTitle
+  : `${finalTitle} | ${defaults.siteName}`;
+---
+
+<!-- Primary Meta Tags -->
+<title>{formattedTitle}</title>
+<meta name="title" content={formattedTitle} />
+<meta name="description" content={finalDescription} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Canonical URL -->
+<link rel="canonical" href={finalCanonical} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={finalCanonical} />
+<meta property="og:title" content={formattedTitle} />
+<meta property="og:description" content={finalDescription} />
+<meta property="og:image" content={absoluteOgImage} />
+<meta property="og:site_name" content={defaults.siteName} />
+<meta property="og:locale" content="en_US" />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={finalCanonical} />
+<meta property="twitter:title" content={formattedTitle} />
+<meta property="twitter:description" content={finalDescription} />
+<meta property="twitter:image" content={absoluteOgImage} />
+{defaults.twitterHandle && <meta property="twitter:site" content={defaults.twitterHandle} />}
+
+<!-- Additional SEO Tags -->
+<meta name="theme-color" content="#ef7c01" />
+<meta name="author" content={defaults.siteName} />
+
+<!-- Structured Data for Organization -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "NGO",
+  "name": defaults.siteName,
+  "url": defaults.siteUrl,
+  "logo": `${defaults.siteUrl}/logo.png`,
+  "description": defaults.description,
+  "sameAs": [
+    "https://facebook.com/qurbaniusa",
+    "https://twitter.com/qurbaniusa",
+    "https://instagram.com/qurbaniusa"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+1-800-QURBANI",
+    "contactType": "customer service",
+    "email": "info@qurbaniusa.org"
+  }
+})} />

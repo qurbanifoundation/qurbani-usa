@@ -1,0 +1,47 @@
+---
+import '../styles/global.css'
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | Qurbani Foundation USA</title>
+  </head>
+  <body class="bg-[#f1efea] min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <a href="/" class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-[#ef7c01] to-[#fab20b] rounded-full flex items-center justify-center">
+            <span class="text-white text-lg">🐑</span>
+          </div>
+          <div>
+            <span class="font-bold text-lg text-[#312e2b] block leading-tight">QURBANI</span>
+            <span class="text-xs text-[#ef7c01] font-semibold">FOUNDATION USA</span>
+          </div>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex items-center justify-center p-4">
+      <div class="w-full max-w-md">
+        <slot />
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 text-center text-sm text-gray-500">
+      <p>© {new Date().getFullYear()} Qurbani Foundation USA. All rights reserved.</p>
+    </footer>
+  </body>
+</html>

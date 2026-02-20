@@ -1,0 +1,62 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+---
+
+<AuthLayout title="Signing Out">
+  <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+    <div class="mb-6">
+      <svg id="spinner" class="animate-spin h-12 w-12 mx-auto text-[#ef7c01]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+    <h1 class="text-2xl font-bold text-[#312e2b] mb-2">Signing you out...</h1>
+    <p class="text-gray-600">Please wait while we sign you out securely.</p>
+
+    <div id="success-message" class="hidden mt-6">
+      <div class="text-green-600 mb-4">
+        <svg class="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <p class="text-gray-600 mb-4">You have been signed out successfully.</p>
+      <a href="/" class="inline-block bg-[#ef7c01] hover:bg-[#d96e00] text-white font-semibold py-3 px-6 rounded-lg transition">
+        Return to Home
+      </a>
+    </div>
+  </div>
+</AuthLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const spinner = document.getElementById('spinner') as HTMLElement;
+  const successMessage = document.getElementById('success-message') as HTMLElement;
+
+  async function logout() {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      // Hide spinner and show success
+      spinner.classList.add('hidden');
+      spinner.parentElement?.classList.add('hidden');
+      document.querySelector('h1')?.classList.add('hidden');
+      document.querySelector('p')?.classList.add('hidden');
+      successMessage.classList.remove('hidden');
+
+      // Redirect after a short delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+  }
+
+  logout();
+</script>

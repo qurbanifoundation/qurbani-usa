@@ -18,7 +18,11 @@
       "Bash(/tmp/gh_extracted/gh_2.67.0_macOS_arm64/bin/gh auth login --with-token)",
       "Bash(/tmp/gh_extracted/gh_2.67.0_macOS_arm64/bin/gh repo create:*)",
       "WebFetch(domain:www.staging9.qurbani.com)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git push:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(export:*)",
+      "Bash(npx supabase:*)"
     ]
   }
 }

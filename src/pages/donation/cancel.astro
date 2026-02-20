@@ -1,0 +1,46 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout title="Donation Cancelled">
+  <Navbar />
+  <main class="min-h-[60vh] flex items-center justify-center py-20 bg-[#f1efea]">
+    <div class="max-w-lg mx-auto px-4 text-center">
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+        <!-- Cancel Icon -->
+        <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+
+        <h1 class="text-3xl font-bold text-[#312e2b] mb-4">Donation Cancelled</h1>
+        <p class="text-gray-600 mb-6">
+          Your donation was not completed. Don't worry - no payment has been processed.
+        </p>
+
+        <p class="text-gray-600 mb-6">
+          If you experienced any issues or have questions, please don't hesitate to contact us.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="/#packages" class="flex-1 bg-[#ef7c01] hover:bg-[#d96e00] text-white font-semibold py-3 px-6 rounded-lg transition text-center">
+            Try Again
+          </a>
+          <a href="/" class="flex-1 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition text-center">
+            Return Home
+          </a>
+        </div>
+
+        <div class="mt-6 pt-6 border-t">
+          <p class="text-sm text-gray-500">Need help?</p>
+          <p class="text-[#ef7c01] font-medium">1-800-QURBANI</p>
+          <p class="text-gray-600 text-sm">info@qurbaniusa.org</p>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
