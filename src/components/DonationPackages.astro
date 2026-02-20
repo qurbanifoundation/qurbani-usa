@@ -1,108 +1,101 @@
 ---
 const packages = [
   {
-    id: 'goat',
-    name: 'Goat / Sheep',
-    price: 150,
-    description: 'One whole goat or sheep sacrificed according to Islamic guidelines',
+    id: 'uganda',
+    name: 'Uganda',
+    price: 75,
+    type: 'Goat/Sheep',
     feeds: '4-5 families',
-    location: 'Asia & Africa',
-    popular: false,
-    image: 'https://images.unsplash.com/photo-1484557985045-edf25e08da73?w=400&h=250&fit=crop'
+    image: 'https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-14575-e52f7a27f53165c5baa1453a45c84ab0.jpg'
   },
   {
-    id: 'cow-share',
-    name: 'Cow Share (1/7)',
-    price: 195,
-    description: 'One-seventh share of a cow, perfect for individuals',
+    id: 'bangladesh',
+    name: 'Bangladesh',
+    price: 100,
+    type: 'Cow Share',
     feeds: '2-3 families',
-    location: 'Worldwide',
     popular: true,
-    image: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=400&h=250&fit=crop'
+    image: 'https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-17257-f5c3d0b466ee323de219637b60f47254.jpg'
   },
   {
-    id: 'cow-full',
-    name: 'Full Cow',
-    price: 1350,
-    description: 'Entire cow sacrifice, equivalent to 7 Qurbanis',
-    feeds: '15-20 families',
-    location: 'Worldwide',
-    popular: false,
-    image: 'https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?w=400&h=250&fit=crop'
+    id: 'haiti',
+    name: 'Haiti',
+    price: 125,
+    type: 'Cow Share',
+    feeds: '2-3 families',
+    image: 'https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-16827-bee9b8e831c08b2fe42891f4ae29b65e.jpg'
   },
   {
-    id: 'premium',
-    name: 'Premium Qurbani',
-    price: 295,
-    description: 'Premium quality animal with expedited distribution',
+    id: 'malawi',
+    name: 'Malawi',
+    price: 150,
+    type: 'Goat/Sheep',
     feeds: '5-7 families',
-    location: 'Select Regions',
-    popular: false,
-    image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=250&fit=crop'
+    image: 'https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-17884-dcd64d1c367faa193d486d5ea9f2e7c5.jpg'
+  },
+  {
+    id: 'tunisia',
+    name: 'Tunisia - Full Cow',
+    price: 1750,
+    type: '7 Shares',
+    feeds: '15-20 families',
+    image: 'https://www.staging9.qurbani.com/wp-content/uploads/2025/06/zsdf.jpg'
   }
 ];
 ---
 
-<section id="packages" class="py-20 bg-[#f8f7f5]">
+<section id="packages" class="py-20 bg-[#ebe8e1]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-12">
-      <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4">
+      <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
         QURBANI 2026
       </span>
-      <h2 class="text-3xl md:text-4xl font-bold text-[#0b3741] mb-4">Choose Your Qurbani Package</h2>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-        All animals are sacrificed according to Islamic Shariah guidelines. Fresh meat is distributed to families in need within 24-48 hours.
+      <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">Choose Your Qurbani Package</h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+        For just $50 you can provide hungry families with fresh Qurbani meat on the three days of Eid. All animals are sacrificed according to Islamic Shariah guidelines.
       </p>
     </div>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
       {packages.map((pkg) => (
-        <div class={`relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition ${pkg.popular ? 'ring-2 ring-[#ef7c01]' : ''}`}>
+        <div class={`relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition ${pkg.popular ? 'ring-2 ring-[#ef7c01]' : ''}`}>
           {pkg.popular && (
-            <div class="absolute top-4 right-4 bg-[#ef7c01] text-white text-xs font-bold px-3 py-1 rounded-full z-10">
+            <div class="absolute top-0 left-0 right-0 bg-[#ef7c01] text-white text-xs font-bold py-1 text-center z-10" style="font-family: 'Signika', sans-serif;">
               MOST POPULAR
             </div>
           )}
           <img
             src={pkg.image}
             alt={pkg.name}
-            class="w-full h-40 object-cover"
+            class={`w-full h-36 object-cover ${pkg.popular ? 'mt-6' : ''}`}
+            loading="lazy"
           />
-          <div class="p-5">
-            <h3 class="text-xl font-bold text-[#0b3741] mb-2">{pkg.name}</h3>
-            <p class="text-gray-600 text-sm mb-3 min-h-[40px]">{pkg.description}</p>
+          <div class="p-4">
+            <h3 class="text-lg font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">{pkg.name}</h3>
+            <p class="text-gray-500 text-sm mb-2" style="font-family: 'Lato', sans-serif;">{pkg.type}</p>
 
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-              {pkg.location}
-            </div>
-
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-3" style="font-family: 'Lato', sans-serif;">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
               </svg>
               Feeds {pkg.feeds}
             </div>
 
-            <div class="border-t pt-4">
+            <div class="border-t pt-3">
               <div class="flex items-center justify-between mb-3">
                 <div>
-                  <span class="text-3xl font-bold text-[#ef7c01]">${pkg.price}</span>
-                  <span class="text-gray-500 text-sm ml-1">USD</span>
+                  <span class="text-2xl font-bold text-[#ef7c01]" style="font-family: 'Signika', sans-serif;">${pkg.price}</span>
                 </div>
               </div>
               <button
-                class="w-full bg-[#0b3741] hover:bg-[#0a2f38] text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
+                class="w-full bg-[#fdc448] hover:bg-[#efb000] text-[#61470e] font-bold py-2.5 rounded transition flex items-center justify-center gap-2 text-sm" style="box-shadow: 2px 3px 0 rgba(0,0,0,0.15); font-family: 'Signika', sans-serif;"
                 data-package={pkg.id}
                 data-price={pkg.price}
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
-                Add Donation
+                Add to Cart
               </button>
             </div>
           </div>
@@ -110,25 +103,14 @@ const packages = [
       ))}
     </div>
 
-    <!-- Custom Amount Section -->
-    <div class="mt-12 bg-white rounded-2xl p-8 shadow-lg">
-      <div class="grid md:grid-cols-2 gap-8 items-center">
-        <div>
-          <h3 class="text-2xl font-bold text-[#0b3741] mb-2">Custom Amount</h3>
-          <p class="text-gray-600">Want to give a different amount? Enter your custom donation below.</p>
-        </div>
-        <div class="flex gap-4">
-          <input
-            type="number"
-            placeholder="Enter amount"
-            class="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 text-lg focus:border-[#ef7c01] focus:outline-none"
-            min="10"
-          />
-          <button class="bg-[#fdc448] hover:bg-[#efb000] text-[#0b3741] font-bold px-8 py-3 rounded-lg transition whitespace-nowrap">
-            Donate Now
-          </button>
-        </div>
-      </div>
+    <!-- View All Countries -->
+    <div class="text-center mt-8">
+      <a href="#" class="inline-flex items-center gap-2 bg-[#255764] hover:bg-[#1a4a55] text-white font-bold px-8 py-4 rounded transition" style="font-family: 'Signika', sans-serif;">
+        View All 70+ Countries
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+        </svg>
+      </a>
     </div>
   </div>
 </section>
@@ -137,53 +119,53 @@ const packages = [
 <section class="py-16 bg-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-12">
-      <h2 class="text-3xl md:text-4xl font-bold text-[#0b3741] mb-4">
+      <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
         More Ways to Give
       </h2>
-      <p class="text-gray-600">Choose the giving method that works best for you</p>
+      <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">Choose the giving method that works best for you</p>
     </div>
 
     <div class="grid md:grid-cols-3 gap-8">
       <!-- Phone -->
-      <div class="bg-[#f8f7f5] rounded-2xl p-8 text-center hover:shadow-lg transition">
-        <div class="w-16 h-16 mx-auto mb-4 bg-[#0b3741] rounded-full flex items-center justify-center">
+      <div class="bg-[#f8f9fa] rounded-xl p-8 text-center hover:shadow-lg transition">
+        <div class="w-16 h-16 mx-auto mb-4 bg-[#255764] rounded-full flex items-center justify-center">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold text-[#0b3741] mb-2">Give by Phone</h3>
-        <p class="text-gray-600 mb-4">Call our donation hotline</p>
-        <a href="tel:+18009000027" class="text-[#ef7c01] font-bold text-lg hover:underline">
-          +1 (800) 900-0027
+        <h3 class="text-xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Give by Phone</h3>
+        <p class="text-gray-600 mb-4" style="font-family: 'Lato', sans-serif;">Call our donation hotline</p>
+        <a href="tel:+17035964900" class="text-[#ef7c01] font-bold text-lg hover:underline" style="font-family: 'Signika', sans-serif;">
+          +1 (703) 596-4900
         </a>
+        <p class="text-gray-500 text-sm mt-1">or 1-800-900-0027</p>
       </div>
 
       <!-- Cheque -->
-      <div class="bg-[#f8f7f5] rounded-2xl p-8 text-center hover:shadow-lg transition">
-        <div class="w-16 h-16 mx-auto mb-4 bg-[#0b3741] rounded-full flex items-center justify-center">
+      <div class="bg-[#f8f9fa] rounded-xl p-8 text-center hover:shadow-lg transition">
+        <div class="w-16 h-16 mx-auto mb-4 bg-[#255764] rounded-full flex items-center justify-center">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold text-[#0b3741] mb-2">Give by Cheque</h3>
-        <p class="text-gray-600 mb-4">Mail your donation to:</p>
-        <p class="text-[#0b3741] font-medium">
-          Qurbani Foundation USA<br/>
-          123 Charity Lane<br/>
-          New York, NY 10001
+        <h3 class="text-xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Give by Cheque</h3>
+        <p class="text-gray-600 mb-4" style="font-family: 'Lato', sans-serif;">Mail your donation to:</p>
+        <p class="text-[#333] font-medium" style="font-family: 'Lato', sans-serif;">
+          864-1342 Military Rd<br/>
+          Niagara Falls, NY 14304
         </p>
       </div>
 
       <!-- Bank Transfer -->
-      <div class="bg-[#f8f7f5] rounded-2xl p-8 text-center hover:shadow-lg transition">
-        <div class="w-16 h-16 mx-auto mb-4 bg-[#0b3741] rounded-full flex items-center justify-center">
+      <div class="bg-[#f8f9fa] rounded-xl p-8 text-center hover:shadow-lg transition">
+        <div class="w-16 h-16 mx-auto mb-4 bg-[#255764] rounded-full flex items-center justify-center">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
           </svg>
         </div>
-        <h3 class="text-xl font-bold text-[#0b3741] mb-2">Bank Transfer</h3>
-        <p class="text-gray-600 mb-4">Direct bank transfer</p>
-        <a href="#" class="text-[#ef7c01] font-bold hover:underline">
+        <h3 class="text-xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Bank Transfer</h3>
+        <p class="text-gray-600 mb-4" style="font-family: 'Lato', sans-serif;">Direct bank transfer</p>
+        <a href="#" class="text-[#ef7c01] font-bold hover:underline" style="font-family: 'Signika', sans-serif;">
           Get Bank Details
         </a>
       </div>
@@ -192,14 +174,15 @@ const packages = [
 </section>
 
 <!-- Corporate Match Giving -->
-<section class="py-12 bg-gradient-to-r from-[#ef7c01] to-[#fdc448]">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="py-12 relative overflow-hidden" style="background: linear-gradient(90deg, #ef7c01 0%, #f89c01 50%, #ef7c01 100%);">
+  <div class="absolute inset-0 opacity-20" style="background-image: url('https://www.staging9.qurbani.com/wp-content/uploads/2021/08/texture-hardyellow-1.jpg'); background-size: cover;"></div>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <div class="flex flex-col md:flex-row items-center justify-between gap-6">
       <div class="text-white text-center md:text-left">
-        <h2 class="text-2xl md:text-3xl font-bold mb-2">Double Your Impact!</h2>
-        <p class="text-white/90">Many employers match charitable donations. Check if your company participates.</p>
+        <h2 class="text-2xl md:text-3xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Double Your Impact!</h2>
+        <p class="text-white/90" style="font-family: 'Lato', sans-serif;">Many employers match charitable donations. Check if your company participates.</p>
       </div>
-      <a href="#" class="bg-white text-[#ef7c01] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition shadow-lg">
+      <a href="#" class="bg-white text-[#ef7c01] font-bold px-8 py-4 rounded hover:bg-gray-100 transition shadow-lg" style="font-family: 'Signika', sans-serif;">
         Corporate Match Giving
       </a>
     </div>

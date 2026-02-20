@@ -38,7 +38,11 @@ const { title, description, ogImage, canonicalUrl, noindex, campaign } = Astro.p
 
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" />
+
+    <!-- Google Fonts: Signika & Lato -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Signika:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-stone-50 text-stone-900 antialiased">
     <slot />
