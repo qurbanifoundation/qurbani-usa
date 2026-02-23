@@ -433,6 +433,10 @@ export async function syncNewsletterSignupToGHL(data: {
  * - donation_count (Number)
  * - donor_tier (Text: prospect, donor, regular, major, vip)
  * - first_donation_date (Date)
+ * - is_recurring_donor (Text: yes/no)
+ * - is_monthly_donor (Text: yes/no)
+ * - is_weekly_donor (Text: yes/no)
+ * - recurring_type (Text: none/monthly/weekly)
  */
 export async function syncDonationToGHL(data: {
   donorEmail: string;
@@ -440,7 +444,7 @@ export async function syncDonationToGHL(data: {
   donorPhone?: string;
   amount: number;
   campaignName?: string;
-  donationType: 'single' | 'monthly';
+  donationType: 'single' | 'monthly' | 'weekly';
   items?: Array<{ name: string; amount: number }>;
   pipelineId?: string;
   stageId?: string;
@@ -489,14 +493,30 @@ export async function syncDonationToGHL(data: {
     donorTier = 'regular';
   }
 
+  // Determine recurring status
+  const isRecurring = data.donationType === 'monthly' || data.donationType === 'weekly';
+  const isMonthly = data.donationType === 'monthly';
+  const isWeekly = data.donationType === 'weekly';
+
   // Build tags - organized by category
   const tags = [
     // Source tags
     'donor',
     'website',
-    // Donation type tags
-    data.donationType === 'monthly' ? 'monthly-donor' : 'one-time-donor',
   ];
+
+  // Donation type tags
+  if (isRecurring) {
+    tags.push('recurring-donor');
+  }
+  if (isMonthly) {
+    tags.push('monthly-donor');
+  } else if (isWeekly) {
+    tags.push('weekly-donor');
+    tags.push('jummah-donor');
+  } else {
+    tags.push('one-time-donor');
+  }
 
   // Campaign/cause tags (what they care about)
   if (data.campaignName) {
@@ -514,6 +534,40 @@ export async function syncDonationToGHL(data: {
   // Year tag for cohort tracking
   tags.push(`donor-${new Date().getFullYear()}`);
 
+  // Determine recurring type label
+  let recurringTypeLabel = 'none';
+  if (isMonthly) recurringTypeLabel = 'monthly';
+  if (isWeekly) recurringTypeLabel = 'weekly';
+
+  // Build custom fields
+  const customFields: Record<string, string> = {
+    total_lifetime_giving: newLifetimeGiving.toFixed(2),
+    last_donation_amount: data.amount.toFixed(2),
+    last_donation_date: today,
+    donation_count: newDonationCount.toString(),
+    donor_tier: donorTier,
+    first_donation_date: existingContact ? firstDonationDate : today,
+    donation_type: data.donationType,
+    // Recurring donation tracking
+    is_recurring_donor: isRecurring ? 'yes' : 'no',
+    is_monthly_donor: isMonthly ? 'yes' : 'no',
+    is_weekly_donor: isWeekly ? 'yes' : 'no',
+    recurring_type: recurringTypeLabel,
+  };
+
+  // Add Jummah-specific tracking
+  if (isWeekly) {
+    customFields.is_jummah_donor = 'yes';
+    customFields.jummah_donation_amount = data.amount.toFixed(2);
+    customFields.jummah_start_date = today;
+  }
+
+  // Add monthly-specific tracking
+  if (isMonthly) {
+    customFields.monthly_donation_amount = data.amount.toFixed(2);
+    customFields.monthly_start_date = today;
+  }
+
   // Create/update contact with custom fields
   const result = await upsertContact({
     firstName,
@@ -522,20 +576,17 @@ export async function syncDonationToGHL(data: {
     phone: data.donorPhone,
     tags,
     source: 'Donation',
-    customFields: {
-      total_lifetime_giving: newLifetimeGiving.toFixed(2),
-      last_donation_amount: data.amount.toFixed(2),
-      last_donation_date: today,
-      donation_count: newDonationCount.toString(),
-      donor_tier: donorTier,
-      first_donation_date: existingContact ? firstDonationDate : today,
-      donation_type: data.donationType,
-    },
+    customFields,
   });
 
   if (!result.success || !result.contactId) {
     return result;
   }
+
+  // Determine donation type label for note
+  let donationTypeLabel = 'One-time';
+  if (isMonthly) donationTypeLabel = 'Monthly Recurring';
+  if (isWeekly) donationTypeLabel = 'Jummah (Every Friday)';
 
   // Add donation note with full details
   const itemsList = data.items?.map(i => `${i.name}: $${i.amount}`).join(', ') || data.campaignName || 'General Donation';
@@ -543,7 +594,7 @@ export async function syncDonationToGHL(data: {
 💰 Donation Received
 ━━━━━━━━━━━━━━━━━━━━
 Amount: $${data.amount.toFixed(2)}
-Type: ${data.donationType === 'monthly' ? 'Monthly Recurring' : 'One-time'}
+Type: ${donationTypeLabel}
 Campaign: ${data.campaignName || 'General'}
 Items: ${itemsList}
 Date: ${new Date().toLocaleDateString()}
@@ -551,7 +602,7 @@ Date: ${new Date().toLocaleDateString()}
 📊 Donor Stats Updated:
 • Lifetime Giving: $${newLifetimeGiving.toFixed(2)}
 • Total Donations: ${newDonationCount}
-• Tier: ${donorTier.toUpperCase()}
+• Tier: ${donorTier.toUpperCase()}${isRecurring ? `\n• Recurring: ${isWeekly ? 'Every Friday (Jummah)' : 'Monthly'}` : ''}
   `.trim();
 
   await addNoteToContact(result.contactId, note);

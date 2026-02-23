@@ -7,6 +7,7 @@ import GreenWithYellowTemplate from '../../templates/GreenWithYellowTemplate.ast
 import EmergencyAppealTemplate from '../../templates/EmergencyAppealTemplate.astro';
 import OrphanSponsorshipTemplate from '../../templates/OrphanSponsorshipTemplate.astro';
 import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTemplate.astro';
+import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -88,7 +89,9 @@ const pageTemplate = campaign.page_template || (isOrphanSponsorship ? orphanTemp
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
 ---
 
-{pageTemplate === 'tilestack-sponsorship' ? (
+{pageTemplate === 'aqiqah' ? (
+  <AqiqahTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'tilestack-sponsorship' ? (
   <TileStackSponsorshipTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : pageTemplate === 'orphan-sponsorship' ? (
   <OrphanSponsorshipTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />

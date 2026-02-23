@@ -17,11 +17,13 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
     if (String(password) === ADMIN_PASSWORD) {
       // Set session cookie
+      // Note: secure should be true in production, but false for localhost testing
+      const isProduction = import.meta.env.PROD;
       cookies.set('admin_session', ADMIN_PASSWORD, {
         path: '/',
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: isProduction,
+        sameSite: 'lax',
         maxAge: 60 * 60 * 24, // 24 hours
       });
 
@@ -29,7 +31,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     }
 
     // Wrong password - redirect back to admin (will show login form again)
-    const returnUrl = formData.get('returnUrl') || '/admin';
     return redirect(`${returnUrl}?error=1`);
   } catch (e) {
     return new Response('Invalid request', { status: 400 });

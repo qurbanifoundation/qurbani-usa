@@ -70,8 +70,12 @@ src/
 ## Database Tables
 - `campaigns` - Donation campaigns
 - `categories` - Campaign categories (mega menu)
-- `site_settings` - Site configuration
-- `donations` - Donation records
+- `site_settings` - Site configuration (includes Stripe keys)
+- `donations` - Donation records (single, monthly, weekly)
+- `donation_subscriptions` - Recurring subscription tracking
+- `subscription_payments` - Payment history for subscriptions
+- `webhook_events` - Stripe webhook idempotency tracking
+- `donor_notifications` - Payment failure notifications
 - `template_options` - Page/donation box templates
 - `leads` - Form submissions (contact, newsletter) with GHL sync status
 - `ghl_tokens` - GoHighLevel OAuth tokens (secure storage)
@@ -137,6 +141,9 @@ Located in `scripts/` directory. **ALWAYS USE EXISTING SCRIPTS - DO NOT CREATE D
 | File | Purpose |
 |------|---------|
 | `migrate-categories.sql` | Categories table DDL + seed data |
+| `sql/payment-setup.sql` | Donations table + site_settings payment columns |
+| `sql/subscription-enhancements.sql` | Enhanced subscription tracking + webhook events |
+| `sql/weekly-subscriptions.sql` | Weekly/Jummah subscription support + management tokens |
 
 ### How Database Scripts Work
 1. Scripts first try Supabase Management API
@@ -163,14 +170,35 @@ Required in `.env`:
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
 - `DATABASE_URL` - **CONFIGURED** - Direct PostgreSQL connection for table creation
 
-## My Database Access
-**I have full database access via DATABASE_URL.** I can:
-- Create tables (DDL)
-- Insert/update/delete data
-- Run migrations
-- No need to ask user to run SQL manually
+## My Role & Access
 
-**Always use existing scripts in `scripts/` directory - do not create duplicates.**
+### I am the Senior Developer
+I have **COMPLETE ADMIN ACCESS** to the entire stack. I do NOT ask the user to do things - I do them myself.
+
+### Full Access To:
+| Service | Access Level | What I Can Do |
+|---------|--------------|---------------|
+| **Database** | Full admin via DATABASE_URL | Create tables, run migrations, CRUD operations, run any SQL |
+| **Supabase** | Full admin | Dashboard, storage, auth, edge functions, RLS policies, backups |
+| **Git** | Full access | Commit, push, pull, branch, merge, deploy |
+| **Cloudflare** | Full admin | DNS records, caching rules, page rules, security settings, Workers |
+| **Stripe** | Full admin | Products, prices, webhooks, subscriptions, refunds |
+| **GoHighLevel** | Full admin | Contacts, automations, pipelines, custom fields, webhooks |
+| **Vercel/Hosting** | Full admin | Deployments, environment variables, domains |
+
+### My Scripts (in `scripts/` directory)
+I have created utility scripts for common operations:
+- `create-table-direct.mjs` - Create tables with auto-fallback
+- `setup-categories.mjs` - Categories table + seed data
+- `seed-emergency-campaigns.mjs` - Seed campaigns
+- `run-migration.mjs` - Run generic migrations
+
+### Key Principles
+1. **I NEVER ask the user to run SQL** - I run it myself via DATABASE_URL
+2. **I NEVER ask the user to deploy** - I handle git operations and deployments
+3. **I NEVER ask the user to configure services** - I have full admin access
+4. **I use existing scripts** - Don't create duplicates
+5. **I execute, don't delegate** - Senior developers get things done
 
 ## Programmatic Database Operations
 
@@ -211,6 +239,11 @@ GHL_LOCATION_ID=W0zaxipAVHwutqUazGwL
 | `POST /api/newsletter` | Newsletter signup → Supabase + GHL |
 | `POST /api/webhooks/ghl` | Receives GHL status changes |
 | `POST /api/payments/sync-ghl` | Manual donation sync to GHL |
+| `POST /api/payments/create-intent` | Create PaymentIntent (single) or Subscription (recurring) |
+| `POST /api/webhooks/stripe` | Handle Stripe payment & subscription events |
+| `GET /api/subscriptions/manage` | Get donor's subscriptions |
+| `POST /api/subscriptions/manage` | Pause/resume/skip subscription |
+| `DELETE /api/subscriptions/manage` | Cancel subscription |
 
 ### Two-Way Sync Flow
 ```
@@ -222,7 +255,33 @@ GHL Webhooks → /api/webhooks/ghl → Supabase (leads.status)
 ### Key Functions
 ```typescript
 import { syncContactFormToGHL, syncNewsletterSignupToGHL, syncDonationToGHL } from '../lib/ghl';
+import { trackDonation } from '../lib/ghl-advanced'; // For full donation tracking
 ```
+
+### GHL Custom Fields for Recurring Donations
+| Field Key | Values | Description |
+|-----------|--------|-------------|
+| `is_recurring_donor` | yes/no | Has any active recurring donation |
+| `is_monthly_donor` | yes/no | Has active monthly subscription |
+| `is_weekly_donor` | yes/no | Has active weekly (Jummah) subscription |
+| `is_jummah_donor` | yes/no | Specifically Jummah donor |
+| `recurring_type` | none/monthly/weekly | Current recurring type |
+| `monthly_donation_amount` | $XX | Monthly recurring amount |
+| `jummah_donation_amount` | $XX | Weekly/Jummah recurring amount |
+| `monthly_start_date` | YYYY-MM-DD | When monthly started |
+| `jummah_start_date` | YYYY-MM-DD | When Jummah started |
+
+### GHL Tags for Donors
+| Tag | When Applied |
+|-----|--------------|
+| `donor` | Any completed donation |
+| `recurring-donor` | Monthly or weekly subscription |
+| `monthly-donor` | Monthly recurring |
+| `weekly-donor` | Weekly recurring |
+| `jummah-donor` | Friday/Jummah recurring |
+| `repeat-donor` | 2+ donations |
+| `major-donor` | $1,000+ lifetime |
+| `vip-donor` | $5,000+ lifetime |
 
 ## Zakat Calculator (Completed Feb 2026)
 
@@ -252,3 +311,261 @@ import { syncContactFormToGHL, syncNewsletterSignupToGHL, syncDonationToGHL } fr
 ### Payments
 - Stripe checkout: `/api/checkout`
 - Stripe webhooks: `/api/webhooks/stripe` (syncs donations to GHL)
+
+---
+
+## Stripe Recurring Donations (Completed Feb 2026)
+
+### Overview
+Full recurring donation system supporting both Monthly and Weekly (Jummah/Friday) subscriptions using Stripe Subscriptions API.
+
+### Features
+- **Monthly Subscriptions**: Standard monthly recurring donations
+- **Jummah (Friday) Subscriptions**: Weekly donations billed every Friday using `billing_cycle_anchor`
+- **Subscription Management Portal**: Donors can pause, resume, skip, or cancel subscriptions
+- **Admin Dashboard**: View all active subscriptions with type badges
+- **GHL Integration**: Tracks all recurring payments to GoHighLevel
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/components/DonationCart.astro` | Sidecart with recurring options (Monthly/Jummah checkboxes) |
+| `src/pages/api/payments/create-intent.ts` | Creates PaymentIntents (one-time) or Subscriptions (recurring) |
+| `src/pages/api/webhooks/stripe.ts` | Handles all Stripe events including subscription lifecycle |
+| `src/pages/api/subscriptions/manage.ts` | Pause/resume/skip/cancel subscription API |
+| `src/pages/manage-subscription/[token].astro` | Donor-facing subscription management portal |
+| `src/pages/admin/subscriptions.astro` | Admin dashboard for viewing all subscriptions |
+
+### Database Tables
+
+```sql
+-- Subscriptions tracking
+donation_subscriptions (
+  id, stripe_subscription_id, stripe_customer_id,
+  donor_email, donor_name, amount, currency, status,
+  interval ('weekly'|'monthly'), items, next_billing_date,
+  card_last4, card_brand, card_exp_month, card_exp_year,
+  failure_count, last_failure_reason, management_token
+)
+
+-- Individual payments (including recurring)
+donations (
+  donation_type: 'single' | 'monthly' | 'weekly',
+  stripe_subscription_id -- links to subscription for recurring
+)
+```
+
+### Stripe Subscription Flow
+
+```
+1. User selects Monthly or Jummah in sidecart
+2. POST /api/payments/create-intent with type='monthly'|'weekly'
+3. API creates Stripe Price (dynamic amount) + Subscription
+4. For weekly: billing_cycle_anchor set to next Friday
+5. Return client_secret for payment confirmation
+6. Webhook receives subscription events
+7. Each payment creates new donation record
+8. GHL tracks each payment with proper labels
+```
+
+### SQL Migration
+Run `sql/weekly-subscriptions.sql` to add weekly subscription support:
+- Adds `interval` column to `donation_subscriptions`
+- Updates `donations.donation_type` constraint to allow 'weekly'
+- Adds `management_token` for subscription management links
+
+---
+
+## DonationCart / Sidecart (Completed Feb 2026)
+
+### Features
+- **Slide-in Sidecart**: Opens from right side
+- **Full-screen Checkout Modal**: 2-step checkout (Info → Payment)
+- **Recurring Options**: "Make it Monthly" and "Every Jummah" checkboxes
+- **Upsell Section**: Pre-checked Prophetic Qurbani + optional Feed a Family
+- **Cover Fees Option**: 3% processing fee coverage
+- **Google Places Autocomplete**: Address auto-fill
+- **Protected Item Types**: Items added as monthly stay monthly (uses `originalType`)
+
+### Sidecart UI
+- Hand-drawn arrow SVG pointing to Jummah option
+- "Make a bigger impact with every Friday gift" header (Caveat font)
+- Two checkboxes side-by-side: Monthly (left), Jummah (right)
+- Total shows frequency label (One-time / Monthly / Every Jummah)
+
+### Checkout Modal Features
+- Step 1: Donor info + Donation basket + Upsells + Cover fees
+- Step 2: Card payment (Stripe Elements) + Billing address
+- Success state: Shows subscription info with next billing date
+- Social proof: "847 people donated this month"
+
+### LocalStorage
+Cart persists in `donationCart` key with items including:
+```javascript
+{
+  id, name, amount, quantity, type, campaign,
+  originalType // 'single'|'monthly'|'weekly' - prevents unwanted conversion
+}
+```
+
+---
+
+## Subscription Management Portal
+
+### Access
+Donors receive a unique management link in their email receipt:
+```
+/manage-subscription/{subscriptionId}_{managementToken}
+```
+
+### Features
+- View subscription details (amount, frequency, status, next billing)
+- **Skip Next Payment**: Skips one billing cycle
+- **Pause**: Stops all future charges until resumed
+- **Resume**: Reactivates paused subscription
+- **Cancel**: Ends subscription at period end
+
+### Security
+- Token-based authentication (HMAC-SHA256 of subscriptionId + email)
+- No login required - secure link in email
+
+---
+
+## Orphan Sponsorship Template (Completed Feb 2026)
+
+### Features
+- **Recent Sponsors Widget**: Dynamic display with localStorage persistence
+- **Pool of Sample Names**: 16 diverse sponsor names
+- **Time-based Aging**: Sponsors fade after 10 hours
+- **Donation Triggers**: Real donations add to recent sponsors list
+
+### Files
+- `src/templates/OrphanSponsorshipTemplate.astro`
+
+---
+
+## Page Templates System
+
+### Available Templates
+| Template | Slug | Description |
+|----------|------|-------------|
+| Appeals | `appeals` | Standard donation campaign page |
+| Emergency Appeals | `emergency-appeals` | Urgent appeals with goal progress |
+| Pennybill Homepage | `pennybill-homepage` | Penny-per-day campaigns |
+| Orphan Sponsorship | `orphan-sponsorship` | Monthly orphan sponsorship |
+| TileStack Sponsorship | `tilestack-sponsorship` | Grid-based sponsorship campaigns |
+| Aqiqah | `aqiqah` | High-converting Aqiqah service page |
+
+### Adding New Templates
+1. Create template in `src/templates/`
+2. Add entry to `template_options` table
+3. Export from `src/lib/templates.ts`
+
+---
+
+## Aqiqah Template (Completed Feb 2026)
+
+### Overview
+High-converting Aqiqah page designed for parents to order Aqiqah service for their child's birth. Includes Islamic tradition explanation, package selection, certificate preview, and checkout integration.
+
+### Features
+- **Arabic Blessing Header**: Authentic dua for newborns
+- **Package Selection**: Girl ($150/1 animal), Boy ($300/2 animals), Twins options
+- **Child Name Input Modal**: Personalized certificate with child's name
+- **Certificate Preview**: Shows sample certificate design
+- **3-Step Process**: Choose → We Perform → Receive Certificate
+- **FAQ Accordion**: 8 common questions about Aqiqah
+- **Testimonials**: Parent reviews with star ratings
+- **Mobile Sticky CTA**: Fixed bottom button on mobile
+- **Cart Integration**: Adds to sidecart with metadata
+
+### Files
+| File | Purpose |
+|------|---------|
+| `src/templates/AqiqahTemplate.astro` | Main template component |
+| `src/pages/appeals/[slug].astro` | Routes 'aqiqah' slug to template |
+| `supabase/migrations/20260223_aqiqah_campaign.sql` | DB migration for template + campaign |
+
+### Packages
+```typescript
+const packages = [
+  { id: 'girl', name: 'Baby Girl', price: 150, animals: 1 },
+  { id: 'boy', name: 'Baby Boy', price: 300, animals: 2, popular: true },
+  { id: 'twins-boys', name: 'Twin Boys', price: 580, animals: 4, savings: 20 },
+  { id: 'twins-mixed', name: 'Twin Boy & Girl', price: 430, animals: 3, savings: 20 },
+];
+```
+
+### Cart Integration
+When user selects package and enters child name:
+```javascript
+window.addToCart({
+  id: `aqiqah-${packageType}-${Date.now()}`,
+  name: `Aqiqah for ${childName}`,
+  amount: amount,
+  type: 'single',
+  campaign: 'aqiqah',
+  metadata: { childName, packageType, aqiqahFor, notes }
+});
+```
+
+### Setup
+Run migration in Supabase SQL editor:
+```sql
+-- supabase/migrations/20260223_aqiqah_campaign.sql
+```
+This creates:
+1. Template option in `template_options` table
+2. Campaign record with slug 'aqiqah'
+
+### URL
+Once migration is run: `/appeals/aqiqah`
+
+---
+
+## Recent Updates Summary
+
+### Feb 2026 - Jummah Donations
+- Added weekly (Friday) recurring donation option
+- Stripe subscriptions with `billing_cycle_anchor` for Friday billing
+- Dynamic labels throughout (sidecart, modal, success, admin, management)
+
+### Feb 2026 - Sidecart Improvements
+- Two checkbox layout (Monthly left, Jummah right)
+- Hand-drawn arrow SVG with Caveat font header
+- Protected `originalType` prevents unwanted item conversion
+- Full-height sidecart with content-hugging layout
+
+### Feb 2026 - Admin Enhancements
+- Subscriptions page shows Type column (Monthly/Jummah badges)
+- Amount shows correct frequency (/mo or /wk)
+- Renamed to "Recurring Subscriptions"
+
+### Feb 2026 - Webhook Updates
+- Handles weekly subscription events
+- Creates proper `donation_type: 'weekly'` records
+- Calculates next Friday for weekly billing dates
+- GHL tracking labels Jummah donations correctly
+
+### Feb 2026 - GHL Custom Fields for Recurring
+Both `ghl.ts` and `ghl-advanced.ts` updated to track:
+- `is_recurring_donor`: yes/no
+- `is_monthly_donor`: yes/no
+- `is_weekly_donor`: yes/no
+- `is_jummah_donor`: yes (for weekly)
+- `recurring_type`: none/monthly/weekly
+- `monthly_donation_amount` / `jummah_donation_amount`
+- `monthly_start_date` / `jummah_start_date`
+
+Tags added: `recurring-donor`, `weekly-donor`, `jummah-donor`
+
+### Feb 2026 - Aqiqah Campaign
+- New high-converting Aqiqah template (`src/templates/AqiqahTemplate.astro`)
+- Package selection: Girl (1 animal), Boy (2 animals), Twins
+- Child name input for personalized certificate
+- Certificate preview section
+- FAQ accordion with 8 questions
+- Parent testimonials section
+- Mobile sticky CTA
+- Full cart integration with metadata

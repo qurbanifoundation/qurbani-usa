@@ -1,4 +1,5 @@
 ---
+export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
 
@@ -53,6 +54,7 @@ const integrations = [
   },
 ];
 ---
+export const prerender = false;
 
 <AdminLayout title="Settings" activeNav="settings">
   <div class="max-w-4xl">

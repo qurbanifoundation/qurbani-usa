@@ -248,12 +248,17 @@ export async function trackDonation(data: {
   amount: number;
   campaignSlug: string;
   campaignName: string;
-  donationType: 'single' | 'monthly';
+  donationType: 'single' | 'monthly' | 'weekly';
   items?: Array<{ name: string; amount: number }>;
 }) {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
   const today = new Date().toISOString().split('T')[0];
+
+  // Determine recurring status
+  const isRecurring = data.donationType === 'monthly' || data.donationType === 'weekly';
+  const isMonthly = data.donationType === 'monthly';
+  const isWeekly = data.donationType === 'weekly';
 
   // Get existing donation data
   let lifetimeGiving = 0;
@@ -299,6 +304,11 @@ export async function trackDonation(data: {
     newZakatRemaining = Math.max(0, zakatRemaining - data.amount);
   }
 
+  // Determine recurring type label
+  let recurringTypeLabel = 'none';
+  if (isMonthly) recurringTypeLabel = 'monthly';
+  if (isWeekly) recurringTypeLabel = 'weekly';
+
   const customFields = [
     { key: 'total_lifetime_giving', field_value: newLifetime.toString() },
     { key: 'last_donation_amount', field_value: data.amount.toString() },
@@ -312,7 +322,25 @@ export async function trackDonation(data: {
     { key: 'lead_stage', field_value: newCount > 1 ? 'advocate' : 'donor' },
     { key: 'cart_abandoned', field_value: 'no' },
     { key: 'engagement_score', field_value: Math.min(100, 50 + newCount * 10).toString() },
+    // Recurring donation tracking
+    { key: 'is_recurring_donor', field_value: isRecurring ? 'yes' : 'no' },
+    { key: 'is_monthly_donor', field_value: isMonthly ? 'yes' : 'no' },
+    { key: 'is_weekly_donor', field_value: isWeekly ? 'yes' : 'no' },
+    { key: 'recurring_type', field_value: recurringTypeLabel },
   ];
+
+  // Add Jummah-specific tracking
+  if (isWeekly) {
+    customFields.push({ key: 'is_jummah_donor', field_value: 'yes' });
+    customFields.push({ key: 'jummah_donation_amount', field_value: data.amount.toString() });
+    customFields.push({ key: 'jummah_start_date', field_value: today });
+  }
+
+  // Add monthly-specific tracking
+  if (isMonthly) {
+    customFields.push({ key: 'monthly_donation_amount', field_value: data.amount.toString() });
+    customFields.push({ key: 'monthly_start_date', field_value: today });
+  }
 
   if (zakatPaid > 0) {
     customFields.push({ key: 'zakat_paid', field_value: zakatPaid.toString() });
@@ -321,7 +349,12 @@ export async function trackDonation(data: {
 
   // Build tags
   const tags = ['donor', 'website', `donor-${new Date().getFullYear()}`];
-  if (data.donationType === 'monthly') tags.push('monthly-donor');
+  if (isRecurring) tags.push('recurring-donor');
+  if (isMonthly) tags.push('monthly-donor');
+  if (isWeekly) {
+    tags.push('weekly-donor');
+    tags.push('jummah-donor');
+  }
   if (newLifetime >= 1000) tags.push('major-donor');
   if (newLifetime >= 5000) tags.push('vip-donor');
   if (newCount > 1) tags.push('repeat-donor');
@@ -359,10 +392,15 @@ export async function trackDonation(data: {
   if (contactId) {
     const itemsList = data.items?.map(i => `  • ${i.name}: $${i.amount}`).join('\n') || `  • ${data.campaignName}: $${data.amount}`;
 
+    // Determine donation type label for note
+    let donationTypeLabel = 'One-time';
+    if (isMonthly) donationTypeLabel = '🔄 Monthly Recurring';
+    if (isWeekly) donationTypeLabel = '🕌 Jummah (Every Friday)';
+
     await ghlFetch(`/contacts/${contactId}/notes`, {
       method: 'POST',
       body: JSON.stringify({
-        body: `💰 DONATION RECEIVED\n${'━'.repeat(30)}\nAmount: $${data.amount.toLocaleString()}\nType: ${data.donationType === 'monthly' ? '🔄 Monthly Recurring' : 'One-time'}\nCampaign: ${data.campaignName}\n\nItems:\n${itemsList}\n\n📊 DONOR STATS\n${'━'.repeat(30)}\nLifetime Giving: $${newLifetime.toLocaleString()}\nTotal Donations: ${newCount}\nTier: ${donorTier.toUpperCase()}\nCampaigns Supported: ${campaignsArray.length}\n${zakatPaid > 0 ? `\n🕌 ZAKAT: Paid $${zakatPaid}, Remaining $${newZakatRemaining}` : ''}`
+        body: `💰 DONATION RECEIVED\n${'━'.repeat(30)}\nAmount: $${data.amount.toLocaleString()}\nType: ${donationTypeLabel}\nCampaign: ${data.campaignName}\n\nItems:\n${itemsList}\n\n📊 DONOR STATS\n${'━'.repeat(30)}\nLifetime Giving: $${newLifetime.toLocaleString()}\nTotal Donations: ${newCount}\nTier: ${donorTier.toUpperCase()}\nCampaigns Supported: ${campaignsArray.length}${isRecurring ? `\n\n🔄 RECURRING: ${isWeekly ? 'Every Friday (Jummah)' : 'Monthly'}` : ''}${zakatPaid > 0 ? `\n🕌 ZAKAT: Paid $${zakatPaid}, Remaining $${newZakatRemaining}` : ''}`
       }),
     });
   }

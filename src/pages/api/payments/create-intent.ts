@@ -4,8 +4,9 @@ import Stripe from 'stripe';
 
 export const prerender = false;
 
-// Product ID for monthly donations (will be created on first use)
+// Product names for recurring donations
 const MONTHLY_DONATION_PRODUCT_NAME = 'Monthly Donation';
+const WEEKLY_DONATION_PRODUCT_NAME = 'Jummah (Friday) Donation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -82,8 +83,8 @@ export const POST: APIRoute = async ({ request }) => {
       }
     } else {
       // Customer email is required for subscriptions
-      if (type === 'monthly') {
-        return new Response(JSON.stringify({ error: 'Email is required for monthly donations' }), {
+      if (type === 'monthly' || type === 'weekly') {
+        return new Response(JSON.stringify({ error: 'Email is required for recurring donations' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         });
@@ -95,7 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
       stripeCustomerId = newCustomer.id;
     }
 
-    // Build metadata for tracking
+    // Build metadata for tracking - include item metadata (childName, notes, etc.)
     const metadata: Record<string, string> = {
       donation_type: type,
       covers_fees: coverFees ? 'true' : 'false',
@@ -107,6 +108,8 @@ export const POST: APIRoute = async ({ request }) => {
         quantity: i.quantity,
         label: i.label,
         name: i.name,
+        // Include item-specific metadata (Aqiqah child name, notes, etc.)
+        metadata: i.metadata || null,
       })) || []),
     };
 
@@ -116,9 +119,9 @@ export const POST: APIRoute = async ({ request }) => {
       metadata.customer_phone = customer.phone || '';
     }
 
-    // Handle MONTHLY subscriptions
-    if (type === 'monthly') {
-      return await createMonthlySubscription({
+    // Handle recurring subscriptions (monthly or weekly/Jummah)
+    if (type === 'monthly' || type === 'weekly') {
+      return await createRecurringSubscription({
         stripe,
         stripeCustomerId,
         amount,
@@ -127,6 +130,7 @@ export const POST: APIRoute = async ({ request }) => {
         customer,
         billingAddress,
         metadata,
+        interval: type, // 'monthly' or 'weekly'
       });
     }
 
@@ -142,6 +146,23 @@ export const POST: APIRoute = async ({ request }) => {
       description: `Donation - ${items?.map((i: any) => i.name).join(', ') || 'General'}`,
     });
 
+    // Prepare items with full metadata (childName, notes, etc.)
+    const itemsWithMetadata = items?.map((i: any) => ({
+      id: i.id,
+      campaign: i.campaign,
+      amount: i.amount,
+      quantity: i.quantity || 1,
+      label: i.label,
+      name: i.name,
+      type: i.type,
+      // Include item-specific metadata (Aqiqah child name, notes, etc.)
+      childName: i.metadata?.childName || null,
+      packageType: i.metadata?.packageType || null,
+      aqiqahFor: i.metadata?.aqiqahFor || null,
+      notes: i.metadata?.notes || null,
+      metadata: i.metadata || null,
+    })) || [];
+
     // Create pending donation record
     const { data: donation, error: donationError } = await supabaseAdmin
       .from('donations')
@@ -154,7 +175,7 @@ export const POST: APIRoute = async ({ request }) => {
         donor_email: customer?.email,
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
         donor_phone: customer?.phone,
-        items: items || [],
+        items: itemsWithMetadata,
         covers_fees: coverFees,
         fee_amount: feeAmount,
         base_amount: baseAmount || amount,
@@ -189,8 +210,19 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-// Helper function to create monthly subscription
-async function createMonthlySubscription({
+// Helper function to get next Friday (for Jummah donations)
+function getNextFriday(): Date {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 5 = Friday
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7; // If today is Friday, get next Friday
+  const nextFriday = new Date(now);
+  nextFriday.setDate(now.getDate() + daysUntilFriday);
+  nextFriday.setHours(12, 0, 0, 0); // Set to noon on Friday
+  return nextFriday;
+}
+
+// Helper function to create recurring subscription (monthly or weekly)
+async function createRecurringSubscription({
   stripe,
   stripeCustomerId,
   amount,
@@ -199,6 +231,7 @@ async function createMonthlySubscription({
   customer,
   billingAddress,
   metadata,
+  interval,
 }: {
   stripe: Stripe;
   stripeCustomerId: string;
@@ -208,23 +241,30 @@ async function createMonthlySubscription({
   customer: any;
   billingAddress: any;
   metadata: Record<string, string>;
+  interval: 'monthly' | 'weekly';
 }) {
   try {
-    // Get or create the monthly donation product
+    const isWeekly = interval === 'weekly';
+    const productName = isWeekly ? WEEKLY_DONATION_PRODUCT_NAME : MONTHLY_DONATION_PRODUCT_NAME;
+    const productDescription = isWeekly
+      ? 'Jummah (Friday) recurring donation to Qurbani USA'
+      : 'Monthly recurring donation to Qurbani USA';
+
+    // Get or create the donation product
     let product: Stripe.Product;
     const existingProducts = await stripe.products.list({
       active: true,
       limit: 100,
     });
 
-    const existingProduct = existingProducts.data.find(p => p.name === MONTHLY_DONATION_PRODUCT_NAME);
+    const existingProduct = existingProducts.data.find(p => p.name === productName);
 
     if (existingProduct) {
       product = existingProduct;
     } else {
       product = await stripe.products.create({
-        name: MONTHLY_DONATION_PRODUCT_NAME,
-        description: 'Monthly recurring donation to Qurbani USA',
+        name: productName,
+        description: productDescription,
       });
     }
 
@@ -234,15 +274,16 @@ async function createMonthlySubscription({
       unit_amount: Math.round(amount * 100), // Convert to cents
       currency,
       recurring: {
-        interval: 'month',
+        interval: isWeekly ? 'week' : 'month',
       },
       metadata: {
         donation_amount: amount.toString(),
+        interval_type: interval,
       },
     });
 
-    // Create the subscription
-    const subscription = await stripe.subscriptions.create({
+    // For weekly (Jummah) subscriptions, anchor to next Friday
+    const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: stripeCustomerId,
       items: [{ price: price.id }],
       payment_behavior: 'default_incomplete',
@@ -253,8 +294,20 @@ async function createMonthlySubscription({
       metadata: {
         ...metadata,
         donation_items: JSON.stringify(items || []),
+        interval_type: interval,
+        is_jummah: isWeekly ? 'true' : 'false',
       },
-    });
+    };
+
+    // For weekly subscriptions, set billing cycle anchor to next Friday
+    if (isWeekly) {
+      const nextFriday = getNextFriday();
+      subscriptionParams.billing_cycle_anchor = Math.floor(nextFriday.getTime() / 1000);
+      subscriptionParams.proration_behavior = 'none';
+    }
+
+    // Create the subscription
+    const subscription = await stripe.subscriptions.create(subscriptionParams);
 
     // Get the client secret from the subscription's first invoice
     const invoice = subscription.latest_invoice as Stripe.Invoice;
@@ -265,8 +318,26 @@ async function createMonthlySubscription({
     }
 
     // Calculate next billing date
-    const nextBillingDate = new Date();
-    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+    const nextBillingDate = isWeekly ? getNextFriday() : new Date();
+    if (!isWeekly) {
+      nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+    }
+
+    // Prepare items with full metadata (childName, notes, etc.)
+    const itemsWithMetadata = items?.map((i: any) => ({
+      id: i.id,
+      campaign: i.campaign,
+      amount: i.amount,
+      quantity: i.quantity || 1,
+      label: i.label,
+      name: i.name,
+      type: i.type,
+      childName: i.metadata?.childName || null,
+      packageType: i.metadata?.packageType || null,
+      aqiqahFor: i.metadata?.aqiqahFor || null,
+      notes: i.metadata?.notes || null,
+      metadata: i.metadata || null,
+    })) || [];
 
     // Create subscription record in database
     const { data: subscriptionRecord, error: subError } = await supabaseAdmin
@@ -279,7 +350,8 @@ async function createMonthlySubscription({
         amount,
         currency,
         status: 'active',
-        items: items || [],
+        interval: interval,
+        items: itemsWithMetadata,
         next_billing_date: nextBillingDate.toISOString(),
       })
       .select()
@@ -298,15 +370,16 @@ async function createMonthlySubscription({
         amount,
         currency,
         status: 'pending',
-        donation_type: 'monthly',
+        donation_type: interval,
         donor_email: customer?.email,
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
         donor_phone: customer?.phone,
-        items: items || [],
+        items: itemsWithMetadata,
         metadata: {
           stripe_customer_id: stripeCustomerId,
           billing_address: billingAddress || null,
           is_recurring: true,
+          is_jummah: isWeekly,
           subscription_id: subscriptionRecord?.id,
         },
       })
@@ -323,6 +396,8 @@ async function createMonthlySubscription({
       subscriptionId: subscription.id,
       donationId: donation?.id,
       type: 'subscription',
+      interval: interval,
+      isJummah: isWeekly,
       nextBillingDate: nextBillingDate.toISOString(),
     }), {
       status: 200,

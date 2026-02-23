@@ -75,7 +75,7 @@ const statusColors: Record<string, string> = {
 };
 ---
 
-<AdminLayout title="Monthly Subscriptions" activeNav="subscriptions">
+<AdminLayout title="Recurring Subscriptions" activeNav="subscriptions">
   <!-- Stats Grid -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -83,8 +83,9 @@ const statusColors: Record<string, string> = {
       <p class="text-3xl font-bold text-green-600">{activeCount}</p>
     </div>
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <p class="text-sm text-gray-500 mb-1">Monthly Revenue</p>
+      <p class="text-sm text-gray-500 mb-1">Recurring Revenue</p>
       <p class="text-3xl font-bold text-[#01534d]">{formatCurrency(monthlyRevenue)}</p>
+      <p class="text-xs text-gray-400 mt-1">Monthly + Weekly</p>
     </div>
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
       <p class="text-sm text-gray-500 mb-1">Paused</p>
@@ -142,6 +143,7 @@ const statusColors: Record<string, string> = {
         <thead class="bg-gray-50 border-b border-gray-100">
           <tr>
             <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Donor</th>
+            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Type</th>
             <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Amount</th>
             <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
             <th class="text-left px-6 py-4 text-sm font-semibold text-gray-700">Card</th>
@@ -161,7 +163,14 @@ const statusColors: Record<string, string> = {
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  <span class="font-bold text-[#01534d]">{formatCurrency(sub.amount)}/mo</span>
+                  {sub.interval === 'weekly' ? (
+                    <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Jummah</span>
+                  ) : (
+                    <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Monthly</span>
+                  )}
+                </td>
+                <td class="px-6 py-4">
+                  <span class="font-bold text-[#01534d]">{formatCurrency(sub.amount)}{sub.interval === 'weekly' ? '/wk' : '/mo'}</span>
                 </td>
                 <td class="px-6 py-4">
                   <span class={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[sub.status] || 'bg-gray-100 text-gray-600'}`}>
@@ -207,7 +216,7 @@ const statusColors: Record<string, string> = {
             ))
           ) : (
             <tr>
-              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                 No subscriptions found
               </td>
             </tr>

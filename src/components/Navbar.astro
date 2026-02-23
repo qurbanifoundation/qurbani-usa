@@ -152,7 +152,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                             <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
                               <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
                             </div>
-                            <span class="flex-1 font-medium text-[#333] text-[13px]">{cat.label}</span>
+                            <span class="flex-1 font-medium text-[#333] text-[15px]">{cat.label}</span>
                             <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                             </svg>
@@ -164,7 +164,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                               <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
                             </svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">View All Appeals</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">View All Appeals</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                           </svg>
@@ -174,7 +174,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
 
                     <!-- Middle Column - Campaign Cards (Dynamic) -->
                     <div class="flex-1 bg-[#f8f6f2] p-6 border-l border-r border-gray-200/60">
-                      <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                      <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
                         Popular Appeals & Projects in <span id="category-title" class="text-[#333] font-bold">Emergencies</span>
                       </p>
 
@@ -187,58 +187,43 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                         <a href="/appeals" class="text-[#D97718] hover:underline mt-2 inline-block">View all appeals</a>
                       </div>
 
-                      <a id="view-all-link" href="/appeals" class="block w-full bg-[#D97718] hover:bg-[#c46a14] text-white font-semibold py-2.5 rounded-full text-center transition text-[13px]">
+                      <a id="view-all-link" href="/appeals" class="block w-full bg-[#D97718] hover:bg-[#c46a14] text-white font-semibold py-2.5 rounded-full text-center transition text-[15px]">
                         All Projects & Appeals in Emergencies
                       </a>
                     </div>
 
-                    <!-- Right Column - Donation Box -->
+                    <!-- Right Column - Orphan Sponsorship Promotion -->
                     <div class="w-[280px] p-4 flex-shrink-0">
-                      <div class="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-                        <p class="text-[13px] text-[#0b5d3a] italic text-center mb-0.5" style="font-family: 'Playfair Display', serif;">Donate Now</p>
-                        <h4 class="text-lg font-bold text-[#333] text-center mb-3">Most Needed</h4>
-
-                        <div class="flex gap-1.5 mb-3">
-                          <button class="flex-1 py-1.5 px-2 rounded bg-[#D97718] text-white font-semibold text-[11px] transition mega-single-btn leading-tight">
-                            Single<br/>Payment
-                          </button>
-                          <button class="flex-1 py-1.5 px-2 rounded bg-[#e8e6e1] text-[#333] font-semibold text-[11px] transition hover:bg-[#D97718] hover:text-white mega-monthly-btn leading-tight">
-                            Monthly<br/>Payment
-                          </button>
+                      <a href="/appeals/sponsor-an-orphan" class="block bg-gradient-to-br from-[#01534d] to-[#013d38] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 group">
+                        <div class="relative h-32 overflow-hidden">
+                          <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&q=80" alt="Sponsor an Orphan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <div class="absolute inset-0 bg-gradient-to-t from-[#01534d] to-transparent"></div>
+                          <div class="absolute bottom-2 left-3 right-3">
+                            <span class="inline-block bg-[#D97718] text-white text-xs font-bold px-2 py-1 rounded">FEATURED</span>
+                          </div>
                         </div>
-
-                        <div class="grid grid-cols-3 gap-1.5 mb-2.5">
-                          <button class="mega-amount-btn py-1.5 border border-gray-300 rounded bg-white text-[#333] font-bold text-[13px] hover:border-[#D97718] transition" data-amount="40">$40</button>
-                          <button class="mega-amount-btn py-1.5 border border-gray-300 rounded bg-white text-[#333] font-bold text-[13px] hover:border-[#D97718] transition" data-amount="50">$50</button>
-                          <button class="mega-amount-btn py-1.5 border-2 border-[#D97718] bg-white text-[#333] rounded font-bold text-[13px]" data-amount="100">$100</button>
+                        <div class="p-4 text-white">
+                          <h4 class="font-bold text-lg mb-1">Sponsor an Orphan</h4>
+                          <p class="text-white/80 text-sm mb-3">Change a child's life with monthly support for education, food & healthcare.</p>
+                          <div class="flex items-center justify-between mb-3">
+                            <div>
+                              <p class="text-xs text-white/60">Starting from</p>
+                              <p class="text-2xl font-bold text-[#D97718]">$50<span class="text-sm font-normal text-white/80">/month</span></p>
+                            </div>
+                            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                              </svg>
+                            </div>
+                          </div>
+                          <div class="bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-2.5 rounded-lg text-center transition flex items-center justify-center gap-2">
+                            Sponsor Now
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                          </div>
                         </div>
-
-                        <div class="relative mb-2.5">
-                          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[12px]">$</span>
-                          <input type="number" placeholder="Other amount" class="w-full pl-6 pr-2 py-1.5 border border-gray-300 rounded bg-[#f5f3ef] text-[12px] focus:border-[#D97718] focus:outline-none mega-custom-amount" />
-                        </div>
-
-                        <div class="text-center text-[10px] text-gray-500 border-t border-gray-200 pt-2 mb-2">Most Needed</div>
-
-                        <div class="relative mb-3">
-                          <select class="w-full py-1.5 px-2.5 border border-gray-300 rounded bg-[#D97718] text-white text-[12px] font-medium appearance-none cursor-pointer focus:outline-none mega-campaign-select">
-                            <option value="general">General Donation</option>
-                            <option value="emergencies">Emergency Relief</option>
-                            <option value="water">Water for Life</option>
-                            <option value="food">Food Aid</option>
-                          </select>
-                          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                          </svg>
-                        </div>
-
-                        <button class="w-full bg-[#c41e3a] hover:bg-[#a31830] text-white font-bold py-2 rounded transition text-[13px] mega-donate-btn flex items-center justify-center gap-1.5">
-                          Donate Now
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                          </svg>
-                        </button>
-                      </div>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -266,35 +251,35 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Pay Your Zakat</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Pay Your Zakat</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/zakat-calculator" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#e6f4fa] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 1a1 1 0 10-2 0v2a1 1 0 102 0v-2zm-3-1a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Zakat Calculator</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Zakat Calculator</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/zakat-faq" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#e6f4fa] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#7c3aed]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Zakat FAQ</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Zakat FAQ</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/what-is-zakat" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#e6f4fa] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#ea580c]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">What is Zakat?</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">What is Zakat?</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/zakat-on-gold" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#e6f4fa] transition-colors">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#eab308]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Zakat on Gold & Silver</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Zakat on Gold & Silver</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                       </nav>
@@ -302,22 +287,22 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
 
                     <!-- Middle Column - Zakat Info -->
                     <div class="flex-1 bg-[#f8f6f2] p-6 border-l border-r border-gray-200/60">
-                      <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-4">Understanding Zakat</p>
+                      <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Understanding Zakat</p>
                       <div class="bg-white rounded-xl p-5 border border-gray-100 mb-4">
                         <h4 class="font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">The Third Pillar of Islam</h4>
                         <p class="text-sm text-gray-600 mb-3">Zakat is an obligatory form of charity for Muslims who meet the necessary criteria of wealth (nisab). It purifies your wealth and helps those in need.</p>
                         <div class="grid grid-cols-2 gap-3 text-center">
-                          <div class="bg-[#e6f4fa] rounded-lg p-3">
+                          <a href="/zakat-calculator" class="bg-[#e6f4fa] rounded-lg p-3 hover:bg-[#cce9f5] transition-colors block">
                             <p class="text-2xl font-bold text-[#0096D6]">2.5%</p>
                             <p class="text-xs text-gray-600">Of qualifying wealth</p>
-                          </div>
-                          <div class="bg-[#fef3c7] rounded-lg p-3">
+                          </a>
+                          <a href="/zakat-calculator" class="bg-[#fef3c7] rounded-lg p-3 hover:bg-[#fde68a] transition-colors block">
                             <p class="text-2xl font-bold text-[#eab308]">$5,500</p>
                             <p class="text-xs text-gray-600">Approx. Nisab threshold</p>
-                          </div>
+                          </a>
                         </div>
                       </div>
-                      <a href="/zakat-calculator" class="block w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-semibold py-2.5 rounded-full text-center transition text-[13px]">
+                      <a href="/zakat-calculator" class="block w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-semibold py-2.5 rounded-full text-center transition text-[15px]">
                         Calculate Your Zakat Now
                       </a>
                     </div>
@@ -325,21 +310,21 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                     <!-- Right Column - Quick Zakat -->
                     <div class="w-[280px] p-4 flex-shrink-0">
                       <div class="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-                        <p class="text-[13px] text-[#0096D6] italic text-center mb-0.5" style="font-family: 'Playfair Display', serif;">Give Zakat</p>
+                        <p class="text-[15px] text-[#0096D6] italic text-center mb-0.5" style="font-family: 'Playfair Display', serif;">Give Zakat</p>
                         <h4 class="text-lg font-bold text-[#333] text-center mb-3">Quick Zakat Payment</h4>
                         <div class="grid grid-cols-3 gap-1.5 mb-3">
-                          <button class="zakat-amount-btn py-2 border border-gray-300 rounded bg-white text-[#333] font-bold text-[13px] hover:border-[#0096D6] transition" data-amount="100">$100</button>
-                          <button class="zakat-amount-btn py-2 border border-gray-300 rounded bg-white text-[#333] font-bold text-[13px] hover:border-[#0096D6] transition" data-amount="250">$250</button>
-                          <button class="zakat-amount-btn py-2 border-2 border-[#0096D6] bg-white text-[#333] rounded font-bold text-[13px]" data-amount="500">$500</button>
+                          <button class="zakat-amount-btn py-2 border border-gray-300 rounded bg-white text-[#333] font-bold text-[15px] hover:border-[#0096D6] transition" data-amount="100">$100</button>
+                          <button class="zakat-amount-btn py-2 border border-gray-300 rounded bg-white text-[#333] font-bold text-[15px] hover:border-[#0096D6] transition" data-amount="250">$250</button>
+                          <button class="zakat-amount-btn py-2 border-2 border-[#0096D6] bg-white text-[#333] rounded font-bold text-[15px]" data-amount="500">$500</button>
                         </div>
                         <div class="relative mb-3">
-                          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[12px]">$</span>
-                          <input type="number" placeholder="Enter Zakat amount" class="w-full pl-6 pr-2 py-2 border border-gray-300 rounded bg-[#f5f3ef] text-[12px] focus:border-[#0096D6] focus:outline-none" />
+                          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                          <input type="number" placeholder="Enter Zakat amount" class="w-full pl-6 pr-2 py-2 border border-gray-300 rounded bg-[#f5f3ef] text-sm focus:border-[#0096D6] focus:outline-none" />
                         </div>
-                        <a href="/zakat" class="block w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-2.5 rounded transition text-[13px] text-center">
+                        <a href="/zakat" class="block w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-2.5 rounded transition text-[15px] text-center">
                           Pay Zakat Now
                         </a>
-                        <p class="text-[10px] text-gray-500 text-center mt-2">100% Zakat policy - all funds reach those in need</p>
+                        <p class="text-xs text-gray-500 text-center mt-2">100% Zakat policy - all funds reach those in need</p>
                       </div>
                     </div>
                   </div>
@@ -368,7 +353,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#024139]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Ramadan Home</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Ramadan 2026</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/30-days-of-ramadan" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#024139]/10 transition-colors border-b border-gray-200/60 bg-gradient-to-r from-[#024139]/5 to-transparent">
@@ -376,8 +361,8 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                           </div>
                           <div class="flex-1">
-                            <span class="font-medium text-[#333] text-[13px]">30 Days of Ramadan</span>
-                            <span class="block text-[10px] text-[#024139]">Automate Your Giving</span>
+                            <span class="font-medium text-[#333] text-[15px]">30 Days of Ramadan</span>
+                            <span class="block text-xs text-[#024139]">Automate Your Giving</span>
                           </div>
                           <svg class="w-3.5 h-3.5 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
@@ -385,35 +370,35 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Fidya</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Fidya</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/kaffarah" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#024139]/10 transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#dc2626]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Kaffarah</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Kaffarah</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/zakat-ul-fitr" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#024139]/10 transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Zakat ul-Fitr</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Zakat ul-Fitr</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/iftar" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#024139]/10 transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#ea580c]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 3a1 1 0 011-1h.01a1 1 0 010 2H7a1 1 0 01-1-1zm2 3a1 1 0 00-2 0v1a2 2 0 00-2 2v1a2 2 0 00-2 2v.683a3.7 3.7 0 011.055.485 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0A3.7 3.7 0 0118 12.683V12a2 2 0 00-2-2V9a2 2 0 00-2-2V6a1 1 0 10-2 0v1h-1V6a1 1 0 10-2 0v1H8V6zm10 8.868a3.704 3.704 0 01-4.055-.036 1.704 1.704 0 00-1.89 0 3.704 3.704 0 01-4.11 0 1.704 1.704 0 00-1.89 0A3.704 3.704 0 012 14.868V17a1 1 0 001 1h14a1 1 0 001-1v-2.132z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Feed Iftar</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Feed Iftar</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/food-packs" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#024139]/10 transition-colors">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#eab308]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Food Packs</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Food Packs</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                       </nav>
@@ -421,53 +406,68 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
 
                     <!-- Middle Column - Ramadan Info -->
                     <div class="flex-1 bg-[#f8f6f2] p-6 border-l border-r border-gray-200/60">
-                      <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-4">Ramadan 2026</p>
+                      <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Ramadan 2026</p>
                       <div class="bg-gradient-to-br from-[#024139] to-[#013028] rounded-xl p-5 text-white mb-4">
                         <h4 class="font-bold text-xl mb-2" style="font-family: 'Signika', sans-serif;">The Blessed Month</h4>
                         <p class="text-sm text-white/90 mb-3">Multiply your rewards this Ramadan. Every good deed is multiplied many times over during this sacred month.</p>
                         <div class="grid grid-cols-3 gap-2 text-center">
-                          <div class="bg-white/20 rounded-lg p-2">
+                          <a href="/ramadan" class="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors block">
                             <p class="text-lg font-bold">$10</p>
-                            <p class="text-[10px] text-white/80">Fidya/day</p>
-                          </div>
-                          <div class="bg-white/20 rounded-lg p-2">
+                            <p class="text-xs text-white/80">Fidya/day</p>
+                          </a>
+                          <a href="/ramadan" class="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors block">
                             <p class="text-lg font-bold">$15</p>
-                            <p class="text-[10px] text-white/80">Zakat ul-Fitr</p>
-                          </div>
-                          <div class="bg-white/20 rounded-lg p-2">
+                            <p class="text-xs text-white/80">Zakat ul-Fitr</p>
+                          </a>
+                          <a href="/ramadan" class="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors block">
                             <p class="text-lg font-bold">$5</p>
-                            <p class="text-[10px] text-white/80">Feed Iftar</p>
-                          </div>
+                            <p class="text-xs text-white/80">Feed Iftar</p>
+                          </a>
                         </div>
                       </div>
-                      <a href="/ramadan" class="block w-full bg-[#024139] hover:bg-[#013028] text-white font-semibold py-2.5 rounded-full text-center transition text-[13px]">
+                      <a href="/ramadan" class="block w-full bg-[#024139] hover:bg-[#013028] text-white font-semibold py-2.5 rounded-full text-center transition text-[15px]">
                         Explore Ramadan Giving
                       </a>
                     </div>
 
-                    <!-- Right Column - Quick Ramadan Donation -->
+                    <!-- Right Column - 30 Days of Ramadan Promotion -->
                     <div class="w-[280px] p-4 flex-shrink-0">
-                      <div class="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-                        <p class="text-[13px] text-[#024139] italic text-center mb-0.5" style="font-family: 'Playfair Display', serif;">Give Now</p>
-                        <h4 class="text-lg font-bold text-[#333] text-center mb-3">Ramadan Giving</h4>
-                        <div class="space-y-2 mb-3">
-                          <a href="/fidya" class="block w-full py-2 px-3 border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#024139]/10 transition text-left">
-                            <span class="font-semibold text-[#333] text-[13px]">Fidya</span>
-                            <span class="text-[11px] text-gray-500 float-right">$10/day</span>
-                          </a>
-                          <a href="/kaffarah" class="block w-full py-2 px-3 border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#024139]/10 transition text-left">
-                            <span class="font-semibold text-[#333] text-[13px]">Kaffarah</span>
-                            <span class="text-[11px] text-gray-500 float-right">$300</span>
-                          </a>
-                          <a href="/zakat-ul-fitr" class="block w-full py-2 px-3 border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#024139]/10 transition text-left">
-                            <span class="font-semibold text-[#333] text-[13px]">Zakat ul-Fitr</span>
-                            <span class="text-[11px] text-gray-500 float-right">$15/person</span>
-                          </a>
+                      <a href="/30-days-of-ramadan" class="block bg-gradient-to-br from-[#024139] to-[#012d28] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 group">
+                        <div class="relative h-28 overflow-hidden bg-[#024139]">
+                          <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                              <div class="flex items-center justify-center gap-1 mb-1">
+                                <svg class="w-5 h-5 text-[#D97718]" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                                <span class="text-4xl font-bold text-white">30</span>
+                              </div>
+                              <p class="text-white/90 text-sm font-medium">Days of Giving</p>
+                            </div>
+                          </div>
+                          <div class="absolute top-2 right-2">
+                            <span class="inline-block bg-[#D97718] text-white text-xs font-bold px-2 py-1 rounded">AUTOMATE</span>
+                          </div>
                         </div>
-                        <a href="/ramadan" class="block w-full bg-[#024139] hover:bg-[#013028] text-white font-bold py-2.5 rounded transition text-[13px] text-center">
-                          Give for Ramadan
-                        </a>
-                      </div>
+                        <div class="p-4 text-white">
+                          <h4 class="font-bold text-lg mb-1">30 Days of Ramadan</h4>
+                          <p class="text-white/80 text-sm mb-3">Automate your daily giving throughout Ramadan. Set it once, earn rewards every day.</p>
+                          <div class="flex items-center gap-2 mb-3 text-sm">
+                            <div class="flex items-center gap-1 text-white/80">
+                              <svg class="w-4 h-4 text-[#D97718]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                              <span>Auto-scheduled</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-white/80">
+                              <svg class="w-4 h-4 text-[#D97718]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                              <span>Daily rewards</span>
+                            </div>
+                          </div>
+                          <div class="bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-2.5 rounded-lg text-center transition flex items-center justify-center gap-2">
+                            Start Giving
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                          </div>
+                        </div>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -495,42 +495,44 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#D97718]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Our Story</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Our Story</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
+                        <!-- Hidden for now - Our Team page
                         <a href="/team" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fbefdd] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Our Team</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Our Team</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
+                        -->
                         <a href="/reports" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fbefdd] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Annual Reports</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Annual Reports</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/impact" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fbefdd] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#7c3aed]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Our Impact</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Our Impact</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/media" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fbefdd] transition-colors border-b border-gray-200/60">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#dc2626]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Media Center</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Media Center</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                         <a href="/contact" class="mega-link w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#fbefdd] transition-colors">
                           <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-[#333]">
                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
                           </div>
-                          <span class="flex-1 font-medium text-[#333] text-[13px]">Contact Us</span>
+                          <span class="flex-1 font-medium text-[#333] text-[15px]">Contact Us</span>
                           <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </a>
                       </nav>
@@ -538,7 +540,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
 
                     <!-- Middle Column - Impact Stats -->
                     <div class="flex-1 bg-[#f8f6f2] p-6 border-l border-r border-gray-200/60">
-                      <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-4">Our Impact</p>
+                      <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Our Impact</p>
                       <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-white rounded-xl p-4 text-center border border-gray-100">
                           <p class="text-3xl font-bold text-[#D97718]" style="font-family: 'Signika', sans-serif;">25+</p>
@@ -557,7 +559,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                           <p class="text-xs text-gray-600">Zakat Policy</p>
                         </div>
                       </div>
-                      <a href="/about" class="block w-full bg-[#D97718] hover:bg-[#c46a14] text-white font-semibold py-2.5 rounded-full text-center transition text-[13px]">
+                      <a href="/about" class="block w-full bg-[#D97718] hover:bg-[#c46a14] text-white font-semibold py-2.5 rounded-full text-center transition text-[15px]">
                         Learn More About Us
                       </a>
                     </div>
@@ -565,11 +567,11 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                     <!-- Right Column - Newsletter -->
                     <div class="w-[280px] p-4 flex-shrink-0">
                       <div class="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-                        <p class="text-[13px] text-[#D97718] italic text-center mb-0.5" style="font-family: 'Playfair Display', serif;">Stay Connected</p>
+                        <p class="text-[15px] text-[#D97718] italic text-center mb-0.5" style="font-family: 'Playfair Display', serif;">Stay Connected</p>
                         <h4 class="text-lg font-bold text-[#333] text-center mb-3">Newsletter</h4>
                         <p class="text-xs text-gray-600 text-center mb-3">Get updates on our projects and impact stories delivered to your inbox.</p>
-                        <input type="email" placeholder="Enter your email" class="w-full px-3 py-2 border border-gray-300 rounded bg-[#f5f3ef] text-[12px] focus:border-[#D97718] focus:outline-none mb-2" />
-                        <button class="w-full bg-[#D97718] hover:bg-[#c46a14] text-white font-bold py-2.5 rounded transition text-[13px]">
+                        <input type="email" placeholder="Enter your email" class="w-full px-3 py-2 border border-gray-300 rounded bg-[#f5f3ef] text-sm focus:border-[#D97718] focus:outline-none mb-2" />
+                        <button class="w-full bg-[#D97718] hover:bg-[#c46a14] text-white font-bold py-2.5 rounded transition text-[15px]">
                           Subscribe
                         </button>
                         <div class="flex justify-center gap-3 mt-3">
@@ -593,7 +595,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                 <svg class="w-5 h-5 text-[#D97706]" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"></path>
                 </svg>
-                <span id="cart-badge" class="absolute -top-2 -right-2 bg-[#D97706] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold" style="display: none;">0</span>
+                <span id="cart-badge" class="absolute -top-2 -right-2 bg-[#D97706] text-white text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold" style="display: none;">0</span>
               </div>
             </button>
             <a href="/donate" class="donate-btn">
@@ -1035,7 +1037,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
         campaignsGrid.innerHTML = campaigns.map(campaign => `
           <a href="/appeals/${campaign.slug}" class="appeal-card flex items-center gap-2.5 border border-gray-200 rounded-lg p-2 bg-white hover:shadow-md hover:border-[#D97718]/30 transition-all">
             <img src="${getCampaignImage(campaign)}" alt="${campaign.name}" class="w-16 h-12 object-cover rounded flex-shrink-0" loading="lazy" />
-            <span class="text-[12px] font-semibold text-[#333] leading-tight line-clamp-2">${campaign.name}</span>
+            <span class="text-sm font-semibold text-[#333] leading-tight line-clamp-2">${campaign.name}</span>
           </a>
         `).join('');
       }

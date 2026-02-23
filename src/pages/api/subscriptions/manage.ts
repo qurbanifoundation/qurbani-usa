@@ -185,9 +185,16 @@ export const POST: APIRoute = async ({ request }) => {
         const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
         const nextBillingDate = stripeSubscription.current_period_end;
 
-        // Calculate resume date (one month after next billing)
+        // Calculate resume date based on interval (weekly or monthly)
         const resumeDate = new Date(nextBillingDate * 1000);
-        resumeDate.setMonth(resumeDate.getMonth() + 1);
+        const isWeekly = subscription.interval === 'weekly';
+        if (isWeekly) {
+          // For weekly (Jummah), skip to next Friday
+          resumeDate.setDate(resumeDate.getDate() + 7);
+        } else {
+          // For monthly, add one month
+          resumeDate.setMonth(resumeDate.getMonth() + 1);
+        }
 
         await stripe.subscriptions.update(subscription.stripe_subscription_id, {
           pause_collection: {
@@ -205,10 +212,17 @@ export const POST: APIRoute = async ({ request }) => {
           })
           .eq('id', subscription_id);
 
+        const dateFormat: Intl.DateTimeFormatOptions = {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          ...(isWeekly && { weekday: 'long' }),
+        };
+
         return new Response(JSON.stringify({
           success: true,
           status: 'active',
-          message: `Next payment skipped. Billing will resume on ${resumeDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
+          message: `Next ${isWeekly ? 'Jummah' : ''} payment skipped. Billing will resume on ${resumeDate.toLocaleDateString('en-US', dateFormat)}.`,
         }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },

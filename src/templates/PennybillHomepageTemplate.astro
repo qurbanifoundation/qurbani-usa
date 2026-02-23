@@ -80,8 +80,8 @@ const heroSlides = [
     headline: 'Sponsor an',
     headlineAccent: 'Orphan',
     description: 'For just $45/month, you can provide education, healthcare, and hope to a child who has lost everything.',
-    primaryCta: { text: 'Sponsor Now', href: '/appeals/orphan-sponsorship' },
-    secondaryCta: { text: 'Learn More', href: '/appeals/orphan-sponsorship' }
+    primaryCta: { text: 'Sponsor Now', href: '/appeals/sponsor-an-orphan' },
+    secondaryCta: { text: 'Learn More', href: '/appeals/sponsor-an-orphan' }
   },
   {
     image: '/images/qurbani-foundation-food-distribution.png',
@@ -230,12 +230,12 @@ const heroSlides = [
                   <!-- Amount Selection with Impact -->
                   <div class="space-y-3 mb-5">
                     <div class="grid grid-cols-2 gap-3">
-                      <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="45">
-                        <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$45</div>
-                        <div class="text-xs text-neutral-500 group-hover:text-amber-700">Sponsor an orphan for a month</div>
+                      <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="45" data-monthly="true">
+                        <div class="absolute -top-2 -right-2 bg-[#d97706] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">POPULAR</div>
+                        <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$45<span class="text-sm font-normal text-neutral-500">/monthly</span></div>
+                        <div class="text-xs text-neutral-500 group-hover:text-amber-700">Sponsor One Orphan</div>
                       </button>
                       <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="100">
-                        <div class="absolute -top-2 -right-2 bg-[#d97706] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">POPULAR</div>
                         <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$100</div>
                         <div class="text-xs text-neutral-500 group-hover:text-amber-700">Feed a family for a month</div>
                       </button>
@@ -306,32 +306,12 @@ const heroSlides = [
                     <input type="hidden" id="fund-select" value="where-needed" />
                   </div>
 
-                  <!-- Frequency Toggle -->
-                  <div class="flex items-center justify-between p-3 bg-[#0096D6]/10 rounded-xl mb-5 border border-[#0096D6]/20">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-full bg-[#0096D6] flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <div class="font-semibold text-[#0096D6] text-sm">Make it monthly?</div>
-                        <div class="text-xs text-[#0096D6]/70">12x the impact, same amount</div>
-                      </div>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" id="monthly-toggle" class="sr-only peer">
-                      <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0096D6]"></div>
-                    </label>
-                  </div>
-
                   <!-- Donate Button -->
-                  <button id="hero-donate-btn" class="w-full bg-gradient-to-r from-[#d97706] to-[#f59e0b] hover:from-[#b45309] hover:to-[#d97706] text-white font-bold py-5 rounded-xl transition-all text-lg flex items-center justify-center gap-3 shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:-translate-y-0.5 relative overflow-hidden group">
-                    <span class="relative z-10">Complete Donation</span>
-                    <svg class="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button id="hero-donate-btn" class="w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-5 rounded-xl transition-colors duration-200 text-lg flex items-center justify-center gap-3">
+                    <span>Donate Now</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
-                    <div class="absolute inset-0 bg-gradient-to-r from-amber-400 to-orange-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </button>
 
                   <!-- Trust Badges -->
@@ -686,7 +666,7 @@ const heroSlides = [
             </span>
           </a>
 
-          <a href="/appeals/orphan-sponsorship" class="group bg-neutral-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-neutral-100">
+          <a href="/appeals/sponsor-an-orphan" class="group bg-neutral-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-neutral-100">
             <div class="w-14 h-14 bg-white group-hover:bg-[#d97706]/10 rounded-xl flex items-center justify-center mb-6 transition-colors shadow-sm group-hover:shadow-none">
               <svg class="w-7 h-7 text-neutral-400 group-hover:text-[#d97706] transition-colors" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -1175,14 +1155,13 @@ const heroSlides = [
     const amountBtns = document.querySelectorAll('.amount-btn');
     const fundBtns = document.querySelectorAll('.fund-btn');
     const customAmount = document.getElementById('custom-amount') as HTMLInputElement;
-    const monthlyToggle = document.getElementById('monthly-toggle') as HTMLInputElement;
     const donateBtn = document.getElementById('hero-donate-btn');
     const fundSelect = document.getElementById('fund-select') as HTMLInputElement;
 
     let selectedAmount = 0; // No default selection
     let selectedFund = 'where-needed';
     let selectedImpact = ''; // No default selection
-    let isMonthly = false;
+    let isMonthlyItem = false; // Track if selected item is monthly (like orphan sponsorship)
 
     const fundLabels: Record<string, string> = {
       'where-needed': 'Where Most Needed',
@@ -1195,7 +1174,7 @@ const heroSlides = [
 
     const impactLabels: Record<number, string> = {
       100: 'Feed a family for a month',
-      45: 'Sponsor an orphan for a month',
+      45: 'Sponsor One Orphan',
       250: 'Build a water well',
       500: 'Emergency shelter'
     };
@@ -1230,6 +1209,8 @@ const heroSlides = [
           impactText.classList.remove('text-neutral-500');
         }
         selectedAmount = parseInt(btn.getAttribute('data-amount') || '100');
+        // Check if this is a monthly item (like orphan sponsorship)
+        isMonthlyItem = btn.getAttribute('data-monthly') === 'true';
         // Get the impact text from the button
         const impact = btn.querySelector('div:last-child');
         if (impact) {
@@ -1248,6 +1229,7 @@ const heroSlides = [
         });
         selectedAmount = parseInt(customAmount.value) || 0;
         selectedImpact = `$${selectedAmount} Donation`; // Custom amount has generic label
+        isMonthlyItem = false; // Custom amounts are one-time by default
       }
     });
 
@@ -1285,25 +1267,21 @@ const heroSlides = [
       });
     });
 
-    // Monthly toggle
-    monthlyToggle?.addEventListener('change', () => {
-      isMonthly = monthlyToggle.checked;
-    });
-
-    // Donate button click
+    // Donate button click - adds to cart, some items are automatically monthly (like orphan sponsorship)
     donateBtn?.addEventListener('click', () => {
       if (selectedAmount > 0 && typeof (window as any).addToCart === 'function') {
         const fundName = fundLabels[selectedFund] || 'Where Most Needed';
 
         (window as any).addToCart({
           id: `donation-${selectedFund}-${Date.now()}`,
-          type: 'donation',
-          name: selectedImpact, // Impact statement as main title (e.g., "Feeds 5 families")
-          label: `$${selectedAmount}`, // Amount label
+          type: isMonthlyItem ? 'monthly' : 'single',
+          name: selectedImpact, // Impact statement as main title (e.g., "Sponsor One Orphan")
+          label: isMonthlyItem ? `$${selectedAmount}/mo` : `$${selectedAmount}`,
           amount: selectedAmount,
           quantity: 1,
-          description: `${fundName} • ${isMonthly ? 'Monthly' : 'One-time'}`, // Fund category in description
-          frequency: isMonthly ? 'monthly' : 'single'
+          campaign: selectedFund,
+          description: fundName,
+          recurringInterval: isMonthlyItem ? 'monthly' : 'single'
         });
 
         // Increment the live donor count

@@ -1,0 +1,30 @@
+---
+/**
+ * Global Qurbani Campaign Page
+ * Route: /qurbani
+ *
+ * High-converting Qurbani donation page with country selection,
+ * animal type options, and "on behalf of" personalization.
+ */
+
+import QurbaniTemplate from '../templates/QurbaniTemplate.astro';
+import DonationCart from '../components/DonationCart.astro';
+
+export const prerender = false;
+
+// Campaign data for the Qurbani page
+const campaign = {
+  id: 'qurbani-global',
+  title: 'Global Qurbani',
+  subtitle: 'Give Your Qurbani Where It\'s Needed Most',
+  slug: 'qurbani',
+  featured_image: '/images/qurbani-hero.jpg',
+  description: 'Fulfill your Qurbani obligation with 100% Shariah-compliant sacrifice. Fresh meat delivered to families in 70+ countries within 24 hours.',
+  goal_amount: 500000,
+  raised_amount: 245000,
+  is_zakat_eligible: false,
+};
+---
+
+<QurbaniTemplate campaign={campaign} />
+<DonationCart />

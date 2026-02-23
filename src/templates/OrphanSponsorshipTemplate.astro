@@ -533,16 +533,15 @@ const faqs = [
 
                 <!-- Recent Sponsors -->
                 <div class="mt-6 pt-4 border-t border-gray-100">
-                  <div class="flex items-center gap-2">
-                    <div class="flex -space-x-2">
-                      <img src="https://i.pravatar.cc/32?img=1" alt="" class="w-8 h-8 rounded-full border-2 border-white" />
-                      <img src="https://i.pravatar.cc/32?img=2" alt="" class="w-8 h-8 rounded-full border-2 border-white" />
-                      <img src="https://i.pravatar.cc/32?img=3" alt="" class="w-8 h-8 rounded-full border-2 border-white" />
-                      <div class="w-8 h-8 rounded-full border-2 border-white bg-[#01534d] text-white text-xs flex items-center justify-center font-semibold">+5</div>
-                    </div>
-                    <p class="text-xs text-gray-500">
-                      <strong class="text-gray-700">8 people</strong> sponsored in the last hour
-                    </p>
+                  <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs text-gray-500 font-medium">Recent Sponsors</p>
+                    <span class="flex items-center gap-1 text-xs text-green-600">
+                      <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                      Live
+                    </span>
+                  </div>
+                  <div class="space-y-2" id="recent-sponsors">
+                    <!-- Populated by JavaScript -->
                   </div>
                 </div>
               </div>
@@ -1083,6 +1082,249 @@ const faqs = [
         liveSponsors.textContent = newVal.toString();
       }, 5000);
     }
+
+    // ============ RECENT SPONSORS ============
+    const recentSponsorsContainer = document.getElementById('recent-sponsors');
+    const STORAGE_KEY = 'orphan_sponsors_data';
+    const MAX_SPONSOR_AGE = 10 * 60 * 60 * 1000; // 10 hours max age
+
+    // Pool of names
+    const namePool = [
+      { name: 'Ahmed R.', location: 'California' },
+      { name: 'Fatima K.', location: 'New York' },
+      { name: 'Omar S.', location: 'Texas' },
+      { name: 'Aisha M.', location: 'Illinois' },
+      { name: 'Ibrahim H.', location: 'Florida' },
+      { name: 'Yasmin A.', location: 'New Jersey' },
+      { name: 'Khalid M.', location: 'Michigan' },
+      { name: 'Mariam S.', location: 'Georgia' },
+      { name: 'Hassan B.', location: 'Virginia' },
+      { name: 'Nadia Z.', location: 'Pennsylvania' },
+      { name: 'Yusuf T.', location: 'Ohio' },
+      { name: 'Layla H.', location: 'North Carolina' },
+      { name: 'Bilal K.', location: 'Arizona' },
+      { name: 'Samira J.', location: 'Colorado' },
+      { name: 'Tariq N.', location: 'Washington' },
+      { name: 'Zainab Q.', location: 'Maryland' },
+    ];
+
+    interface Sponsor {
+      name: string;
+      location: string;
+      qty: number;
+      timestamp: number;
+      isReal?: boolean;
+    }
+
+    interface StoredData {
+      sponsors: Sponsor[];
+      scheduledFakes: number[];
+      lastRealDonation: number;
+    }
+
+    // Get stored data or initialize
+    const getStoredData = (): StoredData => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          return JSON.parse(stored);
+        }
+      } catch (e) {}
+
+      // Initialize with default sponsors
+      const now = Date.now();
+      return {
+        sponsors: [
+          { name: 'Ahmed R.', location: 'California', qty: 2, timestamp: now - 1 * 60 * 60 * 1000 },
+          { name: 'Fatima K.', location: 'New York', qty: 3, timestamp: now - 3 * 60 * 60 * 1000 },
+          { name: 'Omar S.', location: 'Texas', qty: 1, timestamp: now - 5 * 60 * 60 * 1000 },
+          { name: 'Aisha M.', location: 'Illinois', qty: 2, timestamp: now - 7 * 60 * 60 * 1000 },
+          { name: 'Ibrahim H.', location: 'Florida', qty: 5, timestamp: now - 9 * 60 * 60 * 1000 },
+        ],
+        scheduledFakes: [],
+        lastRealDonation: 0
+      };
+    };
+
+    // Save to localStorage
+    const saveData = (data: StoredData) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {}
+    };
+
+    // Get a random name not in current list
+    const getNewSponsor = (currentNames: string[]): Sponsor => {
+      const available = namePool.filter(n => !currentNames.includes(n.name));
+      const pick = available.length > 0
+        ? available[Math.floor(Math.random() * available.length)]
+        : namePool[Math.floor(Math.random() * namePool.length)];
+
+      return {
+        ...pick,
+        qty: [1, 2, 2, 2, 3, 3, 5][Math.floor(Math.random() * 7)],
+        timestamp: Date.now()
+      };
+    };
+
+    // Sort sponsors by timestamp (newest first)
+    const sortSponsors = (sponsors: Sponsor[]) => {
+      return sponsors.sort((a, b) => b.timestamp - a.timestamp);
+    };
+
+    // Load data
+    let storedData = getStoredData();
+    let displayedSponsors = storedData.sponsors;
+    let scheduledFakes = storedData.scheduledFakes;
+    let lastRealDonation = storedData.lastRealDonation;
+    const now = Date.now();
+
+    // Process any scheduled fake sponsors that are due
+    const dueSchedules = scheduledFakes.filter(t => t <= now);
+    const remainingSchedules = scheduledFakes.filter(t => t > now);
+
+    if (dueSchedules.length > 0) {
+      for (const scheduleTime of dueSchedules) {
+        const currentNames = displayedSponsors.map(s => s.name);
+        const newSponsor = getNewSponsor(currentNames);
+        newSponsor.timestamp = scheduleTime + Math.floor(Math.random() * 10) * 60 * 1000;
+        displayedSponsors.push(newSponsor);
+      }
+      scheduledFakes = remainingSchedules;
+    }
+
+    // Sort and remove old sponsors
+    displayedSponsors = sortSponsors(displayedSponsors);
+    displayedSponsors = displayedSponsors.filter(s => (now - s.timestamp) < MAX_SPONSOR_AGE);
+    displayedSponsors = displayedSponsors.slice(0, 5);
+
+    // If less than 5, fill with spread-out fake sponsors
+    while (displayedSponsors.length < 5) {
+      const currentNames = displayedSponsors.map(s => s.name);
+      const newSponsor = getNewSponsor(currentNames);
+      const existingCount = displayedSponsors.length;
+      newSponsor.timestamp = now - (1 + existingCount * 2) * 60 * 60 * 1000;
+      displayedSponsors.push(newSponsor);
+    }
+
+    displayedSponsors = sortSponsors(displayedSponsors);
+    saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
+
+    // Format time ago
+    const formatTimeAgo = (timestamp: number) => {
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'Just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes === 1) return '1 min ago';
+      if (minutes < 60) return `${minutes} min ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours === 1) return '1 hour ago';
+      return `${hours} hours ago`;
+    };
+
+    // Render sponsors list
+    const renderSponsors = () => {
+      if (!recentSponsorsContainer) return;
+
+      const toShow = displayedSponsors.slice(0, 5);
+
+      recentSponsorsContainer.innerHTML = toShow.map(sponsor => `
+        <div class="flex items-center justify-between py-1.5 ${sponsor.isReal ? 'bg-amber-50 -mx-2 px-2 rounded-lg' : ''}">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 bg-gradient-to-br from-[#01534d] to-[#024a45] rounded-full flex items-center justify-center text-white text-xs font-bold">
+              ${sponsor.name.charAt(0)}
+            </div>
+            <div>
+              <div class="text-sm font-medium text-gray-800">${sponsor.name}</div>
+              <div class="text-xs text-gray-400">${sponsor.location}</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-medium text-[#01534d]">${sponsor.qty} ${sponsor.qty === 1 ? 'child' : 'children'}</div>
+            <div class="text-xs text-gray-400">${formatTimeAgo(sponsor.timestamp)}</div>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    // Schedule fake sponsors after a real donation
+    const scheduleFakeSponsors = () => {
+      const now = Date.now();
+      const randomMinutes = () => (Math.random() - 0.5) * 30 * 60 * 1000;
+
+      scheduledFakes = [
+        now + 1 * 60 * 60 * 1000 + randomMinutes(),
+        now + 3 * 60 * 60 * 1000 + randomMinutes(),
+        now + 6 * 60 * 60 * 1000 + randomMinutes(),
+      ];
+
+      lastRealDonation = now;
+      saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
+    };
+
+    // Add real sponsor when someone donates
+    const addRealSponsor = (name: string, location: string, qty: number) => {
+      displayedSponsors.unshift({
+        name,
+        location,
+        qty,
+        timestamp: Date.now(),
+        isReal: true
+      });
+
+      displayedSponsors = sortSponsors(displayedSponsors);
+
+      while (displayedSponsors.length > 5) {
+        let oldestFakeIndex = -1;
+        for (let i = displayedSponsors.length - 1; i >= 0; i--) {
+          if (!displayedSponsors[i].isReal) {
+            oldestFakeIndex = i;
+            break;
+          }
+        }
+
+        if (oldestFakeIndex !== -1) {
+          displayedSponsors.splice(oldestFakeIndex, 1);
+        } else {
+          displayedSponsors.pop();
+        }
+      }
+
+      scheduleFakeSponsors();
+      renderSponsors();
+    };
+
+    // Expose for external use
+    (window as any).addRealSponsor = addRealSponsor;
+
+    // Initialize
+    renderSponsors();
+
+    // Update times every minute
+    setInterval(() => {
+      renderSponsors();
+    }, 60000);
+
+    // Check for scheduled fakes every 5 minutes
+    setInterval(() => {
+      const now = Date.now();
+      const dueNow = scheduledFakes.filter(t => t <= now);
+
+      if (dueNow.length > 0) {
+        for (const scheduleTime of dueNow) {
+          const currentNames = displayedSponsors.map(s => s.name);
+          const newSponsor = getNewSponsor(currentNames);
+          newSponsor.timestamp = scheduleTime;
+          displayedSponsors.push(newSponsor);
+        }
+
+        scheduledFakes = scheduledFakes.filter(t => t > now);
+        displayedSponsors = sortSponsors(displayedSponsors);
+        displayedSponsors = displayedSponsors.slice(0, 5);
+        saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
+        renderSponsors();
+      }
+    }, 5 * 60 * 1000);
   });
 </script>
 

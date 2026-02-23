@@ -35,6 +35,11 @@ try {
 <!-- Stripe.js -->
 <script is:inline src="https://js.stripe.com/v3/"></script>
 
+<!-- Caveat font for handwritten style -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+
 <!-- Google Places Autocomplete Dropdown Fix -->
 <style is:global>
   .pac-container {
@@ -58,12 +63,65 @@ try {
   .pac-matched {
     font-weight: 600;
   }
+
+  /* Highlight checked recurring option */
+  .recurring-option:has(input:checked) {
+    background-color: #fef3c7 !important;
+    border-color: #d97706 !important;
+  }
+
+  /* Custom checkbox - white background with orange check */
+  .custom-checkbox {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 1;
+  }
+  .custom-checkbox .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+  }
+  .custom-checkbox input:checked + .checkmark {
+    background-color: white;
+    border-color: #d97706;
+  }
+  .custom-checkbox .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #d97706;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+  }
+  .custom-checkbox input:checked + .checkmark:after {
+    display: block;
+  }
 </style>
 
 <!-- ==================== SIDECART ==================== -->
 <div id="cart-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden opacity-0 transition-opacity duration-300"></div>
 
-<div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white z-[101] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+<div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-[101] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
   <!-- Header -->
   <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-[#d97706]">
     <h2 class="text-lg font-bold text-white" style="font-family: 'Signika', sans-serif;">Your Donations</h2>
@@ -74,11 +132,11 @@ try {
     </button>
   </div>
 
-  <!-- Cart Items - Scrollable -->
-  <div class="flex-1 overflow-y-auto p-4">
+  <!-- Cart Content -->
+  <div class="flex-1 overflow-y-auto p-4 flex flex-col">
     <!-- Empty State -->
-    <div id="cart-empty" class="text-center py-12">
-      <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div id="cart-empty" class="text-center py-8">
+      <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
       </svg>
       <p class="text-gray-500 font-medium">Your cart is empty</p>
@@ -89,17 +147,71 @@ try {
     <div id="cart-items" class="space-y-3 hidden">
       <!-- Items rendered via JS -->
     </div>
-  </div>
 
-  <!-- Footer - Total & Checkout Button -->
-  <div id="cart-footer" class="border-t border-gray-200 p-4 bg-gray-50">
-    <div class="flex justify-between items-center mb-3">
-      <span class="text-gray-600 text-sm" id="payment-type-label">Single Payment</span>
-      <span class="text-xl font-bold text-[#d97706]" id="cart-total">$0.00</span>
+    <!-- Spacer to push checkout to middle (shrinks when more items) -->
+    <div id="cart-spacer" class="flex-1 min-h-[60px] max-h-[30vh]"></div>
+
+    <!-- Make it Monthly + Checkout Section -->
+    <div id="cart-footer">
+      <!-- Make a Bigger Impact Section -->
+      <div id="recurring-options" class="mb-5 hidden">
+        <!-- Handwritten-style header with arrow pointing to Jummah -->
+        <div class="relative mb-1">
+          <p class="text-gray-500 text-[24px] text-center pr-8" style="font-family: 'Caveat', cursive;">Make a bigger impact with every Friday gift</p>
+          <!-- Clear curved arrow pointing down -->
+          <svg class="absolute right-0 top-3 w-10 h-14 text-[#d97706]" viewBox="0 0 40 56" fill="none">
+            <!-- Curved line ending before the arrowhead -->
+            <path d="M4 4 C18 8, 26 20, 26 34" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <!-- Arrow head - left line -->
+            <line x1="18" y1="42" x2="26" y2="52" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <!-- Arrow head - right line -->
+            <line x1="34" y1="42" x2="26" y2="52" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <!-- Connecting curve to arrowhead -->
+            <path d="M26 34 L26 52" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+
+        <!-- Two checkboxes side by side: Monthly (left), Jummah (right) -->
+        <div class="grid grid-cols-2 gap-2">
+          <!-- Monthly -->
+          <label class="cursor-pointer">
+            <div class="recurring-option p-3 bg-gray-50 hover:bg-amber-50 rounded-xl transition border border-gray-200 hover:border-[#d97706] h-full">
+              <div class="flex items-start gap-2">
+                <input type="checkbox" name="recurring-type" value="monthly" class="mt-0.5 w-4 h-4 text-[#d97706] border-gray-300 rounded focus:ring-[#d97706] accent-[#d97706] flex-shrink-0" />
+                <div>
+                  <p class="font-bold text-gray-700 text-xs uppercase tracking-wide">Make it Monthly</p>
+                  <p class="text-[10px] text-gray-400 mt-1 leading-tight">Monthly donations help us transform communities faster!</p>
+                </div>
+              </div>
+            </div>
+          </label>
+
+          <!-- Every Jummah (Friday) -->
+          <label class="cursor-pointer">
+            <div class="recurring-option p-3 bg-gray-50 hover:bg-amber-50 rounded-xl transition border border-gray-200 hover:border-[#d97706] h-full">
+              <div class="flex items-start gap-2">
+                <input type="checkbox" name="recurring-type" value="weekly" class="mt-0.5 w-4 h-4 text-[#d97706] border-gray-300 rounded focus:ring-[#d97706] accent-[#d97706] flex-shrink-0" />
+                <div>
+                  <p class="font-bold text-gray-700 text-xs uppercase tracking-wide">Every Jummah</p>
+                  <p class="text-[10px] text-gray-400 mt-1">Friday</p>
+                </div>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Total -->
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-gray-600 text-sm" id="payment-type-label">One-time Payment</span>
+        <span class="text-xl font-bold text-[#d97706]" id="cart-total">$0.00</span>
+      </div>
+
+      <!-- Checkout Button -->
+      <button id="proceed-checkout-btn" disabled class="w-full bg-[#d97706] text-white font-bold py-3 rounded-xl hover:bg-[#b45309] transition disabled:opacity-50 disabled:cursor-not-allowed" style="font-family: 'Signika', sans-serif;">
+        Proceed To Checkout
+      </button>
     </div>
-    <button id="proceed-checkout-btn" disabled class="w-full bg-[#d97706] text-white font-bold py-3 rounded-xl hover:bg-[#b45309] transition disabled:opacity-50 disabled:cursor-not-allowed" style="font-family: 'Signika', sans-serif;">
-      Proceed To Checkout
-    </button>
   </div>
 </div>
 
@@ -168,7 +280,41 @@ try {
                   <input type="tel" name="phone" id="modal-phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
                 </div>
 
-                <button type="button" id="modal-continue-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-4">
+                <!-- Privacy & Communication Preferences -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                  <h4 class="text-lg font-bold text-[#01534d] mb-4 italic">Your Choice Can Make a Difference</h4>
+
+                  <!-- Communication Preferences -->
+                  <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-700 mb-2">I am happy to hear from Qurbani Foundation by:</p>
+                    <div class="flex flex-wrap gap-4">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="pref-email" checked class="w-4 h-4 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                        <span class="text-sm text-gray-700">Email</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="pref-sms" checked class="w-4 h-4 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                        <span class="text-sm text-gray-700">SMS</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="pref-whatsapp" checked class="w-4 h-4 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                        <span class="text-sm text-gray-700">WhatsApp</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="pref-phone" checked class="w-4 h-4 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                        <span class="text-sm text-gray-700">Phone</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="pref-post" checked class="w-4 h-4 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                        <span class="text-sm text-gray-700">Post</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <p class="text-xs text-gray-500">To opt-out, email to: <a href="mailto:donor@qurbani.com" class="text-[#01534d] hover:underline">donor@qurbani.com</a></p>
+                </div>
+
+                <button type="button" id="modal-continue-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-6">
                   Continue to Payment
                   <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
@@ -189,85 +335,72 @@ try {
                 <span><strong>847</strong> people donated this month</span>
               </div>
 
-              <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Donation Basket</h3>
+              <!-- Donation Basket Box -->
+              <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+                <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Donation Basket</h3>
 
-              <!-- Cart Items Summary -->
-              <div id="modal-cart-items" class="space-y-3 mb-6">
-                <!-- Rendered via JS -->
-              </div>
-
-              <!-- Subtotal -->
-              <div class="flex justify-between items-center py-3 border-t border-gray-200">
-                <span class="font-medium text-gray-700">Subtotal</span>
-                <span class="text-xl font-bold text-[#d97706]" id="modal-subtotal">$0.00</span>
-              </div>
-
-              <!-- Upsell Section -->
-              <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="flex items-center gap-2 mb-4">
-                  <svg class="w-5 h-5 text-[#d97706]" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                  </svg>
-                  <p class="text-sm font-semibold text-gray-700">Most Donors Also Give To:</p>
+                <!-- Cart Items Summary -->
+                <div id="modal-cart-items" class="space-y-3">
+                  <!-- Rendered via JS -->
                 </div>
 
-                <!-- Upsell Item 1: Prophetic Qurbani - PRE-CHECKED -->
-                <label id="upsell-prophetic" class="block cursor-pointer">
-                  <div class="upsell-card flex items-start gap-3 p-4 border-2 border-[#d97706] rounded-xl bg-orange-50 transition">
-                    <input type="checkbox" id="upsell-checkbox-1" checked class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2">
-                        <p class="font-bold text-gray-800 text-sm">YES! Add Prophetic Qurbani</p>
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">RECOMMENDED</span>
-                      </div>
-                      <div class="flex gap-3 mt-2">
-                        <img src="/images/campaigns/prophetic-qurbani.jpg" alt="Prophetic Qurbani" class="w-14 h-14 object-cover rounded-lg flex-shrink-0" onerror="this.style.display='none'" />
-                        <div>
-                          <p class="text-sm font-semibold text-[#d97706]">+$50 — Feeds 15 people meat for Eid</p>
-                          <p class="text-xs text-gray-500 mt-1">Follow the Sunnah of giving a second Qurbani for those who cannot afford one.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-
-                <!-- Upsell Item 2: Feed the Hungry -->
-                <label class="block cursor-pointer mt-3">
-                  <div class="upsell-card flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl hover:border-[#d97706] transition bg-white">
-                    <input type="checkbox" id="upsell-checkbox-2" class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
-                    <div class="flex-1">
-                      <p class="font-bold text-gray-800 text-sm">YES! Feed a Family for a Week</p>
-                      <p class="text-sm font-semibold text-[#d97706] mt-1">+$25 — Provides 21 nutritious meals</p>
-                      <p class="text-xs text-gray-500 mt-1">Help a family in need with essential food supplies for 7 days.</p>
-                    </div>
-                  </div>
-                </label>
-
-                <!-- Micro-copy for trust -->
-                <p class="text-xs text-gray-400 mt-3 text-center italic">Uncheck if you prefer not to add these — no pressure!</p>
+                <!-- Subtotal -->
+                <div class="flex justify-between items-center pt-3 mt-3 border-t border-gray-200">
+                  <span class="font-medium text-gray-700">Subtotal</span>
+                  <span class="text-xl font-bold text-[#d97706]" id="modal-subtotal">$0.00</span>
+                </div>
               </div>
 
-              <!-- Cover the Fees Option -->
-              <div class="mt-6 pt-4 border-t border-gray-200">
-                <label class="flex items-start gap-3 cursor-pointer group">
-                  <input type="checkbox" id="cover-fees-checkbox" class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                      <span class="font-semibold text-gray-800 text-sm group-hover:text-[#d97706] transition">Cover Transaction Fees</span>
-                      <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">+3%</span>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">Add <span id="fee-amount-display">$0.00</span> to ensure 100% of your donation reaches those in need.</p>
+              <!-- Please Support Us Further Box -->
+              <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-sm font-semibold text-gray-700 mb-4">Please Support Us Further</p>
+
+                <!-- Upsell Item 1: Prophetic Qurbani -->
+                <label class="flex items-center gap-3 cursor-pointer mb-4">
+                  <div class="custom-checkbox">
+                    <input type="checkbox" id="upsell-checkbox-1" />
+                    <span class="checkmark"></span>
                   </div>
+                  <span class="text-sm text-gray-700">YES, Give Prophetic Qurbani</span>
                 </label>
+
+                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                  <div class="flex gap-4">
+                    <img src="/images/campaigns/prophetic-qurbani.jpg" alt="Prophetic Qurbani" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://images.unsplash.com/photo-1545167496-5a24ed2d68b4?w=200&q=80'" />
+                    <div>
+                      <p class="font-bold text-gray-800 text-sm">I WANT TO GIVE $50 TO PROPHETIC QURBANI</p>
+                      <p class="text-xs text-gray-600 mt-2 leading-relaxed">The Prophet (&#65018;) used to give his Qurbani and then give a second Qurbani for those in his Ummah who were unable to do so themselves. This act of generous giving is for those who cannot. Follow in the footsteps of The Prophet (&#65018;) and give today!</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Upsell Item 2: Feed a Family -->
+                <label class="flex items-center gap-3 cursor-pointer mb-4">
+                  <div class="custom-checkbox">
+                    <input type="checkbox" id="upsell-checkbox-2" />
+                    <span class="checkmark"></span>
+                  </div>
+                  <span class="text-sm text-gray-700">YES, Feed a Family for a Week</span>
+                </label>
+
+                <div class="bg-gray-50 rounded-xl p-4">
+                  <div class="flex gap-4">
+                    <img src="/images/campaigns/feed-family.jpg" alt="Feed a Family" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80'" />
+                    <div>
+                      <p class="font-bold text-gray-800 text-sm">I WANT TO GIVE $25 TO FEED A FAMILY</p>
+                      <p class="text-xs text-gray-600 mt-2 leading-relaxed">Provide 21 nutritious meals for a family in need. Your generosity ensures they have food on the table for an entire week. Be the reason a family doesn't go hungry.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Updated Total -->
-              <div class="mt-4 p-4 bg-[#d97706] rounded-xl text-white">
+              <div class="mt-4 bg-white rounded-xl border border-gray-200 p-4">
                 <div class="flex justify-between items-center">
-                  <span class="font-medium">Total</span>
-                  <span class="text-2xl font-bold" id="modal-total">$0.00</span>
+                  <span class="font-medium text-gray-700">Total</span>
+                  <span class="text-2xl font-bold text-[#d97706]" id="modal-total">$0.00</span>
                 </div>
-                <p class="text-xs text-white/70 mt-1" id="modal-payment-type">One-time donation</p>
+                <p class="text-xs text-gray-500 mt-1" id="modal-payment-type">One-time donation</p>
               </div>
             </div>
           </div>
@@ -381,12 +514,24 @@ try {
               </div>
             </div>
 
-            <!-- Terms -->
-            <div class="flex items-start gap-2 mb-6">
-              <input type="checkbox" id="modal-terms" required class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706]" />
-              <label for="modal-terms" class="text-sm text-gray-600">
-                I agree to the <a href="/terms" class="text-[#d97706] underline">Terms</a> and <a href="/privacy" class="text-[#d97706] underline">Privacy Policy</a>
+            <!-- Cover Transaction Fees -->
+            <div class="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <label class="flex items-start gap-3 cursor-pointer group">
+                <input type="checkbox" id="cover-fees-checkbox" class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-gray-800 text-sm group-hover:text-[#d97706] transition">Cover Transaction Fees</span>
+                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">+3%</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1">Add <span id="fee-amount-display">$0.00</span> so 100% of your donation reaches those in need.</p>
+                </div>
               </label>
+            </div>
+
+            <!-- Total Display -->
+            <div class="flex justify-between items-center mb-4 py-3 px-4 bg-white rounded-xl border border-gray-200">
+              <span class="font-medium text-gray-700">Your Total</span>
+              <span class="text-2xl font-bold text-[#d97706]" id="step2-total">$0.00</span>
             </div>
 
             <!-- Pay Button -->
@@ -452,8 +597,8 @@ try {
                 </svg>
               </div>
               <div>
-                <p class="font-semibold text-blue-800">Monthly Recurring Donation</p>
-                <p class="text-sm text-blue-600 mt-1">You will be automatically charged <span id="monthly-amount" class="font-bold"></span> each month.</p>
+                <p id="subscription-type-title" class="font-semibold text-blue-800">Recurring Donation</p>
+                <p class="text-sm text-blue-600 mt-1">You will be automatically charged <span id="monthly-amount" class="font-bold"></span> <span id="billing-interval-text">each month</span>.</p>
                 <p class="text-sm text-blue-600 mt-1">Next billing date: <span id="next-billing-date" class="font-medium"></span></p>
               </div>
             </div>
@@ -637,17 +782,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Upsell checkboxes - update total and visual styles
   document.getElementById('upsell-checkbox-1').addEventListener('change', function() {
-    updateUpsellCardStyles();
+    if (this.checked) {
+      // Add Prophetic Qurbani to basket
+      const exists = window.donationCart.items.find(i => i.id === 'prophetic-qurbani-upsell');
+      if (!exists) {
+        window.donationCart.items.push({
+          id: 'prophetic-qurbani-upsell',
+          name: 'Prophetic Qurbani',
+          amount: 50,
+          quantity: 1,
+          type: 'single',
+          campaign: 'qurbani',
+          isUpsell: true
+        });
+      }
+    } else {
+      // Remove from basket
+      window.donationCart.items = window.donationCart.items.filter(i => i.id !== 'prophetic-qurbani-upsell');
+    }
+    updateModalCart();
     updateModalTotal();
+    saveCart();
   });
   document.getElementById('upsell-checkbox-2').addEventListener('change', function() {
-    updateUpsellCardStyles();
+    if (this.checked) {
+      // Add Feed a Family to basket
+      const exists = window.donationCart.items.find(i => i.id === 'feed-family-upsell');
+      if (!exists) {
+        window.donationCart.items.push({
+          id: 'feed-family-upsell',
+          name: 'Feed a Family',
+          amount: 25,
+          quantity: 1,
+          type: 'single',
+          campaign: 'food-aid',
+          isUpsell: true
+        });
+      }
+    } else {
+      // Remove from basket
+      window.donationCart.items = window.donationCart.items.filter(i => i.id !== 'feed-family-upsell');
+    }
+    updateModalCart();
     updateModalTotal();
   });
 
   // Cover fees checkbox
   document.getElementById('cover-fees-checkbox').addEventListener('change', function() {
     updateModalTotal();
+  });
+
+  // Recurring type checkboxes (only one can be selected at a time)
+  document.querySelectorAll('input[name="recurring-type"]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+      const thisCheckbox = this;
+      if (thisCheckbox.checked) {
+        // Uncheck the other checkbox
+        document.querySelectorAll('input[name="recurring-type"]').forEach(function(cb) {
+          if (cb !== thisCheckbox) cb.checked = false;
+        });
+        updateCartRecurringType(thisCheckbox.value);
+      } else {
+        // If unchecked, revert to single
+        updateCartRecurringType('single');
+      }
+      updateCartUI();
+    });
   });
 
   // ESC to close
@@ -687,6 +887,23 @@ function mountCardElement() {
   }
 }
 
+// Recurring option functions
+function updateCartRecurringType(type) {
+  // Only update items that were originally added as single/one-time
+  // Items added as monthly/weekly (like orphan sponsorship) stay as they are
+  window.donationCart.items.forEach(function(item) {
+    if (item.originalType === 'single' || !item.originalType) {
+      // This item can be converted
+      // type can be: 'single', 'weekly' (Jummah), or 'monthly'
+      item.type = type === 'single' ? 'single' : type;
+      item.recurringInterval = type;
+    }
+    // Items with originalType === 'monthly' or 'weekly' are not changed
+  });
+  saveCart();
+  updateCartUI();
+}
+
 // Cart Functions
 function saveCart() {
   localStorage.setItem('donationCart', JSON.stringify(window.donationCart.items));
@@ -697,7 +914,13 @@ window.addToCart = function(item) {
   if (existingIndex >= 0) {
     window.donationCart.items[existingIndex].quantity += item.quantity || 1;
   } else {
-    window.donationCart.items.push({ ...item, quantity: item.quantity || 1 });
+    // Store originalType so we know if this item can be converted later
+    const originalType = item.type || 'single';
+    window.donationCart.items.push({
+      ...item,
+      quantity: item.quantity || 1,
+      originalType: originalType // Remember how it was added
+    });
   }
   saveCart();
   updateCartUI();
@@ -723,23 +946,45 @@ function updateCartUI() {
   const items = window.donationCart.items;
   const cartEmpty = document.getElementById('cart-empty');
   const cartItems = document.getElementById('cart-items');
+  const recurringOptions = document.getElementById('recurring-options');
   const proceedBtn = document.getElementById('proceed-checkout-btn');
 
   if (items.length === 0) {
     cartEmpty.classList.remove('hidden');
     cartItems.classList.add('hidden');
+    recurringOptions.classList.add('hidden');
     proceedBtn.disabled = true;
   } else {
     cartEmpty.classList.add('hidden');
     cartItems.classList.remove('hidden');
     proceedBtn.disabled = false;
 
-    cartItems.innerHTML = items.map((item, index) => `
+    // Always show recurring options when there are items
+    recurringOptions.classList.remove('hidden');
+
+    // Check if there are any convertible items (originally single)
+    // Only show the checkbox option if there are items that CAN be converted
+    const hasConvertibleItems = items.some(item => item.originalType === 'single' || !item.originalType);
+
+    // Don't auto-check the checkbox - user must manually select it
+    // The checkbox state is preserved as-is unless user interacts with it
+
+    cartItems.innerHTML = items.map((item, index) => {
+      // Each item shows its own type
+      const itemType = item.recurringInterval || item.type || 'single';
+      const itemTypeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : itemType === 'annual' ? 'Annual' : 'One-time';
+
+      // Check for notes in metadata (Aqiqah items)
+      const hasNotes = item.metadata?.notes && item.metadata.notes.trim() !== '';
+      const notesHtml = hasNotes ? `<p class="text-xs text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">📝 ${item.metadata.notes}</p>` : '';
+
+      return `
       <div class="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
         <div class="flex justify-between items-start">
           <div class="flex-1">
             <h4 class="font-semibold text-gray-800 text-sm">${item.name}</h4>
-            <p class="text-xs text-gray-500">${item.type === 'monthly' ? 'Monthly' : 'One-time'}</p>
+            <p class="text-xs text-gray-500">${itemTypeLabel}</p>
+            ${notesHtml}
           </div>
           <p class="font-bold text-[#d97706]">$${(item.amount * item.quantity).toFixed(2)}</p>
         </div>
@@ -749,17 +994,35 @@ function updateCartUI() {
             <span class="w-6 text-center text-sm font-medium">${item.quantity}</span>
             <button onclick="updateQuantity(${index}, 1)" class="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition text-gray-600">+</button>
           </div>
-          <button onclick="removeFromCart(${index})" class="text-red-500 text-xs font-medium hover:text-red-700">Remove</button>
+          <button onclick="removeFromCart(${index})" class="text-gray-400 text-xs font-medium hover:text-gray-600">Remove</button>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   // Update total
   const total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
-  const hasMonthly = items.some(i => i.type === 'monthly');
+
+  // Determine payment label based on cart contents
+  const hasWeekly = items.some(item => (item.recurringInterval || item.type) === 'weekly');
+  const hasMonthly = items.some(item => (item.recurringInterval || item.type) === 'monthly');
+  const hasAnnual = items.some(item => (item.recurringInterval || item.type) === 'annual');
+  const hasSingle = items.some(item => !item.type || item.type === 'single');
+  const hasRecurring = hasWeekly || hasMonthly || hasAnnual;
+
+  let paymentLabel = 'One-time Payment';
+  if (hasWeekly && !hasMonthly && !hasAnnual && !hasSingle) {
+    paymentLabel = 'Every Jummah';
+  } else if (hasMonthly && !hasWeekly && !hasAnnual && !hasSingle) {
+    paymentLabel = 'Monthly Payment';
+  } else if (hasAnnual && !hasWeekly && !hasMonthly && !hasSingle) {
+    paymentLabel = 'Annual Payment';
+  } else if (hasRecurring) {
+    paymentLabel = 'Includes Recurring';
+  }
+
   document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('payment-type-label').textContent = hasMonthly ? 'Monthly' : 'One-time';
+  document.getElementById('payment-type-label').textContent = paymentLabel;
 
   // Update cart count badge (if exists)
   const badge = document.getElementById('cart-count');
@@ -802,7 +1065,7 @@ function openCheckoutModal() {
   document.getElementById('modal-success').classList.add('hidden');
 
   // Pre-check first upsell (opt-out strategy for higher conversions)
-  document.getElementById('upsell-checkbox-1').checked = true;
+  document.getElementById('upsell-checkbox-1').checked = false;
   document.getElementById('upsell-checkbox-2').checked = false;
 
   // Update upsell card styling
@@ -856,26 +1119,31 @@ function updateModalCart() {
   const items = window.donationCart.items;
   const container = document.getElementById('modal-cart-items');
 
-  container.innerHTML = items.map(item => `
+  container.innerHTML = items.map(item => {
+    const itemType = item.recurringInterval || item.type || 'single';
+    const typeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : 'One-time';
+    const hasNotes = item.metadata?.notes && item.metadata.notes.trim() !== '';
+    const notesHtml = hasNotes ? `<p class="text-xs text-gray-500 italic">📝 ${item.metadata.notes}</p>` : '';
+    return `
     <div class="flex justify-between items-center py-2 border-b border-gray-100">
       <div>
         <p class="font-medium text-gray-800 text-sm">${item.name}</p>
-        <p class="text-xs text-gray-500">${item.type === 'monthly' ? 'Monthly' : 'One-time'} × ${item.quantity}</p>
+        <p class="text-xs text-gray-500">${typeLabel} × ${item.quantity}</p>
+        ${notesHtml}
       </div>
       <p class="font-semibold text-gray-800">$${(item.amount * item.quantity).toFixed(2)}</p>
     </div>
-  `).join('');
+  `}).join('');
 
   updateModalTotal();
 }
 
 function updateModalTotal() {
+  // Upsells are now added directly to cart, so no need to add them separately
   let baseTotal = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
-  const hasMonthly = window.donationCart.items.some(i => i.type === 'monthly');
-
-  // Add upsells
-  if (document.getElementById('upsell-checkbox-1').checked) baseTotal += 50;
-  if (document.getElementById('upsell-checkbox-2').checked) baseTotal += 25;
+  const hasWeekly = window.donationCart.items.some(i => i.type === 'weekly' || i.recurringInterval === 'weekly');
+  const hasMonthly = window.donationCart.items.some(i => i.type === 'monthly' || i.recurringInterval === 'monthly');
+  const hasRecurring = hasWeekly || hasMonthly;
 
   // Calculate fees (3% processing fee)
   const feePercentage = 0.03;
@@ -894,9 +1162,23 @@ function updateModalTotal() {
   document.getElementById('modal-subtotal').textContent = '$' + window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0).toFixed(2);
   document.getElementById('modal-total').textContent = '$' + total.toFixed(2);
   document.getElementById('payment-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('modal-payment-type').textContent = hasMonthly
-    ? (coverFees ? 'Monthly + fees covered' : 'Includes monthly donations')
-    : (coverFees ? 'One-time + fees covered' : 'One-time donation');
+
+  // Update step 2 total display
+  const step2Total = document.getElementById('step2-total');
+  if (step2Total) step2Total.textContent = '$' + total.toFixed(2);
+
+  // Determine payment type label
+  let paymentTypeLabel = 'One-time donation';
+  if (hasWeekly && !hasMonthly) {
+    paymentTypeLabel = coverFees ? 'Every Jummah + fees covered' : 'Every Jummah (Friday)';
+  } else if (hasMonthly && !hasWeekly) {
+    paymentTypeLabel = coverFees ? 'Monthly + fees covered' : 'Monthly donation';
+  } else if (hasRecurring) {
+    paymentTypeLabel = coverFees ? 'Recurring + fees covered' : 'Includes recurring';
+  } else if (coverFees) {
+    paymentTypeLabel = 'One-time + fees covered';
+  }
+  document.getElementById('modal-payment-type').textContent = paymentTypeLabel;
 }
 
 function goToPaymentStep() {
@@ -912,6 +1194,9 @@ function goToPaymentStep() {
   document.getElementById('modal-step-1').classList.add('hidden');
   document.getElementById('modal-step-2').classList.remove('hidden');
   mountCardElement();
+
+  // Update fee display for step 2
+  updateModalTotal();
 
   // Initialize Google Places autocomplete if not already done
   if (!window.donationCart.autocomplete && window.google?.maps?.places) {
@@ -930,12 +1215,6 @@ async function handlePayment() {
   const payText = document.getElementById('pay-btn-text');
   const processing = document.getElementById('processing-indicator');
   const errorDiv = document.getElementById('payment-error');
-
-  // Validate terms
-  if (!document.getElementById('modal-terms').checked) {
-    alert('Please agree to the Terms and Privacy Policy');
-    return;
-  }
 
   payBtn.disabled = true;
   payText.textContent = 'Processing...';
@@ -959,17 +1238,19 @@ async function handlePayment() {
       country: document.getElementById('modal-country').value,
     };
 
-    // Calculate total with upsells
+    // Calculate total - upsells are already in cart from checkbox change
     let items = [...window.donationCart.items];
-    if (document.getElementById('upsell-checkbox-1').checked) {
-      items.push({ id: 'prophetic-qurbani', name: 'Prophetic Qurbani', amount: 50, quantity: 1, type: 'single', campaign: 'qurbani' });
-    }
-    if (document.getElementById('upsell-checkbox-2').checked) {
-      items.push({ id: 'feed-family', name: 'Feed a Family', amount: 25, quantity: 1, type: 'single', campaign: 'food-aid' });
-    }
-
     let total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
-    const hasMonthly = items.some(i => i.type === 'monthly');
+    const hasWeekly = items.some(i => i.type === 'weekly' || i.recurringInterval === 'weekly');
+    const hasMonthly = items.some(i => i.type === 'monthly' || i.recurringInterval === 'monthly');
+
+    // Determine donation type: weekly (Jummah) takes priority, then monthly, then single
+    let donationType = 'single';
+    if (hasWeekly) {
+      donationType = 'weekly';
+    } else if (hasMonthly) {
+      donationType = 'monthly';
+    }
 
     // Add fee coverage if selected
     const coverFees = window.donationCart.coverFees || false;
@@ -985,7 +1266,7 @@ async function handlePayment() {
         items: items,
         customer,
         billingAddress,
-        type: hasMonthly ? 'monthly' : 'single',
+        type: donationType,
         coverFees: coverFees,
         feeAmount: feeAmount,
         baseAmount: total - feeAmount,
@@ -1018,17 +1299,30 @@ async function handlePayment() {
       // Show subscription info if this was a recurring donation
       if (data.type === 'subscription' && data.subscriptionId) {
         document.getElementById('subscription-info').classList.remove('hidden');
-        document.getElementById('success-message').textContent = 'Your monthly donation has been set up successfully!';
+
+        // Customize message based on interval (Jummah vs Monthly)
+        const isJummah = data.isJummah || data.interval === 'weekly';
+        if (isJummah) {
+          document.getElementById('success-message').textContent = 'Your Jummah (Friday) donation has been set up successfully!';
+          document.getElementById('subscription-type-title').textContent = 'Jummah (Friday) Recurring Donation';
+          document.getElementById('billing-interval-text').textContent = 'every Friday';
+        } else {
+          document.getElementById('success-message').textContent = 'Your monthly donation has been set up successfully!';
+          document.getElementById('subscription-type-title').textContent = 'Monthly Recurring Donation';
+          document.getElementById('billing-interval-text').textContent = 'each month';
+        }
         document.getElementById('monthly-amount').textContent = '$' + total.toFixed(2);
 
         // Format next billing date
         if (data.nextBillingDate) {
           const nextDate = new Date(data.nextBillingDate);
-          document.getElementById('next-billing-date').textContent = nextDate.toLocaleDateString('en-US', {
+          const dateStr = nextDate.toLocaleDateString('en-US', {
+            weekday: isJummah ? 'long' : undefined,
             year: 'numeric',
             month: 'long',
             day: 'numeric',
           });
+          document.getElementById('next-billing-date').textContent = dateStr;
         }
 
         // Set management link (we'll need to fetch the token from the API)

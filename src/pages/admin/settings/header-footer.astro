@@ -1,10 +1,12 @@
 ---
+export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
 import { getSettings } from '../../../lib/settings';
 
 const settings = await getSettings();
 ---
+export const prerender = false;
 
 <AdminLayout title="Header & Footer" activeNav="settings">
   <div class="max-w-4xl">

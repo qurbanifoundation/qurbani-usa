@@ -187,7 +187,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         amount: parseFloat(donation.amount),
         campaignSlug: campaignSlug,
         campaignName: donation.campaign_name || 'General Donation',
-        donationType: (donation.donation_type as 'single' | 'monthly') || 'single',
+        donationType: (donation.donation_type as 'single' | 'monthly' | 'weekly') || 'single',
         items: items.map(item => ({
           name: item.name || 'Donation',
           amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount
@@ -385,6 +385,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
     ? invoice.payment_intent
     : invoice.payment_intent?.id;
 
+  // Determine if this is weekly (Jummah) or monthly subscription
+  const isWeekly = subscriptionRecord.interval === 'weekly';
+  const donationType = isWeekly ? 'weekly' : 'monthly';
+
   // Create new donation record for this recurring payment
   const { data: donation, error: donationError } = await supabaseAdmin
     .from('donations')
@@ -394,7 +398,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
       amount: subscriptionRecord.amount,
       currency: subscriptionRecord.currency,
       status: 'completed',
-      donation_type: 'monthly',
+      donation_type: donationType,
       donor_email: subscriptionRecord.donor_email,
       donor_name: subscriptionRecord.donor_name,
       items: subscriptionRecord.items || [],
@@ -402,6 +406,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
       metadata: {
         stripe_customer_id: subscriptionRecord.stripe_customer_id,
         is_recurring: true,
+        is_jummah: isWeekly,
         invoice_id: invoice.id,
         billing_reason: invoice.billing_reason,
       },
@@ -414,9 +419,17 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
     return;
   }
 
-  // Update subscription's next billing date
+  // Update subscription's next billing date (weekly or monthly)
   const nextBillingDate = new Date();
-  nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+  if (isWeekly) {
+    // Next Friday
+    const dayOfWeek = nextBillingDate.getDay();
+    const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
+    nextBillingDate.setDate(nextBillingDate.getDate() + daysUntilFriday);
+    nextBillingDate.setHours(12, 0, 0, 0);
+  } else {
+    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+  }
 
   await supabaseAdmin
     .from('donation_subscriptions')
@@ -438,16 +451,17 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
       const campaignSlug = subscriptionRecord.campaign_slug ||
         (items.length > 0 ? items[0].name?.toLowerCase().replace(/\s+/g, '-') : 'general');
 
+      const donationLabel = isWeekly ? 'Jummah Donation' : 'Monthly Donation';
       const result = await trackDonation({
         email: subscriptionRecord.donor_email,
         name: subscriptionRecord.donor_name,
         phone: null,
         amount: parseFloat(subscriptionRecord.amount),
         campaignSlug: campaignSlug,
-        campaignName: items.length > 0 ? items[0].name : 'Monthly Donation',
-        donationType: 'monthly',
+        campaignName: items.length > 0 ? items[0].name : donationLabel,
+        donationType: donationType as 'single' | 'monthly' | 'weekly',
         items: items.map(item => ({
-          name: item.name || 'Monthly Donation',
+          name: item.name || donationLabel,
           amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount
         })),
       });
@@ -456,6 +470,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
         contactId: result.contactId,
         lifetimeGiving: result.lifetimeGiving,
         donationCount: result.donationCount,
+        donationType: donationType,
       });
     } catch (ghlError) {
       console.error('GHL sync error for recurring donation:', ghlError);

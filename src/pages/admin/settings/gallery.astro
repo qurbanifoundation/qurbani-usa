@@ -1,4 +1,5 @@
 ---
+export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
 import { supabaseAdmin } from '../../../lib/supabase';
@@ -18,6 +19,7 @@ try {
   console.error('Failed to fetch slides:', e);
 }
 ---
+export const prerender = false;
 
 <AdminLayout title="Hero Gallery" activeNav="settings">
   <div class="max-w-6xl">

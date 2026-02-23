@@ -1,0 +1,1447 @@
+---
+/**
+ * QURBANI TEMPLATE - Premium High-Converting Global Qurbani Page
+ *
+ * Key Features:
+ * - Stunning hero with countdown timer
+ * - Tab-based country filtering (Most Needed, Lowest Price, Emergency, All)
+ * - Country cards with images, pricing, animal selection
+ * - "On Behalf Of" personalization
+ * - Impact statistics and trust badges
+ * - FAQ accordion
+ * - Testimonials
+ * - Mobile-optimized with sticky CTA
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    id: string;
+    title: string;
+    subtitle?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    goal_amount?: number;
+    raised_amount?: number;
+    is_zakat_eligible?: boolean;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign, donationBoxTemplate } = Astro.props;
+
+// Define animal option types
+interface AnimalOption {
+  type: string;
+  label: string;
+  price: number;
+}
+
+interface Country {
+  id: string;
+  name: string;
+  flag: string;
+  image: string;
+  category: string[];
+  animals: AnimalOption[];
+  description: string;
+  urgency?: boolean;
+  lowestPrice?: boolean;
+  featured?: boolean;
+}
+
+// Qurbani Countries with pricing and categories - Real pricing from qurbani.com
+const countries: Country[] = [
+  // MOST NEEDED - Emergency & Crisis Areas
+  {
+    id: 'palestine-gaza',
+    name: 'Palestine Gaza',
+    flag: '🇵🇸',
+    image: 'https://images.unsplash.com/photo-1597933557903-44c26da20d5e?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 425 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 400 },
+      { type: 'cow_full', label: 'Full Cow', price: 2800 },
+    ],
+    description: 'Support families in besieged Gaza',
+    urgency: true,
+    featured: true
+  },
+  {
+    id: 'palestine-jerusalem',
+    name: 'Palestine Jerusalem',
+    flag: '🇵🇸',
+    image: 'https://images.unsplash.com/photo-1549893072-4b6c95f3da45?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 325 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 300 },
+      { type: 'cow_full', label: 'Full Cow', price: 2100 },
+    ],
+    description: 'Feed families in Al-Quds',
+    urgency: true
+  },
+  {
+    id: 'yemen',
+    name: 'Yemen',
+    flag: '🇾🇪',
+    image: 'https://images.unsplash.com/photo-1587974928442-77dc3e0dba72?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 155 },
+      { type: 'sheep', label: 'Sheep', price: 155 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 130 },
+      { type: 'cow_full', label: 'Full Cow', price: 910 },
+    ],
+    description: 'Relief for famine-affected regions',
+    urgency: true
+  },
+  {
+    id: 'syria',
+    name: 'Syria',
+    flag: '🇸🇾',
+    image: 'https://images.unsplash.com/photo-1580835845259-5c34e1b5b6bd?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 225 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_full', label: 'Full Cow', price: 1400 },
+    ],
+    description: 'Aid for displaced Syrian families',
+    urgency: true
+  },
+  {
+    id: 'afghanistan',
+    name: 'Afghanistan',
+    flag: '🇦🇫',
+    image: 'https://images.unsplash.com/photo-1587634741838-6a4a0a6a1a0e?w=400&q=80',
+    category: ['most-needed'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 200 },
+      { type: 'sheep', label: 'Sheep', price: 200 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 175 },
+      { type: 'cow_full', label: 'Full Cow', price: 1225 },
+    ],
+    description: 'Help families facing economic hardship'
+  },
+  {
+    id: 'iraq',
+    name: 'Iraq',
+    flag: '🇮🇶',
+    image: 'https://images.unsplash.com/photo-1570939274717-7eda259b50ed?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 275 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_full', label: 'Full Cow', price: 1750 },
+    ],
+    description: 'Rebuild communities in conflict zones',
+    urgency: true
+  },
+  {
+    id: 'iraq-refugees',
+    name: 'Iraq Refugees',
+    flag: '🇮🇶',
+    image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 225 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_full', label: 'Full Cow', price: 1400 },
+    ],
+    description: 'Support displaced Iraqi families',
+    urgency: true
+  },
+  {
+    id: 'sudan',
+    name: 'Sudan',
+    flag: '🇸🇩',
+    image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 145 },
+      { type: 'sheep', label: 'Sheep', price: 145 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 120 },
+      { type: 'cow_full', label: 'Full Cow', price: 840 },
+    ],
+    description: 'Support conflict-affected communities',
+    urgency: true
+  },
+  {
+    id: 'kashmir-pakistan',
+    name: 'Kashmir Pakistan',
+    flag: '🇵🇰',
+    image: 'https://images.unsplash.com/photo-1566296314636-5c71a3b24df9?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'sheep', label: 'Sheep', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Reach families in Kashmir region',
+    urgency: true
+  },
+  {
+    id: 'kashmir-india',
+    name: 'Kashmir India',
+    flag: '🇮🇳',
+    image: 'https://images.unsplash.com/photo-1566837497312-7be7830ae9b3?w=400&q=80',
+    category: ['most-needed', 'emergency', 'lowest-price'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 75 },
+      { type: 'sheep', label: 'Sheep', price: 75 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 50 },
+      { type: 'cow_full', label: 'Full Cow', price: 350 },
+    ],
+    description: 'Support families in Indian Kashmir',
+    urgency: true,
+    lowestPrice: true
+  },
+  {
+    id: 'myanmar-refugees',
+    name: 'Myanmar Refugees',
+    flag: '🇲🇲',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Rohingya refugee communities',
+    urgency: true
+  },
+  {
+    id: 'refugees-jordan',
+    name: 'Refugees in Jordan',
+    flag: '🇯🇴',
+    image: 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 275 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_full', label: 'Full Cow', price: 1750 },
+    ],
+    description: 'Syrian refugees in Jordan camps',
+    urgency: true
+  },
+  {
+    id: 'refugees-lebanon',
+    name: 'Refugees in Lebanon',
+    flag: '🇱🇧',
+    image: 'https://images.unsplash.com/photo-1579033461380-adb47c3eb938?w=400&q=80',
+    category: ['most-needed', 'emergency'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 225 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_full', label: 'Full Cow', price: 1400 },
+    ],
+    description: 'Refugee families in Lebanon',
+    urgency: true
+  },
+  {
+    id: 'bosnia',
+    name: 'Bosnia',
+    flag: '🇧🇦',
+    image: 'https://images.unsplash.com/photo-1555990538-1e6b2e07e0c0?w=400&q=80',
+    category: ['most-needed'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 300 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_full', label: 'Full Cow', price: 1750 },
+    ],
+    description: 'Support Bosnian Muslim communities'
+  },
+
+  // LOWEST PRICE Countries
+  {
+    id: 'india',
+    name: 'India',
+    flag: '🇮🇳',
+    image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=400&q=80',
+    category: ['lowest-price'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 75 },
+      { type: 'sheep', label: 'Sheep', price: 75 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 50 },
+      { type: 'cow_full', label: 'Full Cow', price: 350 },
+    ],
+    description: 'Serve underprivileged communities',
+    lowestPrice: true
+  },
+  {
+    id: 'burundi',
+    name: 'Burundi',
+    flag: '🇧🇮',
+    image: 'https://images.unsplash.com/photo-1489392191049-fc10c97e64b6?w=400&q=80',
+    category: ['lowest-price'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 100 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 75 },
+      { type: 'cow_full', label: 'Full Cow', price: 525 },
+    ],
+    description: 'Feed families in East Africa',
+    lowestPrice: true
+  },
+  {
+    id: 'kenya',
+    name: 'Kenya',
+    flag: '🇰🇪',
+    image: 'https://images.unsplash.com/photo-1489392191049-fc10c97e64b6?w=400&q=80',
+    category: ['lowest-price'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 85 },
+      { type: 'sheep', label: 'Sheep', price: 85 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 80 },
+      { type: 'cow_full', label: 'Full Cow', price: 560 },
+    ],
+    description: 'East African communities',
+    lowestPrice: true
+  },
+  {
+    id: 'bangladesh',
+    name: 'Bangladesh',
+    flag: '🇧🇩',
+    image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&q=80',
+    category: ['lowest-price'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'sheep', label: 'Sheep', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Feed families in rural areas',
+    lowestPrice: true
+  },
+  {
+    id: 'rohingya-malaysia',
+    name: 'Rohingya Malaysia',
+    flag: '🇲🇾',
+    image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=400&q=80',
+    category: ['lowest-price', 'emergency'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 110 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 85 },
+      { type: 'cow_full', label: 'Full Cow', price: 595 },
+    ],
+    description: 'Rohingya refugees in Malaysia',
+    lowestPrice: true,
+    urgency: true
+  },
+
+  // ALL OTHER Countries
+  {
+    id: 'pakistan',
+    name: 'Pakistan',
+    flag: '🇵🇰',
+    image: 'https://images.unsplash.com/photo-1586076052079-81a12e3c24c9?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 140 },
+      { type: 'sheep', label: 'Sheep', price: 140 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 115 },
+      { type: 'cow_full', label: 'Full Cow', price: 805 },
+    ],
+    description: 'Reach communities across Pakistan'
+  },
+  {
+    id: 'somalia',
+    name: 'Somalia',
+    flag: '🇸🇴',
+    image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=400&q=80',
+    category: ['all', 'emergency'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 150 },
+      { type: 'sheep', label: 'Sheep', price: 150 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 125 },
+      { type: 'cow_full', label: 'Full Cow', price: 875 },
+    ],
+    description: 'Aid for drought-affected areas',
+    urgency: true
+  },
+  {
+    id: 'jordan',
+    name: 'Jordan',
+    flag: '🇯🇴',
+    image: 'https://images.unsplash.com/photo-1580834341580-8c17a3a630ca?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 300 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 275 },
+      { type: 'cow_full', label: 'Full Cow', price: 1925 },
+    ],
+    description: 'Local Jordanian communities'
+  },
+  {
+    id: 'lebanon',
+    name: 'Lebanon',
+    flag: '🇱🇧',
+    image: 'https://images.unsplash.com/photo-1579033461380-adb47c3eb938?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 250 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 225 },
+      { type: 'cow_full', label: 'Full Cow', price: 1575 },
+    ],
+    description: 'Lebanese families in need'
+  },
+  {
+    id: 'turkey',
+    name: 'Turkey',
+    flag: '🇹🇷',
+    image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 275 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_full', label: 'Full Cow', price: 1750 },
+    ],
+    description: 'Syrian refugee support in Turkey'
+  },
+  {
+    id: 'indonesia',
+    name: 'Indonesia',
+    flag: '🇮🇩',
+    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 225 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_full', label: 'Full Cow', price: 1400 },
+    ],
+    description: 'Island communities across Indonesia'
+  },
+  {
+    id: 'mali',
+    name: 'Mali',
+    flag: '🇲🇱',
+    image: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'sheep', label: 'Sheep', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Sahel region support'
+  },
+  {
+    id: 'niger',
+    name: 'Niger',
+    flag: '🇳🇪',
+    image: 'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'sheep', label: 'Sheep', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Food security programs'
+  },
+  {
+    id: 'ethiopia',
+    name: 'Ethiopia',
+    flag: '🇪🇹',
+    image: 'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 115 },
+      { type: 'sheep', label: 'Sheep', price: 115 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 90 },
+      { type: 'cow_full', label: 'Full Cow', price: 630 },
+    ],
+    description: 'Drought relief efforts'
+  },
+  {
+    id: 'ghana',
+    name: 'Ghana',
+    flag: '🇬🇭',
+    image: 'https://images.unsplash.com/photo-1577019750148-cdfc23fd812b?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 135 },
+      { type: 'sheep', label: 'Sheep', price: 135 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 110 },
+      { type: 'cow_full', label: 'Full Cow', price: 770 },
+    ],
+    description: 'West African families'
+  },
+  {
+    id: 'senegal',
+    name: 'Senegal',
+    flag: '🇸🇳',
+    image: 'https://images.unsplash.com/photo-1577019750148-cdfc23fd812b?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 135 },
+      { type: 'sheep', label: 'Sheep', price: 135 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 110 },
+      { type: 'cow_full', label: 'Full Cow', price: 770 },
+    ],
+    description: 'Coastal community support'
+  },
+  {
+    id: 'mauritania',
+    name: 'Mauritania',
+    flag: '🇲🇷',
+    image: 'https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 100 },
+      { type: 'sheep', label: 'Sheep', price: 100 },
+      { type: 'camel', label: 'Camel', price: 450 },
+    ],
+    description: 'Desert communities'
+  },
+  {
+    id: 'chad',
+    name: 'Chad',
+    flag: '🇹🇩',
+    image: 'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 120 },
+      { type: 'sheep', label: 'Sheep', price: 120 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 95 },
+      { type: 'cow_full', label: 'Full Cow', price: 665 },
+    ],
+    description: 'Central African support'
+  },
+  {
+    id: 'cameroon',
+    name: 'Cameroon',
+    flag: '🇨🇲',
+    image: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'sheep', label: 'Sheep', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Cameroonian families'
+  },
+  {
+    id: 'nigeria',
+    name: 'Nigeria',
+    flag: '🇳🇬',
+    image: 'https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'sheep', label: 'Sheep/Ram', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Nigerian Muslim communities'
+  },
+  {
+    id: 'tanzania',
+    name: 'Tanzania',
+    flag: '🇹🇿',
+    image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 110 },
+      { type: 'sheep', label: 'Sheep', price: 110 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 85 },
+      { type: 'cow_full', label: 'Full Cow', price: 595 },
+    ],
+    description: 'Tanzanian communities'
+  },
+  {
+    id: 'uganda',
+    name: 'Uganda',
+    flag: '🇺🇬',
+    image: 'https://images.unsplash.com/photo-1619451334792-150fd785ee74?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 110 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 85 },
+      { type: 'cow_full', label: 'Full Cow', price: 595 },
+    ],
+    description: 'Ugandan Muslim families'
+  },
+  {
+    id: 'egypt',
+    name: 'Egypt',
+    flag: '🇪🇬',
+    image: 'https://images.unsplash.com/photo-1539768942893-daf53e448371?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 225 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_full', label: 'Full Cow', price: 1400 },
+    ],
+    description: 'Egyptian families in need'
+  },
+  {
+    id: 'morocco',
+    name: 'Morocco',
+    flag: '🇲🇦',
+    image: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 250 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 225 },
+      { type: 'cow_full', label: 'Full Cow', price: 1575 },
+    ],
+    description: 'Moroccan communities'
+  },
+  {
+    id: 'tunisia',
+    name: 'Tunisia',
+    flag: '🇹🇳',
+    image: 'https://images.unsplash.com/photo-1534551767192-78b8dd45b51b?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 225 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_full', label: 'Full Cow', price: 1400 },
+    ],
+    description: 'Tunisian families'
+  },
+  {
+    id: 'albania',
+    name: 'Albania',
+    flag: '🇦🇱',
+    image: 'https://images.unsplash.com/photo-1565257726420-01a9573cc128?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 275 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_full', label: 'Full Cow', price: 1750 },
+    ],
+    description: 'Albanian Muslim communities'
+  },
+  {
+    id: 'kosovo',
+    name: 'Kosovo',
+    flag: '🇽🇰',
+    image: 'https://images.unsplash.com/photo-1558271736-cd043ef0e013?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'sheep', label: 'Sheep', price: 300 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 275 },
+      { type: 'cow_full', label: 'Full Cow', price: 1925 },
+    ],
+    description: 'Kosovar families'
+  },
+  {
+    id: 'philippines',
+    name: 'Philippines',
+    flag: '🇵🇭',
+    image: 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 175 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 150 },
+      { type: 'cow_full', label: 'Full Cow', price: 1050 },
+    ],
+    description: 'Mindanao Muslim communities'
+  },
+  {
+    id: 'sri-lanka',
+    name: 'Sri Lanka',
+    flag: '🇱🇰',
+    image: 'https://images.unsplash.com/photo-1586185331496-11cadf8c31fb?w=400&q=80',
+    category: ['all'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 125 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_full', label: 'Full Cow', price: 700 },
+    ],
+    description: 'Sri Lankan Muslim families'
+  },
+  {
+    id: 'nepal',
+    name: 'Nepal',
+    flag: '🇳🇵',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&q=80',
+    category: ['all', 'lowest-price'],
+    animals: [
+      { type: 'goat', label: 'Goat', price: 100 },
+      { type: 'cow_share', label: 'Cow Share (1/7)', price: 75 },
+      { type: 'cow_full', label: 'Full Cow', price: 525 },
+    ],
+    description: 'Mountain community support',
+    lowestPrice: true
+  },
+].sort((a, b) => a.name.localeCompare(b.name));
+
+// Statistics
+const stats = [
+  { number: '2M+', label: 'People Fed Last Year' },
+  { number: '70+', label: 'Countries Served' },
+  { number: '100%', label: 'Shariah Compliant' },
+  { number: '27+', label: 'Years of Service' },
+];
+
+// FAQ items
+const faqs = [
+  {
+    question: 'What is Qurbani?',
+    answer: 'Qurbani (also known as Udhiyah) is the sacrifice of an animal during Eid al-Adha to commemorate Prophet Ibrahim\'s (AS) willingness to sacrifice his son for Allah. It is obligatory (Wajib) for every Muslim who meets the Nisab threshold.',
+  },
+  {
+    question: 'When is Qurbani performed?',
+    answer: 'Qurbani must be performed during the days of Eid al-Adha: from after the Eid prayer on the 10th of Dhul Hijjah until before sunset on the 13th of Dhul Hijjah.',
+  },
+  {
+    question: 'Who is Qurbani obligatory for?',
+    answer: 'Qurbani is obligatory for every sane Muslim who has reached puberty and possesses wealth above the Nisab threshold (equivalent to 87.48g of gold or 612.36g of silver).',
+  },
+  {
+    question: 'Can I give Qurbani on behalf of someone else?',
+    answer: 'Yes, you can give Qurbani on behalf of deceased relatives, the Prophet Muhammad (PBUH), or as a gift for living family members. Simply enter their name in the "On Behalf Of" field.',
+  },
+  {
+    question: 'What is the difference between a goat/sheep and cow share?',
+    answer: 'A goat or sheep counts as one Qurbani and is sacrificed for one person. A cow can be divided into 7 shares, so each share counts as one Qurbani. A whole cow equals 7 Qurbanis.',
+  },
+  {
+    question: 'How is the meat distributed?',
+    answer: 'We distribute fresh Qurbani meat to families in need within 24-48 hours of sacrifice. The meat is divided and given to those who rarely have access to protein, bringing joy to their Eid celebrations.',
+  },
+  {
+    question: 'Will I receive confirmation of my Qurbani?',
+    answer: 'Yes! You will receive an email confirmation with details of your Qurbani, including the country of sacrifice and a certificate of completion after Eid.',
+  },
+  {
+    question: 'Is my Qurbani tax-deductible?',
+    answer: 'Yes, Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. All donations are tax-deductible to the extent allowed by law.',
+  },
+];
+
+// Testimonials
+const testimonials = [
+  {
+    name: 'Ahmed Hassan',
+    location: 'New York, USA',
+    text: 'I\'ve been giving Qurbani through Qurbani Foundation for 5 years. The process is seamless, and knowing my sacrifice reaches those most in need gives me peace of mind.',
+    rating: 5,
+  },
+  {
+    name: 'Fatima Al-Rashid',
+    location: 'London, UK',
+    text: 'The ability to select specific countries and give on behalf of my late parents is truly special. JazakAllah Khair for making this so easy.',
+    rating: 5,
+  },
+  {
+    name: 'Omar Siddiqui',
+    location: 'Toronto, Canada',
+    text: 'Last year I gave Qurbani to Palestine. Receiving the certificate and knowing families there celebrated Eid with meat was incredibly fulfilling.',
+    rating: 5,
+  },
+];
+---
+
+<Layout title={`${campaign.title} - Global Qurbani Service | Qurbani Foundation`}>
+  <Navbar />
+
+  <!-- Hero Section -->
+  <section class="relative min-h-[85vh] flex items-center overflow-hidden">
+    <!-- Background Image -->
+    <div class="absolute inset-0">
+      <img src="/images/qurbani-hero.png" alt="Qurbani Foundation" class="w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-[#01534d]/80"></div>
+    </div>
+
+
+    <div class="container mx-auto px-4 py-16 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <!-- Trust Badge -->
+        <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full mb-8 border border-white/20">
+          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+          <span class="text-white/90 text-sm font-medium">2 Million+ People Fed Globally</span>
+        </div>
+
+        <!-- Arabic Text -->
+        <p class="text-3xl md:text-4xl text-[#D97718] mb-4 font-arabic" style="font-family: 'Amiri', serif;">
+          وَالْبُدْنَ جَعَلْنَاهَا لَكُم مِّن شَعَائِرِ اللَّهِ
+        </p>
+        <p class="text-white/70 text-sm mb-8 italic">"And the camels and cattle We have made for you as among the symbols of Allah" - Quran 22:36</p>
+
+        <!-- Main Headline -->
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+          Give Your Qurbani<br/>
+          <span class="text-[#D97718]">Where It's Needed Most</span>
+        </h1>
+
+        <!-- Subheadline -->
+        <p class="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed max-w-2xl mx-auto">
+          Fulfill your obligation with 100% Shariah-compliant Qurbani.<br class="hidden md:block"/>
+          Fresh meat delivered to families in 70+ countries within 24 hours.
+        </p>
+
+        <!-- Key Points -->
+        <div class="flex flex-wrap justify-center gap-4 mb-10">
+          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-white text-sm">Shariah Compliant</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-white text-sm">70+ Countries</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-white text-sm">From $50</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-white text-sm">Tax Deductible</span>
+          </div>
+        </div>
+
+        <!-- CTA Button -->
+        <a href="#select-qurbani" class="inline-flex items-center gap-3 bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-xl">
+          <span>Give Your Qurbani Now</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="relative z-20 -mt-6 px-4">
+    <div class="bg-white shadow-xl rounded-2xl max-w-5xl mx-auto overflow-hidden">
+      <div class="grid grid-cols-2 md:grid-cols-4">
+        <div class="p-6 text-center border-r border-b md:border-b-0 border-gray-100">
+          <p class="text-4xl md:text-5xl font-bold text-[#01534d] mb-1">2M+</p>
+          <p class="text-gray-500 text-sm font-medium">People Fed Last Year</p>
+        </div>
+        <div class="p-6 text-center border-b md:border-b-0 md:border-r border-gray-100">
+          <p class="text-4xl md:text-5xl font-bold text-[#01534d] mb-1">70+</p>
+          <p class="text-gray-500 text-sm font-medium">Countries Served</p>
+        </div>
+        <div class="p-6 text-center border-r border-gray-100">
+          <p class="text-4xl md:text-5xl font-bold text-[#01534d] mb-1">100%</p>
+          <p class="text-gray-500 text-sm font-medium">Shariah Compliant</p>
+        </div>
+        <div class="p-6 text-center">
+          <p class="text-4xl md:text-5xl font-bold text-[#01534d] mb-1">27+</p>
+          <p class="text-gray-500 text-sm font-medium">Years of Service</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Qurbani Selection Section -->
+  <section id="select-qurbani" class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Choose Where to Give
+        </h2>
+        <p class="text-gray-500 text-lg max-w-2xl mx-auto">
+          Select a country, choose your animal type, and fulfill your Qurbani obligation
+        </p>
+      </div>
+
+      <!-- Search Box -->
+      <div class="max-w-md mx-auto mb-8">
+        <div class="relative">
+          <input
+            type="text"
+            id="country-search"
+            placeholder="Search country..."
+            class="w-full px-5 py-3 border border-gray-200 rounded-full focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-gray-700 placeholder-gray-400 pr-12"
+          />
+          <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Category Tabs -->
+      <div class="flex flex-wrap justify-center gap-2 mb-10" id="category-tabs">
+        <button data-category="most-needed" class="category-tab active px-6 py-3 rounded-full font-semibold text-sm transition-all bg-[#01534d] text-white">
+          Most Needed
+        </button>
+        <button data-category="lowest-price" class="category-tab px-6 py-3 rounded-full font-semibold text-sm transition-all bg-white text-gray-700 hover:bg-gray-100 border border-gray-200">
+          Lowest Price
+        </button>
+        <button data-category="emergency" class="category-tab px-6 py-3 rounded-full font-semibold text-sm transition-all bg-white text-gray-700 hover:bg-gray-100 border border-gray-200">
+          Emergency Areas
+        </button>
+        <button data-category="all" class="category-tab px-6 py-3 rounded-full font-semibold text-sm transition-all bg-white text-gray-700 hover:bg-gray-100 border border-gray-200">
+          All Countries
+        </button>
+      </div>
+
+      <!-- Countries Grid -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto" id="countries-grid">
+        {countries.map((country) => (
+          <div
+            class="country-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1"
+            data-categories={country.category.join(',')}
+            data-country={country.id}
+          >
+            <!-- Country Header -->
+            <div class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200">
+              <img
+                src={country.image}
+                alt={country.name}
+                class="w-full h-full object-cover"
+                onerror={`this.src='https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80'`}
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+
+              {/* Badges */}
+              <div class="absolute top-3 left-3 flex flex-wrap gap-2">
+                {country.urgency && (
+                  <div class="bg-white/95 backdrop-blur-sm text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
+                    Urgent need
+                  </div>
+                )}
+                {country.lowestPrice && (
+                  <div class="bg-white/95 backdrop-blur-sm text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
+                    Best value
+                  </div>
+                )}
+              </div>
+
+              {/* Country Name & Flag */}
+              <div class="absolute bottom-3 left-4 flex items-center gap-2">
+                <span class="text-3xl">{country.flag}</span>
+                <h3 class="text-xl font-bold text-white">{country.name}</h3>
+              </div>
+            </div>
+
+            <!-- Country Body -->
+            <div class="p-5">
+              <p class="text-gray-600 text-sm mb-4">{country.description}</p>
+
+              <!-- Animal Type Selection - 2 Options Only -->
+              {(() => {
+                const sheepGoat = country.animals.find(a => a.type === 'sheep' || a.type === 'goat');
+                const cowShare = country.animals.find(a => a.type === 'cow_share');
+                return (
+                  <div class="grid grid-cols-2 gap-2 mb-4">
+                    {sheepGoat && (
+                      <button
+                        type="button"
+                        class="animal-pill px-3 py-3 text-sm rounded-lg border-2 transition-all border-[#01534d] bg-[#01534d]/5 text-[#01534d]"
+                        data-type={sheepGoat.type}
+                        data-price={sheepGoat.price}
+                        data-label="Sheep/Goat"
+                      >
+                        <div class="font-semibold">Sheep/Goat</div>
+                        <div class="text-lg font-bold">${sheepGoat.price}</div>
+                      </button>
+                    )}
+                    {cowShare && (
+                      <button
+                        type="button"
+                        class="animal-pill px-3 py-3 text-sm rounded-lg border-2 transition-all border-gray-200 text-gray-600 hover:border-gray-300"
+                        data-type="cow_share"
+                        data-price={cowShare.price}
+                        data-label="Cow Share"
+                      >
+                        <div class="font-semibold">Cow Share</div>
+                        <div class="text-lg font-bold">${cowShare.price}</div>
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <!-- Quantity -->
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-gray-600">Qty:</span>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                    <button type="button" class="qty-minus px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 transition">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                      </svg>
+                    </button>
+                    <input type="number" class="qty-input w-8 text-center py-1.5 border-0 focus:ring-0 text-gray-700 font-medium text-sm" value="1" min="1" max="100" />
+                    <button type="button" class="qty-plus px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 transition">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" class="behalf-toggle text-sm text-gray-500 hover:text-[#01534d] flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Add name (Optional)
+                </button>
+              </div>
+              <!-- On Behalf Of (Hidden by default) -->
+              <div class="behalf-container hidden mb-4">
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    class="behalf-input flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-sm"
+                    placeholder="e.g. Muhammad"
+                  />
+                  <button type="button" class="behalf-clear px-2 text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Price & Add Button -->
+              <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <p class="text-xl font-bold text-gray-900">$<span class="country-price">{country.animals.find(a => a.type === 'sheep' || a.type === 'goat')?.price || country.animals[0].price}</span></p>
+                <button
+                  class="add-qurbani-btn bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
+                  data-country={country.id}
+                  data-country-name={country.name}
+                  data-flag={country.flag}
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Show More Button -->
+      <div class="text-center mt-10" id="show-more-container">
+        <button id="show-more-btn" class="inline-flex items-center gap-2 px-8 py-3 border-2 border-[#01534d] text-[#01534d] rounded-full font-semibold hover:bg-[#01534d] hover:text-white transition-all">
+          <span>Show All Countries</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          How Your Qurbani Works
+        </h2>
+      </div>
+
+      <div class="max-w-5xl mx-auto">
+        <div class="grid md:grid-cols-4 gap-8">
+          <div class="text-center">
+            <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <span class="text-xl font-bold text-gray-700">1</span>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Select Country</h3>
+            <p class="text-gray-500 text-sm">Choose from 70+ countries where your Qurbani is needed most</p>
+          </div>
+          <div class="text-center">
+            <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <span class="text-xl font-bold text-gray-700">2</span>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Choose Animal</h3>
+            <p class="text-gray-500 text-sm">Pick goat, sheep, or cow share based on your preference</p>
+          </div>
+          <div class="text-center">
+            <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <span class="text-xl font-bold text-gray-700">3</span>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">We Sacrifice</h3>
+            <p class="text-gray-500 text-sm">Our teams perform the sacrifice following Islamic guidelines</p>
+          </div>
+          <div class="text-center">
+            <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <span class="text-xl font-bold text-gray-700">4</span>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Meat Distributed</h3>
+            <p class="text-gray-500 text-sm">Fresh meat reaches families in need within 24 hours</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          What Donors Say
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {testimonials.map((testimonial) => (
+          <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+            <div class="flex mb-4">
+              {[1,2,3,4,5].map(() => (
+                <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              ))}
+            </div>
+            <p class="text-gray-700 mb-6 italic">"{testimonial.text}"</p>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-bold">
+                {testimonial.name.charAt(0)}
+              </div>
+              <div>
+                <p class="font-bold text-gray-800">{testimonial.name}</p>
+                <p class="text-gray-500 text-sm">{testimonial.location}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div class="space-y-4" id="faq-accordion">
+          {faqs.map((faq, index) => (
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <button
+                class="faq-toggle w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition"
+                data-index={index}
+              >
+                <span class="font-semibold text-gray-800 pr-8">{faq.question}</span>
+                <svg class="faq-icon w-5 h-5 text-[#01534d] flex-shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              <div class="faq-content hidden px-6 pb-6">
+                <p class="text-gray-600 leading-relaxed">{faq.answer}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="py-20 bg-[#01534d] relative overflow-hidden">
+
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-3xl mx-auto text-center">
+        <p class="text-[#D97718] font-arabic text-2xl mb-4">لَن تَنَالُوا الْبِرَّ حَتَّىٰ تُنفِقُوا مِمَّا تُحِبُّونَ</p>
+        <p class="text-white/80 text-sm italic mb-8">"You will never attain righteousness until you spend from that which you love" - Quran 3:92</p>
+
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Fulfill Your Qurbani Today
+        </h2>
+        <p class="text-xl text-white/80 mb-8">
+          Join thousands of Muslims worldwide in this blessed act of worship
+        </p>
+
+        <a href="#select-qurbani" class="inline-flex items-center gap-3 bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg">
+          <span>Give Qurbani Now</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </a>
+
+        <p class="text-white/60 text-sm mt-6">
+          Questions? Call us at <a href="tel:+18009000027" class="text-[#D97718] hover:underline">1-800-900-0027</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sticky Mobile CTA -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg">
+    <a href="#select-qurbani" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl">
+      <span>Give Qurbani</span>
+      <span class="text-[#D97718]">from $50</span>
+    </a>
+  </div>
+
+  <Footer />
+
+  <script is:inline>
+    // Category Tab Filtering
+    document.querySelectorAll('.category-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Update active tab
+        document.querySelectorAll('.category-tab').forEach(t => {
+          t.classList.remove('active', 'bg-[#01534d]', 'text-white');
+          t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+        });
+        tab.classList.add('active', 'bg-[#01534d]', 'text-white');
+        tab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+
+        const category = tab.dataset.category;
+
+        // Filter countries
+        document.querySelectorAll('.country-card').forEach(card => {
+          const categories = card.dataset.categories.split(',');
+          if (category === 'all' || categories.includes(category)) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // Country Search
+    const searchInput = document.getElementById('country-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+
+        // If searching, show all matching countries regardless of category
+        if (searchTerm.length > 0) {
+          // Reset all tabs to inactive
+          document.querySelectorAll('.category-tab').forEach(t => {
+            t.classList.remove('active', 'bg-[#01534d]', 'text-white');
+            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+          });
+
+          // Filter by search term
+          document.querySelectorAll('.country-card').forEach(card => {
+            const countryName = card.querySelector('h3')?.textContent?.toLowerCase() || '';
+            const countryId = card.dataset.country?.toLowerCase() || '';
+
+            if (countryName.includes(searchTerm) || countryId.includes(searchTerm)) {
+              card.classList.remove('hidden');
+            } else {
+              card.classList.add('hidden');
+            }
+          });
+
+          // Hide show more button when searching
+          const showMoreContainer = document.getElementById('show-more-container');
+          if (showMoreContainer) showMoreContainer.classList.add('hidden');
+        } else {
+          // If search is cleared, click "Most Needed" tab to reset
+          const mostNeededTab = document.querySelector('[data-category="most-needed"]');
+          if (mostNeededTab) mostNeededTab.click();
+
+          // Show the show more button again
+          const showMoreContainer = document.getElementById('show-more-container');
+          if (showMoreContainer) showMoreContainer.classList.remove('hidden');
+        }
+      });
+    }
+
+    // Animal Type Pill Selection
+    document.querySelectorAll('.animal-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const card = pill.closest('.country-card');
+
+        // Update pill styles
+        card.querySelectorAll('.animal-pill').forEach(p => {
+          p.classList.remove('border-[#01534d]', 'bg-[#01534d]/5', 'text-[#01534d]');
+          p.classList.add('border-gray-200', 'text-gray-600');
+        });
+        pill.classList.remove('border-gray-200', 'text-gray-600');
+        pill.classList.add('border-[#01534d]', 'bg-[#01534d]/5', 'text-[#01534d]');
+
+        // Update price
+        updateCardPrice(card);
+      });
+    });
+
+    // Quantity Controls
+    document.querySelectorAll('.qty-minus').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.country-card');
+        const input = card.querySelector('.qty-input');
+        const currentVal = parseInt(input.value) || 1;
+        if (currentVal > 1) {
+          input.value = currentVal - 1;
+          updateCardPrice(card);
+        }
+      });
+    });
+
+    document.querySelectorAll('.qty-plus').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.country-card');
+        const input = card.querySelector('.qty-input');
+        const currentVal = parseInt(input.value) || 1;
+        if (currentVal < 100) {
+          input.value = currentVal + 1;
+          updateCardPrice(card);
+        }
+      });
+    });
+
+    document.querySelectorAll('.qty-input').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const card = e.target.closest('.country-card');
+        let val = parseInt(e.target.value) || 1;
+        if (val < 1) val = 1;
+        if (val > 100) val = 100;
+        e.target.value = val;
+        updateCardPrice(card);
+      });
+    });
+
+    function updateCardPrice(card) {
+      const selectedPill = card.querySelector('.animal-pill.border-\\[\\#01534d\\]');
+      if (!selectedPill) return;
+      const unitPrice = parseInt(selectedPill.dataset.price);
+      const qty = parseInt(card.querySelector('.qty-input').value) || 1;
+      card.querySelector('.country-price').textContent = (unitPrice * qty).toLocaleString();
+    }
+
+    // Dedicate Toggle
+    document.querySelectorAll('.behalf-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.country-card');
+        const container = card.querySelector('.behalf-container');
+        container.classList.remove('hidden');
+        btn.classList.add('hidden');
+        card.querySelector('.behalf-input').focus();
+      });
+    });
+
+    // Dedicate Clear/Close
+    document.querySelectorAll('.behalf-clear').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.country-card');
+        const container = card.querySelector('.behalf-container');
+        const toggle = card.querySelector('.behalf-toggle');
+        card.querySelector('.behalf-input').value = '';
+        container.classList.add('hidden');
+        toggle.classList.remove('hidden');
+      });
+    });
+
+    // Add to Cart
+    document.querySelectorAll('.add-qurbani-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.country-card');
+        const countryName = btn.dataset.countryName;
+        const flag = btn.dataset.flag;
+        const selectedPill = card.querySelector('.animal-pill.border-\\[\\#01534d\\]');
+        if (!selectedPill) return;
+
+        const animalType = selectedPill.dataset.type;
+        const animalLabel = selectedPill.dataset.label;
+        const unitPrice = parseInt(selectedPill.dataset.price);
+        const quantity = parseInt(card.querySelector('.qty-input').value) || 1;
+        const behalfOf = card.querySelector('.behalf-input').value;
+
+        const qtyText = quantity > 1 ? ` x${quantity}` : '';
+        const itemName = behalfOf
+          ? `Qurbani ${countryName} - ${animalLabel}${qtyText} (For: ${behalfOf})`
+          : `Qurbani ${countryName} - ${animalLabel}${qtyText}`;
+
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({
+            id: `qurbani-${btn.dataset.country}-${animalType}-${Date.now()}`,
+            name: itemName,
+            amount: unitPrice,
+            quantity: quantity,
+            type: 'single',
+            campaign: 'qurbani',
+            label: `${flag} ${countryName}`,
+            metadata: {
+              country: countryName,
+              countryCode: btn.dataset.country,
+              animalType: animalType,
+              animalLabel: animalLabel,
+              quantity: quantity,
+              behalfOf: behalfOf || null,
+              service: 'qurbani'
+            }
+          });
+        }
+
+        // Visual feedback
+        const addedText = quantity > 1 ? `${quantity} Added!` : 'Added!';
+        btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> ${addedText}`;
+        btn.classList.add('bg-green-500');
+
+        setTimeout(() => {
+          btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Add`;
+          btn.classList.remove('bg-green-500');
+        }, 1500);
+
+        // Reset quantity and behalf input
+        card.querySelector('.qty-input').value = '1';
+        card.querySelector('.behalf-input').value = '';
+        card.querySelector('.behalf-container').classList.add('hidden');
+        card.querySelector('.behalf-toggle').classList.remove('hidden');
+        updateCardPrice(card);
+      });
+    });
+
+    // FAQ Accordion
+    document.querySelectorAll('.faq-toggle').forEach(button => {
+      button.addEventListener('click', () => {
+        const content = button.nextElementSibling;
+        const icon = button.querySelector('.faq-icon');
+
+        document.querySelectorAll('.faq-content').forEach(c => {
+          if (c !== content) {
+            c.classList.add('hidden');
+            c.previousElementSibling.querySelector('.faq-icon').classList.remove('rotate-180');
+          }
+        });
+
+        content.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
+      });
+    });
+
+    // Show More Countries
+    const showMoreBtn = document.getElementById('show-more-btn');
+    if (showMoreBtn) {
+      showMoreBtn.addEventListener('click', () => {
+        // Click "All Countries" tab
+        const allTab = document.querySelector('[data-category="all"]');
+        if (allTab) allTab.click();
+        showMoreBtn.closest('#show-more-container').classList.add('hidden');
+      });
+    }
+
+    // Initially show only first 6 countries in most-needed
+    const cards = document.querySelectorAll('.country-card');
+    cards.forEach((card, index) => {
+      const categories = card.dataset.categories.split(',');
+      if (!categories.includes('most-needed')) {
+        card.classList.add('hidden');
+      }
+    });
+  </script>
+
+  <style>
+    .font-arabic {
+      font-family: 'Amiri', 'Traditional Arabic', serif;
+    }
+  </style>
+</Layout>
