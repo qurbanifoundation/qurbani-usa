@@ -1,0 +1,342 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+const { token } = Astro.params;
+
+// Token format: subscriptionId_managementToken
+const parts = token?.split('_') || [];
+if (parts.length !== 2) {
+  return Astro.redirect('/');
+}
+
+const [subscriptionId, managementToken] = parts;
+
+// Fetch subscription details
+const { data: subscription, error } = await supabaseAdmin
+  .from('donation_subscriptions')
+  .select('*')
+  .eq('id', subscriptionId)
+  .single();
+
+if (error || !subscription) {
+  return Astro.redirect('/');
+}
+
+// Get donation history for this subscription
+const { data: donations } = await supabaseAdmin
+  .from('donations')
+  .select('*')
+  .eq('stripe_subscription_id', subscription.stripe_subscription_id)
+  .order('created_at', { ascending: false })
+  .limit(12);
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount);
+};
+
+const statusColors: Record<string, string> = {
+  active: 'bg-green-100 text-green-800',
+  paused: 'bg-yellow-100 text-yellow-800',
+  past_due: 'bg-red-100 text-red-800',
+  cancelled: 'bg-gray-100 text-gray-800',
+};
+---
+
+<Layout title="Manage Your Monthly Donation">
+  <div class="min-h-screen bg-gray-50 py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <a href="/" class="inline-block mb-6">
+          <img src="/images/logo.png" alt="Qurbani USA" class="h-12 mx-auto" />
+        </a>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Manage Your Monthly Donation</h1>
+        <p class="text-gray-600">Thank you for your continued support</p>
+      </div>
+
+      <!-- Subscription Card -->
+      <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+        <div class="bg-[#01534d] text-white p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-white/80 mb-1">Monthly Donation</p>
+              <p class="text-3xl font-bold">{formatCurrency(subscription.amount)}/month</p>
+            </div>
+            <span class={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[subscription.status]}`}>
+              {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1).replace('_', ' ')}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Donor Info -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-500">Donor</p>
+              <p class="font-medium">{subscription.donor_name || 'Anonymous'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Email</p>
+              <p class="font-medium">{subscription.donor_email}</p>
+            </div>
+          </div>
+
+          <!-- Dates -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-500">Started</p>
+              <p class="font-medium">{formatDate(subscription.created_at)}</p>
+            </div>
+            {subscription.next_billing_date && subscription.status === 'active' && (
+              <div>
+                <p class="text-sm text-gray-500">Next Payment</p>
+                <p class="font-medium">{formatDate(subscription.next_billing_date)}</p>
+              </div>
+            )}
+          </div>
+
+          <!-- Items -->
+          {subscription.items && subscription.items.length > 0 && (
+            <div>
+              <p class="text-sm text-gray-500 mb-2">Supporting</p>
+              <div class="flex flex-wrap gap-2">
+                {subscription.items.map((item: any) => (
+                  <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#01534d]/10 text-[#01534d] text-sm font-medium">
+                    {item.name || item.label || 'General'}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <!-- Actions -->
+        {subscription.status !== 'cancelled' && (
+          <div class="border-t border-gray-100 p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Manage Your Subscription</h3>
+            <div class="space-y-3">
+              {subscription.status === 'active' && (
+                <>
+                  <button
+                    id="skip-btn"
+                    class="w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                    </svg>
+                    Skip Next Payment
+                  </button>
+                  <button
+                    id="pause-btn"
+                    class="w-full px-4 py-3 bg-yellow-50 text-yellow-700 rounded-lg font-medium hover:bg-yellow-100 transition flex items-center justify-center gap-2"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Pause Monthly Donations
+                  </button>
+                </>
+              )}
+              {subscription.status === 'paused' && (
+                <button
+                  id="resume-btn"
+                  class="w-full px-4 py-3 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition flex items-center justify-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Resume Monthly Donations
+                </button>
+              )}
+              <div class="pt-3 border-t border-gray-100">
+                <button
+                  id="cancel-btn"
+                  class="w-full px-4 py-3 bg-gray-50 text-gray-600 rounded-lg font-medium hover:bg-red-50 hover:text-red-600 transition flex items-center justify-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                  Cancel Subscription
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {subscription.status === 'cancelled' && (
+          <div class="border-t border-gray-100 p-6">
+            <div class="text-center text-gray-500">
+              <p>This subscription was cancelled on {formatDate(subscription.cancelled_at)}</p>
+              <a href="/donate" class="inline-block mt-4 px-6 py-3 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+                Start a New Donation
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- Donation History -->
+      {donations && donations.length > 0 && (
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Donation History</h2>
+          </div>
+          <div class="divide-y divide-gray-100">
+            {donations.map((donation: any) => (
+              <div class="p-4 flex items-center justify-between">
+                <div>
+                  <p class="font-medium text-gray-900">{formatCurrency(donation.amount)}</p>
+                  <p class="text-sm text-gray-500">{formatDate(donation.created_at)}</p>
+                </div>
+                <span class={`px-3 py-1 rounded-full text-xs font-medium ${
+                  donation.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  donation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {donation.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Footer -->
+      <div class="text-center mt-8 text-gray-500 text-sm">
+        <p>Questions? Contact us at <a href="mailto:info@qurbaniusa.com" class="text-[#01534d] hover:underline">info@qurbaniusa.com</a></p>
+        <a href="/" class="inline-block mt-4 text-[#01534d] hover:underline">Return to Website</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6">
+      <h3 id="modal-title" class="text-xl font-bold text-gray-900 mb-2">Confirm Action</h3>
+      <p id="modal-message" class="text-gray-600 mb-6"></p>
+      <div class="flex gap-4">
+        <button id="modal-cancel" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+          Cancel
+        </button>
+        <button id="modal-confirm" class="flex-1 px-4 py-3 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ subscriptionId, managementToken }}>
+    const modal = document.getElementById('confirm-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalConfirm = document.getElementById('modal-confirm');
+
+    let currentAction = null;
+
+    function showModal(title, message, action) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      currentAction = action;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function hideModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentAction = null;
+    }
+
+    modalCancel?.addEventListener('click', hideModal);
+
+    modalConfirm?.addEventListener('click', async () => {
+      if (!currentAction) return;
+
+      modalConfirm.disabled = true;
+      modalConfirm.textContent = 'Processing...';
+
+      try {
+        let response;
+        if (currentAction === 'cancel') {
+          response = await fetch(`/api/subscriptions/manage?subscription_id=${subscriptionId}&token=${managementToken}`, {
+            method: 'DELETE',
+          });
+        } else {
+          response = await fetch('/api/subscriptions/manage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subscription_id: subscriptionId,
+              token: managementToken,
+              action: currentAction,
+            }),
+          });
+        }
+
+        const result = await response.json();
+
+        if (response.ok) {
+          // Reload page to show updated status
+          window.location.reload();
+        } else {
+          alert(result.error || 'An error occurred');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+      } finally {
+        modalConfirm.disabled = false;
+        modalConfirm.textContent = 'Confirm';
+        hideModal();
+      }
+    });
+
+    document.getElementById('pause-btn')?.addEventListener('click', () => {
+      showModal(
+        'Pause Monthly Donation',
+        'Are you sure you want to pause your monthly donation? You will not be charged until you resume.',
+        'pause'
+      );
+    });
+
+    document.getElementById('resume-btn')?.addEventListener('click', () => {
+      showModal(
+        'Resume Monthly Donation',
+        'Are you sure you want to resume your monthly donation? Regular billing will continue.',
+        'resume'
+      );
+    });
+
+    document.getElementById('cancel-btn')?.addEventListener('click', () => {
+      showModal(
+        'Cancel Subscription',
+        'Are you sure you want to cancel your monthly donation? This cannot be undone. You will not be charged again after the current period ends.',
+        'cancel'
+      );
+    });
+
+    document.getElementById('skip-btn')?.addEventListener('click', () => {
+      showModal(
+        'Skip Next Payment',
+        'Skip the next scheduled payment? Your subscription will remain active and billing will resume the following month.',
+        'skip'
+      );
+    });
+  </script>
+</Layout>

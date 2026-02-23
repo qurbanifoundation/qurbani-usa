@@ -1,6 +1,8 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 
+export const prerender = false;
+
 // Mock data - replace with Supabase queries
 const stats = [
   { label: 'Total Donations', value: '$45,231', change: '+12.5%', positive: true },

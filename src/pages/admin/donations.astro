@@ -1,0 +1,316 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Get query params for filtering
+const url = new URL(Astro.request.url);
+const statusFilter = url.searchParams.get('status') || 'all';
+const page = parseInt(url.searchParams.get('page') || '1');
+const perPage = 25;
+
+// Build query
+let query = supabaseAdmin
+  .from('donations')
+  .select('*', { count: 'exact' })
+  .order('created_at', { ascending: false });
+
+if (statusFilter !== 'all') {
+  query = query.eq('status', statusFilter);
+}
+
+// Pagination
+const { data: donations, count, error } = await query
+  .range((page - 1) * perPage, page * perPage - 1);
+
+const totalPages = Math.ceil((count || 0) / perPage);
+
+// Get stats
+const { data: statsData } = await supabaseAdmin
+  .from('donations')
+  .select('status, amount');
+
+const stats = {
+  total: statsData?.length || 0,
+  completed: statsData?.filter(d => d.status === 'completed').length || 0,
+  pending: statsData?.filter(d => d.status === 'pending').length || 0,
+  failed: statsData?.filter(d => d.status === 'failed').length || 0,
+  totalAmount: statsData?.filter(d => d.status === 'completed').reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0,
+};
+
+// Format date helper
+function formatDate(dateStr: string) {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+// Format amount helper
+function formatAmount(amount: number | string) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
+}
+
+// Status badge colors
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'completed':
+      return 'bg-green-100 text-green-800';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'failed':
+      return 'bg-red-100 text-red-800';
+    case 'refunded':
+      return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+---
+
+<AdminLayout title="Donations" activeNav="donations">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-sm text-gray-500 mb-1">Total Donations</p>
+      <p class="text-2xl font-bold text-gray-800">{stats.total}</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-sm text-gray-500 mb-1">Completed</p>
+      <p class="text-2xl font-bold text-green-600">{stats.completed}</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-sm text-gray-500 mb-1">Pending</p>
+      <p class="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-sm text-gray-500 mb-1">Failed</p>
+      <p class="text-2xl font-bold text-red-600">{stats.failed}</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <p class="text-sm text-gray-500 mb-1">Total Revenue</p>
+      <p class="text-2xl font-bold text-[#01534d]">{formatAmount(stats.totalAmount)}</p>
+    </div>
+  </div>
+
+  <!-- Filters & Actions -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+    <div class="p-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">Filter by status:</span>
+        <div class="flex gap-2">
+          <a
+            href="/admin/donations?status=all"
+            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'all' ? 'bg-[#01534d] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            All
+          </a>
+          <a
+            href="/admin/donations?status=completed"
+            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'completed' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            Completed
+          </a>
+          <a
+            href="/admin/donations?status=pending"
+            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            Pending
+          </a>
+          <a
+            href="/admin/donations?status=failed"
+            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'failed' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          >
+            Failed
+          </a>
+        </div>
+      </div>
+      <button
+        id="export-btn"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition text-sm"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- Donations Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Donor</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Items</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Stripe</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {donations && donations.length > 0 ? (
+            donations.map((donation: any) => {
+              const items = typeof donation.items === 'string'
+                ? JSON.parse(donation.items)
+                : (donation.items || []);
+              const itemNames = items.map((i: any) => i.name || i.label || 'Donation').join(', ');
+
+              return (
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-800">{formatDate(donation.created_at)}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div>
+                      <p class="text-sm font-medium text-gray-800">{donation.donor_name || 'Anonymous'}</p>
+                      <p class="text-xs text-gray-500">{donation.donor_email || 'No email'}</p>
+                      {donation.donor_phone && (
+                        <p class="text-xs text-gray-400">{donation.donor_phone}</p>
+                      )}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-600 max-w-xs truncate" title={itemNames}>
+                      {itemNames || 'General Donation'}
+                    </p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm font-semibold text-gray-800">{formatAmount(donation.amount)}</p>
+                    <p class="text-xs text-gray-400 uppercase">{donation.currency || 'USD'}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusBadge(donation.status)}`}>
+                      {donation.status || 'unknown'}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    {donation.stripe_payment_intent_id ? (
+                      <a
+                        href={`https://dashboard.stripe.com/payments/${donation.stripe_payment_intent_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        View in Stripe
+                      </a>
+                    ) : (
+                      <span class="text-xs text-gray-400">N/A</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center">
+                  <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                  <p class="text-gray-500 font-medium">No donations found</p>
+                  <p class="text-gray-400 text-sm">Donations will appear here once customers complete checkout</p>
+                </div>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+        <p class="text-sm text-gray-500">
+          Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, count || 0)} of {count} donations
+        </p>
+        <div class="flex gap-2">
+          {page > 1 && (
+            <a
+              href={`/admin/donations?status=${statusFilter}&page=${page - 1}`}
+              class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              Previous
+            </a>
+          )}
+          {page < totalPages && (
+            <a
+              href={`/admin/donations?status=${statusFilter}&page=${page + 1}`}
+              class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              Next
+            </a>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+
+  <!-- Info Box -->
+  <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <p class="text-sm font-medium text-blue-800">About Donation Status</p>
+        <ul class="text-sm text-blue-700 mt-1 space-y-1">
+          <li><span class="font-medium">Pending:</span> Payment initiated but not yet completed</li>
+          <li><span class="font-medium">Completed:</span> Payment successful, donation confirmed</li>
+          <li><span class="font-medium">Failed:</span> Payment was declined or error occurred</li>
+          <li><span class="font-medium">Refunded:</span> Donation was refunded to the donor</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ donations: donations || [] }}>
+  // Export CSV functionality
+  document.getElementById('export-btn')?.addEventListener('click', function() {
+    if (!donations || donations.length === 0) {
+      alert('No donations to export');
+      return;
+    }
+
+    // Build CSV
+    const headers = ['Date', 'Donor Name', 'Email', 'Phone', 'Amount', 'Currency', 'Status', 'Items', 'Stripe ID'];
+    const rows = donations.map(d => {
+      const items = typeof d.items === 'string' ? JSON.parse(d.items) : (d.items || []);
+      const itemNames = items.map(i => i.name || i.label || 'Donation').join('; ');
+      return [
+        new Date(d.created_at).toISOString(),
+        d.donor_name || 'Anonymous',
+        d.donor_email || '',
+        d.donor_phone || '',
+        d.amount,
+        d.currency || 'USD',
+        d.status,
+        itemNames,
+        d.stripe_payment_intent_id || ''
+      ];
+    });
+
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `donations-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>

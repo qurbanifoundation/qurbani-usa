@@ -35,6 +35,31 @@ try {
 <!-- Stripe.js -->
 <script is:inline src="https://js.stripe.com/v3/"></script>
 
+<!-- Google Places Autocomplete Dropdown Fix -->
+<style is:global>
+  .pac-container {
+    z-index: 10000 !important;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    margin-top: 4px;
+  }
+  .pac-item {
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .pac-item:hover {
+    background-color: #f3f4f6;
+  }
+  .pac-item-query {
+    font-size: 14px;
+    color: #111827;
+  }
+  .pac-matched {
+    font-weight: 600;
+  }
+</style>
+
 <!-- ==================== SIDECART ==================== -->
 <div id="cart-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden opacity-0 transition-opacity duration-300"></div>
 
@@ -222,8 +247,22 @@ try {
                 <p class="text-xs text-gray-400 mt-3 text-center italic">Uncheck if you prefer not to add these — no pressure!</p>
               </div>
 
+              <!-- Cover the Fees Option -->
+              <div class="mt-6 pt-4 border-t border-gray-200">
+                <label class="flex items-start gap-3 cursor-pointer group">
+                  <input type="checkbox" id="cover-fees-checkbox" class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="font-semibold text-gray-800 text-sm group-hover:text-[#d97706] transition">Cover Transaction Fees</span>
+                      <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">+3%</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Add <span id="fee-amount-display">$0.00</span> to ensure 100% of your donation reaches those in need.</p>
+                  </div>
+                </label>
+              </div>
+
               <!-- Updated Total -->
-              <div class="mt-6 p-4 bg-[#d97706] rounded-xl text-white">
+              <div class="mt-4 p-4 bg-[#d97706] rounded-xl text-white">
                 <div class="flex justify-between items-center">
                   <span class="font-medium">Total</span>
                   <span class="text-2xl font-bold" id="modal-total">$0.00</span>
@@ -395,14 +434,38 @@ try {
         </div>
 
         <!-- Success State -->
-        <div id="modal-success" class="hidden p-8 text-center">
+        <div id="modal-success" class="hidden p-8 text-center max-w-lg mx-auto">
           <div class="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
             <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
           <h2 class="text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Thank You!</h2>
-          <p class="text-gray-600 mb-6">Your donation has been processed successfully.</p>
+          <p class="text-gray-600 mb-4" id="success-message">Your donation has been processed successfully.</p>
+
+          <!-- Subscription Info (hidden by default) -->
+          <div id="subscription-info" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="font-semibold text-blue-800">Monthly Recurring Donation</p>
+                <p class="text-sm text-blue-600 mt-1">You will be automatically charged <span id="monthly-amount" class="font-bold"></span> each month.</p>
+                <p class="text-sm text-blue-600 mt-1">Next billing date: <span id="next-billing-date" class="font-medium"></span></p>
+              </div>
+            </div>
+            <a href="#" id="manage-subscription-link" class="mt-3 inline-flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Manage Your Subscription
+            </a>
+          </div>
+
           <p class="text-sm text-gray-500 mb-8">A confirmation email has been sent to your email address.</p>
           <button type="button" id="close-success-btn" class="px-8 py-3 bg-[#d97706] text-white font-semibold rounded-xl hover:bg-[#b45309] transition">
             Continue Browsing
@@ -428,27 +491,80 @@ window.donationCart = {
 
 // Load Google Places API
 function loadGooglePlaces() {
-  if (window.donationCart.placesLoaded || !googlePlacesApiKey) return;
+  console.log('loadGooglePlaces called, API key present:', !!googlePlacesApiKey, 'key length:', googlePlacesApiKey?.length || 0);
 
+  if (window.donationCart.placesLoaded) {
+    console.log('Google Places already loaded');
+    return;
+  }
+
+  if (!googlePlacesApiKey) {
+    console.error('Google Places API key is missing! Address autocomplete will not work.');
+    return;
+  }
+
+  console.log('Loading Google Places API script...');
   const script = document.createElement('script');
   script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesApiKey}&libraries=places&callback=initPlacesAutocomplete`;
   script.async = true;
   script.defer = true;
+  script.onerror = function() {
+    console.error('Failed to load Google Places API script');
+  };
   document.head.appendChild(script);
   window.donationCart.placesLoaded = true;
 }
 
 // Initialize Places Autocomplete
 window.initPlacesAutocomplete = function() {
+  console.log('=== initPlacesAutocomplete called ===');
+
+  // Skip if already initialized
+  if (window.donationCart.autocomplete) {
+    console.log('Places autocomplete already initialized, skipping');
+    return;
+  }
+
   const addressInput = document.getElementById('modal-address');
-  if (!addressInput || !window.google?.maps?.places) return;
+  console.log('Address input element:', addressInput);
+  console.log('Address input visible:', addressInput ? getComputedStyle(addressInput).display : 'N/A');
+
+  if (!addressInput) {
+    console.error('ERROR: Address input not found in DOM');
+    return;
+  }
+
+  console.log('Google object:', typeof window.google);
+  console.log('Google maps:', typeof window.google?.maps);
+  console.log('Google places:', typeof window.google?.maps?.places);
+
+  if (!window.google?.maps?.places) {
+    console.error('ERROR: Google Places API not loaded');
+    return;
+  }
 
   try {
+    console.log('Creating Autocomplete instance...');
     window.donationCart.autocomplete = new google.maps.places.Autocomplete(addressInput, {
       types: ['address'],
       componentRestrictions: { country: ['us', 'ca', 'gb', 'au'] },
       fields: ['address_components', 'formatted_address'],
     });
+    console.log('SUCCESS: Autocomplete created:', window.donationCart.autocomplete);
+
+    // Debug: Listen for any autocomplete events
+    window.donationCart.autocomplete.addListener('place_changed', function() {
+      console.log('place_changed event fired!');
+    });
+
+    // Force the pac-container to be visible
+    setTimeout(function() {
+      const pacContainers = document.querySelectorAll('.pac-container');
+      console.log('pac-container elements found:', pacContainers.length);
+      pacContainers.forEach(function(pac, i) {
+        console.log('pac-container ' + i + ':', pac, 'z-index:', getComputedStyle(pac).zIndex);
+      });
+    }, 500);
 
     window.donationCart.autocomplete.addListener('place_changed', function() {
       const place = window.donationCart.autocomplete.getPlace();
@@ -526,6 +642,11 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.getElementById('upsell-checkbox-2').addEventListener('change', function() {
     updateUpsellCardStyles();
+    updateModalTotal();
+  });
+
+  // Cover fees checkbox
+  document.getElementById('cover-fees-checkbox').addEventListener('change', function() {
     updateModalTotal();
   });
 
@@ -687,6 +808,13 @@ function openCheckoutModal() {
   // Update upsell card styling
   updateUpsellCardStyles();
 
+  // Initialize Google Places autocomplete after modal is visible
+  setTimeout(function() {
+    if (!window.donationCart.autocomplete && window.google?.maps?.places) {
+      window.initPlacesAutocomplete();
+    }
+  }, 100);
+
   // Update cart display with upsell included
   updateModalCart();
 }
@@ -742,17 +870,33 @@ function updateModalCart() {
 }
 
 function updateModalTotal() {
-  let total = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+  let baseTotal = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
   const hasMonthly = window.donationCart.items.some(i => i.type === 'monthly');
 
   // Add upsells
-  if (document.getElementById('upsell-checkbox-1').checked) total += 50;
-  if (document.getElementById('upsell-checkbox-2').checked) total += 25;
+  if (document.getElementById('upsell-checkbox-1').checked) baseTotal += 50;
+  if (document.getElementById('upsell-checkbox-2').checked) baseTotal += 25;
+
+  // Calculate fees (3% processing fee)
+  const feePercentage = 0.03;
+  const feeAmount = baseTotal * feePercentage;
+  const coverFees = document.getElementById('cover-fees-checkbox').checked;
+  const total = coverFees ? baseTotal + feeAmount : baseTotal;
+
+  // Update fee display
+  document.getElementById('fee-amount-display').textContent = '$' + feeAmount.toFixed(2);
+
+  // Store fee state for payment
+  window.donationCart.coverFees = coverFees;
+  window.donationCart.feeAmount = feeAmount;
+  window.donationCart.baseTotal = baseTotal;
 
   document.getElementById('modal-subtotal').textContent = '$' + window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0).toFixed(2);
   document.getElementById('modal-total').textContent = '$' + total.toFixed(2);
   document.getElementById('payment-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('modal-payment-type').textContent = hasMonthly ? 'Includes monthly donations' : 'One-time donation';
+  document.getElementById('modal-payment-type').textContent = hasMonthly
+    ? (coverFees ? 'Monthly + fees covered' : 'Includes monthly donations')
+    : (coverFees ? 'One-time + fees covered' : 'One-time donation');
 }
 
 function goToPaymentStep() {
@@ -824,8 +968,13 @@ async function handlePayment() {
       items.push({ id: 'feed-family', name: 'Feed a Family', amount: 25, quantity: 1, type: 'single', campaign: 'food-aid' });
     }
 
-    const total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+    let total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
     const hasMonthly = items.some(i => i.type === 'monthly');
+
+    // Add fee coverage if selected
+    const coverFees = window.donationCart.coverFees || false;
+    const feeAmount = coverFees ? (total * 0.03) : 0;
+    total = total + feeAmount;
 
     // Create payment intent
     const response = await fetch('/api/payments/create-intent', {
@@ -837,6 +986,9 @@ async function handlePayment() {
         customer,
         billingAddress,
         type: hasMonthly ? 'monthly' : 'single',
+        coverFees: coverFees,
+        feeAmount: feeAmount,
+        baseAmount: total - feeAmount,
       }),
     });
 
@@ -863,6 +1015,29 @@ async function handlePayment() {
       document.getElementById('modal-step-2').classList.add('hidden');
       document.getElementById('modal-success').classList.remove('hidden');
 
+      // Show subscription info if this was a recurring donation
+      if (data.type === 'subscription' && data.subscriptionId) {
+        document.getElementById('subscription-info').classList.remove('hidden');
+        document.getElementById('success-message').textContent = 'Your monthly donation has been set up successfully!';
+        document.getElementById('monthly-amount').textContent = '$' + total.toFixed(2);
+
+        // Format next billing date
+        if (data.nextBillingDate) {
+          const nextDate = new Date(data.nextBillingDate);
+          document.getElementById('next-billing-date').textContent = nextDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+        }
+
+        // Set management link (we'll need to fetch the token from the API)
+        fetchManagementLink(customer.email, data.donationId);
+      } else {
+        document.getElementById('subscription-info').classList.add('hidden');
+        document.getElementById('success-message').textContent = 'Your donation has been processed successfully.';
+      }
+
       // Clear cart
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
@@ -876,6 +1051,23 @@ async function handlePayment() {
     payBtn.disabled = false;
     payText.textContent = 'Complete Donation';
     processing.classList.add('hidden');
+  }
+}
+
+// Fetch management link for subscription
+async function fetchManagementLink(email, donationId) {
+  try {
+    const response = await fetch(`/api/subscriptions/manage?email=${encodeURIComponent(email)}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.subscriptions && data.subscriptions.length > 0) {
+        const subscription = data.subscriptions[0];
+        const managementUrl = `/manage-subscription/${subscription.id}_${subscription.management_token}`;
+        document.getElementById('manage-subscription-link').href = managementUrl;
+      }
+    }
+  } catch (e) {
+    console.error('Error fetching management link:', e);
   }
 }
 </script>
