@@ -48,6 +48,10 @@ const faviconType = faviconUrl.endsWith('.svg') ? 'image/svg+xml' :
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" />
 
+    <!-- Preload critical hero images for LCP improvement -->
+    <link rel="preload" as="image" href="/images/qurbani-foundation-zakat-hero.png" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/qurbani-foundation-orphan-hero.png" fetchpriority="high" />
+
     <!-- Google Fonts: Signika, Lato & Playfair Display -->
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Signika:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
