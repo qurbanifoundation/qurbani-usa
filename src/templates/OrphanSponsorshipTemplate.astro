@@ -371,91 +371,160 @@ const faqs = [
 
               <!-- Country Selection -->
               <div class="p-6">
-                <div class="space-y-3 mb-4" id="country-options">
-                  {countries.slice(0, 4).map((country, index) => (
-                    <label
-                      class={`country-option block relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${index === 0 ? 'border-[#01534d] bg-[#01534d]/5 ring-2 ring-[#01534d]/20' : 'border-gray-200 hover:border-gray-300'}`}
-                      data-country={country.id}
-                      data-monthly={country.monthlyAmount}
-                      data-yearly={country.yearlyAmount}
-                    >
-                      <input
-                        type="radio"
-                        name="country"
-                        value={country.id}
-                        checked={index === 0}
-                        class="sr-only"
-                      />
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <span class="text-2xl">{country.flag}</span>
-                          <div>
-                            <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
-                              {country.name}
-                              {country.badge && (
-                                <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
-                              )}
+                <!-- Step 1: Choose Region - Mobile Friendly Horizontal Scroll -->
+                <div class="mb-6" id="country-options">
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="w-6 h-6 bg-[#ef7c01] rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
+                    <span class="font-semibold text-gray-800" style="font-family: 'Signika', sans-serif;">Choose a Region</span>
+                  </div>
+
+                  <!-- Mobile: Horizontal Scrollable Pills -->
+                  <div class="lg:hidden overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+                    <div class="flex gap-2 min-w-max">
+                      {countries.map((country) => (
+                        <button
+                          type="button"
+                          class="country-pill flex items-center gap-2 px-4 py-3 rounded-full border-2 border-gray-200 bg-white whitespace-nowrap transition-all hover:border-[#01534d] text-sm font-medium"
+                          data-country={country.id}
+                          data-monthly={country.monthlyAmount}
+                          data-yearly={country.yearlyAmount}
+                        >
+                          <span class="text-lg">{country.flag}</span>
+                          <span class="text-gray-700">{country.name}</span>
+                          {country.badge && (
+                            <span class={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${country.badge === 'Most Needed' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+                              {country.badge === 'Most Needed' ? 'URGENT' : 'BEST'}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <!-- Desktop: Stacked Cards -->
+                  <div class="hidden lg:block space-y-3">
+                    {countries.slice(0, 4).map((country) => (
+                      <label
+                        class="country-option block relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md border-gray-200 hover:border-gray-300"
+                        data-country={country.id}
+                        data-monthly={country.monthlyAmount}
+                        data-yearly={country.yearlyAmount}
+                      >
+                        <input
+                          type="radio"
+                          name="country"
+                          value={country.id}
+                          class="sr-only"
+                        />
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-3">
+                            <span class="text-2xl">{country.flag}</span>
+                            <div>
+                              <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+                                {country.name}
+                                {country.badge && (
+                                  <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
+                                )}
+                              </div>
+                              <div class="text-xs text-gray-500">{country.urgency}</div>
                             </div>
-                            <div class="text-xs text-gray-500">{country.urgency}</div>
+                          </div>
+                          <div class="text-right">
+                            <div class="font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">
+                              ${country.monthlyAmount}<span class="text-gray-400 font-normal text-sm">/mo</span>
+                            </div>
+                            <div class="text-xs text-gray-400">${(country.monthlyAmount / 30).toFixed(2)}/day</div>
                           </div>
                         </div>
-                        <div class="text-right">
-                          <div class="font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">
-                            ${country.monthlyAmount}<span class="text-gray-400 font-normal text-sm">/mo</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <!-- Hidden Countries - Desktop Only -->
+                  <div id="more-countries" class="hidden lg:hidden space-y-3 mt-3">
+                    {countries.slice(4).map((country) => (
+                      <label
+                        class="country-option block relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md border-gray-200 hover:border-gray-300"
+                        data-country={country.id}
+                        data-monthly={country.monthlyAmount}
+                        data-yearly={country.yearlyAmount}
+                      >
+                        <input
+                          type="radio"
+                          name="country"
+                          value={country.id}
+                          class="sr-only"
+                        />
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-3">
+                            <span class="text-2xl">{country.flag}</span>
+                            <div>
+                              <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+                                {country.name}
+                                {country.badge && (
+                                  <span class="bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
+                                )}
+                              </div>
+                              <div class="text-xs text-gray-500">{country.urgency}</div>
+                            </div>
                           </div>
-                          <div class="text-xs text-gray-400">${(country.monthlyAmount / 30).toFixed(2)}/day</div>
+                          <div class="text-right">
+                            <div class="font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">
+                              ${country.monthlyAmount}<span class="text-gray-400 font-normal text-sm">/mo</span>
+                            </div>
+                            <div class="text-xs text-gray-400">${(country.monthlyAmount / 30).toFixed(2)}/day</div>
+                          </div>
                         </div>
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    ))}
+                  </div>
+
+                  <!-- More Countries Toggle - Desktop Only -->
+                  <button id="show-more-countries" class="hidden lg:flex w-full text-sm text-[#01534d] hover:text-[#024a45] font-medium mt-3 items-center justify-center gap-1 py-2 hover:bg-gray-50 rounded-lg transition">
+                    <span id="show-more-text">Show more countries</span>
+                    <svg id="show-more-icon" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
                 </div>
 
-                <!-- Hidden Countries (shown on click) -->
-                <div id="more-countries" class="space-y-3 mb-4 hidden">
-                  {countries.slice(4).map((country) => (
-                    <label
-                      class="country-option block relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md border-gray-200 hover:border-gray-300"
-                      data-country={country.id}
-                      data-monthly={country.monthlyAmount}
-                      data-yearly={country.yearlyAmount}
-                    >
-                      <input
-                        type="radio"
-                        name="country"
-                        value={country.id}
-                        class="sr-only"
-                      />
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <span class="text-2xl">{country.flag}</span>
-                          <div>
-                            <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
-                              {country.name}
-                              {country.badge && (
-                                <span class="bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
-                              )}
-                            </div>
-                            <div class="text-xs text-gray-500">{country.urgency}</div>
-                          </div>
-                        </div>
-                        <div class="text-right">
-                          <div class="font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">
-                            ${country.monthlyAmount}<span class="text-gray-400 font-normal text-sm">/mo</span>
-                          </div>
-                          <div class="text-xs text-gray-400">${(country.monthlyAmount / 30).toFixed(2)}/day</div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
+                <!-- Selected Region Display - Mobile -->
+                <div id="selected-region-display" class="lg:hidden hidden mb-4 p-3 bg-[#01534d]/10 rounded-xl border border-[#01534d]/20">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span id="selected-flag" class="text-xl">🇵🇰</span>
+                      <span id="selected-name" class="font-semibold text-[#01534d]">Pakistan</span>
+                    </div>
+                    <span id="selected-price" class="font-bold text-[#01534d]">$45/mo</span>
+                  </div>
                 </div>
 
-                <!-- More Countries Toggle -->
-                <button id="show-more-countries" class="w-full text-sm text-[#01534d] hover:text-[#024a45] font-medium mb-4 flex items-center justify-center gap-1 py-2 hover:bg-gray-50 rounded-lg transition">
-                  <span id="show-more-text">Show more countries</span>
-                  <svg id="show-more-icon" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
+                <!-- Step 2: How Many Children - Mobile Friendly -->
+                <div class="lg:hidden mb-4" id="mobile-qty-section">
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="w-6 h-6 bg-[#ef7c01] rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
+                    <span class="font-semibold text-gray-800" style="font-family: 'Signika', sans-serif;">How Many Children?</span>
+                  </div>
+
+                  <div class="flex items-center justify-center gap-6 bg-gray-50 rounded-xl p-4">
+                    <button
+                      type="button"
+                      class="mobile-qty-decrease w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-[#01534d] transition disabled:opacity-50 text-xl font-bold"
+                    >−</button>
+                    <div class="text-center">
+                      <span class="mobile-qty-value text-4xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">1</span>
+                      <span class="mobile-qty-label block text-sm text-gray-500">child</span>
+                    </div>
+                    <button
+                      type="button"
+                      class="mobile-qty-increase w-12 h-12 rounded-full bg-[#01534d] border-2 border-[#01534d] flex items-center justify-center text-white hover:bg-[#024a45] transition text-xl font-bold"
+                    >+</button>
+                  </div>
+
+                  <p class="text-center text-sm text-gray-500 mt-2">
+                    Most sponsors choose <span class="text-[#01534d] font-semibold">2-3 children</span>
+                  </p>
+                </div>
 
                 <!-- Payment Frequency Toggle -->
                 <div class="flex bg-gray-100 rounded-xl p-1 mb-4">
@@ -508,13 +577,14 @@ const faqs = [
                 <!-- Sponsor Button -->
                 <button
                   id="sponsor-btn"
-                  class="w-full bg-gradient-to-r from-[#ef7c01] to-[#fdc448] hover:from-[#d96e00] hover:to-[#efb000] text-white font-bold text-lg py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  class="w-full bg-gray-300 text-gray-500 font-bold text-lg py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-not-allowed"
                   style="font-family: 'Signika', sans-serif;"
+                  disabled
                 >
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
                   </svg>
-                  <span id="sponsor-btn-text">Sponsor for $45/month</span>
+                  <span id="sponsor-btn-text">Select a Country Above</span>
                 </button>
 
                 <!-- Trust Badges -->
@@ -899,18 +969,20 @@ const faqs = [
     </section>
   </main>
 
-  <!-- Sticky Mobile CTA -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 shadow-lg">
+  <!-- Sticky Mobile CTA - Simplified -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 lg:hidden z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.15)]" id="mobile-cta-bar">
     <button
       id="mobile-sponsor-btn"
-      class="w-full bg-gradient-to-r from-[#ef7c01] to-[#fdc448] text-white font-bold text-lg py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+      class="w-full bg-gradient-to-r from-[#ef7c01] to-[#fdc448] text-white font-bold text-lg py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:from-gray-400 disabled:to-gray-500"
       style="font-family: 'Signika', sans-serif;"
+      disabled
     >
       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>
-      <span id="mobile-btn-text">Sponsor for $45/month</span>
+      <span id="mobile-btn-text">Select a Region Below</span>
     </button>
+    <p class="text-center text-xs text-gray-500 mt-2">100% Zakat Eligible • Tax Deductible</p>
   </div>
 
   <Footer />
@@ -931,10 +1003,10 @@ const faqs = [
     const qtyValue = document.getElementById('qty-value');
     const qtyTotal = document.getElementById('qty-total');
     const qtyMessage = document.getElementById('qty-message');
-    const mobileSponsorBtn = document.getElementById('mobile-sponsor-btn');
+    const mobileSponsorBtn = document.getElementById('mobile-sponsor-btn') as HTMLButtonElement;
     const mobileBtnText = document.getElementById('mobile-btn-text');
 
-    let selectedCountry = 'pakistan';
+    let selectedCountry: string | null = null;
     let selectedMonthly = 45;
     let selectedYearly = 540;
     let isMonthly = true;
@@ -953,10 +1025,45 @@ const faqs = [
         : `Sponsor ${quantity} Children - $${totalAmount}/${periodFull}`;
 
       if (btnText) {
-        btnText.textContent = buttonLabel;
+        btnText.textContent = selectedCountry ? buttonLabel : 'Select a Country Above';
       }
       if (mobileBtnText) {
-        mobileBtnText.textContent = buttonLabel;
+        if (selectedCountry) {
+          // Show "Sponsor X Children" format for mobile (cleaner)
+          mobileBtnText.textContent = quantity === 1 ? 'Sponsor 1 Child' : `Sponsor ${quantity} Children`;
+        } else {
+          mobileBtnText.textContent = 'Select a Region Below';
+        }
+      }
+
+      // Update mobile button based on selection
+      if (mobileSponsorBtn) {
+        if (selectedCountry) {
+          mobileSponsorBtn.disabled = false;
+          mobileSponsorBtn.classList.remove('disabled:opacity-60', 'disabled:from-gray-400', 'disabled:to-gray-500');
+        } else {
+          mobileSponsorBtn.disabled = true;
+        }
+      }
+
+      // Enable/disable desktop sponsor button
+      if (sponsorBtn) {
+        if (selectedCountry) {
+          sponsorBtn.disabled = false;
+          sponsorBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+          sponsorBtn.classList.add('bg-gradient-to-r', 'from-[#ef7c01]', 'to-[#fdc448]', 'hover:from-[#d96e00]', 'hover:to-[#efb000]', 'text-white', 'shadow-lg', 'hover:shadow-xl', 'transform', 'hover:-translate-y-0.5');
+          // Update icon to heart
+          const icon = sponsorBtn.querySelector('svg');
+          if (icon) {
+            icon.innerHTML = '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>';
+            icon.setAttribute('fill', 'currentColor');
+            icon.removeAttribute('stroke');
+          }
+        } else {
+          sponsorBtn.disabled = true;
+          sponsorBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+          sponsorBtn.classList.remove('bg-gradient-to-r', 'from-[#ef7c01]', 'to-[#fdc448]', 'hover:from-[#d96e00]', 'hover:to-[#efb000]', 'text-white', 'shadow-lg', 'hover:shadow-xl', 'transform', 'hover:-translate-y-0.5');
+        }
       }
 
       // Update quantity display
@@ -984,6 +1091,7 @@ const faqs = [
 
     // Setup country option click handlers
     const setupCountryOptions = () => {
+      // Desktop country options
       const countryOptions = document.querySelectorAll('.country-option');
       countryOptions.forEach(option => {
         option.addEventListener('click', () => {
@@ -1005,16 +1113,63 @@ const faqs = [
           updateUI();
         });
       });
+
+      // Mobile country pills
+      const countryPills = document.querySelectorAll('.country-pill');
+      countryPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          // Update visual state for ALL pills
+          countryPills.forEach(p => {
+            p.classList.remove('border-[#01534d]', 'bg-[#01534d]', 'text-white');
+            p.classList.add('border-gray-200', 'bg-white');
+            const textSpan = p.querySelector('span:nth-child(2)');
+            if (textSpan) textSpan.classList.remove('text-white');
+            if (textSpan) textSpan.classList.add('text-gray-700');
+          });
+
+          pill.classList.remove('border-gray-200', 'bg-white');
+          pill.classList.add('border-[#01534d]', 'bg-[#01534d]');
+          const textSpan = pill.querySelector('span:nth-child(2)');
+          if (textSpan) {
+            textSpan.classList.remove('text-gray-700');
+            textSpan.classList.add('text-white');
+          }
+
+          // Update values
+          const el = pill as HTMLElement;
+          selectedCountry = el.dataset.country || 'pakistan';
+          selectedMonthly = parseInt(el.dataset.monthly || '45');
+          selectedYearly = parseInt(el.dataset.yearly || '540');
+
+          // Update selected region display
+          const selectedDisplay = document.getElementById('selected-region-display');
+          const selectedFlag = document.getElementById('selected-flag');
+          const selectedName = document.getElementById('selected-name');
+          const selectedPrice = document.getElementById('selected-price');
+
+          if (selectedDisplay && selectedFlag && selectedName && selectedPrice) {
+            selectedDisplay.classList.remove('hidden');
+            const flagEmoji = pill.querySelector('span:first-child')?.textContent || '🌍';
+            const countryName = el.dataset.country ? el.dataset.country.charAt(0).toUpperCase() + el.dataset.country.slice(1) : 'Selected';
+            selectedFlag.textContent = flagEmoji;
+            selectedName.textContent = countryName === 'General' ? 'Where Most Needed' : countryName;
+            selectedPrice.textContent = `$${selectedMonthly}/mo`;
+          }
+
+          updateUI();
+        });
+      });
     };
 
     // Initialize country options
     setupCountryOptions();
 
-    // Quantity controls
+    // Quantity controls - Desktop
     qtyDecrease?.addEventListener('click', () => {
       if (quantity > 1) {
         quantity--;
         updateUI();
+        updateMobileQty();
       }
     });
 
@@ -1022,6 +1177,35 @@ const faqs = [
       if (quantity < 10) {
         quantity++;
         updateUI();
+        updateMobileQty();
+      }
+    });
+
+    // Quantity controls - Mobile
+    const mobileQtyDecrease = document.querySelector('.mobile-qty-decrease');
+    const mobileQtyIncrease = document.querySelector('.mobile-qty-increase');
+
+    const updateMobileQty = () => {
+      const mobileQtyValue = document.querySelector('.mobile-qty-value');
+      const mobileQtyLabel = document.querySelector('.mobile-qty-label');
+      if (mobileQtyValue) mobileQtyValue.textContent = quantity.toString();
+      if (mobileQtyLabel) mobileQtyLabel.textContent = quantity === 1 ? 'child' : 'children';
+      if (mobileQtyDecrease) (mobileQtyDecrease as HTMLButtonElement).disabled = quantity <= 1;
+    };
+
+    mobileQtyDecrease?.addEventListener('click', () => {
+      if (quantity > 1) {
+        quantity--;
+        updateUI();
+        updateMobileQty();
+      }
+    });
+
+    mobileQtyIncrease?.addEventListener('click', () => {
+      if (quantity < 10) {
+        quantity++;
+        updateUI();
+        updateMobileQty();
       }
     });
 
@@ -1061,6 +1245,11 @@ const faqs = [
     // Sponsor button click - redirect to donate page
     const handleSponsorClick = (e: Event) => {
       e.preventDefault();
+      if (!selectedCountry) {
+        // Scroll to country selection
+        document.getElementById('country-options')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
       const baseAmount = isMonthly ? selectedMonthly : selectedYearly;
       const totalAmount = baseAmount * quantity;
       const frequency = isMonthly ? 'monthly' : 'single';
@@ -1342,7 +1531,25 @@ const faqs = [
   /* Add padding for sticky mobile CTA */
   @media (max-width: 1023px) {
     main {
-      padding-bottom: 80px;
+      padding-bottom: 100px;
     }
+  }
+
+  /* Hide scrollbar but allow scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth horizontal scroll snap */
+  .overflow-x-auto {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .country-pill {
+    scroll-snap-align: start;
   }
 </style>
