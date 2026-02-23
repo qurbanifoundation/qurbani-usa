@@ -28,8 +28,9 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       return redirect(returnUrl as string);
     }
 
-    // Wrong password - redirect back to login
-    return redirect('/admin-login?error=1');
+    // Wrong password - redirect back to admin (will show login form again)
+    const returnUrl = formData.get('returnUrl') || '/admin';
+    return redirect(`${returnUrl}?error=1`);
   } catch (e) {
     return new Response('Invalid request', { status: 400 });
   }

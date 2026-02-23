@@ -26,6 +26,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
+  // Check for error in query string
+  const hasError = context.url.searchParams.get('error') === '1';
+
   // Return login form (POST goes to /api/admin-login)
   const html = `
 <!DOCTYPE html>
@@ -131,6 +134,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     <p>Enter the admin password to continue</p>
     <form method="POST" action="/api/admin-login">
       <input type="hidden" name="returnUrl" value="${pathname}">
+      ${hasError ? '<div style="background:#fee2e2;color:#dc2626;padding:12px;border-radius:8px;margin-bottom:16px;font-size:14px;text-align:center;">Incorrect password. Please try again.</div>' : ''}
       <label for="password">Password</label>
       <input type="password" id="password" name="password" placeholder="Enter admin password" required autofocus>
       <button type="submit">Sign In</button>
