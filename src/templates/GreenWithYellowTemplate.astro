@@ -730,7 +730,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 </Layout>
 
 <script define:vars={{ campaignData: { slug: campaign.slug, title: campaign.title, image: campaign.featured_image }, donationOpts: activeOptions, boxTemplate: donationBoxTemplate, colorConfig: colors }}>
-  let selectedAmount = 300;
+  let selectedAmount = 0; // No default selection
   let selectedLabel = '';
   let donationType = 'single';
 

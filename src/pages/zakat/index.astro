@@ -322,7 +322,7 @@ import Footer from '../../components/Footer.astro';
     const customInput = document.getElementById('zakat-custom-amount') as HTMLInputElement;
     const donateBtn = document.getElementById('zakat-donate-btn');
 
-    let selectedAmount = 500;
+    let selectedAmount = 0; // No default selection
 
     function updateButtonStyle(btn: Element, isSelected: boolean) {
       const span = btn.querySelector('span');

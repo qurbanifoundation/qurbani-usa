@@ -148,7 +148,7 @@ const progressPercent = goalAmount > 0 ? Math.min((progressAmount / goalAmount) 
     const box = document.getElementById(boxId);
     if (!box) return;
 
-    let selectedAmount = donationOptions[1]?.amount || 50;
+    let selectedAmount = 0; // No default selection
     let selectedLabel = donationOptions[1]?.label || '';
     let donationType = 'single';
 

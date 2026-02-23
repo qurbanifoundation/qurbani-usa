@@ -131,7 +131,7 @@ const boxId = `teal-yellow-box-${Math.random().toString(36).substr(2, 9)}`;
     const box = document.getElementById(boxId);
     if (!box) return;
 
-    let selectedAmount = donationOptions[0]?.amount || 50;
+    let selectedAmount = 0; // No default selection
     let selectedLabel = donationOptions[0]?.label || '';
     let donationType = 'single';
 

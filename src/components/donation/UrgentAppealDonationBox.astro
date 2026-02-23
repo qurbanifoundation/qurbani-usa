@@ -195,7 +195,7 @@ const {
 
 <script define:vars={{ campaignSlug, campaignTitle, campaignImage, donationOptions, accentColor }}>
   let donationType = 'single';
-  let selectedAmount = donationOptions[0]?.amount || 50;
+  let selectedAmount = 0; // No default selection
   let selectedLabel = donationOptions[0]?.label || '';
 
   document.addEventListener('DOMContentLoaded', function() {

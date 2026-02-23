@@ -453,7 +453,7 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
 </Layout>
 
 <script define:vars={{ campaignData: { slug: campaign.slug, title: campaign.title, image: campaign.featured_image }, donationOpts: donationOptions }}>
-  let selectedAmount = 250;
+  let selectedAmount = 0; // No default selection
   let selectedLabel = 'Family relief kit';
   let donationType = 'single';
 
