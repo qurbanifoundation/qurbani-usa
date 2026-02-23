@@ -1,0 +1,141 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch active campaigns
+let campaigns: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('is_active', true)
+    .order('is_featured', { ascending: false })
+    .order('display_order', { ascending: true });
+  campaigns = data || [];
+} catch (e) {}
+---
+
+<Layout title="Campaigns & Appeals" description="Support our humanitarian campaigns and appeals. Your donation can make a difference.">
+  <Navbar />
+
+  <main class="min-h-screen">
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-[#255764] to-[#01534d] py-16 md:py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <span class="inline-block bg-white/10 text-white text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+          CAMPAIGNS
+        </span>
+        <h1 class="text-3xl md:text-5xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+          Support Our Causes
+        </h1>
+        <p class="text-xl text-white/80 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          Your donations fund critical humanitarian work around the world
+        </p>
+      </div>
+    </section>
+
+    <!-- Campaigns Grid -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {campaigns.length === 0 ? (
+          <div class="text-center py-12">
+            <p class="text-gray-500 text-lg">No active campaigns at the moment. Check back soon!</p>
+          </div>
+        ) : (
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {campaigns.map((campaign) => {
+              const raised = campaign.raised_amount || 0;
+              const goal = campaign.goal_amount || 0;
+              const percentage = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+
+              return (
+                <a href={`/campaigns/${campaign.slug}`} class="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
+                  <!-- Image -->
+                  <div class="h-48 bg-gray-100 relative overflow-hidden">
+                    {campaign.featured_image ? (
+                      <img
+                        src={campaign.featured_image}
+                        alt={campaign.title}
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#01534d] to-[#255764]">
+                        <svg class="w-16 h-16 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                      </div>
+                    )}
+                    {campaign.is_featured && (
+                      <span class="absolute top-3 left-3 bg-[#ef7c01] text-white text-xs font-bold px-3 py-1 rounded-full">
+                        FEATURED
+                      </span>
+                    )}
+                  </div>
+
+                  <!-- Content -->
+                  <div class="p-5">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#01534d] transition" style="font-family: 'Signika', sans-serif;">
+                      {campaign.title}
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2" style="font-family: 'Lato', sans-serif;">
+                      {campaign.subtitle || campaign.description?.substring(0, 100) || 'Support this important cause'}
+                    </p>
+
+                    {/* Progress Bar */}
+                    {goal > 0 && (
+                      <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                          <span class="font-semibold text-[#01534d]">${raised.toLocaleString()} raised</span>
+                          <span class="text-gray-500">{percentage}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            class="h-full bg-gradient-to-r from-[#01534d] to-[#255764] rounded-full transition-all"
+                            style={`width: ${percentage}%`}
+                          ></div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1">Goal: ${goal.toLocaleString()}</p>
+                      </div>
+                    )}
+
+                    <span class="inline-flex items-center gap-2 text-[#01534d] font-semibold text-sm group-hover:gap-3 transition-all" style="font-family: 'Signika', sans-serif;">
+                      Donate Now
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                      </svg>
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-[#f8f9fa]">
+      <div class="max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Can't decide? Donate to where it's most needed
+        </h2>
+        <p class="text-gray-600 mb-6" style="font-family: 'Lato', sans-serif;">
+          Your donation will be used where it's needed most, helping communities in crisis around the world.
+        </p>
+        <a
+          href="/donate"
+          class="inline-block bg-[#ef7c01] text-white font-bold px-8 py-4 rounded-lg hover:bg-[#d66f00] transition"
+          style="box-shadow: 3px 4px 0 rgba(0,0,0,0.15); font-family: 'Signika', sans-serif;"
+        >
+          Donate Now
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

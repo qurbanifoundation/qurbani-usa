@@ -1,0 +1,33 @@
+---
+/**
+ * Appeals Listing Page
+ * Dynamically loads template based on site settings
+ */
+import GreenAppealTemplate from '../../templates/appeals/GreenAppealTemplate.astro';
+import OrangeAppealTemplate from '../../templates/appeals/OrangeAppealTemplate.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch site settings for appeals page template
+let appealsPageTemplate = 'green'; // Default
+
+try {
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_appeals_page_template')
+    .limit(1);
+
+  if (!error && data && data.length > 0) {
+    appealsPageTemplate = data[0].default_appeals_page_template || 'green';
+  }
+} catch (e) {
+  console.error('Error fetching site settings:', e);
+}
+---
+
+{appealsPageTemplate === 'orange' ? (
+  <OrangeAppealTemplate />
+) : (
+  <GreenAppealTemplate />
+)}

@@ -1,19 +1,96 @@
 ---
+import { supabaseAdmin } from '../lib/supabase';
+
+// Fetch hero slides from database
+let slides: any[] = [];
+try {
+  const { data, error } = await supabaseAdmin
+    .from('hero_slides')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
+
+  if (!error && data) {
+    slides = data;
+  }
+} catch (e) {
+  console.error('Failed to fetch hero slides:', e);
+}
+
+// Fallback if no slides
+if (slides.length === 0) {
+  slides = [{
+    id: 'default',
+    title: 'A Muslim Charity Serving Humanity',
+    subtitle: '100% of your Zakat reaches those in need',
+    image_url: '/images/Qurbani-hero-section-img-1.jpg',
+    overlay_color: 'rgba(37, 87, 100, 0.7)'
+  }];
+}
 ---
 
-<section class="relative min-h-[700px] md:min-h-[800px] overflow-hidden pt-28 md:pt-32">
-  <!-- Hero Background Image -->
-  <div class="absolute inset-0">
-    <img
-      src="/images/Qurbani-hero-section-img-1.jpg"
-      alt="Qurbani Foundation - Serving Humanity"
-      class="w-full h-full object-cover"
-    />
-    <!-- Gradient Overlay for text readability -->
-    <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/90 via-[#255764]/70 to-transparent"></div>
+<section class="relative min-h-[700px] md:min-h-[800px] overflow-hidden">
+  <!-- Hero Slider Container - Starts from very top, behind header -->
+  <div id="heroSlider" class="absolute inset-0 -z-0">
+    {slides.map((slide, index) => (
+      <div
+        class={`hero-slide absolute inset-0 transition-opacity duration-1000 ${index === 0 ? 'opacity-100' : 'opacity-0'}`}
+        data-index={index}
+      >
+        <img
+          src={slide.image_url}
+          alt={slide.title || 'Hero image'}
+          class="w-full h-full object-cover"
+          loading={index === 0 ? 'eager' : 'lazy'}
+        />
+        <!-- Subtle Gradient Overlay - Only on left side for text readability -->
+        <div
+          class="absolute inset-0"
+          style="background: linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 40%, transparent 70%);"
+        ></div>
+      </div>
+    ))}
   </div>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative z-10">
+  <!-- Slider Navigation Dots -->
+  {slides.length > 1 && (
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      {slides.map((_, index) => (
+        <button
+          class={`slider-dot w-3 h-3 rounded-full transition-all duration-300 ${index === 0 ? 'bg-white scale-110' : 'bg-white/50 hover:bg-white/75'}`}
+          data-index={index}
+          aria-label={`Go to slide ${index + 1}`}
+        ></button>
+      ))}
+    </div>
+  )}
+
+  <!-- Slider Arrows -->
+  {slides.length > 1 && (
+    <>
+      <button
+        id="prevSlide"
+        class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition"
+        aria-label="Previous slide"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <button
+        id="nextSlide"
+        class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition"
+        aria-label="Next slide"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </>
+  )}
+
+  <!-- Content starts below header -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-40 pb-12 md:pb-16 relative z-10">
     <div class="grid lg:grid-cols-2 gap-8 items-center">
       <!-- Left Content -->
       <div class="text-center lg:text-left text-white">
@@ -23,13 +100,22 @@
           100% ZAKAT POLICY
         </div>
 
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6" style="font-family: 'Signika', sans-serif;">
-          A Muslim Charity<br/>
-          <span class="text-[#fdc448]">Serving Humanity</span>
+        <h1 id="heroTitle" class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 transition-opacity duration-500" style="font-family: 'Signika', sans-serif;">
+          {slides[0].title ? (
+            <>
+              {slides[0].title.split(' ').slice(0, 3).join(' ')}<br/>
+              <span class="text-[#fdc448]">{slides[0].title.split(' ').slice(3).join(' ')}</span>
+            </>
+          ) : (
+            <>
+              A Muslim Charity<br/>
+              <span class="text-[#fdc448]">Serving Humanity</span>
+            </>
+          )}
         </h1>
 
-        <p class="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0" style="font-family: 'Lato', sans-serif;">
-          100% of your Zakat will reach those who need it the most. We ensure every single cent goes directly to vulnerable populations worldwide.
+        <p id="heroSubtitle" class="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 transition-opacity duration-500" style="font-family: 'Lato', sans-serif;">
+          {slides[0].subtitle || '100% of your Zakat will reach those who need it the most. We ensure every single cent goes directly to vulnerable populations worldwide.'}
         </p>
 
         <!-- Trust Badges -->
@@ -153,12 +239,90 @@
   </div>
 </section>
 
-<script>
+<script define:vars={{ slidesData: slides }}>
   document.addEventListener('DOMContentLoaded', () => {
-    // Elements
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots = document.querySelectorAll('.slider-dot');
+    const prevBtn = document.getElementById('prevSlide');
+    const nextBtn = document.getElementById('nextSlide');
+
+    if (slides.length <= 1) return;
+
+    let currentSlide = 0;
+    let autoplayInterval;
+
+    function goToSlide(index) {
+      // Wrap around
+      if (index < 0) index = slides.length - 1;
+      if (index >= slides.length) index = 0;
+
+      // Update slides
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('opacity-100', i === index);
+        slide.classList.toggle('opacity-0', i !== index);
+      });
+
+      // Update dots
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('bg-white', i === index);
+        dot.classList.toggle('scale-110', i === index);
+        dot.classList.toggle('bg-white/50', i !== index);
+      });
+
+      currentSlide = index;
+    }
+
+    function nextSlide() {
+      goToSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      goToSlide(currentSlide - 1);
+    }
+
+    function startAutoplay() {
+      autoplayInterval = setInterval(nextSlide, 5000);
+    }
+
+    function stopAutoplay() {
+      clearInterval(autoplayInterval);
+    }
+
+    // Event listeners
+    prevBtn?.addEventListener('click', () => {
+      stopAutoplay();
+      prevSlide();
+      startAutoplay();
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      stopAutoplay();
+      nextSlide();
+      startAutoplay();
+    });
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        stopAutoplay();
+        goToSlide(index);
+        startAutoplay();
+      });
+    });
+
+    // Start autoplay
+    startAutoplay();
+
+    // Pause on hover
+    const heroSlider = document.getElementById('heroSlider');
+    heroSlider?.addEventListener('mouseenter', stopAutoplay);
+    heroSlider?.addEventListener('mouseleave', startAutoplay);
+  });
+
+  // Donation box logic
+  document.addEventListener('DOMContentLoaded', () => {
     const amountBtns = document.querySelectorAll('.amount-btn');
     const amountBtnsMonthly = document.querySelectorAll('.amount-btn-monthly');
-    const customInput = document.getElementById('custom-amount') as HTMLInputElement;
+    const customInput = document.getElementById('custom-amount');
     const oneOffBtn = document.getElementById('one-off-btn');
     const monthlyBtn = document.getElementById('monthly-btn');
     const oneoffAmounts = document.getElementById('oneoff-amounts');
@@ -168,8 +332,7 @@
     let selectedAmount = 720;
     let isMonthly = false;
 
-    // Function to update button styles
-    function updateButtonStyle(btn: Element, isSelected: boolean) {
+    function updateButtonStyle(btn, isSelected) {
       const span = btn.querySelector('span:first-child');
       if (isSelected) {
         btn.classList.remove('border-gray-200');
@@ -188,20 +351,14 @@
       }
     }
 
-    // Setup amount button click handlers
-    function setupAmountButtons(buttons: NodeListOf<Element>) {
+    function setupAmountButtons(buttons) {
       buttons.forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          // Deselect all buttons
           buttons.forEach(b => updateButtonStyle(b, false));
-          // Select clicked button
           updateButtonStyle(btn, true);
-          // Update selected amount
           selectedAmount = parseInt(btn.getAttribute('data-amount') || '720');
-          // Clear custom input
           if (customInput) customInput.value = '';
-          console.log('Selected amount:', selectedAmount);
         });
       });
     }
@@ -209,18 +366,14 @@
     setupAmountButtons(amountBtns);
     setupAmountButtons(amountBtnsMonthly);
 
-    // Custom amount input
     customInput?.addEventListener('input', () => {
       if (customInput.value) {
-        // Deselect all preset buttons
         amountBtns.forEach(b => updateButtonStyle(b, false));
         amountBtnsMonthly.forEach(b => updateButtonStyle(b, false));
         selectedAmount = parseInt(customInput.value) || 0;
-        console.log('Custom amount:', selectedAmount);
       }
     });
 
-    // One-off button click
     oneOffBtn?.addEventListener('click', (e) => {
       e.preventDefault();
       isMonthly = false;
@@ -230,11 +383,9 @@
       monthlyBtn?.classList.add('text-gray-600');
       oneoffAmounts?.classList.remove('hidden');
       monthlyAmounts?.classList.add('hidden');
-      selectedAmount = 720; // Reset to default one-off amount
-      console.log('Switched to one-off');
+      selectedAmount = 720;
     });
 
-    // Monthly button click
     monthlyBtn?.addEventListener('click', (e) => {
       e.preventDefault();
       isMonthly = true;
@@ -244,22 +395,16 @@
       oneOffBtn?.classList.add('text-gray-600');
       oneoffAmounts?.classList.add('hidden');
       monthlyAmounts?.classList.remove('hidden');
-      selectedAmount = 60; // Reset to default monthly amount
-      console.log('Switched to monthly');
+      selectedAmount = 60;
     });
 
-    // Donate button click
     donateBtn?.addEventListener('click', (e) => {
       e.preventDefault();
       if (selectedAmount > 0) {
-        const checkoutUrl = `/api/checkout?amount=${selectedAmount}&recurring=${isMonthly}`;
-        console.log('Redirecting to checkout:', checkoutUrl);
-        // For now, scroll to packages section
         const packagesSection = document.getElementById('packages');
         if (packagesSection) {
           packagesSection.scrollIntoView({ behavior: 'smooth' });
         }
-        // Alert for demonstration
         alert(`Donation: $${selectedAmount} (${isMonthly ? 'Monthly' : 'One-time'})\n\nThis will redirect to Stripe checkout.`);
       } else {
         alert('Please select an amount');

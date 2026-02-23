@@ -1,0 +1,1034 @@
+---
+/**
+ * GREEN WITH YELLOW TEMPLATE
+ *
+ * A campaign page template featuring:
+ * - Teal/Green primary colors (#255764, #01534d)
+ * - Yellow/Gold accent colors (#fdc448, #ef7c01)
+ * - Fixed sticky donation box on the right side
+ * - Hero section with left-aligned text and right donation box
+ * - Mobile-responsive with separate mobile donation box
+ * - Smooth sticky behavior that stays within content section
+ *
+ * Color Palette:
+ * - Primary Dark: #01534d (dark teal)
+ * - Primary: #255764 (teal)
+ * - Accent: #fdc448 (yellow/gold)
+ * - Accent Dark: #ef7c01 (orange)
+ * - Button Text: #61470e (dark gold)
+ *
+ * Usage:
+ * Pass campaign data as props or fetch from database
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import TealYellowDonationBox from '../components/donation/TealYellowDonationBox.astro';
+import WhiteDonationBox from '../components/donation/WhiteDonationBox.astro';
+import ListStyleDonationBox from '../components/donation/ListStyleDonationBox.astro';
+import UrgentAppealDonationBox from '../components/donation/UrgentAppealDonationBox.astro';
+import { supabaseAdmin } from '../lib/supabase';
+import { formatTextToHtml, formatLineBreaks } from '../lib/textFormatting';
+
+interface Props {
+  campaign: {
+    title: string;
+    subtitle?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: Array<{ title?: string; content?: string; image?: string }>;
+    donation_options?: Array<{ amount: number; label?: string }>;
+    gallery_images?: string[];
+  };
+  donationBoxTemplate?: 'teal-yellow' | 'dark-teal' | 'white' | 'compact' | 'list-style' | string;
+}
+
+const { campaign, donationBoxTemplate = 'teal-yellow' } = Astro.props;
+
+const contentSections = campaign.content_sections || [];
+const campaignDonationOptions = campaign.donation_options || [];
+const galleryImages = campaign.gallery_images || [];
+
+// Hardcoded fallback (used only if template has no defaults)
+const hardcodedDefaults = [
+  { amount: 50, label: 'Feed a family' },
+  { amount: 100, label: 'Provide essentials' },
+  { amount: 250, label: 'Emergency aid' },
+  { amount: 500, label: 'Transform lives' },
+];
+
+// Default color schemes (fallback if database doesn't have colors)
+const defaultBoxColors: Record<string, any> = {
+  'teal-yellow': {
+    bgColor: '#255764',
+    textColor: '#ffffff',
+    textMutedColor: 'rgba(255,255,255,0.7)',
+    accentColor: '#fdc448',
+    accentTextColor: '#61470e',
+    borderColor: 'rgba(255,255,255,0.3)',
+    activeBgColor: 'rgba(253,196,72,0.2)',
+    toggleActiveColor: 'rgba(255,255,255,0.2)',
+    inactiveBtnBg: 'transparent',
+  },
+  'dark-teal': {
+    bgColor: '#004139',
+    textColor: '#ffffff',
+    textMutedColor: '#d4c4a8',
+    accentColor: '#c41e3a',
+    accentTextColor: '#ffffff',
+    borderColor: '#108D70',
+    activeBgColor: '#ECF0EE',
+    activeTextColor: '#004139',
+    toggleActiveColor: '#108D70',
+    inactiveBtnBg: '#005A4C',
+  },
+  'white': {
+    bgColor: '#ffffff',
+    textColor: '#1f2937',
+    textMutedColor: '#6b7280',
+    accentColor: '#01534d',
+    accentTextColor: '#ffffff',
+    borderColor: '#01534d',
+    activeBgColor: '#01534d',
+    toggleActiveColor: '#01534d',
+    inactiveBtnBg: 'transparent',
+  },
+  'compact': {
+    bgColor: '#1a4a55',
+    textColor: '#ffffff',
+    textMutedColor: 'rgba(255,255,255,0.7)',
+    accentColor: '#fdc448',
+    accentTextColor: '#61470e',
+    borderColor: 'rgba(255,255,255,0.3)',
+    activeBgColor: 'rgba(253,196,72,0.2)',
+    toggleActiveColor: 'rgba(255,255,255,0.2)',
+    inactiveBtnBg: 'transparent',
+  },
+  'list-style': {
+    bgColor: '#f5f5f5',
+    textColor: '#374151',
+    textMutedColor: '#6b7280',
+    accentColor: '#D97706',
+    accentTextColor: '#ffffff',
+    borderColor: '#e5e7eb',
+    activeBgColor: '#D97706',
+    activeTextColor: '#ffffff',
+    toggleActiveColor: '#D97706',
+    inactiveBtnBg: '#ffffff',
+  },
+  'urgent-appeal': {
+    bgColor: '#ffffff',
+    headerBgColor: '#c41e3a',
+    textColor: '#1f2937',
+    textMutedColor: '#6b7280',
+    accentColor: '#c41e3a',
+    accentTextColor: '#ffffff',
+    borderColor: '#e5e7eb',
+    activeBgColor: '#c41e3a10',
+    activeTextColor: '#1f2937',
+    toggleActiveColor: '#c41e3a',
+    inactiveBtnBg: '#ffffff',
+  },
+};
+
+// Fetch colors from database for the selected template
+let dbColors: any = null;
+try {
+  const { data } = await supabaseAdmin
+    .from('template_colors')
+    .select('*')
+    .eq('template_name', donationBoxTemplate)
+    .single();
+  if (data) {
+    dbColors = data;
+  }
+} catch (e) {
+  // Use defaults if fetch fails
+}
+
+// Merge database colors with defaults (db colors override defaults)
+const defaultColors = defaultBoxColors[donationBoxTemplate] || defaultBoxColors['teal-yellow'];
+const colors = {
+  bgColor: dbColors?.bg_color || defaultColors.bgColor,
+  headerBgColor: dbColors?.header_bg_color || defaultColors.headerBgColor || defaultColors.accentColor,
+  textColor: dbColors?.text_color || defaultColors.textColor,
+  textMutedColor: dbColors?.text_muted_color || defaultColors.textMutedColor,
+  accentColor: dbColors?.accent_color || defaultColors.accentColor,
+  accentTextColor: dbColors?.accent_text_color || defaultColors.accentTextColor,
+  borderColor: dbColors?.border_color || defaultColors.borderColor,
+  activeBgColor: dbColors?.active_bg_color || defaultColors.activeBgColor,
+  activeTextColor: dbColors?.active_text_color || defaultColors.activeTextColor || defaultColors.textColor,
+  toggleActiveColor: dbColors?.toggle_active_color || defaultColors.toggleActiveColor,
+  inactiveBtnBg: dbColors?.inactive_btn_bg || defaultColors.inactiveBtnBg || 'transparent',
+};
+
+// Text customizations from database (supports {campaign} placeholder)
+const rawTitleText = dbColors?.title_text || '{campaign}';
+const textSettings = {
+  titleText: rawTitleText.replace('{campaign}', campaign.title),
+  subtitleText: (dbColors?.subtitle_text || '100% reaches those in need').replace('{campaign}', campaign.title),
+  buttonText: dbColors?.button_text || 'Donate Now',
+  singleText: dbColors?.single_text || 'Single',
+  monthlyText: dbColors?.monthly_text || 'Monthly',
+  customAmountPlaceholder: dbColors?.custom_amount_placeholder || 'Any Amount',
+  trustMessageText: dbColors?.trust_message_text || 'Donating through Qurbani Foundation is safe, secure, and easy with many payment options to choose from.',
+  trustLinkText: dbColors?.trust_link_text || 'View other ways to donate',
+  trustLinkUrl: dbColors?.trust_link_url || '/donate',
+};
+
+// Font size settings from database
+const fontSizeMap: Record<string, string> = {
+  'text-xs': '0.75rem',
+  'text-sm': '0.875rem',
+  'text-base': '1rem',
+  'text-lg': '1.125rem',
+  'text-xl': '1.25rem',
+  'text-2xl': '1.5rem',
+};
+const fontSizes = {
+  titleSize: fontSizeMap[dbColors?.title_size] || '1.25rem',
+  subtitleSize: fontSizeMap[dbColors?.subtitle_size] || '0.875rem',
+  buttonSize: fontSizeMap[dbColors?.button_size] || '1.125rem',
+  amountSize: fontSizeMap[dbColors?.amount_size] || '1.125rem',
+};
+const isWhiteTheme = donationBoxTemplate === 'white';
+const isCompact = donationBoxTemplate === 'compact';
+const isDarkTeal = donationBoxTemplate === 'dark-teal';
+const isListStyle = donationBoxTemplate === 'list-style';
+const isUrgentAppeal = donationBoxTemplate === 'urgent-appeal';
+
+// Get donation options: campaign-specific > template defaults > hardcoded fallback
+const templateDefaultAmounts = dbColors?.default_amounts || hardcodedDefaults;
+const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptions : templateDefaultAmounts;
+---
+
+<Layout
+  title={campaign.meta_title || campaign.title}
+  description={campaign.meta_description || campaign.subtitle}
+  ogImage={campaign.featured_image}
+>
+  <Navbar />
+
+  <main class="min-h-screen">
+    <!-- Hero Section with Donation Box -->
+    <section class="relative min-h-[85vh] overflow-hidden">
+      <!-- Background -->
+      <div class="absolute inset-0">
+        {campaign.featured_image ? (
+          <img
+            src={campaign.featured_image}
+            alt=""
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div class="absolute inset-0 bg-gradient-to-br from-[#1a4a55] via-[#255764] to-[#01534d]"></div>
+        )}
+        <!-- Dark overlay for text readability -->
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
+      </div>
+
+      <!-- Hero Content Grid -->
+      <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 min-h-[85vh] flex flex-col" id="hero-container">
+
+        <!-- Top: Back link and Badge (stays at top) -->
+        <div class="pt-28 lg:pt-32">
+          <a href="/appeals" class="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition group">
+            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Appeals
+          </a>
+          <div class="mt-3">
+            <span class="inline-block bg-[#ef7c01] text-white text-sm font-bold px-4 py-1.5 rounded-full animate-pulse">
+              URGENT APPEAL
+            </span>
+          </div>
+        </div>
+
+        <!-- Center: Main content grid (vertically centered) -->
+        <div class="flex-1 flex items-center">
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16 w-full">
+
+            <!-- Left: Text Content (3 cols) - vertically centered -->
+            <div class="lg:col-span-3 text-left">
+              <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+                {campaign.title}
+              </h1>
+
+              {campaign.subtitle && (
+                <div class="text-xl md:text-2xl text-white/90 max-w-2xl mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatLineBreaks(campaign.subtitle)}></div>
+              )}
+
+              <!-- Trust badges in hero -->
+              <div class="flex items-center gap-6 text-white/70 text-sm">
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Secure Payment</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>100% Donation Policy</span>
+                </div>
+              </div>
+            </div>
+
+          <!-- Right: Placeholder for donation box (2 cols) -->
+            <div class="hidden lg:block lg:col-span-2" id="donation-box-placeholder"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Bottom spacer -->
+      <div class="pb-8"></div>
+    </div>
+  </section>
+
+  <!-- Fixed Donation Box - Desktop only (hidden until JS positions it) -->
+  <div id="fixed-donate-box" class="hidden lg:block fixed top-36 z-40 opacity-0" style={(isListStyle || isUrgentAppeal) ? "width: 420px;" : "width: 380px;"}>
+    {isListStyle ? (
+      <div id="donate">
+        <ListStyleDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+          campaignImage={campaign.featured_image}
+          donationOptions={activeOptions}
+          colors={{
+            bgColor: colors.bgColor,
+            textColor: colors.textColor,
+            textMutedColor: colors.textMutedColor,
+            accentColor: colors.accentColor,
+            accentTextColor: colors.accentTextColor,
+            borderColor: colors.borderColor,
+          }}
+          textSettings={{
+            titleText: textSettings.titleText,
+            subtitleText: textSettings.subtitleText,
+            buttonText: textSettings.buttonText,
+            singleText: textSettings.singleText,
+            monthlyText: textSettings.monthlyText,
+            customAmountPlaceholder: textSettings.customAmountPlaceholder,
+            trustMessageText: textSettings.trustMessageText,
+            trustLinkText: textSettings.trustLinkText,
+            trustLinkUrl: textSettings.trustLinkUrl,
+          }}
+        />
+      </div>
+    ) : isUrgentAppeal ? (
+      <div id="donate">
+        <UrgentAppealDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+          campaignImage={campaign.featured_image}
+          donationOptions={activeOptions}
+          colors={{
+            bgColor: colors.bgColor,
+            headerBgColor: colors.headerBgColor,
+            textColor: colors.textColor,
+            textMutedColor: colors.textMutedColor,
+            accentColor: colors.accentColor,
+            accentTextColor: colors.accentTextColor,
+            borderColor: colors.borderColor,
+          }}
+          textSettings={{
+            titleText: textSettings.titleText,
+            subtitleText: textSettings.subtitleText,
+            buttonText: textSettings.buttonText,
+            singleText: textSettings.singleText,
+            monthlyText: textSettings.monthlyText,
+            customAmountPlaceholder: textSettings.customAmountPlaceholder,
+          }}
+        />
+      </div>
+    ) : (
+    <div
+      id="donate"
+      class="rounded-2xl p-6 shadow-2xl w-full"
+      style={`background-color: ${colors.bgColor}; ${isWhiteTheme ? 'border: 2px solid #01534d;' : ''}`}
+    >
+      <div class="text-center mb-5">
+        {isDarkTeal ? (
+          <>
+            <p class="mb-1" style={`color: #d4c4a8; font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: ${fontSizes.subtitleSize};`}>{textSettings.subtitleText}</p>
+            <h3 class="font-bold" style={`color: #ffffff; font-family: 'Signika', sans-serif; font-size: ${fontSizes.titleSize};`}>
+              {textSettings.titleText}
+            </h3>
+          </>
+        ) : (
+          <>
+            <h3 class="font-bold mb-1" style={`color: ${colors.textColor}; font-family: 'Signika', sans-serif; font-size: ${fontSizes.titleSize};`}>
+              {textSettings.titleText}
+            </h3>
+            <p style={`color: ${colors.textMutedColor}; font-size: ${fontSizes.subtitleSize};`}>{textSettings.subtitleText}</p>
+          </>
+        )}
+      </div>
+
+      <!-- Toggle -->
+      <div
+        class={`flex ${isDarkTeal ? 'rounded-full border-2' : 'rounded-xl p-1'} mb-5`}
+        style={`${isDarkTeal ? `border-color: ${colors.borderColor};` : 'background-color: rgba(255,255,255,0.1);'} ${isWhiteTheme ? 'border: 2px solid #01534d;' : ''}`}
+      >
+        <button
+          type="button"
+          id="btn-single"
+          class={`donation-type-btn flex-1 py-2.5 px-4 ${isDarkTeal ? 'rounded-full' : 'rounded-lg'} font-semibold transition text-sm`}
+          data-type="single"
+          style={`background-color: ${colors.toggleActiveColor}; color: ${isWhiteTheme ? '#ffffff' : colors.textColor};`}
+        >
+          {textSettings.singleText}
+        </button>
+        <button
+          type="button"
+          id="btn-monthly"
+          class={`donation-type-btn flex-1 py-2.5 px-4 ${isDarkTeal ? 'rounded-full' : 'rounded-lg'} font-semibold transition text-sm`}
+          data-type="monthly"
+          style={`color: ${isDarkTeal ? '#ffffff' : colors.textMutedColor};`}
+        >
+          {textSettings.monthlyText}
+        </button>
+      </div>
+
+      <!-- Amount Grid -->
+      <div class={`grid ${isCompact || isDarkTeal ? 'grid-cols-3' : 'grid-cols-2'} gap-2 mb-5`} id="amount-buttons">
+        {activeOptions.slice(0, isCompact || isDarkTeal ? 3 : 6).map((opt: any, index: number) => (
+          <button
+            type="button"
+            class={`amount-btn py-3 px-2 ${isDarkTeal ? 'rounded-lg' : 'rounded-xl'} border-2 font-semibold transition text-center hover:scale-[1.02]`}
+            data-amount={opt.amount}
+            style={`color: ${index === 0 ? colors.activeTextColor : colors.textColor}; border-color: ${colors.borderColor}; background-color: ${index === 0 ? colors.activeBgColor : colors.inactiveBtnBg};`}
+            data-active-border={colors.borderColor}
+            data-active-bg={colors.activeBgColor}
+            data-active-text={colors.activeTextColor}
+            data-inactive-border={colors.borderColor}
+            data-inactive-bg={colors.inactiveBtnBg}
+            data-inactive-text={colors.textColor}
+          >
+            <span class="block" style={`font-size: ${fontSizes.amountSize};`}>${opt.amount.toLocaleString()}</span>
+            {opt.label && !isCompact && !isDarkTeal && (
+              <span class="block text-xs font-normal mt-0.5 truncate" style={`color: ${colors.textMutedColor};`}>{opt.label}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <!-- Custom Amount -->
+      {!isCompact && (
+        <div class="mb-5">
+          <div class="relative">
+            <span id="custom-amount-symbol" class={`absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold ${isDarkTeal ? 'text-white/60' : 'text-gray-500'}`}>$</span>
+            <input
+              type="number"
+              id="custom-amount"
+              min="1"
+              placeholder={textSettings.customAmountPlaceholder}
+              class={`w-full pl-10 pr-4 py-3 rounded-xl border-2 font-bold focus:outline-none text-lg ${isDarkTeal ? 'bg-transparent text-white placeholder-white/50' : 'bg-white text-gray-800'}`}
+              style={`border-color: ${colors.borderColor};`}
+              data-active-border={colors.borderColor}
+              data-active-bg={colors.activeBgColor}
+              data-active-text={colors.activeTextColor}
+              data-inactive-border={colors.borderColor}
+              data-inactive-bg={isDarkTeal ? 'transparent' : '#ffffff'}
+              data-inactive-text={isDarkTeal ? '#ffffff' : '#1f2937'}
+            />
+          </div>
+        </div>
+      )}
+
+      <!-- Donate Button -->
+      <button
+        type="button"
+        id="donate-btn"
+        class="w-full font-bold py-4 rounded-xl hover:opacity-90 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+        style={`background-color: ${colors.accentColor}; color: ${colors.accentTextColor}; ${isDarkTeal ? '' : 'box-shadow: 3px 4px 0 rgba(0,0,0,0.2);'} font-family: 'Signika', sans-serif; font-size: ${fontSizes.buttonSize};`}
+      >
+        {textSettings.buttonText}
+        {isDarkTeal && (
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        )}
+      </button>
+
+      <!-- Trust Badges -->
+      {!isCompact && (
+        <div class="mt-4 pt-4" style={`border-top: 1px solid ${isWhiteTheme ? '#e5e7eb' : 'rgba(255,255,255,0.2)'};`}>
+          <div class="flex justify-center gap-4 text-center">
+            <div class="text-xs flex items-center gap-1" style={`color: ${isWhiteTheme ? '#9ca3af' : 'rgba(255,255,255,0.6)'};`}>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Secure</span>
+            </div>
+            <div class="text-xs flex items-center gap-1" style={`color: ${isWhiteTheme ? '#9ca3af' : 'rgba(255,255,255,0.6)'};`}>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Tax Deductible</span>
+            </div>
+            <div class="text-xs flex items-center gap-1" style={`color: ${isWhiteTheme ? '#9ca3af' : 'rgba(255,255,255,0.6)'};`}>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+              </svg>
+              <span>100% Policy</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+    )}
+  </div>
+
+    <!-- Main Content -->
+    <section class="py-16 md:py-24 bg-white" id="content-section">
+      <div class="max-w-[1750px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16">
+
+          <!-- Left: Content -->
+          <div class="lg:col-span-3 space-y-16">
+
+            <!-- Mobile Donation Box -->
+            {isListStyle ? (
+              <div class="lg:hidden">
+                <ListStyleDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  donationOptions={activeOptions}
+                  colors={{
+                    bgColor: colors.bgColor,
+                    textColor: colors.textColor,
+                    textMutedColor: colors.textMutedColor,
+                    accentColor: colors.accentColor,
+                    accentTextColor: colors.accentTextColor,
+                    borderColor: colors.borderColor,
+                  }}
+                  textSettings={{
+                    titleText: textSettings.titleText,
+                    subtitleText: textSettings.subtitleText,
+                    buttonText: textSettings.buttonText,
+                    singleText: textSettings.singleText,
+                    monthlyText: textSettings.monthlyText,
+                    customAmountPlaceholder: textSettings.customAmountPlaceholder,
+                    trustMessageText: textSettings.trustMessageText,
+                    trustLinkText: textSettings.trustLinkText,
+                    trustLinkUrl: textSettings.trustLinkUrl,
+                  }}
+                />
+              </div>
+            ) : isUrgentAppeal ? (
+              <div class="lg:hidden">
+                <UrgentAppealDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  donationOptions={activeOptions}
+                  colors={{
+                    bgColor: colors.bgColor,
+                    headerBgColor: colors.headerBgColor,
+                    textColor: colors.textColor,
+                    textMutedColor: colors.textMutedColor,
+                    accentColor: colors.accentColor,
+                    accentTextColor: colors.accentTextColor,
+                    borderColor: colors.borderColor,
+                  }}
+                  textSettings={{
+                    titleText: textSettings.titleText,
+                    subtitleText: textSettings.subtitleText,
+                    buttonText: textSettings.buttonText,
+                    singleText: textSettings.singleText,
+                    monthlyText: textSettings.monthlyText,
+                    customAmountPlaceholder: textSettings.customAmountPlaceholder,
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                class="lg:hidden rounded-2xl p-6 shadow-xl"
+                style={`background-color: ${colors.bgColor}; ${isWhiteTheme ? 'border: 2px solid #01534d;' : ''}`}
+              >
+                <div class="text-center mb-5">
+                  {isDarkTeal ? (
+                    <>
+                      <p class="mb-1" style={`color: #d4c4a8; font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: ${fontSizes.subtitleSize};`}>{textSettings.subtitleText}</p>
+                      <h3 class="font-bold" style={`color: #ffffff; font-family: 'Signika', sans-serif; font-size: ${fontSizes.titleSize};`}>{textSettings.titleText}</h3>
+                    </>
+                  ) : (
+                    <>
+                      <h3 class="font-bold mb-1" style={`color: ${colors.textColor}; font-family: 'Signika', sans-serif; font-size: ${fontSizes.titleSize};`}>{textSettings.titleText}</h3>
+                      <p style={`color: ${colors.textMutedColor}; font-size: ${fontSizes.subtitleSize};`}>{textSettings.subtitleText}</p>
+                    </>
+                  )}
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-4" id="mobile-amount-buttons">
+                  {activeOptions.slice(0, 3).map((opt: any, index: number) => (
+                    <button
+                      type="button"
+                      class="mobile-amount-btn py-3 rounded-lg border-2 font-semibold"
+                      data-amount={opt.amount}
+                      style={`color: ${index === 0 ? colors.activeTextColor : colors.textColor}; border-color: ${colors.borderColor}; background-color: ${index === 0 ? colors.activeBgColor : colors.inactiveBtnBg}; font-size: ${fontSizes.amountSize};`}
+                      data-active-border={colors.borderColor}
+                      data-active-bg={colors.activeBgColor}
+                      data-active-text={colors.activeTextColor}
+                      data-inactive-border={colors.borderColor}
+                      data-inactive-bg={colors.inactiveBtnBg}
+                      data-inactive-text={colors.textColor}
+                    >
+                      ${opt.amount}
+                    </button>
+                  ))}
+                </div>
+                <div class="relative mb-4">
+                  <span id="mobile-custom-amount-symbol" class={`absolute left-3 top-1/2 -translate-y-1/2 font-bold ${isDarkTeal ? 'text-white/60' : 'text-gray-500'}`}>$</span>
+                  <input
+                    type="number"
+                    id="mobile-custom-amount"
+                    placeholder={textSettings.customAmountPlaceholder}
+                    class={`w-full pl-8 pr-3 py-3 rounded-lg border-2 font-bold ${isDarkTeal ? 'bg-transparent text-white placeholder-white/50' : 'bg-white text-gray-800'}`}
+                    style={`border-color: ${colors.borderColor};`}
+                    data-active-border={colors.borderColor}
+                    data-active-bg={colors.activeBgColor}
+                    data-active-text={colors.activeTextColor}
+                    data-inactive-border={colors.borderColor}
+                    data-inactive-bg={isDarkTeal ? 'transparent' : '#ffffff'}
+                    data-inactive-text={isDarkTeal ? '#ffffff' : '#1f2937'}
+                  />
+                </div>
+                <button
+                  type="button"
+                  id="mobile-donate-btn"
+                  class="w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2"
+                  style={`background-color: ${colors.accentColor}; color: ${colors.accentTextColor}; font-family: 'Signika', sans-serif; font-size: ${fontSizes.buttonSize};`}
+                >
+                  {textSettings.buttonText}
+                  {isDarkTeal && (
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )}
+
+            <!-- Main Description -->
+            {campaign.description && (
+              <div class="prose prose-lg lg:prose-xl max-w-none">
+                <div class="text-gray-700 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(campaign.description)}></div>
+              </div>
+            )}
+
+            <!-- Impact Stats Bar -->
+            <div class="bg-gradient-to-r from-[#01534d] to-[#255764] rounded-2xl p-8 text-white">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div>
+                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">3.57M</p>
+                  <p class="text-white/70 text-sm">Deaths per year</p>
+                </div>
+                <div>
+                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">2.2M</p>
+                  <p class="text-white/70 text-sm">Children affected</p>
+                </div>
+                <div>
+                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">1 in 3</p>
+                  <p class="text-white/70 text-sm">Without clean water</p>
+                </div>
+                <div>
+                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">$300</p>
+                  <p class="text-white/70 text-sm">Can save lives</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Sections -->
+            {contentSections.length > 0 && (
+              <div class="space-y-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#255764]" style="font-family: 'Signika', sans-serif;">
+                  How Your Donation Helps
+                </h2>
+
+                <div class="grid gap-8">
+                  {contentSections.map((section: any, idx: number) => (
+                    <div class={`flex flex-col ${idx % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-6 items-start p-6 bg-[#f8f9fa] rounded-2xl hover:shadow-lg transition`}>
+                      {section.image && (
+                        <div class="w-full md:w-1/3 flex-shrink-0">
+                          <img src={section.image} alt={section.title} class="w-full h-48 object-cover rounded-xl" />
+                        </div>
+                      )}
+                      <div class="flex-1">
+                        {section.title && (
+                          <h3 class="text-xl font-bold text-[#255764] mb-3" style="font-family: 'Signika', sans-serif;">
+                            {section.title}
+                          </h3>
+                        )}
+                        {section.content && (
+                          <div class="text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(section.content)}></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- Gallery -->
+            {galleryImages.length > 0 && (
+              <div class="space-y-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-[#255764]" style="font-family: 'Signika', sans-serif;">
+                  Your Donations in Action
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {galleryImages.map((img: string) => (
+                    <div class="aspect-square rounded-xl overflow-hidden group cursor-pointer">
+                      <img src={img} alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          <!-- Right sidebar space (empty on desktop since donation box is sticky) -->
+          <div class="hidden lg:block lg:col-span-2" id="sidebar-placeholder"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="py-20 bg-gradient-to-br from-[#ef7c01] to-[#fdc448] relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23000\" fill-opacity=\"0.3\"%3E%3Cpath d=\"M20 20c0-11.046-8.954-20-20-20v20h20z\"/%3E%3C/g%3E%3C/svg%3E');"></div>
+      </div>
+      <div class="relative max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+          Be the Change Today
+        </h2>
+        <p class="text-xl text-white/90 mb-10 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          Your generosity can transform lives and bring hope to families in need. Every donation makes a difference.
+        </p>
+        <a
+          href="#donate"
+          class="inline-flex items-center gap-3 bg-white text-[#ef7c01] font-bold px-12 py-5 rounded-xl hover:bg-gray-100 transition-all hover:scale-105 text-lg"
+          style="box-shadow: 4px 6px 0 rgba(0,0,0,0.15); font-family: 'Signika', sans-serif;"
+        >
+          Donate Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script define:vars={{ campaignData: { slug: campaign.slug, title: campaign.title, image: campaign.featured_image }, donationOpts: activeOptions, boxTemplate: donationBoxTemplate, colorConfig: colors }}>
+  let selectedAmount = 300;
+  let selectedLabel = '';
+  let donationType = 'single';
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Donation box elements
+    const typeButtons = document.querySelectorAll('.donation-type-btn');
+    const amountButtons = document.querySelectorAll('.amount-btn');
+    const customInput = document.getElementById('custom-amount');
+    const donateBtn = document.getElementById('donate-btn');
+
+    // Mobile donation box elements
+    const mobileAmountButtons = document.querySelectorAll('.mobile-amount-btn');
+    const mobileCustomInput = document.getElementById('mobile-custom-amount');
+    const mobileDonateBtn = document.getElementById('mobile-donate-btn');
+
+    // Fixed donation box positioning
+    const fixedDonateBox = document.getElementById('fixed-donate-box');
+    const placeholder = document.getElementById('donation-box-placeholder');
+    const contentSection = document.getElementById('content-section');
+
+    let boxHeight = 0;
+
+    function initDonateBox() {
+      if (!fixedDonateBox || window.innerWidth < 1024) {
+        if (fixedDonateBox) fixedDonateBox.style.display = 'none';
+        return;
+      }
+
+      fixedDonateBox.style.display = 'block';
+      boxHeight = fixedDonateBox.offsetHeight;
+      positionDonateBox();
+      // Show the box after positioning
+      fixedDonateBox.classList.remove('opacity-0');
+    }
+
+    function positionDonateBox() {
+      if (!fixedDonateBox || !contentSection || !placeholder || window.innerWidth < 1024) {
+        return;
+      }
+
+      const placeholderRect = placeholder.getBoundingClientRect();
+      const contentRect = contentSection.getBoundingClientRect();
+
+      // Horizontal position - align with placeholder
+      fixedDonateBox.style.left = placeholderRect.left + 'px';
+      fixedDonateBox.style.width = placeholderRect.width + 'px';
+
+      // Vertical position - aligned with "Back to Appeals" link
+      const normalTop = 144;
+      const contentBottomInViewport = contentRect.bottom;
+      const maxBoxBottom = contentBottomInViewport - 40; // Box bottom should not go past this
+      const calculatedTop = maxBoxBottom - boxHeight;
+
+      if (calculatedTop < normalTop) {
+        // Content is ending - move box up so it stays within content
+        // This will eventually push it off screen as we scroll into footer
+        fixedDonateBox.style.top = calculatedTop + 'px';
+      } else {
+        // Normal fixed position at top
+        fixedDonateBox.style.top = normalTop + 'px';
+      }
+    }
+
+    // Initialize and set up listeners
+    setTimeout(initDonateBox, 200);
+    window.addEventListener('scroll', positionDonateBox, { passive: true });
+    window.addEventListener('resize', initDonateBox);
+
+    // Sync amount buttons using inline styles
+    function syncAmountSelection(amount, source) {
+      selectedAmount = amount;
+      const option = donationOpts.find(o => o.amount === amount);
+      selectedLabel = option ? option.label : 'Custom Amount';
+
+      // Update main buttons using data attributes for colors
+      amountButtons.forEach(b => {
+        const activeBorder = b.dataset.activeBorder;
+        const activeBg = b.dataset.activeBg;
+        const activeText = b.dataset.activeText || '#ffffff';
+        const inactiveBorder = b.dataset.inactiveBorder;
+        const inactiveBg = b.dataset.inactiveBg || 'transparent';
+        const inactiveText = b.dataset.inactiveText || '#ffffff';
+
+        if (parseInt(b.dataset.amount) === amount) {
+          b.style.borderColor = activeBorder;
+          b.style.backgroundColor = activeBg;
+          b.style.color = activeText;
+          b.classList.add('selected');
+        } else {
+          b.style.borderColor = inactiveBorder;
+          b.style.backgroundColor = inactiveBg;
+          b.style.color = inactiveText;
+          b.classList.remove('selected');
+        }
+      });
+
+      // Update mobile buttons
+      mobileAmountButtons.forEach(b => {
+        const activeBorder = b.dataset.activeBorder;
+        const activeBg = b.dataset.activeBg;
+        const activeText = b.dataset.activeText || '#ffffff';
+        const inactiveBorder = b.dataset.inactiveBorder;
+        const inactiveBg = b.dataset.inactiveBg || 'transparent';
+        const inactiveText = b.dataset.inactiveText || '#ffffff';
+
+        if (parseInt(b.dataset.amount) === amount) {
+          b.style.borderColor = activeBorder;
+          b.style.backgroundColor = activeBg;
+          b.style.color = activeText;
+        } else {
+          b.style.borderColor = inactiveBorder;
+          b.style.backgroundColor = inactiveBg;
+          b.style.color = inactiveText;
+        }
+      });
+
+      // Clear custom inputs and reset their styling when preset buttons are clicked
+      if (source === 'main' || source === 'init' || source === 'mobile') {
+        if (customInput) {
+          customInput.value = '';
+          customInput.style.borderColor = customInput.dataset.inactiveBorder;
+          customInput.style.backgroundColor = customInput.dataset.inactiveBg;
+          customInput.style.color = customInput.dataset.inactiveText;
+        }
+        if (mobileCustomInput) {
+          mobileCustomInput.value = '';
+          mobileCustomInput.style.borderColor = mobileCustomInput.dataset.inactiveBorder;
+          mobileCustomInput.style.backgroundColor = mobileCustomInput.dataset.inactiveBg;
+          mobileCustomInput.style.color = mobileCustomInput.dataset.inactiveText;
+        }
+      }
+    }
+
+    // Type toggle using inline styles
+    const isWhite = boxTemplate === 'white';
+    typeButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        donationType = this.dataset.type;
+        typeButtons.forEach(b => {
+          if (b.dataset.type === donationType) {
+            b.style.backgroundColor = colorConfig.toggleActiveColor;
+            b.style.color = isWhite ? '#ffffff' : colorConfig.textColor;
+          } else {
+            b.style.backgroundColor = 'transparent';
+            b.style.color = isWhite ? '#01534d' : colorConfig.textMutedColor;
+          }
+        });
+      });
+    });
+
+    // Main amount buttons
+    amountButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        syncAmountSelection(parseInt(this.dataset.amount), 'main');
+      });
+    });
+
+    // Mobile amount buttons
+    mobileAmountButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        syncAmountSelection(parseInt(this.dataset.amount), 'mobile');
+      });
+    });
+
+    // Helper to style custom input as active
+    function setCustomInputActive(input, isActive) {
+      if (!input) return;
+      if (isActive) {
+        input.style.borderColor = input.dataset.activeBorder;
+        input.style.backgroundColor = input.dataset.activeBg;
+        input.style.color = input.dataset.activeText;
+      } else {
+        input.style.borderColor = input.dataset.inactiveBorder;
+        input.style.backgroundColor = input.dataset.inactiveBg;
+        input.style.color = input.dataset.inactiveText;
+      }
+    }
+
+    // Custom inputs - use 'custom' source so we don't clear the input
+    if (customInput) {
+      customInput.addEventListener('focus', function() {
+        // Style as active when focused
+        setCustomInputActive(this, true);
+        if (mobileCustomInput) setCustomInputActive(mobileCustomInput, true);
+      });
+
+      customInput.addEventListener('blur', function() {
+        // Only remove active style if empty
+        if (!this.value) {
+          setCustomInputActive(this, false);
+          if (mobileCustomInput) setCustomInputActive(mobileCustomInput, false);
+        }
+      });
+
+      customInput.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value);
+          selectedLabel = 'Custom Amount';
+          // Style custom input as active
+          setCustomInputActive(this, true);
+          if (mobileCustomInput) {
+            setCustomInputActive(mobileCustomInput, true);
+            mobileCustomInput.value = this.value;
+          }
+          // Deselect all preset buttons
+          amountButtons.forEach(b => {
+            b.style.borderColor = b.dataset.inactiveBorder;
+            b.style.backgroundColor = b.dataset.inactiveBg || 'transparent';
+            b.style.color = b.dataset.inactiveText || '#ffffff';
+            b.classList.remove('selected');
+          });
+          mobileAmountButtons.forEach(b => {
+            b.style.borderColor = b.dataset.inactiveBorder;
+            b.style.backgroundColor = b.dataset.inactiveBg || 'transparent';
+            b.style.color = b.dataset.inactiveText || '#ffffff';
+          });
+        } else {
+          // If cleared, remove active style
+          setCustomInputActive(this, false);
+          if (mobileCustomInput) setCustomInputActive(mobileCustomInput, false);
+        }
+      });
+    }
+
+    if (mobileCustomInput) {
+      mobileCustomInput.addEventListener('focus', function() {
+        setCustomInputActive(this, true);
+        if (customInput) setCustomInputActive(customInput, true);
+      });
+
+      mobileCustomInput.addEventListener('blur', function() {
+        if (!this.value) {
+          setCustomInputActive(this, false);
+          if (customInput) setCustomInputActive(customInput, false);
+        }
+      });
+
+      mobileCustomInput.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value);
+          selectedLabel = 'Custom Amount';
+          // Style custom input as active
+          setCustomInputActive(this, true);
+          if (customInput) {
+            setCustomInputActive(customInput, true);
+            customInput.value = this.value;
+          }
+          // Deselect all preset buttons
+          amountButtons.forEach(b => {
+            b.style.borderColor = b.dataset.inactiveBorder;
+            b.style.backgroundColor = b.dataset.inactiveBg || 'transparent';
+            b.style.color = b.dataset.inactiveText || '#ffffff';
+            b.classList.remove('selected');
+          });
+          mobileAmountButtons.forEach(b => {
+            b.style.borderColor = b.dataset.inactiveBorder;
+            b.style.backgroundColor = b.dataset.inactiveBg || 'transparent';
+            b.style.color = b.dataset.inactiveText || '#ffffff';
+          });
+        } else {
+          setCustomInputActive(this, false);
+          if (customInput) setCustomInputActive(customInput, false);
+        }
+      });
+    }
+
+    // Donate function
+    function handleDonate() {
+      const amount = selectedAmount;
+      if (!amount || amount < 1) {
+        alert('Please enter a valid amount');
+        return;
+      }
+
+      const itemId = `${campaignData.slug}-${amount}-${donationType}`;
+
+      window.addToCart({
+        id: itemId,
+        name: campaignData.title,
+        label: selectedLabel || `$${amount} Donation`,
+        amount: amount,
+        quantity: 1,
+        type: donationType,
+        image: campaignData.image,
+        campaign: campaignData.slug
+      });
+    }
+
+    // Donate buttons
+    donateBtn.addEventListener('click', handleDonate);
+    if (mobileDonateBtn) {
+      mobileDonateBtn.addEventListener('click', handleDonate);
+    }
+
+    // Set initial selection
+    if (amountButtons.length > 0) {
+      const firstBtn = amountButtons[0];
+      syncAmountSelection(parseInt(firstBtn.dataset.amount), 'init');
+    }
+  });
+</script>

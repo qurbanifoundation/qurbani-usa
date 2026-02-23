@@ -9,6 +9,15 @@
   --color-teal: #255764;
 }
 
+:root {
+  /* Mega menu colors  */
+  --menu-brand-primary: #01534d;
+  --menu-brand-secondary: #fbefdd;
+  --menu-text-dark: #4c473e;
+  --menu-text-muted: #988f7e;
+  --menu-bg: #ffffff;
+}
+
 html {
   scroll-behavior: smooth;
 }

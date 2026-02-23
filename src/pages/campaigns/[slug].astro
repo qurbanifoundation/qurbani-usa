@@ -1,0 +1,90 @@
+---
+/**
+ * Campaign Dynamic Page
+ * Dynamically loads templates based on campaign settings or site defaults
+ */
+import GreenWithYellowTemplate from '../../templates/GreenWithYellowTemplate.astro';
+import EmergencyAppealTemplate from '../../templates/EmergencyAppealTemplate.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Fetch campaign by slug or ID
+let campaign: any = null;
+let siteSettings: any = null;
+
+try {
+  // First try to find by slug
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single();
+  campaign = data;
+} catch (e) {
+  // If not found by slug, try by ID (for UUID-based lookups)
+  try {
+    const { data } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('id', slug)
+      .eq('is_active', true)
+      .single();
+    campaign = data;
+  } catch (e2) {}
+}
+
+// Fetch site settings for default templates
+try {
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_campaign_page_template, default_donation_box_template')
+    .limit(1);
+
+  if (!error && data && data.length > 0) {
+    siteSettings = data[0];
+  }
+} catch (e) {
+  // Use defaults if fetch fails
+  console.error('Error fetching site settings:', e);
+}
+
+if (!campaign) {
+  return Astro.redirect('/campaigns');
+}
+
+// Transform database fields to match template props
+const campaignProps = {
+  id: campaign.id,
+  title: campaign.name || campaign.title,
+  subtitle: campaign.description,
+  slug: campaign.slug,
+  featured_image: campaign.featured_image || campaign.hero_image_url || campaign.image_url,
+  description: campaign.long_description || campaign.description,
+  meta_title: campaign.meta_title,
+  meta_description: campaign.meta_description,
+  content_sections: campaign.content_sections || [],
+  donation_options: campaign.donation_options || [],
+  gallery_images: campaign.gallery_images || [],
+  goal_amount: campaign.goal_amount,
+  raised_amount: campaign.raised_amount,
+  country: campaign.country,
+  category: campaign.category,
+  is_zakat_eligible: campaign.is_zakat_eligible,
+  impact_stats: campaign.impact_stats || [],
+};
+
+// Determine which templates to use (campaign override > site default > fallback)
+const pageTemplate = campaign.page_template || siteSettings?.default_campaign_page_template || 'green-with-yellow';
+const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
+
+---
+
+{pageTemplate === 'emergency-appeal' ? (
+  <EmergencyAppealTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : (
+  <GreenWithYellowTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+)}

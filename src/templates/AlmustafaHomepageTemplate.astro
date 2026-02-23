@@ -1,0 +1,656 @@
+---
+/**
+ * Almustafa Homepage Template
+ * Exact replica of staging9.qurbani.com
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { supabaseAdmin } from '../lib/supabase';
+
+// Fetch active campaigns
+let campaigns: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .limit(12);
+  if (data) campaigns = data;
+} catch (e) {}
+
+// Fallback campaigns
+if (campaigns.length === 0) {
+  campaigns = [
+    { id: 1, title: 'Palestine & Gaza Emergency', slug: 'palestine', description: 'Emergency relief for families in Gaza', featured_image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800', is_urgent: true },
+    { id: 2, title: 'Orphan Sponsorship', slug: 'orphan-sponsorship', description: 'Support orphaned children', featured_image: '/images/qurbani-foundation-orphan-sponsorship.jpg' },
+    { id: 3, title: 'Water for Life', slug: 'water', description: 'Provide clean drinking water', featured_image: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=800' },
+    { id: 4, title: 'Cataract Surgery', slug: 'cataract', description: 'Restore sight to the blind', featured_image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800' },
+    { id: 5, title: 'Yemen Emergency', slug: 'yemen', description: 'Crisis relief for Yemen', featured_image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800', is_urgent: true },
+    { id: 6, title: 'Sponsor a Hafiz', slug: 'hafiz', description: 'Support Quran memorization', featured_image: 'https://images.unsplash.com/photo-1585036156261-1e2ac055e25e?w=800' },
+    { id: 7, title: 'Food Packs', slug: 'food-packs', description: 'Feed hungry families', featured_image: '/images/qurbani-foundation-food-distribution.png' },
+    { id: 8, title: 'Education Fund', slug: 'education', description: 'Build brighter futures', featured_image: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=800' },
+  ];
+}
+
+// Impact stats from staging9
+const impactStats = [
+  { value: '18M+', label: 'People Reached' },
+  { value: '252K', label: 'Cataract Surgeries' },
+  { value: '1.7M', label: 'OPD Screenings' },
+  { value: '1.1M', label: 'Eyeglasses Distributed' },
+  { value: '7.1K', label: 'Orphans Sponsored' },
+  { value: '15.6K', label: 'Water Wells' },
+];
+---
+
+<Layout title="Qurbani Foundation - 100% Zakat Policy">
+  <Navbar />
+
+  <main>
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         HERO SECTION WITH DONATION WIDGET
+    ════════════════════════════════════════════════════════════════════════ -->
+    <section class="relative bg-[#1a1a1a] min-h-[600px]">
+      <!-- Background Image -->
+      <div class="absolute inset-0">
+        <img
+          src="/images/Qurbani-hero-section-img-1.jpg"
+          alt="Hero"
+          class="w-full h-full object-cover opacity-60"
+        />
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent"></div>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 py-16 lg:py-24">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <!-- Left Side - Hero Text -->
+          <div class="text-white">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+              Sponsor an Orphan
+            </h1>
+            <p class="text-xl text-white/80 mb-8 max-w-lg">
+              Give hope to orphaned children with education, healthcare, nutrition and love.
+            </p>
+            <div class="flex flex-wrap gap-4">
+              <a href="/appeals/orphan-sponsorship" class="inline-flex items-center gap-2 bg-[#ef7c01] hover:bg-[#d96d00] text-white font-bold px-8 py-4 rounded transition-colors">
+                LEARN MORE
+              </a>
+              <a href="/appeals" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-8 py-4 rounded border border-white/30 transition-colors">
+                VIEW ALL APPEALS
+              </a>
+            </div>
+          </div>
+
+          <!-- Right Side - Donation Widget -->
+          <div class="bg-white rounded-lg shadow-2xl overflow-hidden max-w-md ml-auto">
+            <!-- Widget Header -->
+            <div class="bg-[#255764] px-6 py-4">
+              <h3 class="text-xl font-bold text-white" style="font-family: 'Signika', sans-serif;">
+                Sponsor an Orphan
+              </h3>
+            </div>
+
+            <div class="p-6">
+              <!-- Frequency Tabs -->
+              <div class="flex border-b border-gray-200 mb-6">
+                <button id="tab-oneoff" class="flex-1 py-3 text-center font-semibold text-[#255764] border-b-2 border-[#255764] transition-colors">
+                  One Off
+                </button>
+                <button id="tab-monthly" class="flex-1 py-3 text-center font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+                  Monthly
+                </button>
+              </div>
+
+              <!-- One-Off Options -->
+              <div id="oneoff-options" class="space-y-3 mb-6">
+                <label class="orphan-radio flex items-center justify-between p-4 border-2 border-[#255764] bg-[#255764]/5 rounded-lg cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="orphan-amount" value="360" checked class="w-5 h-5 text-[#255764]" />
+                    <span class="font-semibold text-gray-900">1 Orphan</span>
+                  </div>
+                  <span class="text-xl font-bold text-[#255764]">$360.00</span>
+                </label>
+
+                <label class="orphan-radio flex items-center justify-between p-4 border-2 border-gray-200 hover:border-[#255764] rounded-lg cursor-pointer transition-colors">
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="orphan-amount" value="720" class="w-5 h-5 text-[#255764]" />
+                    <span class="font-semibold text-gray-900">2 Orphans</span>
+                  </div>
+                  <span class="text-xl font-bold text-gray-700">$720.00</span>
+                </label>
+
+                <label class="orphan-radio flex items-center justify-between p-4 border-2 border-gray-200 hover:border-[#255764] rounded-lg cursor-pointer transition-colors">
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="orphan-amount" value="1800" class="w-5 h-5 text-[#255764]" />
+                    <span class="font-semibold text-gray-900">5 Orphans</span>
+                  </div>
+                  <span class="text-xl font-bold text-gray-700">$1,800.00</span>
+                </label>
+              </div>
+
+              <!-- Monthly Options (hidden by default) -->
+              <div id="monthly-options" class="space-y-3 mb-6 hidden">
+                <label class="orphan-radio flex items-center justify-between p-4 border-2 border-[#255764] bg-[#255764]/5 rounded-lg cursor-pointer">
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="orphan-amount-monthly" value="30" checked class="w-5 h-5 text-[#255764]" />
+                    <span class="font-semibold text-gray-900">1 Orphan</span>
+                  </div>
+                  <span class="text-xl font-bold text-[#255764]">$30.00/mo</span>
+                </label>
+
+                <label class="orphan-radio flex items-center justify-between p-4 border-2 border-gray-200 hover:border-[#255764] rounded-lg cursor-pointer transition-colors">
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="orphan-amount-monthly" value="60" class="w-5 h-5 text-[#255764]" />
+                    <span class="font-semibold text-gray-900">2 Orphans</span>
+                  </div>
+                  <span class="text-xl font-bold text-gray-700">$60.00/mo</span>
+                </label>
+
+                <label class="orphan-radio flex items-center justify-between p-4 border-2 border-gray-200 hover:border-[#255764] rounded-lg cursor-pointer transition-colors">
+                  <div class="flex items-center gap-3">
+                    <input type="radio" name="orphan-amount-monthly" value="150" class="w-5 h-5 text-[#255764]" />
+                    <span class="font-semibold text-gray-900">5 Orphans</span>
+                  </div>
+                  <span class="text-xl font-bold text-gray-700">$150.00/mo</span>
+                </label>
+              </div>
+
+              <!-- Add to Cart Button -->
+              <button id="add-donation-btn" class="w-full bg-[#fdc448] hover:bg-[#efb635] text-[#1a1a1a] font-bold py-4 rounded text-lg transition-colors">
+                Add donation
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         100% ZAKAT POLICY + CAMPAIGNS CAROUSEL (Exact staging9 design)
+    ════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Top Banner -->
+    <div class="bg-[#01534d] py-3 text-center">
+      <span class="inline-block bg-[#01534d] border-2 border-white text-white text-sm md:text-base font-bold px-6 py-2 uppercase tracking-wider">
+        Give Your Zakat & Transform Lives
+      </span>
+    </div>
+
+    <!-- Main Lime Green Section -->
+    <section class="py-12 md:py-16 bg-[#bfd730]">
+      <div class="max-w-7xl mx-auto px-4">
+
+        <!-- 100% Zakat Policy Header -->
+        <div class="text-center mb-12">
+          <!-- 100% Badge -->
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full border-4 border-[#01534d] bg-[#bfd730] mb-6">
+            <div class="text-center">
+              <span class="block text-2xl font-bold text-[#01534d] leading-none">100</span>
+              <span class="block text-xs font-bold text-[#01534d]">%</span>
+            </div>
+          </div>
+
+          <h2 class="text-2xl md:text-3xl font-bold text-[#1a1a1a] mb-4 uppercase tracking-wide" style="font-family: 'Signika', sans-serif;">
+            100% Zakat Policy
+          </h2>
+          <p class="text-[#1a1a1a]/80 max-w-xl mx-auto">
+            Our 100% Zakat Policy means that 100% of your Zakat will reach those who need it the most.
+          </p>
+        </div>
+
+        <!-- Campaigns Carousel -->
+        <div class="relative">
+          <!-- Left Arrow -->
+          <button
+            id="carousel-prev"
+            class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-12 h-12 bg-white/80 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
+          >
+            <svg class="w-6 h-6 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+
+          <!-- Right Arrow -->
+          <button
+            id="carousel-next"
+            class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-12 h-12 bg-white/80 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
+          >
+            <svg class="w-6 h-6 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+
+          <!-- Cards Container -->
+          <div id="campaigns-carousel" class="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 px-2 scrollbar-hide">
+            {campaigns.map((campaign, index) => {
+              // Assign colors based on index or type
+              const colors = ['#01534d', '#01534d', '#0891b2', '#dc2626', '#01534d', '#0891b2', '#dc2626', '#01534d'];
+              const bgColor = campaign.is_urgent ? '#dc2626' : colors[index % colors.length];
+
+              return (
+                <div class="flex-shrink-0 w-64 md:w-72 snap-start">
+                  <div class="bg-white rounded-lg overflow-hidden shadow-lg h-full flex flex-col">
+                    <!-- Image -->
+                    <div class="relative h-56 md:h-64 overflow-hidden">
+                      <img
+                        src={campaign.featured_image}
+                        alt={campaign.title}
+                        class="w-full h-full object-cover"
+                        loading={index < 4 ? 'eager' : 'lazy'}
+                      />
+                    </div>
+
+                    <!-- Colored Bottom Section -->
+                    <div class="p-5 flex-1 flex flex-col justify-between" style={`background-color: ${bgColor};`}>
+                      <h3 class="text-white font-bold text-lg md:text-xl uppercase leading-tight mb-4" style="font-family: 'Signika', sans-serif;">
+                        {campaign.title}
+                      </h3>
+
+                      <div class="space-y-2">
+                        <a
+                          href={`/appeals/${campaign.slug}`}
+                          class="inline-flex items-center gap-2 bg-transparent border-2 border-white text-white font-bold px-5 py-2 text-sm uppercase hover:bg-white hover:text-[#1a1a1a] transition-colors"
+                        >
+                          Donate
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                          </svg>
+                        </a>
+                        <a
+                          href={`/appeals/${campaign.slug}`}
+                          class="block text-white/90 text-sm font-medium underline hover:text-white transition-colors"
+                        >
+                          LEARN MORE
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <!-- Pagination Dots -->
+          <div class="flex justify-center gap-2 mt-6" id="carousel-dots">
+            <button class="carousel-dot w-3 h-3 rounded-full bg-[#01534d] transition-all" data-index="0"></button>
+            <button class="carousel-dot w-3 h-3 rounded-full bg-[#01534d]/30 hover:bg-[#01534d]/50 transition-all" data-index="1"></button>
+            <button class="carousel-dot w-3 h-3 rounded-full bg-[#01534d]/30 hover:bg-[#01534d]/50 transition-all" data-index="2"></button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CHANGE LIVES SECTION WITH VIDEO
+    ════════════════════════════════════════════════════════════════════════ -->
+    <section class="py-16 bg-[#f1efea]">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <!-- Left - Text Content -->
+          <div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6" style="font-family: 'Signika', sans-serif;">
+              Change Lives and Build a Brighter Future
+            </h2>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+              We are dedicated to eradicating global poverty by running humanitarian projects worldwide. Our programs specialize in healthcare and sight restoration, operating free medical eye camps across Asia, Africa, and the Middle East.
+            </p>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+              From emergency relief to sustainable development, we provide food, clean water, education, and shelter to those most in need. Join us in making a lasting difference in the lives of millions.
+            </p>
+            <a href="/about" class="inline-flex items-center gap-2 bg-[#255764] hover:bg-[#1d4550] text-white font-bold px-8 py-4 rounded transition-colors">
+              Learn More About Us
+            </a>
+          </div>
+
+          <!-- Right - Video -->
+          <div class="relative">
+            <div class="relative rounded-lg overflow-hidden shadow-xl aspect-video bg-gray-900">
+              <img
+                src="/images/qurbani-foundation-food-distribution.png"
+                alt="Watch our impact"
+                class="w-full h-full object-cover opacity-80"
+              />
+              <div class="absolute inset-0 flex items-center justify-center">
+                <button class="w-20 h-20 bg-[#ef7c01] hover:bg-[#d96d00] rounded-full flex items-center justify-center shadow-2xl transition-colors group">
+                  <svg class="w-8 h-8 text-white ml-1 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="text-center mt-4 text-gray-600 font-medium">Watch The Video</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         IMPACT STATISTICS
+    ════════════════════════════════════════════════════════════════════════ -->
+    <section class="py-16 bg-[#255764]">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+            Our Impact in Numbers
+          </h2>
+          <p class="text-white/70 max-w-2xl mx-auto">
+            Together, we've transformed millions of lives across the globe.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+          {impactStats.map((stat) => (
+            <div class="text-center">
+              <div class="text-3xl md:text-4xl font-bold text-[#fdc448] mb-2" style="font-family: 'Signika', sans-serif;">
+                {stat.value}
+              </div>
+              <div class="text-white/80 text-sm">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         APPEALS GRID
+    ════════════════════════════════════════════════════════════════════════ -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Signika', sans-serif;">
+            Our Appeals
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto">
+            Support our ongoing humanitarian projects around the world.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {campaigns.slice(0, 8).map((campaign) => (
+            <a href={`/appeals/${campaign.slug}`} class="group">
+              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <div class="relative h-48 overflow-hidden">
+                  <img
+                    src={campaign.featured_image}
+                    alt={campaign.title}
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {campaign.is_urgent && (
+                    <div class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded">
+                      URGENT
+                    </div>
+                  )}
+                </div>
+                <div class="p-4">
+                  <h3 class="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wide" style="font-family: 'Signika', sans-serif;">
+                    {campaign.title}
+                  </h3>
+                  <div class="flex gap-2">
+                    <span class="flex-1 text-center bg-[#ef7c01] text-white text-xs font-bold px-3 py-2 rounded hover:bg-[#d96d00] transition-colors">
+                      DONATE
+                    </span>
+                    <span class="flex-1 text-center bg-[#255764] text-white text-xs font-bold px-3 py-2 rounded hover:bg-[#1d4550] transition-colors">
+                      Learn More
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div class="text-center mt-10">
+          <a href="/appeals" class="inline-flex items-center gap-2 bg-[#255764] hover:bg-[#1d4550] text-white font-bold px-8 py-4 rounded transition-colors">
+            View All Appeals
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WAYS TO DONATE
+    ════════════════════════════════════════════════════════════════════════ -->
+    <section class="py-16 bg-[#f1efea]">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4" style="font-family: 'Signika', sans-serif;">
+            Ways to Donate
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <!-- Phone -->
+          <div class="bg-white rounded-lg p-8 text-center shadow-md">
+            <div class="w-16 h-16 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+            </div>
+            <h3 class="font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">By Phone</h3>
+            <p class="text-[#ef7c01] font-bold text-xl">+1 (800) 900-0027</p>
+          </div>
+
+          <!-- Mail -->
+          <div class="bg-white rounded-lg p-8 text-center shadow-md">
+            <div class="w-16 h-16 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h3 class="font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">By Mail</h3>
+            <p class="text-gray-600 text-sm">145 Sherwood Ave<br/>Teaneck, NJ 07666</p>
+          </div>
+
+          <!-- Bank -->
+          <div class="bg-white rounded-lg p-8 text-center shadow-md">
+            <div class="w-16 h-16 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+              </svg>
+            </div>
+            <h3 class="font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">Bank Transfer</h3>
+            <p class="text-gray-600 text-sm">Contact us for details</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         NEWSLETTER
+    ════════════════════════════════════════════════════════════════════════ -->
+    <section class="py-16 bg-[#255764]">
+      <div class="max-w-3xl mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+          Subscribe to Our Newsletter
+        </h2>
+        <p class="text-white/70 mb-8">
+          Stay updated with our latest projects and appeals.
+        </p>
+        <form class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+          <input
+            type="email"
+            placeholder="Enter your email address"
+            class="flex-1 px-5 py-4 rounded bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#fdc448]"
+          />
+          <button type="submit" class="bg-[#fdc448] hover:bg-[#efb635] text-[#1a1a1a] font-bold px-8 py-4 rounded transition-colors">
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Radio button styling */
+  .orphan-radio input[type="radio"]:checked + span {
+    color: #255764;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Tab switching
+    const tabOneoff = document.getElementById('tab-oneoff');
+    const tabMonthly = document.getElementById('tab-monthly');
+    const oneoffOptions = document.getElementById('oneoff-options');
+    const monthlyOptions = document.getElementById('monthly-options');
+
+    let isMonthly = false;
+
+    tabOneoff?.addEventListener('click', () => {
+      isMonthly = false;
+      tabOneoff.classList.add('text-[#255764]', 'border-b-2', 'border-[#255764]');
+      tabOneoff.classList.remove('text-gray-400');
+      tabMonthly?.classList.remove('text-[#255764]', 'border-b-2', 'border-[#255764]');
+      tabMonthly?.classList.add('text-gray-400');
+      oneoffOptions?.classList.remove('hidden');
+      monthlyOptions?.classList.add('hidden');
+    });
+
+    tabMonthly?.addEventListener('click', () => {
+      isMonthly = true;
+      tabMonthly.classList.add('text-[#255764]', 'border-b-2', 'border-[#255764]');
+      tabMonthly.classList.remove('text-gray-400');
+      tabOneoff?.classList.remove('text-[#255764]', 'border-b-2', 'border-[#255764]');
+      tabOneoff?.classList.add('text-gray-400');
+      monthlyOptions?.classList.remove('hidden');
+      oneoffOptions?.classList.add('hidden');
+    });
+
+    // Radio button styling
+    const allRadios = document.querySelectorAll('.orphan-radio');
+    allRadios.forEach(label => {
+      const radio = label.querySelector('input[type="radio"]');
+      radio?.addEventListener('change', () => {
+        // Reset all labels in same group
+        const groupName = radio.getAttribute('name');
+        document.querySelectorAll(`input[name="${groupName}"]`).forEach(r => {
+          const parentLabel = r.closest('.orphan-radio');
+          if (parentLabel) {
+            parentLabel.classList.remove('border-[#255764]', 'bg-[#255764]/5');
+            parentLabel.classList.add('border-gray-200');
+          }
+        });
+        // Highlight selected
+        label.classList.add('border-[#255764]', 'bg-[#255764]/5');
+        label.classList.remove('border-gray-200');
+      });
+    });
+
+    // Add to cart
+    const addDonationBtn = document.getElementById('add-donation-btn');
+    addDonationBtn?.addEventListener('click', () => {
+      let amount = 360;
+      let qty = 1;
+
+      if (isMonthly) {
+        const checked = document.querySelector('input[name="orphan-amount-monthly"]:checked') as HTMLInputElement;
+        if (checked) {
+          amount = parseInt(checked.value);
+          qty = amount === 30 ? 1 : amount === 60 ? 2 : 5;
+        }
+      } else {
+        const checked = document.querySelector('input[name="orphan-amount"]:checked') as HTMLInputElement;
+        if (checked) {
+          amount = parseInt(checked.value);
+          qty = amount === 360 ? 1 : amount === 720 ? 2 : 5;
+        }
+      }
+
+      if (typeof (window as any).addToCart === 'function') {
+        (window as any).addToCart({
+          id: `orphan-sponsorship-${qty}-${Date.now()}`,
+          type: 'sponsorship',
+          name: `Orphan Sponsorship (${qty} ${qty === 1 ? 'orphan' : 'orphans'})`,
+          amount: amount,
+          quantity: 1,
+          description: isMonthly ? 'Monthly sponsorship' : 'Annual sponsorship',
+          frequency: isMonthly ? 'monthly' : 'single'
+        });
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // Campaigns Carousel
+    // ═══════════════════════════════════════════════════════════════
+    const carousel = document.getElementById('campaigns-carousel');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    const dots = document.querySelectorAll('.carousel-dot');
+
+    const cardWidth = 288; // w-72 = 18rem = 288px
+    const gap = 24; // gap-6 = 1.5rem = 24px
+    const scrollAmount = (cardWidth + gap) * 4; // Scroll 4 cards at a time
+
+    let currentPage = 0;
+    const totalPages = 3;
+
+    function updateDots() {
+      dots.forEach((dot, index) => {
+        if (index === currentPage) {
+          dot.classList.add('bg-[#01534d]');
+          dot.classList.remove('bg-[#01534d]/30');
+        } else {
+          dot.classList.remove('bg-[#01534d]');
+          dot.classList.add('bg-[#01534d]/30');
+        }
+      });
+    }
+
+    prevBtn?.addEventListener('click', () => {
+      if (carousel) {
+        currentPage = Math.max(0, currentPage - 1);
+        carousel.scrollTo({ left: currentPage * scrollAmount, behavior: 'smooth' });
+        updateDots();
+      }
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      if (carousel) {
+        currentPage = Math.min(totalPages - 1, currentPage + 1);
+        carousel.scrollTo({ left: currentPage * scrollAmount, behavior: 'smooth' });
+        updateDots();
+      }
+    });
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        currentPage = index;
+        if (carousel) {
+          carousel.scrollTo({ left: currentPage * scrollAmount, behavior: 'smooth' });
+        }
+        updateDots();
+      });
+    });
+
+    // Update dots on scroll
+    carousel?.addEventListener('scroll', () => {
+      const scrollLeft = carousel.scrollLeft;
+      const newPage = Math.round(scrollLeft / scrollAmount);
+      if (newPage !== currentPage) {
+        currentPage = newPage;
+        updateDots();
+      }
+    });
+  });
+</script>

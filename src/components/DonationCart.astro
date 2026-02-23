@@ -1,0 +1,881 @@
+---
+// Donation Cart Sidebar + Full-Screen Checkout Modal
+import { supabaseAdmin } from '../lib/supabase';
+
+// Google Places API key
+const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
+
+// Fetch payment settings
+let paymentSettings = {
+  stripe_enabled: true,
+  stripe_publishable_key: '',
+  google_pay_enabled: true,
+  apple_pay_enabled: true,
+  paypal_enabled: false,
+};
+
+try {
+  const { data } = await supabaseAdmin
+    .from('site_settings')
+    .select('stripe_enabled, stripe_publishable_key, google_pay_enabled, apple_pay_enabled, paypal_enabled')
+    .single();
+
+  if (data) {
+    paymentSettings = {
+      stripe_enabled: data.stripe_enabled ?? true,
+      stripe_publishable_key: data.stripe_publishable_key || '',
+      google_pay_enabled: data.google_pay_enabled ?? true,
+      apple_pay_enabled: data.apple_pay_enabled ?? true,
+      paypal_enabled: data.paypal_enabled ?? false,
+    };
+  }
+} catch (e) {}
+---
+
+<!-- Stripe.js -->
+<script is:inline src="https://js.stripe.com/v3/"></script>
+
+<!-- ==================== SIDECART ==================== -->
+<div id="cart-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden opacity-0 transition-opacity duration-300"></div>
+
+<div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white z-[101] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-[#d97706]">
+    <h2 class="text-lg font-bold text-white" style="font-family: 'Signika', sans-serif;">Your Donations</h2>
+    <button id="close-cart" class="p-2 hover:bg-white/10 rounded-full transition">
+      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Cart Items - Scrollable -->
+  <div class="flex-1 overflow-y-auto p-4">
+    <!-- Empty State -->
+    <div id="cart-empty" class="text-center py-12">
+      <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+      </svg>
+      <p class="text-gray-500 font-medium">Your cart is empty</p>
+      <p class="text-gray-400 text-sm mt-1">Add a donation to get started</p>
+    </div>
+
+    <!-- Cart Items List -->
+    <div id="cart-items" class="space-y-3 hidden">
+      <!-- Items rendered via JS -->
+    </div>
+  </div>
+
+  <!-- Footer - Total & Checkout Button -->
+  <div id="cart-footer" class="border-t border-gray-200 p-4 bg-gray-50">
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-gray-600 text-sm" id="payment-type-label">Single Payment</span>
+      <span class="text-xl font-bold text-[#d97706]" id="cart-total">$0.00</span>
+    </div>
+    <button id="proceed-checkout-btn" disabled class="w-full bg-[#d97706] text-white font-bold py-3 rounded-xl hover:bg-[#b45309] transition disabled:opacity-50 disabled:cursor-not-allowed" style="font-family: 'Signika', sans-serif;">
+      Proceed To Checkout
+    </button>
+  </div>
+</div>
+
+<!-- ==================== FULL-SCREEN CHECKOUT MODAL ==================== -->
+<div id="checkout-modal" class="fixed inset-0 z-[200] hidden">
+  <!-- Modal Content - True Full Screen -->
+  <div class="absolute inset-0 bg-white overflow-y-auto">
+
+    <!-- Close Button -->
+    <button id="close-checkout-modal" class="fixed top-4 right-4 z-20 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-lg">
+      <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+        <!-- Step 1: Your Information + Cart Summary -->
+        <div id="modal-step-1">
+          <!-- Progress Indicator -->
+          <div class="bg-gray-100 px-6 py-4 border-b border-gray-200">
+            <div class="max-w-4xl mx-auto flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-[#d97706] text-white flex items-center justify-center font-bold text-sm">1</div>
+                <span class="font-semibold text-gray-800">Your Information</span>
+              </div>
+              <div class="hidden md:flex items-center gap-2 text-gray-400">
+                <div class="w-12 h-0.5 bg-gray-300"></div>
+                <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center font-bold text-sm">2</div>
+                <span class="text-gray-500">Payment</span>
+              </div>
+              <!-- Social Proof -->
+              <div class="hidden md:flex items-center gap-2 text-sm text-gray-600">
+                <div class="flex -space-x-2">
+                  <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">A</div>
+                  <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">M</div>
+                  <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">S</div>
+                </div>
+                <span><strong>847</strong> people donated this month</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2">
+            <!-- Left: Your Information -->
+            <div class="p-6 md:p-8 bg-white">
+              <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">Your Information</h2>
+
+              <form id="checkout-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                    <input type="text" name="firstName" id="modal-firstName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                    <input type="text" name="lastName" id="modal-lastName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                  <input type="email" name="email" id="modal-email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <input type="tel" name="phone" id="modal-phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                </div>
+
+                <button type="button" id="modal-continue-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-4">
+                  Continue to Payment
+                  <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                  </svg>
+                </button>
+              </form>
+            </div>
+
+            <!-- Right: Donation Basket + Upsell -->
+            <div class="p-6 md:p-8 bg-gray-50 border-l border-gray-200">
+              <!-- Mobile Social Proof -->
+              <div class="md:hidden flex items-center justify-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
+                <div class="flex -space-x-2">
+                  <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">A</div>
+                  <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">M</div>
+                  <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">S</div>
+                </div>
+                <span><strong>847</strong> people donated this month</span>
+              </div>
+
+              <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Donation Basket</h3>
+
+              <!-- Cart Items Summary -->
+              <div id="modal-cart-items" class="space-y-3 mb-6">
+                <!-- Rendered via JS -->
+              </div>
+
+              <!-- Subtotal -->
+              <div class="flex justify-between items-center py-3 border-t border-gray-200">
+                <span class="font-medium text-gray-700">Subtotal</span>
+                <span class="text-xl font-bold text-[#d97706]" id="modal-subtotal">$0.00</span>
+              </div>
+
+              <!-- Upsell Section -->
+              <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center gap-2 mb-4">
+                  <svg class="w-5 h-5 text-[#d97706]" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                  <p class="text-sm font-semibold text-gray-700">Most Donors Also Give To:</p>
+                </div>
+
+                <!-- Upsell Item 1: Prophetic Qurbani - PRE-CHECKED -->
+                <label id="upsell-prophetic" class="block cursor-pointer">
+                  <div class="upsell-card flex items-start gap-3 p-4 border-2 border-[#d97706] rounded-xl bg-orange-50 transition">
+                    <input type="checkbox" id="upsell-checkbox-1" checked class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2">
+                        <p class="font-bold text-gray-800 text-sm">YES! Add Prophetic Qurbani</p>
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">RECOMMENDED</span>
+                      </div>
+                      <div class="flex gap-3 mt-2">
+                        <img src="/images/campaigns/prophetic-qurbani.jpg" alt="Prophetic Qurbani" class="w-14 h-14 object-cover rounded-lg flex-shrink-0" onerror="this.style.display='none'" />
+                        <div>
+                          <p class="text-sm font-semibold text-[#d97706]">+$50 — Feeds 15 people meat for Eid</p>
+                          <p class="text-xs text-gray-500 mt-1">Follow the Sunnah of giving a second Qurbani for those who cannot afford one.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                <!-- Upsell Item 2: Feed the Hungry -->
+                <label class="block cursor-pointer mt-3">
+                  <div class="upsell-card flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl hover:border-[#d97706] transition bg-white">
+                    <input type="checkbox" id="upsell-checkbox-2" class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />
+                    <div class="flex-1">
+                      <p class="font-bold text-gray-800 text-sm">YES! Feed a Family for a Week</p>
+                      <p class="text-sm font-semibold text-[#d97706] mt-1">+$25 — Provides 21 nutritious meals</p>
+                      <p class="text-xs text-gray-500 mt-1">Help a family in need with essential food supplies for 7 days.</p>
+                    </div>
+                  </div>
+                </label>
+
+                <!-- Micro-copy for trust -->
+                <p class="text-xs text-gray-400 mt-3 text-center italic">Uncheck if you prefer not to add these — no pressure!</p>
+              </div>
+
+              <!-- Updated Total -->
+              <div class="mt-6 p-4 bg-[#d97706] rounded-xl text-white">
+                <div class="flex justify-between items-center">
+                  <span class="font-medium">Total</span>
+                  <span class="text-2xl font-bold" id="modal-total">$0.00</span>
+                </div>
+                <p class="text-xs text-white/70 mt-1" id="modal-payment-type">One-time donation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Payment Details -->
+        <div id="modal-step-2" class="hidden">
+          <!-- Progress Indicator - Step 2 -->
+          <div class="bg-gray-100 px-6 py-4 border-b border-gray-200">
+            <div class="max-w-2xl mx-auto flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <span class="text-gray-500">Your Information</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-12 h-0.5 bg-[#d97706]"></div>
+                <div class="w-8 h-8 rounded-full bg-[#d97706] text-white flex items-center justify-center font-bold text-sm">2</div>
+                <span class="font-semibold text-gray-800">Payment</span>
+              </div>
+              <!-- Trust Badge in Header -->
+              <div class="hidden md:flex items-center gap-2 text-sm text-green-600">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="font-medium">256-bit SSL Secure</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 md:p-8 max-w-2xl mx-auto">
+            <!-- Back Button -->
+            <button type="button" id="modal-back-btn" class="flex items-center gap-2 text-[#d97706] font-medium mb-6 hover:underline">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back to Information
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">Payment Details</h2>
+
+            <!-- Order Summary with Impact -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-200">
+              <div class="flex justify-between items-center">
+                <div>
+                  <span class="text-gray-600">Your Total Impact</span>
+                  <p class="text-xs text-green-600 mt-1">100% of your donation goes to those in need</p>
+                </div>
+                <span class="text-2xl font-bold text-[#d97706]" id="payment-total">$0.00</span>
+              </div>
+            </div>
+
+            <!-- Card Element with Trust Badges -->
+            <div class="mb-6">
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-gray-700">Card Details *</label>
+                <div class="flex items-center gap-2">
+                  <img src="https://cdn.jsdelivr.net/gh/nicerobot/stripe-badge@master/svg/badge-solid-dark.svg" alt="Powered by Stripe" class="h-6" onerror="this.style.display='none'" />
+                </div>
+              </div>
+              <div id="card-element" class="p-4 border border-gray-300 rounded-xl bg-white min-h-[50px]"></div>
+              <div id="card-errors" class="text-red-500 text-sm mt-2" role="alert"></div>
+              <!-- Card Brands -->
+              <div class="flex items-center gap-2 mt-2">
+                <span class="text-xs text-gray-400">We accept:</span>
+                <div class="flex gap-1">
+                  <div class="w-8 h-5 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">VISA</div>
+                  <div class="w-8 h-5 bg-red-500 rounded flex items-center justify-center text-white text-xs font-bold">MC</div>
+                  <div class="w-8 h-5 bg-blue-400 rounded flex items-center justify-center text-white text-xs font-bold">AMEX</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Billing Address -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Billing Address</h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                  <input type="text" name="address" id="modal-address" required autocomplete="off" placeholder="Start typing to search..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                  <p class="text-xs text-gray-400 mt-1">Start typing to auto-fill your address</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                    <input type="text" name="city" id="modal-city" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                    <input type="text" name="state" id="modal-state" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
+                    <input type="text" name="zipCode" id="modal-zip" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                    <select name="country" id="modal-country" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] bg-white">
+                      <option value="US" selected>United States</option>
+                      <option value="CA">Canada</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="AU">Australia</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="flex items-start gap-2 mb-6">
+              <input type="checkbox" id="modal-terms" required class="mt-1 w-5 h-5 text-[#d97706] rounded focus:ring-[#d97706]" />
+              <label for="modal-terms" class="text-sm text-gray-600">
+                I agree to the <a href="/terms" class="text-[#d97706] underline">Terms</a> and <a href="/privacy" class="text-[#d97706] underline">Privacy Policy</a>
+              </label>
+            </div>
+
+            <!-- Pay Button -->
+            <button type="button" id="pay-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              <span id="pay-btn-text">Complete Secure Donation</span>
+            </button>
+
+            <!-- Trust Indicators Below Button -->
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500">
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Secure Payment</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Tax Deductible</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                </svg>
+                <span>Receipt Emailed</span>
+              </div>
+            </div>
+
+            <!-- Processing -->
+            <div id="processing-indicator" class="hidden mt-4 text-center">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d97706]"></div>
+              <p class="text-gray-600 mt-2">Processing your donation...</p>
+            </div>
+
+            <!-- Error -->
+            <div id="payment-error" class="hidden mt-4 p-4 bg-red-50 rounded-xl text-center">
+              <p class="text-red-600" id="payment-error-text"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success State -->
+        <div id="modal-success" class="hidden p-8 text-center">
+          <div class="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Thank You!</h2>
+          <p class="text-gray-600 mb-6">Your donation has been processed successfully.</p>
+          <p class="text-sm text-gray-500 mb-8">A confirmation email has been sent to your email address.</p>
+          <button type="button" id="close-success-btn" class="px-8 py-3 bg-[#d97706] text-white font-semibold rounded-xl hover:bg-[#b45309] transition">
+            Continue Browsing
+          </button>
+  </div>
+</div>
+
+<script is:inline define:vars={{ stripePublishableKey: paymentSettings.stripe_publishable_key, stripeEnabled: paymentSettings.stripe_enabled, googlePlacesApiKey: googlePlacesApiKey }}>
+// Cart State
+window.donationCart = {
+  items: [],
+  isOpen: false,
+  stripe: null,
+  cardElement: null,
+  cardMounted: false,
+  placesLoaded: false,
+  autocomplete: null,
+  upsellItems: [
+    { id: 'prophetic-qurbani', name: 'Prophetic Qurbani', amount: 50, type: 'single' },
+    { id: 'feed-family', name: 'Feed a Family', amount: 25, type: 'single' },
+  ],
+};
+
+// Load Google Places API
+function loadGooglePlaces() {
+  if (window.donationCart.placesLoaded || !googlePlacesApiKey) return;
+
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesApiKey}&libraries=places&callback=initPlacesAutocomplete`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+  window.donationCart.placesLoaded = true;
+}
+
+// Initialize Places Autocomplete
+window.initPlacesAutocomplete = function() {
+  const addressInput = document.getElementById('modal-address');
+  if (!addressInput || !window.google?.maps?.places) return;
+
+  try {
+    window.donationCart.autocomplete = new google.maps.places.Autocomplete(addressInput, {
+      types: ['address'],
+      componentRestrictions: { country: ['us', 'ca', 'gb', 'au'] },
+      fields: ['address_components', 'formatted_address'],
+    });
+
+    window.donationCart.autocomplete.addListener('place_changed', function() {
+      const place = window.donationCart.autocomplete.getPlace();
+      if (!place.address_components) return;
+
+      // Parse address components
+      let streetNumber = '';
+      let route = '';
+      let city = '';
+      let state = '';
+      let zip = '';
+      let country = 'US';
+
+      for (const component of place.address_components) {
+        const type = component.types[0];
+        if (type === 'street_number') streetNumber = component.long_name;
+        if (type === 'route') route = component.long_name;
+        if (type === 'locality') city = component.long_name;
+        if (type === 'administrative_area_level_1') state = component.short_name;
+        if (type === 'postal_code') zip = component.long_name;
+        if (type === 'country') country = component.short_name;
+      }
+
+      // Fill in the form fields
+      document.getElementById('modal-address').value = `${streetNumber} ${route}`.trim();
+      document.getElementById('modal-city').value = city;
+      document.getElementById('modal-state').value = state;
+      document.getElementById('modal-zip').value = zip;
+      document.getElementById('modal-country').value = country;
+    });
+  } catch (e) {
+    console.log('Google Places not available:', e.message);
+  }
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  // Load cart from localStorage
+  const savedCart = localStorage.getItem('donationCart');
+  if (savedCart) {
+    try {
+      window.donationCart.items = JSON.parse(savedCart);
+      updateCartUI();
+    } catch (e) {}
+  }
+
+  // Initialize Stripe
+  if (stripeEnabled && stripePublishableKey && typeof Stripe !== 'undefined') {
+    window.donationCart.stripe = Stripe(stripePublishableKey);
+    initializeStripeElements();
+  }
+
+  // Load Google Places API
+  loadGooglePlaces();
+
+  // Event Listeners
+  document.getElementById('close-cart').addEventListener('click', closeCart);
+  document.getElementById('cart-overlay').addEventListener('click', closeCart);
+  document.getElementById('proceed-checkout-btn').addEventListener('click', openCheckoutModal);
+  document.getElementById('close-checkout-modal').addEventListener('click', closeCheckoutModal);
+  document.getElementById('modal-continue-btn').addEventListener('click', goToPaymentStep);
+  document.getElementById('modal-back-btn').addEventListener('click', goToInfoStep);
+  document.getElementById('pay-btn').addEventListener('click', handlePayment);
+  document.getElementById('close-success-btn').addEventListener('click', function() {
+    closeCheckoutModal();
+    window.donationCart.items = [];
+    localStorage.removeItem('donationCart');
+    updateCartUI();
+  });
+
+  // Upsell checkboxes - update total and visual styles
+  document.getElementById('upsell-checkbox-1').addEventListener('change', function() {
+    updateUpsellCardStyles();
+    updateModalTotal();
+  });
+  document.getElementById('upsell-checkbox-2').addEventListener('change', function() {
+    updateUpsellCardStyles();
+    updateModalTotal();
+  });
+
+  // ESC to close
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (document.getElementById('checkout-modal').classList.contains('hidden') === false) {
+        closeCheckoutModal();
+      } else if (window.donationCart.isOpen) {
+        closeCart();
+      }
+    }
+  });
+});
+
+// Initialize Stripe Elements
+function initializeStripeElements() {
+  if (!window.donationCart.stripe) return;
+  const elements = window.donationCart.stripe.elements();
+  window.donationCart.cardElement = elements.create('card', {
+    style: {
+      base: { fontSize: '16px', color: '#333', fontFamily: 'system-ui, sans-serif' },
+      invalid: { color: '#dc2626' },
+    },
+  });
+}
+
+// Mount card element
+function mountCardElement() {
+  if (!window.donationCart.cardElement || window.donationCart.cardMounted) return;
+  const container = document.getElementById('card-element');
+  if (container) {
+    window.donationCart.cardElement.mount('#card-element');
+    window.donationCart.cardMounted = true;
+    window.donationCart.cardElement.on('change', function(event) {
+      document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
+    });
+  }
+}
+
+// Cart Functions
+function saveCart() {
+  localStorage.setItem('donationCart', JSON.stringify(window.donationCart.items));
+}
+
+window.addToCart = function(item) {
+  const existingIndex = window.donationCart.items.findIndex(i => i.id === item.id && i.type === item.type);
+  if (existingIndex >= 0) {
+    window.donationCart.items[existingIndex].quantity += item.quantity || 1;
+  } else {
+    window.donationCart.items.push({ ...item, quantity: item.quantity || 1 });
+  }
+  saveCart();
+  updateCartUI();
+  openCart();
+};
+
+window.removeFromCart = function(index) {
+  window.donationCart.items.splice(index, 1);
+  saveCart();
+  updateCartUI();
+};
+
+window.updateQuantity = function(index, delta) {
+  const item = window.donationCart.items[index];
+  if (item) {
+    item.quantity = Math.max(1, item.quantity + delta);
+    saveCart();
+    updateCartUI();
+  }
+};
+
+function updateCartUI() {
+  const items = window.donationCart.items;
+  const cartEmpty = document.getElementById('cart-empty');
+  const cartItems = document.getElementById('cart-items');
+  const proceedBtn = document.getElementById('proceed-checkout-btn');
+
+  if (items.length === 0) {
+    cartEmpty.classList.remove('hidden');
+    cartItems.classList.add('hidden');
+    proceedBtn.disabled = true;
+  } else {
+    cartEmpty.classList.add('hidden');
+    cartItems.classList.remove('hidden');
+    proceedBtn.disabled = false;
+
+    cartItems.innerHTML = items.map((item, index) => `
+      <div class="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-800 text-sm">${item.name}</h4>
+            <p class="text-xs text-gray-500">${item.type === 'monthly' ? 'Monthly' : 'One-time'}</p>
+          </div>
+          <p class="font-bold text-[#d97706]">$${(item.amount * item.quantity).toFixed(2)}</p>
+        </div>
+        <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+          <div class="flex items-center gap-2">
+            <button onclick="updateQuantity(${index}, -1)" class="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition text-gray-600">−</button>
+            <span class="w-6 text-center text-sm font-medium">${item.quantity}</span>
+            <button onclick="updateQuantity(${index}, 1)" class="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition text-gray-600">+</button>
+          </div>
+          <button onclick="removeFromCart(${index})" class="text-red-500 text-xs font-medium hover:text-red-700">Remove</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Update total
+  const total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+  const hasMonthly = items.some(i => i.type === 'monthly');
+  document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('payment-type-label').textContent = hasMonthly ? 'Monthly' : 'One-time';
+
+  // Update cart count badge (if exists)
+  const badge = document.getElementById('cart-count');
+  if (badge) {
+    const count = items.reduce((sum, item) => sum + item.quantity, 0);
+    badge.textContent = count;
+    badge.classList.toggle('hidden', count === 0);
+  }
+}
+
+// Open/Close Cart
+function openCart() {
+  window.donationCart.isOpen = true;
+  document.getElementById('cart-overlay').classList.remove('hidden');
+  document.getElementById('cart-sidebar').classList.remove('translate-x-full');
+  setTimeout(() => document.getElementById('cart-overlay').classList.remove('opacity-0'), 10);
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+  window.donationCart.isOpen = false;
+  document.getElementById('cart-overlay').classList.add('opacity-0');
+  document.getElementById('cart-sidebar').classList.add('translate-x-full');
+  setTimeout(() => document.getElementById('cart-overlay').classList.add('hidden'), 300);
+  document.body.style.overflow = '';
+}
+
+window.openCart = openCart;
+window.closeCart = closeCart;
+
+// Checkout Modal Functions
+function openCheckoutModal() {
+  closeCart();
+  document.getElementById('checkout-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Reset to step 1
+  document.getElementById('modal-step-1').classList.remove('hidden');
+  document.getElementById('modal-step-2').classList.add('hidden');
+  document.getElementById('modal-success').classList.add('hidden');
+
+  // Pre-check first upsell (opt-out strategy for higher conversions)
+  document.getElementById('upsell-checkbox-1').checked = true;
+  document.getElementById('upsell-checkbox-2').checked = false;
+
+  // Update upsell card styling
+  updateUpsellCardStyles();
+
+  // Update cart display with upsell included
+  updateModalCart();
+}
+
+// Update upsell card visual styles based on checked state
+function updateUpsellCardStyles() {
+  const checkbox1 = document.getElementById('upsell-checkbox-1');
+  const checkbox2 = document.getElementById('upsell-checkbox-2');
+  const card1 = checkbox1.closest('.upsell-card');
+  const card2 = checkbox2.closest('.upsell-card');
+
+  if (card1) {
+    if (checkbox1.checked) {
+      card1.classList.remove('border-gray-200', 'bg-white');
+      card1.classList.add('border-[#d97706]', 'bg-orange-50');
+    } else {
+      card1.classList.remove('border-[#d97706]', 'bg-orange-50');
+      card1.classList.add('border-gray-200', 'bg-white');
+    }
+  }
+
+  if (card2) {
+    if (checkbox2.checked) {
+      card2.classList.remove('border-gray-200', 'bg-white');
+      card2.classList.add('border-[#d97706]', 'bg-orange-50');
+    } else {
+      card2.classList.remove('border-[#d97706]', 'bg-orange-50');
+      card2.classList.add('border-gray-200', 'bg-white');
+    }
+  }
+}
+
+function closeCheckoutModal() {
+  document.getElementById('checkout-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function updateModalCart() {
+  const items = window.donationCart.items;
+  const container = document.getElementById('modal-cart-items');
+
+  container.innerHTML = items.map(item => `
+    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+      <div>
+        <p class="font-medium text-gray-800 text-sm">${item.name}</p>
+        <p class="text-xs text-gray-500">${item.type === 'monthly' ? 'Monthly' : 'One-time'} × ${item.quantity}</p>
+      </div>
+      <p class="font-semibold text-gray-800">$${(item.amount * item.quantity).toFixed(2)}</p>
+    </div>
+  `).join('');
+
+  updateModalTotal();
+}
+
+function updateModalTotal() {
+  let total = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+  const hasMonthly = window.donationCart.items.some(i => i.type === 'monthly');
+
+  // Add upsells
+  if (document.getElementById('upsell-checkbox-1').checked) total += 50;
+  if (document.getElementById('upsell-checkbox-2').checked) total += 25;
+
+  document.getElementById('modal-subtotal').textContent = '$' + window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0).toFixed(2);
+  document.getElementById('modal-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('payment-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('modal-payment-type').textContent = hasMonthly ? 'Includes monthly donations' : 'One-time donation';
+}
+
+function goToPaymentStep() {
+  // Validate
+  const firstName = document.getElementById('modal-firstName').value.trim();
+  const lastName = document.getElementById('modal-lastName').value.trim();
+  const email = document.getElementById('modal-email').value.trim();
+
+  if (!firstName) { document.getElementById('modal-firstName').focus(); return; }
+  if (!lastName) { document.getElementById('modal-lastName').focus(); return; }
+  if (!email) { document.getElementById('modal-email').focus(); return; }
+
+  document.getElementById('modal-step-1').classList.add('hidden');
+  document.getElementById('modal-step-2').classList.remove('hidden');
+  mountCardElement();
+
+  // Initialize Google Places autocomplete if not already done
+  if (!window.donationCart.autocomplete && window.google?.maps?.places) {
+    window.initPlacesAutocomplete();
+  }
+}
+
+function goToInfoStep() {
+  document.getElementById('modal-step-2').classList.add('hidden');
+  document.getElementById('modal-step-1').classList.remove('hidden');
+}
+
+// Handle Payment
+async function handlePayment() {
+  const payBtn = document.getElementById('pay-btn');
+  const payText = document.getElementById('pay-btn-text');
+  const processing = document.getElementById('processing-indicator');
+  const errorDiv = document.getElementById('payment-error');
+
+  // Validate terms
+  if (!document.getElementById('modal-terms').checked) {
+    alert('Please agree to the Terms and Privacy Policy');
+    return;
+  }
+
+  payBtn.disabled = true;
+  payText.textContent = 'Processing...';
+  processing.classList.remove('hidden');
+  errorDiv.classList.add('hidden');
+
+  try {
+    // Get form data
+    const customer = {
+      firstName: document.getElementById('modal-firstName').value,
+      lastName: document.getElementById('modal-lastName').value,
+      email: document.getElementById('modal-email').value,
+      phone: document.getElementById('modal-phone').value,
+    };
+
+    const billingAddress = {
+      line1: document.getElementById('modal-address').value,
+      city: document.getElementById('modal-city').value,
+      state: document.getElementById('modal-state').value,
+      postal_code: document.getElementById('modal-zip').value,
+      country: document.getElementById('modal-country').value,
+    };
+
+    // Calculate total with upsells
+    let items = [...window.donationCart.items];
+    if (document.getElementById('upsell-checkbox-1').checked) {
+      items.push({ id: 'prophetic-qurbani', name: 'Prophetic Qurbani', amount: 50, quantity: 1, type: 'single', campaign: 'qurbani' });
+    }
+    if (document.getElementById('upsell-checkbox-2').checked) {
+      items.push({ id: 'feed-family', name: 'Feed a Family', amount: 25, quantity: 1, type: 'single', campaign: 'food-aid' });
+    }
+
+    const total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+    const hasMonthly = items.some(i => i.type === 'monthly');
+
+    // Create payment intent
+    const response = await fetch('/api/payments/create-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: total,
+        items: items,
+        customer,
+        billingAddress,
+        type: hasMonthly ? 'monthly' : 'single',
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Payment failed');
+
+    // Confirm payment
+    const { error, paymentIntent } = await window.donationCart.stripe.confirmCardPayment(data.clientSecret, {
+      payment_method: {
+        card: window.donationCart.cardElement,
+        billing_details: {
+          name: `${customer.firstName} ${customer.lastName}`,
+          email: customer.email,
+          phone: customer.phone,
+          address: billingAddress,
+        },
+      },
+    });
+
+    if (error) throw new Error(error.message);
+
+    if (paymentIntent.status === 'succeeded') {
+      // Show success
+      document.getElementById('modal-step-2').classList.add('hidden');
+      document.getElementById('modal-success').classList.remove('hidden');
+
+      // Clear cart
+      window.donationCart.items = [];
+      localStorage.removeItem('donationCart');
+      updateCartUI();
+    }
+
+  } catch (err) {
+    errorDiv.classList.remove('hidden');
+    document.getElementById('payment-error-text').textContent = err.message;
+  } finally {
+    payBtn.disabled = false;
+    payText.textContent = 'Complete Donation';
+    processing.classList.add('hidden');
+  }
+}
+</script>

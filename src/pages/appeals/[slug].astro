@@ -1,0 +1,126 @@
+---
+/**
+ * Appeals Dynamic Page
+ * Dynamically loads templates based on campaign settings or site defaults
+ */
+import GreenWithYellowTemplate from '../../templates/GreenWithYellowTemplate.astro';
+import EmergencyAppealTemplate from '../../templates/EmergencyAppealTemplate.astro';
+import OrphanSponsorshipTemplate from '../../templates/OrphanSponsorshipTemplate.astro';
+import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTemplate.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Fetch campaign by slug or ID
+let campaign: any = null;
+let siteSettings: any = null;
+
+try {
+  // First try to find by slug
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single();
+  campaign = data;
+} catch (e) {
+  // If not found by slug, try by ID (for UUID-based lookups)
+  try {
+    const { data } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('id', slug)
+      .eq('is_active', true)
+      .single();
+    campaign = data;
+  } catch (e2) {
+    console.error('Campaign not found by slug or ID:', slug);
+  }
+}
+
+// Fetch site settings for default templates
+try {
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_campaign_page_template, default_donation_box_template, orphan_sponsorship_template')
+    .limit(1);
+
+  if (!error && data && data.length > 0) {
+    siteSettings = data[0];
+  }
+} catch (e) {
+  console.error('Error fetching site settings:', e);
+}
+
+if (!campaign) {
+  return Astro.redirect('/appeals');
+}
+
+// Transform database fields to match template props
+const campaignProps = {
+  id: campaign.id,
+  title: campaign.name || campaign.title,
+  subtitle: campaign.description,
+  slug: campaign.slug,
+  featured_image: campaign.featured_image || campaign.hero_image_url || campaign.image_url,
+  description: campaign.long_description || campaign.description,
+  meta_title: campaign.meta_title,
+  meta_description: campaign.meta_description,
+  content_sections: campaign.content_sections || [],
+  donation_options: campaign.donation_options || [],
+  gallery_images: campaign.gallery_images || [],
+  goal_amount: campaign.goal_amount,
+  raised_amount: campaign.raised_amount,
+  country: campaign.country,
+  category: campaign.category,
+  is_zakat_eligible: campaign.is_zakat_eligible,
+  impact_stats: campaign.impact_stats || [],
+};
+
+// Determine which templates to use (campaign override > site default > fallback)
+// Auto-detect orphan sponsorship pages by slug or category
+const isOrphanSponsorship = slug?.includes('orphan') || campaign.category === 'orphan-sponsorship';
+const orphanTemplate = siteSettings?.orphan_sponsorship_template || 'orphan-sponsorship';
+const pageTemplate = campaign.page_template || (isOrphanSponsorship ? orphanTemplate : null) || siteSettings?.default_campaign_page_template || 'green-with-yellow';
+const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
+---
+
+{pageTemplate === 'tilestack-sponsorship' ? (
+  <TileStackSponsorshipTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'orphan-sponsorship' ? (
+  <OrphanSponsorshipTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'emergency-appeal' ? (
+  <EmergencyAppealTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : (
+  <GreenWithYellowTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+)}
+
+<!-- Campaign View Tracking - Pre-sale Lead Capture -->
+<script is:inline define:vars={{ campaignSlug: campaign.slug, campaignName: campaign.name || campaign.title }}>
+  (function() {
+    // Get or create visitor ID for anonymous tracking
+    let visitorId = localStorage.getItem('qurbani_visitor_id');
+    if (!visitorId) {
+      visitorId = 'v_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+      localStorage.setItem('qurbani_visitor_id', visitorId);
+    }
+
+    // Check if user has previously provided email
+    const savedEmail = localStorage.getItem('qurbani_user_email');
+
+    // Track campaign view
+    fetch('/api/ghl/track-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: savedEmail || null,
+        visitorId: visitorId,
+        campaignSlug: campaignSlug,
+        campaignName: campaignName,
+      }),
+    }).catch(err => console.log('View tracking error:', err));
+  })();
+</script>

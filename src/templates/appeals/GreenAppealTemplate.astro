@@ -1,0 +1,418 @@
+---
+/**
+ * Green Appeal Template
+ * Teal/Blue (#255764) color scheme with orange accents
+ */
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch all active campaigns from database
+let campaigns: any[] = [];
+try {
+  const { data, error } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('is_active', true)
+    .order('is_featured', { ascending: false })
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+
+  if (!error && data) {
+    campaigns = data;
+  }
+} catch (e) {
+  console.error('Error fetching campaigns:', e);
+}
+
+// Get unique categories from campaigns
+const campaignCategories = [...new Set(campaigns.map(c => c.category).filter(Boolean))];
+
+const categories = [
+  { slug: 'all', label: 'All Appeals', icon: '🌍' },
+  { slug: 'emergencies', label: 'Emergencies', icon: '🚨' },
+  { slug: 'water-for-life', label: 'Water for Life', icon: '💧' },
+  { slug: 'food-aid', label: 'Food Aid', icon: '🍞' },
+  { slug: 'orphan-sponsorship', label: 'Orphan Sponsorship', icon: '👶' },
+  { slug: 'education', label: 'Education', icon: '📚' },
+  { slug: 'healthcare', label: 'Healthcare', icon: '🏥' },
+  { slug: 'sadaqah-jariyah', label: 'Sadaqah Jariyah', icon: '🕌' },
+  { slug: 'qurbani', label: 'Qurbani', icon: '🐑' },
+];
+
+// Filter to only show categories that have campaigns
+const activeCategories = categories.filter(cat =>
+  cat.slug === 'all' || campaignCategories.includes(cat.slug)
+);
+
+// Impact stats
+const impactStats = [
+  { value: '53+', label: 'Countries Served' },
+  { value: '2M+', label: 'Lives Impacted' },
+  { value: '100%', label: 'Zakat Policy' },
+  { value: '25+', label: 'Years of Service' },
+];
+---
+
+<Layout title="Appeals - Qurbani Foundation USA">
+  <Navbar />
+
+  <!-- Hero Section with Background Image -->
+  <section class="relative pt-24 pb-16 overflow-hidden">
+    <!-- Background Image -->
+    <div class="absolute inset-0">
+      <img
+        src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+        alt="Joyful children - making a difference"
+        class="w-full h-full object-cover object-top"
+        loading="eager"
+      />
+      <!-- Gradient Overlay -->
+      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/95 via-[#255764]/85 to-[#255764]/70"></div>
+    </div>
+
+    <!-- Islamic Geometric Pattern Border -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <div class="h-12 bg-white"></div>
+      <div class="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <svg class="w-full h-12" viewBox="0 0 1440 48" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="1440" height="48" fill="#ffffff"/>
+          <pattern id="islamicPatternAppeals" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+            <polygon points="24,0 28,10 38,10 30,18 34,28 24,22 14,28 18,18 10,10 20,10" fill="#255764" opacity="0.08"/>
+            <polygon points="24,48 28,38 38,38 30,30 34,20 24,26 14,20 18,30 10,38 20,38" fill="#255764" opacity="0.08"/>
+            <circle cx="24" cy="24" r="3" fill="#255764" opacity="0.1"/>
+            <circle cx="0" cy="24" r="2" fill="#fdc448" opacity="0.3"/>
+            <circle cx="48" cy="24" r="2" fill="#fdc448" opacity="0.3"/>
+            <circle cx="24" cy="0" r="2" fill="#fdc448" opacity="0.3"/>
+            <circle cx="24" cy="48" r="2" fill="#fdc448" opacity="0.3"/>
+          </pattern>
+          <rect width="1440" height="48" fill="url(#islamicPatternAppeals)"/>
+          <line x1="0" y1="1" x2="1440" y2="1" stroke="#255764" stroke-width="2" opacity="0.2"/>
+          <line x1="0" y1="3" x2="1440" y2="3" stroke="#fdc448" stroke-width="1" opacity="0.5"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto">
+        <!-- Breadcrumb -->
+        <div class="flex items-center justify-center gap-2 text-white/60 text-sm mb-6">
+          <a href="/" class="hover:text-white transition">Home</a>
+          <span>/</span>
+          <span class="text-white">Appeals</span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Make a <span class="text-[#fdc448]">Difference</span> Today
+        </h1>
+
+        <p class="text-lg md:text-xl text-white/80 mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+          Your generosity can transform lives around the world. From emergency relief to sustainable development,
+          every donation creates lasting impact for those in need.
+        </p>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+          {impactStats.map((stat) => (
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <p class="text-2xl md:text-3xl font-bold text-[#fdc448]" style="font-family: 'Signika', sans-serif;">{stat.value}</p>
+              <p class="text-sm text-white/70">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave divider -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-16">
+        <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="#f8f9fa"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Category Filter - Sticky -->
+  <section class="bg-[#f8f9fa] sticky top-0 z-40 border-b border-gray-200 shadow-sm">
+    <div class="max-w-[1400px] mx-auto px-4">
+      <div class="flex items-center gap-3 overflow-x-auto py-4 scrollbar-hide">
+        {activeCategories.map((cat, index) => (
+          <button
+            class={`category-btn flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+              index === 0
+                ? 'bg-[#255764] text-white shadow-md'
+                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+            }`}
+            data-category={cat.slug}
+          >
+            <span>{cat.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="bg-[#f8f9fa] py-12">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Featured Message -->
+      <div class="bg-gradient-to-r from-[#D97706] to-[#ef7c01] rounded-2xl p-6 md:p-8 mb-10 text-white">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 class="text-xl md:text-2xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">
+              Your Zakat & Sadaqah Makes an Impact
+            </h2>
+            <p class="text-white/90 text-sm md:text-base">
+              100% of your Zakat reaches those in need. We cover administrative costs separately.
+            </p>
+          </div>
+          <a
+            href="/zakat-calculator"
+            class="inline-flex items-center gap-2 bg-white text-[#D97706] px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition whitespace-nowrap"
+          >
+            Calculate Zakat
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Campaigns Grid -->
+      {campaigns.length > 0 ? (
+        <div id="campaigns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {campaigns.map((campaign) => {
+            const name = campaign.name || campaign.title || 'Untitled';
+            const description = campaign.description || '';
+            const image = campaign.featured_image || campaign.hero_image_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop';
+
+            return (
+              <article
+                class="campaign-card group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
+                data-category={campaign.category || 'uncategorized'}
+              >
+                <!-- Image Container -->
+                <a href={`/appeals/${campaign.slug}`} class="block relative overflow-hidden">
+                  <div class="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={image}
+                      alt={name}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  <!-- Overlay gradient -->
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                  <!-- Badges -->
+                  <div class="absolute top-4 left-4 right-4 flex justify-between items-start">
+                    {campaign.is_zakat_eligible && (
+                      <span class="bg-[#008C70] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                        Zakat Eligible
+                      </span>
+                    )}
+                    {campaign.category && (
+                      <span class="bg-white/95 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full shadow-lg ml-auto capitalize">
+                        {campaign.category.replace(/-/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+
+                  <!-- Hover CTA -->
+                  <div class="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span class="inline-flex items-center gap-2 bg-[#D97706] text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                      Donate Now
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                      </svg>
+                    </span>
+                  </div>
+                </a>
+
+                <!-- Content -->
+                <div class="p-6">
+                  <a href={`/appeals/${campaign.slug}`}>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#255764] transition line-clamp-2" style="font-family: 'Signika', sans-serif;">
+                      {name}
+                    </h3>
+                  </a>
+
+                  {description && (
+                    <p class="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-4">
+                      {description}
+                    </p>
+                  )}
+
+                  <!-- Action Button -->
+                  <a
+                    href={`/appeals/${campaign.slug}`}
+                    class="inline-flex items-center gap-2 text-[#D97706] font-semibold text-sm hover:gap-3 transition-all"
+                  >
+                    Learn More & Donate
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="text-center py-16 bg-white rounded-2xl">
+          <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">No campaigns yet</h3>
+          <p class="text-gray-500 mb-6">Check back soon for new campaigns!</p>
+        </div>
+      )}
+    </div>
+  </main>
+
+  <!-- Why Donate Section -->
+  <section class="py-16 bg-white">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Why Donate With <span class="text-[#255764]">Qurbani Foundation</span>
+        </h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          For over 25 years, we've been delivering aid to those who need it most, with complete transparency and dedication.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#255764]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#255764]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">100% Donation Policy</h3>
+          <p class="text-gray-600 text-sm">
+            Every cent of your Zakat goes directly to those in need. Administrative costs are covered separately.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#D97706]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#D97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Global Reach</h3>
+          <p class="text-gray-600 text-sm">
+            Operating in over 53 countries, we deliver aid wherever it's needed most around the world.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#008C70]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#008C70]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Tax Deductible</h3>
+          <p class="text-gray-600 text-sm">
+            As a registered 501(c)(3) nonprofit, all donations are tax-deductible. EIN: 38-4109716
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-br from-[#255764] to-[#1a4a55] relative overflow-hidden">
+    <!-- Decorative elements -->
+    <div class="absolute top-0 right-0 w-64 h-64 bg-[#fdc448]/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-[#D97706]/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Ready to Make an Impact?
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        "The best charity is giving water to drink." - Prophet Muhammad (PBUH)
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/donate"
+          class="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#b86605] text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+          style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(217, 119, 6, 0.4);"
+        >
+          Donate Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+        <a
+          href="/contact"
+          class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl transition border border-white/20"
+        >
+          Contact Us
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<style>
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .campaign-card.hidden {
+    display: none;
+  }
+</style>
+
+<script>
+  // Category filter functionality
+  const buttons = document.querySelectorAll('.category-btn');
+  const cards = document.querySelectorAll('.campaign-card');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const category = btn.getAttribute('data-category');
+
+      // Update active state
+      buttons.forEach(b => {
+        b.classList.remove('bg-[#255764]', 'text-white', 'shadow-md');
+        b.classList.add('bg-white', 'text-gray-600', 'border', 'border-gray-200');
+      });
+      btn.classList.remove('bg-white', 'text-gray-600', 'border', 'border-gray-200');
+      btn.classList.add('bg-[#255764]', 'text-white', 'shadow-md');
+
+      // Filter campaigns
+      cards.forEach(card => {
+        const cardCategory = card.getAttribute('data-category');
+        if (category === 'all' || cardCategory === category) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    });
+  });
+</script>

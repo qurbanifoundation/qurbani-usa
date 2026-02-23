@@ -1,0 +1,35 @@
+{
+  "site": {
+    "name": "Qurbani Foundation USA",
+    "tagline": "A Muslim Charity Serving Humanity",
+    "logo": "https://www.staging9.qurbani.com/wp-content/uploads/2021/07/QurbaniFoundation-Logo-2.png"
+  },
+  "contact": {
+    "phone": "+1 (703) 596-4900",
+    "tollFree": "1-800-900-0027",
+    "email": "info@qurbani.com",
+    "address": {
+      "street": "145 Sherwood Ave",
+      "city": "Teaneck",
+      "state": "NJ",
+      "zip": "07666"
+    }
+  },
+  "social": {
+    "facebook": "https://facebook.com/qurbani",
+    "youtube": "https://youtube.com/qurbani",
+    "instagram": "https://instagram.com/qurbani",
+    "twitter": "https://twitter.com/qurbani"
+  },
+  "footer": {
+    "about": "A Muslim charity dedicated to alleviating suffering of the world's poorest people. Operating in 53+ countries since 1999.",
+    "zakatPolicy": "100% Zakat Policy",
+    "ein": "38-4109716",
+    "copyright": "Qurbani Foundation USA. All rights reserved."
+  },
+  "donateButton": {
+    "text": "DONATE NOW",
+    "href": "/donate",
+    "backgroundColor": "#fdc448"
+  }
+}

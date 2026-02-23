@@ -1,0 +1,1106 @@
+---
+/**
+ * ORPHAN SPONSORSHIP TEMPLATE - V2
+ * High-converting template inspired by Penny Appeal, Muslim Hands & Islamic Relief
+ *
+ * Key Features:
+ * - Country-specific sponsorship with pricing
+ * - "Less than $X a day" messaging
+ * - Live donor counter
+ * - Emotional storytelling
+ * - 5-step process visualization
+ * - Sticky donation CTA
+ * - Video testimonial integration
+ * - Impact statistics
+ * - Progress reports timeline
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    id: string;
+    title: string;
+    subtitle?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    goal_amount?: number;
+    raised_amount?: number;
+    is_zakat_eligible?: boolean;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign, donationBoxTemplate } = Astro.props;
+
+// Country-specific sponsorship options
+const countries = [
+  {
+    id: 'pakistan',
+    name: 'Pakistan',
+    flag: '🇵🇰',
+    monthlyAmount: 45,
+    yearlyAmount: 540,
+    description: 'Comprehensive care including education, healthcare, and nutrition',
+    features: ['Individual child profile', 'Annual progress reports', 'Photos & updates', 'Letter exchange'],
+    urgency: '2,500+ orphans waiting',
+  },
+  {
+    id: 'palestine',
+    name: 'Palestine',
+    flag: '🇵🇸',
+    monthlyAmount: 45,
+    yearlyAmount: 540,
+    description: 'Critical support for children affected by conflict',
+    features: ['Individual child profile', 'Annual progress reports', 'Psychosocial support', 'Emergency aid'],
+    urgency: 'Urgent need',
+    badge: 'Most Needed',
+  },
+  {
+    id: 'yemen',
+    name: 'Yemen',
+    flag: '🇾🇪',
+    monthlyAmount: 40,
+    yearlyAmount: 480,
+    description: 'Life-saving support in humanitarian crisis',
+    features: ['Individual child profile', 'Quarterly updates', 'Nutrition program', 'Healthcare access'],
+    urgency: '5,000+ orphans in need',
+  },
+  {
+    id: 'syria',
+    name: 'Syria',
+    flag: '🇸🇾',
+    monthlyAmount: 45,
+    yearlyAmount: 540,
+    description: 'Rebuilding futures for displaced children',
+    features: ['Individual child profile', 'Annual reports', 'Education support', 'Trauma counseling'],
+    urgency: 'Critical need',
+  },
+  {
+    id: 'afghanistan',
+    name: 'Afghanistan',
+    flag: '🇦🇫',
+    monthlyAmount: 40,
+    yearlyAmount: 480,
+    description: 'Support children affected by decades of conflict',
+    features: ['Individual child profile', 'Annual reports', 'Education focus', 'Winter aid'],
+    urgency: '3,000+ orphans waiting',
+  },
+  {
+    id: 'bangladesh',
+    name: 'Bangladesh',
+    flag: '🇧🇩',
+    monthlyAmount: 35,
+    yearlyAmount: 420,
+    description: 'Help Rohingya refugees and local orphans',
+    features: ['Individual child profile', 'Quarterly updates', 'Refugee support', 'Skills training'],
+    urgency: '1,500+ children in need',
+  },
+  {
+    id: 'general',
+    name: 'Where Most Needed',
+    flag: '🌍',
+    monthlyAmount: 35,
+    yearlyAmount: 420,
+    description: 'Support orphans in the region with greatest need',
+    features: ['Flexible allocation', 'Combined reports', 'Maximum impact', '100% Zakat eligible'],
+    urgency: 'Help us decide',
+    badge: 'Best Value',
+  },
+];
+
+// What sponsorship provides
+const sponsorshipBenefits = [
+  {
+    icon: 'education',
+    title: 'Quality Education',
+    description: 'School fees, uniforms, books, supplies, and tutoring support',
+    stat: '95%',
+    statLabel: 'school enrollment',
+  },
+  {
+    icon: 'food',
+    title: 'Nutritious Meals',
+    description: 'Daily balanced meals to fuel growing minds and bodies',
+    stat: '3',
+    statLabel: 'meals per day',
+  },
+  {
+    icon: 'health',
+    title: 'Healthcare',
+    description: 'Medical checkups, vaccinations, and emergency treatment',
+    stat: '100%',
+    statLabel: 'coverage',
+  },
+  {
+    icon: 'shelter',
+    title: 'Safe Housing',
+    description: 'Secure shelter with proper sanitation and utilities',
+    stat: '24/7',
+    statLabel: 'protection',
+  },
+  {
+    icon: 'heart',
+    title: 'Emotional Support',
+    description: 'Counseling, mentorship, and psychosocial care',
+    stat: '1:1',
+    statLabel: 'mentorship',
+  },
+  {
+    icon: 'gift',
+    title: 'Eid & Seasonal Gifts',
+    description: 'New clothes, toys, and celebration packages',
+    stat: '2x',
+    statLabel: 'yearly gifts',
+  },
+];
+
+// Impact statistics
+const impactStats = [
+  { value: '15,847', label: 'Orphans Sponsored', icon: 'children' },
+  { value: '32', label: 'Countries Reached', icon: 'globe' },
+  { value: '98%', label: 'Goes to Children', icon: 'percentage' },
+  { value: '25+', label: 'Years of Trust', icon: 'years' },
+];
+
+// How it works steps
+const processSteps = [
+  {
+    step: 1,
+    title: 'Choose Your Sponsorship',
+    description: 'Select a country and payment plan that works for you',
+    timeline: 'Today',
+    icon: 'select',
+  },
+  {
+    step: 2,
+    title: 'Complete Your Donation',
+    description: 'Secure payment via card, bank transfer, or PayPal',
+    timeline: 'Instant',
+    icon: 'payment',
+  },
+  {
+    step: 3,
+    title: 'Receive Child Profile',
+    description: "Get your sponsored child's photo, name, and story",
+    timeline: '4-6 weeks',
+    icon: 'profile',
+  },
+  {
+    step: 4,
+    title: 'Welcome Pack Arrives',
+    description: 'Certificate and information about your impact',
+    timeline: '2-3 months',
+    icon: 'welcome',
+  },
+  {
+    step: 5,
+    title: 'Annual Progress Reports',
+    description: 'See how your child is growing and thriving',
+    timeline: 'Yearly',
+    icon: 'report',
+  },
+];
+
+// Testimonials
+const testimonials = [
+  {
+    quote: "When I received Aisha's first photo, I cried. Now she sends me drawings and letters. She calls me 'Auntie Sarah' and I couldn't be prouder of her progress.",
+    name: 'Sarah Ahmed',
+    location: 'California, USA',
+    years: 4,
+    childName: 'Aisha',
+    childCountry: 'Pakistan',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=face',
+  },
+  {
+    quote: "My family sponsors 3 orphans together. Every Ramadan, we get updates and it reminds us why we fast - to feel what they feel. It's transformed how my kids see the world.",
+    name: 'Ibrahim & Fatima Khan',
+    location: 'New York, USA',
+    years: 6,
+    childName: 'Multiple children',
+    childCountry: 'Yemen & Syria',
+    image: 'https://images.unsplash.com/photo-1618077360395-f3068be8e001?w=100&h=100&fit=crop&crop=face',
+  },
+  {
+    quote: "Sponsoring an orphan is one of the greatest deeds in Islam. The Hadith about being with the Prophet ﷺ in Jannah motivated me. Best decision I ever made.",
+    name: 'Abdullah Mady',
+    location: 'Texas, USA',
+    years: 2,
+    childName: 'Omar',
+    childCountry: 'Palestine',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+  },
+];
+
+// FAQs
+const faqs = [
+  {
+    q: 'How much does it cost to sponsor an orphan?',
+    a: 'Sponsorship starts at just $35/month (Where Most Needed) or $45/month for specific countries like Pakistan, Palestine, or Syria. This works out to less than $1.50 a day - less than a cup of coffee.',
+  },
+  {
+    q: 'Is orphan sponsorship Zakat eligible?',
+    a: 'Yes! Orphan sponsorship through Qurbani Foundation is 100% Zakat eligible. We ensure your Zakat reaches those who meet the Islamic criteria for Zakat recipients.',
+  },
+  {
+    q: 'Will I receive information about my sponsored child?',
+    a: "Absolutely! Within 4-6 weeks of your first payment, you'll receive your child's profile including their photo, name, age, and background story. You'll then receive annual progress reports with photos and updates on their education and wellbeing.",
+  },
+  {
+    q: 'Can I write to my sponsored child?',
+    a: 'Yes! We facilitate letter exchange between sponsors and children. You can send letters, cards, and even small gifts during Eid. Our team ensures safe and appropriate communication.',
+  },
+  {
+    q: 'What if I need to cancel my sponsorship?',
+    a: "We understand circumstances change. You can cancel anytime with no penalties. Your sponsored child will continue to receive care from our general fund while we find them a new sponsor.",
+  },
+  {
+    q: 'How is my money used?',
+    a: '98% of your sponsorship goes directly to child care - education, food, healthcare, and shelter. Only 2% covers essential administrative costs to run the program effectively and transparently.',
+  },
+  {
+    q: 'Can I sponsor more than one child?',
+    a: 'Yes! Many sponsors choose to support multiple orphans, especially as a family. You can sponsor children from different countries and receive separate profiles for each.',
+  },
+  {
+    q: 'How long does sponsorship last?',
+    a: 'Sponsorship continues until the child reaches adulthood (18 years) or becomes self-sufficient. Many sponsors maintain relationships with their children even after graduation through our alumni program.',
+  },
+];
+---
+
+<Layout
+  title="Sponsor an Orphan | Transform a Child's Life | Qurbani Foundation USA"
+  description="For just $35/month, give an orphan education, food, healthcare & hope. 100% Zakat eligible. Join 15,000+ sponsors making a difference."
+>
+  <Navbar />
+
+  <main class="bg-white">
+    <!-- Hero Section - Emotional & Compelling -->
+    <section class="relative min-h-[90vh] flex items-center overflow-hidden">
+      <!-- Background with Parallax Effect -->
+      <div class="absolute inset-0">
+        <img
+          src="/images/qurbani-foundation-orphan-sponsorship.jpg"
+          alt="Qurbani Foundation helping orphan children with school supplies"
+          class="w-full h-full object-cover"
+          loading="eager"
+        />
+        <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/40"></div>
+      </div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <!-- Left Content -->
+          <div class="text-white">
+            <!-- Badges Row -->
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+              <!-- Urgency Badge -->
+              <div class="inline-flex items-center gap-2 bg-red-500/90 text-white text-sm font-bold px-4 py-2 rounded-full">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                153 Million Orphans Need Help
+              </div>
+              <!-- Live Indicator -->
+              <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full">
+                <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span><strong id="live-sponsors">247</strong> sponsoring now</span>
+              </div>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+              Every Child Deserves<br/>
+              <span class="text-[#fdc448]">to Feel Loved</span>
+            </h1>
+
+            <p class="text-xl text-white/90 mb-4 leading-relaxed max-w-xl" style="font-family: 'Lato', sans-serif;">
+              For <strong class="text-[#fdc448] text-2xl">less than $1.50 a day</strong>, you can give an orphan education, nutrition, healthcare, and the chance to dream again.
+            </p>
+
+            <p class="text-lg text-white/80 mb-8 max-w-xl">
+              Join <strong class="text-white">15,847 sponsors</strong> who are changing lives across 32 countries.
+            </p>
+
+            <!-- Quick Impact Stats -->
+            <div class="grid grid-cols-3 gap-4 mb-8 max-w-lg">
+              {impactStats.slice(0, 3).map(stat => (
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
+                  <div class="text-2xl md:text-3xl font-bold text-[#fdc448]" style="font-family: 'Signika', sans-serif;">{stat.value}</div>
+                  <div class="text-xs text-white/70">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <!-- Hadith Quote -->
+            <div class="bg-gradient-to-r from-[#01534d]/80 to-[#024a45]/80 backdrop-blur-sm rounded-xl p-5 border border-white/20 max-w-lg">
+              <div class="flex items-start gap-3">
+                <div class="text-3xl text-[#fdc448]">"</div>
+                <div>
+                  <p class="text-white/95 italic leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                    The one who cares for an orphan and myself will be together in Paradise like this
+                  </p>
+                  <p class="text-[#fdc448] font-semibold mt-2 text-sm">
+                    — Prophet Muhammad ﷺ <span class="text-white/60">(Sahih Bukhari)</span>
+                  </p>
+                  <p class="text-white/50 text-xs mt-1">raising his two fingers together</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right - Country Selection Card -->
+          <div class="lg:justify-self-end w-full max-w-md">
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+              <!-- Card Header -->
+              <div class="bg-gradient-to-r from-[#01534d] to-[#024a45] p-6">
+                <div class="flex items-center justify-between mb-2">
+                  <h2 class="text-xl font-bold text-white" style="font-family: 'Signika', sans-serif;">
+                    Sponsor an Orphan Today
+                  </h2>
+                  <span class="bg-[#fdc448] text-[#61470e] text-xs font-bold px-3 py-1 rounded-full">
+                    100% ZAKAT
+                  </span>
+                </div>
+                <p class="text-white/80 text-sm">Choose a country to begin</p>
+              </div>
+
+              <!-- Country Selection -->
+              <div class="p-6">
+                <div class="space-y-3 mb-4" id="country-options">
+                  {countries.slice(0, 4).map((country, index) => (
+                    <label
+                      class={`country-option block relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${index === 0 ? 'border-[#01534d] bg-[#01534d]/5 ring-2 ring-[#01534d]/20' : 'border-gray-200 hover:border-gray-300'}`}
+                      data-country={country.id}
+                      data-monthly={country.monthlyAmount}
+                      data-yearly={country.yearlyAmount}
+                    >
+                      <input
+                        type="radio"
+                        name="country"
+                        value={country.id}
+                        checked={index === 0}
+                        class="sr-only"
+                      />
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-2xl">{country.flag}</span>
+                          <div>
+                            <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+                              {country.name}
+                              {country.badge && (
+                                <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
+                              )}
+                            </div>
+                            <div class="text-xs text-gray-500">{country.urgency}</div>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <div class="font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">
+                            ${country.monthlyAmount}<span class="text-gray-400 font-normal text-sm">/mo</span>
+                          </div>
+                          <div class="text-xs text-gray-400">${(country.monthlyAmount / 30).toFixed(2)}/day</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <!-- Hidden Countries (shown on click) -->
+                <div id="more-countries" class="space-y-3 mb-4 hidden">
+                  {countries.slice(4).map((country) => (
+                    <label
+                      class="country-option block relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md border-gray-200 hover:border-gray-300"
+                      data-country={country.id}
+                      data-monthly={country.monthlyAmount}
+                      data-yearly={country.yearlyAmount}
+                    >
+                      <input
+                        type="radio"
+                        name="country"
+                        value={country.id}
+                        class="sr-only"
+                      />
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-2xl">{country.flag}</span>
+                          <div>
+                            <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+                              {country.name}
+                              {country.badge && (
+                                <span class="bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
+                              )}
+                            </div>
+                            <div class="text-xs text-gray-500">{country.urgency}</div>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <div class="font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">
+                            ${country.monthlyAmount}<span class="text-gray-400 font-normal text-sm">/mo</span>
+                          </div>
+                          <div class="text-xs text-gray-400">${(country.monthlyAmount / 30).toFixed(2)}/day</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <!-- More Countries Toggle -->
+                <button id="show-more-countries" class="w-full text-sm text-[#01534d] hover:text-[#024a45] font-medium mb-4 flex items-center justify-center gap-1 py-2 hover:bg-gray-50 rounded-lg transition">
+                  <span id="show-more-text">Show more countries</span>
+                  <svg id="show-more-icon" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+
+                <!-- Payment Frequency Toggle -->
+                <div class="flex bg-gray-100 rounded-xl p-1 mb-4">
+                  <button id="freq-monthly" type="button" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition bg-white text-[#01534d] shadow-sm">
+                    Monthly
+                  </button>
+                  <button id="freq-yearly" type="button" class="flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition text-gray-500 hover:text-gray-700">
+                    Yearly <span class="text-green-600 text-xs">(Save 15%)</span>
+                  </button>
+                </div>
+
+                <!-- Quantity Selector -->
+                <div class="mb-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">How many children would you like to sponsor?</label>
+                  <div class="flex items-center justify-between bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <div class="flex items-center gap-3">
+                      <button
+                        id="qty-decrease"
+                        type="button"
+                        class="w-10 h-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-[#01534d] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </svg>
+                      </button>
+                      <div class="text-center min-w-[60px]">
+                        <span id="qty-value" class="text-2xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">1</span>
+                        <span class="text-gray-500 text-sm ml-1">child</span>
+                      </div>
+                      <button
+                        id="qty-increase"
+                        type="button"
+                        class="w-10 h-10 rounded-full bg-[#01534d] border border-[#01534d] flex items-center justify-center text-white hover:bg-[#024a45] transition"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm text-gray-500">Total</div>
+                      <div id="qty-total" class="text-xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">$45/mo</div>
+                    </div>
+                  </div>
+                  <p id="qty-message" class="text-xs text-center text-gray-500 mt-2 hidden">
+                    <span class="text-[#01534d] font-semibold">Thank you!</span> Sponsoring multiple children multiplies your reward.
+                  </p>
+                </div>
+
+                <!-- Sponsor Button -->
+                <button
+                  id="sponsor-btn"
+                  class="w-full bg-gradient-to-r from-[#ef7c01] to-[#fdc448] hover:from-[#d96e00] hover:to-[#efb000] text-white font-bold text-lg py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  style="font-family: 'Signika', sans-serif;"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                  <span id="sponsor-btn-text">Sponsor for $45/month</span>
+                </button>
+
+                <!-- Trust Badges -->
+                <div class="flex items-center justify-center gap-3 mt-4">
+                  <div class="flex items-center gap-1 text-xs text-gray-500">
+                    <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                    </svg>
+                    Secure
+                  </div>
+                  <span class="text-gray-300">•</span>
+                  <span class="text-xs text-gray-500">Tax Deductible</span>
+                  <span class="text-gray-300">•</span>
+                  <span class="text-xs text-gray-500">Cancel Anytime</span>
+                </div>
+
+                <!-- Recent Sponsors -->
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                  <div class="flex items-center gap-2">
+                    <div class="flex -space-x-2">
+                      <img src="https://i.pravatar.cc/32?img=1" alt="" class="w-8 h-8 rounded-full border-2 border-white" />
+                      <img src="https://i.pravatar.cc/32?img=2" alt="" class="w-8 h-8 rounded-full border-2 border-white" />
+                      <img src="https://i.pravatar.cc/32?img=3" alt="" class="w-8 h-8 rounded-full border-2 border-white" />
+                      <div class="w-8 h-8 rounded-full border-2 border-white bg-[#01534d] text-white text-xs flex items-center justify-center font-semibold">+5</div>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                      <strong class="text-gray-700">8 people</strong> sponsored in the last hour
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60 animate-bounce">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Social Proof Bar -->
+    <section class="bg-[#fbefdd] py-6 border-y border-[#e8dcc8]">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex flex-wrap items-center justify-center gap-8 md:gap-16">
+          {impactStats.map(stat => (
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-[#01534d] rounded-full flex items-center justify-center">
+                {stat.icon === 'children' && (
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  </svg>
+                )}
+                {stat.icon === 'globe' && (
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                )}
+                {stat.icon === 'percentage' && (
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                )}
+                {stat.icon === 'years' && (
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                )}
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">{stat.value}</div>
+                <div class="text-sm text-gray-600">{stat.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- What Your Sponsorship Provides -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-[#01534d]/10 text-[#01534d] text-sm font-semibold px-4 py-2 rounded-full mb-4">
+            COMPREHENSIVE CARE
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            What Your <span class="text-[#01534d]">$45/Month</span> Provides
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto text-lg">
+            Every aspect of your sponsored child's life is covered - from education to emotional wellbeing
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {sponsorshipBenefits.map(item => (
+            <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-100 hover:border-[#01534d]/30 hover:shadow-xl transition group">
+              <div class="flex items-start gap-4">
+                <div class="w-14 h-14 bg-[#01534d] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition">
+                  {item.icon === 'education' && (
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                    </svg>
+                  )}
+                  {item.icon === 'food' && (
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                  )}
+                  {item.icon === 'health' && (
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                  )}
+                  {item.icon === 'shelter' && (
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                  )}
+                  {item.icon === 'heart' && (
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  )}
+                  {item.icon === 'gift' && (
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                    </svg>
+                  )}
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-start justify-between mb-2">
+                    <h3 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">{item.title}</h3>
+                    <div class="text-right">
+                      <div class="text-xl font-bold text-[#01534d]">{item.stat}</div>
+                      <div class="text-xs text-gray-500">{item.statLabel}</div>
+                    </div>
+                  </div>
+                  <p class="text-gray-600 text-sm">{item.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works - Timeline -->
+    <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-[#fdc448]/20 text-[#61470e] text-sm font-semibold px-4 py-2 rounded-full mb-4">
+            SIMPLE PROCESS
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            How Sponsorship <span class="text-[#01534d]">Works</span>
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto text-lg">
+            From signup to seeing your child's progress - here's what to expect
+          </p>
+        </div>
+
+        <!-- Desktop Timeline -->
+        <div class="hidden lg:block relative">
+          <!-- Timeline Line -->
+          <div class="absolute top-24 left-0 right-0 h-1 bg-gradient-to-r from-[#01534d] via-[#fdc448] to-[#ef7c01]"></div>
+
+          <div class="grid grid-cols-5 gap-4">
+            {processSteps.map((step, index) => (
+              <div class="relative">
+                <!-- Step Circle -->
+                <div class={`w-12 h-12 mx-auto mb-6 rounded-full flex items-center justify-center text-white font-bold text-lg z-10 relative ${index === 4 ? 'bg-gradient-to-r from-[#ef7c01] to-[#fdc448]' : 'bg-[#01534d]'}`} style="font-family: 'Signika', sans-serif;">
+                  {step.step}
+                </div>
+
+                <!-- Card -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-lg transition">
+                  <div class="text-xs text-[#01534d] font-semibold mb-2">{step.timeline}</div>
+                  <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">{step.title}</h3>
+                  <p class="text-gray-600 text-sm">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Mobile Timeline -->
+        <div class="lg:hidden space-y-6">
+          {processSteps.map((step, index) => (
+            <div class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <div class={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${index === 4 ? 'bg-gradient-to-r from-[#ef7c01] to-[#fdc448]' : 'bg-[#01534d]'}`}>
+                  {step.step}
+                </div>
+                {index < 4 && <div class="w-0.5 h-full bg-[#01534d]/20 mt-2"></div>}
+              </div>
+              <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex-1">
+                <div class="text-xs text-[#01534d] font-semibold mb-1">{step.timeline}</div>
+                <h3 class="font-bold text-gray-800 mb-1" style="font-family: 'Signika', sans-serif;">{step.title}</h3>
+                <p class="text-gray-600 text-sm">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-20 bg-[#01534d] relative overflow-hidden">
+      <!-- Background Pattern -->
+      <div class="absolute inset-0 opacity-5">
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-white/10 text-white text-sm font-semibold px-4 py-2 rounded-full mb-4">
+            SPONSOR STORIES
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+            Hear From Our <span class="text-[#fdc448]">Sponsors</span>
+          </h2>
+          <p class="text-white/80 max-w-2xl mx-auto text-lg">
+            Real stories from people whose lives have been enriched by sponsoring an orphan
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          {testimonials.map(testimonial => (
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition">
+              <!-- Stars -->
+              <div class="flex gap-1 mb-4">
+                {[1,2,3,4,5].map(() => (
+                  <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                  </svg>
+                ))}
+              </div>
+
+              <!-- Quote -->
+              <p class="text-white/95 mb-6 leading-relaxed">"{testimonial.quote}"</p>
+
+              <!-- Author -->
+              <div class="flex items-center gap-4">
+                <img src={testimonial.image} alt={testimonial.name} class="w-14 h-14 rounded-full border-2 border-white/30" />
+                <div>
+                  <div class="font-semibold text-white">{testimonial.name}</div>
+                  <div class="text-white/60 text-sm">{testimonial.location}</div>
+                  <div class="text-[#fdc448] text-xs mt-1">
+                    Sponsoring {testimonial.childName} ({testimonial.childCountry}) for {testimonial.years} years
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <!-- CTA -->
+        <div class="mt-12 text-center">
+          <a
+            href="#country-options"
+            class="inline-flex items-center gap-2 bg-white text-[#01534d] font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition shadow-lg"
+            style="font-family: 'Signika', sans-serif;"
+          >
+            Join 15,847 Sponsors Today
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 bg-gray-50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-[#01534d]/10 text-[#01534d] text-sm font-semibold px-4 py-2 rounded-full mb-4">
+            COMMON QUESTIONS
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            Frequently Asked <span class="text-[#01534d]">Questions</span>
+          </h2>
+        </div>
+
+        <div class="space-y-4">
+          {faqs.map((faq, index) => (
+            <details class="bg-white rounded-2xl shadow-sm group border border-gray-100" open={index === 0}>
+              <summary class="flex items-center justify-between p-6 cursor-pointer list-none hover:bg-gray-50 rounded-2xl transition">
+                <span class="font-semibold text-gray-800 pr-4" style="font-family: 'Signika', sans-serif;">{faq.q}</span>
+                <div class="w-8 h-8 bg-[#01534d]/10 rounded-full flex items-center justify-center flex-shrink-0 group-open:bg-[#01534d] transition">
+                  <svg class="w-4 h-4 text-[#01534d] group-open:text-white group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </summary>
+              <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+
+        <!-- Still Have Questions -->
+        <div class="mt-12 bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
+          <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Still have questions?</h3>
+          <p class="text-gray-600 mb-4">Our donor care team is here to help</p>
+          <div class="flex flex-wrap items-center justify-center gap-4">
+            <a href="tel:18009000027" class="inline-flex items-center gap-2 text-[#01534d] font-semibold hover:underline">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              1-800-900-0027
+            </a>
+            <span class="text-gray-300">|</span>
+            <a href="mailto:sponsor@qurbani.com" class="inline-flex items-center gap-2 text-[#01534d] font-semibold hover:underline">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              sponsor@qurbani.com
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA - Emotional -->
+    <section class="relative py-24 overflow-hidden">
+      <!-- Background -->
+      <div class="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
+          alt="Children with hope"
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-r from-[#ef7c01]/95 to-[#fdc448]/90"></div>
+      </div>
+
+      <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Be the Reason an Orphan<br/>Smiles Today
+        </h2>
+        <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
+          For less than the cost of your daily coffee, you can give an orphan <strong>education, nutrition, healthcare, and hope</strong> for a brighter future.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href="#country-options"
+            class="inline-flex items-center gap-2 bg-white text-[#ef7c01] font-bold text-lg px-8 py-4 rounded-xl hover:bg-gray-100 transition shadow-lg"
+            style="font-family: 'Signika', sans-serif;"
+          >
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            Sponsor an Orphan Now
+          </a>
+          <a
+            href="tel:18009000027"
+            class="inline-flex items-center gap-2 bg-transparent border-2 border-white text-white font-bold text-lg px-8 py-4 rounded-xl hover:bg-white/10 transition"
+            style="font-family: 'Signika', sans-serif;"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+            Call Us
+          </a>
+        </div>
+
+        <p class="mt-6 text-white/80 text-sm">
+          100% Zakat Eligible • Tax Deductible • Cancel Anytime
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Mobile CTA -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 shadow-lg">
+    <button
+      id="mobile-sponsor-btn"
+      class="w-full bg-gradient-to-r from-[#ef7c01] to-[#fdc448] text-white font-bold text-lg py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+      style="font-family: 'Signika', sans-serif;"
+    >
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+      <span id="mobile-btn-text">Sponsor for $45/month</span>
+    </button>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const sponsorBtn = document.getElementById('sponsor-btn');
+    const btnText = document.getElementById('sponsor-btn-text');
+    const freqMonthly = document.getElementById('freq-monthly');
+    const freqYearly = document.getElementById('freq-yearly');
+    const showMoreBtn = document.getElementById('show-more-countries');
+    const moreCountries = document.getElementById('more-countries');
+    const showMoreText = document.getElementById('show-more-text');
+    const showMoreIcon = document.getElementById('show-more-icon');
+    const qtyDecrease = document.getElementById('qty-decrease');
+    const qtyIncrease = document.getElementById('qty-increase');
+    const qtyValue = document.getElementById('qty-value');
+    const qtyTotal = document.getElementById('qty-total');
+    const qtyMessage = document.getElementById('qty-message');
+    const mobileSponsorBtn = document.getElementById('mobile-sponsor-btn');
+    const mobileBtnText = document.getElementById('mobile-btn-text');
+
+    let selectedCountry = 'pakistan';
+    let selectedMonthly = 45;
+    let selectedYearly = 540;
+    let isMonthly = true;
+    let isExpanded = false;
+    let quantity = 1;
+
+    const updateUI = () => {
+      const baseAmount = isMonthly ? selectedMonthly : selectedYearly;
+      const totalAmount = baseAmount * quantity;
+      const period = isMonthly ? 'mo' : 'yr';
+      const periodFull = isMonthly ? 'month' : 'year';
+
+      // Update button text
+      const buttonLabel = quantity === 1
+        ? `Sponsor for $${totalAmount}/${periodFull}`
+        : `Sponsor ${quantity} Children - $${totalAmount}/${periodFull}`;
+
+      if (btnText) {
+        btnText.textContent = buttonLabel;
+      }
+      if (mobileBtnText) {
+        mobileBtnText.textContent = buttonLabel;
+      }
+
+      // Update quantity display
+      if (qtyValue) {
+        qtyValue.textContent = quantity.toString();
+        const label = qtyValue.nextElementSibling;
+        if (label) label.textContent = quantity === 1 ? 'child' : 'children';
+      }
+
+      // Update total
+      if (qtyTotal) {
+        qtyTotal.textContent = `$${totalAmount}/${period}`;
+      }
+
+      // Show/hide message for multiple children
+      if (qtyMessage) {
+        qtyMessage.classList.toggle('hidden', quantity < 2);
+      }
+
+      // Disable decrease button at 1
+      if (qtyDecrease) {
+        (qtyDecrease as HTMLButtonElement).disabled = quantity <= 1;
+      }
+    };
+
+    // Setup country option click handlers
+    const setupCountryOptions = () => {
+      const countryOptions = document.querySelectorAll('.country-option');
+      countryOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          // Update visual state for ALL country options
+          countryOptions.forEach(opt => {
+            opt.classList.remove('border-[#01534d]', 'bg-[#01534d]/5', 'ring-2', 'ring-[#01534d]/20');
+            opt.classList.add('border-gray-200');
+          });
+
+          option.classList.remove('border-gray-200');
+          option.classList.add('border-[#01534d]', 'bg-[#01534d]/5', 'ring-2', 'ring-[#01534d]/20');
+
+          // Update values
+          const el = option as HTMLElement;
+          selectedCountry = el.dataset.country || 'pakistan';
+          selectedMonthly = parseInt(el.dataset.monthly || '45');
+          selectedYearly = parseInt(el.dataset.yearly || '540');
+
+          updateUI();
+        });
+      });
+    };
+
+    // Initialize country options
+    setupCountryOptions();
+
+    // Quantity controls
+    qtyDecrease?.addEventListener('click', () => {
+      if (quantity > 1) {
+        quantity--;
+        updateUI();
+      }
+    });
+
+    qtyIncrease?.addEventListener('click', () => {
+      if (quantity < 10) {
+        quantity++;
+        updateUI();
+      }
+    });
+
+    // Show more countries toggle
+    showMoreBtn?.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      if (moreCountries) {
+        moreCountries.classList.toggle('hidden', !isExpanded);
+      }
+      if (showMoreText) {
+        showMoreText.textContent = isExpanded ? 'Show less' : 'Show more countries';
+      }
+      if (showMoreIcon) {
+        showMoreIcon.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    });
+
+    // Frequency toggle
+    freqMonthly?.addEventListener('click', () => {
+      isMonthly = true;
+      freqMonthly.classList.add('bg-white', 'text-[#01534d]', 'shadow-sm');
+      freqMonthly.classList.remove('text-gray-500');
+      freqYearly?.classList.remove('bg-white', 'text-[#01534d]', 'shadow-sm');
+      freqYearly?.classList.add('text-gray-500');
+      updateUI();
+    });
+
+    freqYearly?.addEventListener('click', () => {
+      isMonthly = false;
+      freqYearly.classList.add('bg-white', 'text-[#01534d]', 'shadow-sm');
+      freqYearly.classList.remove('text-gray-500');
+      freqMonthly?.classList.remove('bg-white', 'text-[#01534d]', 'shadow-sm');
+      freqMonthly?.classList.add('text-gray-500');
+      updateUI();
+    });
+
+    // Sponsor button click - redirect to donate page
+    const handleSponsorClick = (e: Event) => {
+      e.preventDefault();
+      const baseAmount = isMonthly ? selectedMonthly : selectedYearly;
+      const totalAmount = baseAmount * quantity;
+      const frequency = isMonthly ? 'monthly' : 'single';
+      const url = `/donate?cause=orphan-sponsorship&amount=${totalAmount}&frequency=${frequency}&country=${selectedCountry}&quantity=${quantity}`;
+      console.log('Redirecting to:', url);
+      window.location.href = url;
+    };
+
+    sponsorBtn?.addEventListener('click', handleSponsorClick);
+    mobileSponsorBtn?.addEventListener('click', handleSponsorClick);
+
+    // Live sponsors counter animation
+    const liveSponsors = document.getElementById('live-sponsors');
+    if (liveSponsors) {
+      setInterval(() => {
+        const current = parseInt(liveSponsors.textContent || '247');
+        const change = Math.random() > 0.5 ? 1 : -1;
+        const newVal = Math.max(200, Math.min(300, current + change));
+        liveSponsors.textContent = newVal.toString();
+      }, 5000);
+    }
+  });
+</script>
+
+<style>
+  /* Remove default details marker */
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Smooth scroll for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Add padding for sticky mobile CTA */
+  @media (max-width: 1023px) {
+    main {
+      padding-bottom: 80px;
+    }
+  }
+</style>

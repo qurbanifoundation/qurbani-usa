@@ -1,24 +1,76 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.astro';
-import Hero from '../components/Hero.astro';
-import Stats from '../components/Stats.astro';
-import DonationPackages from '../components/DonationPackages.astro';
-import Appeals from '../components/Appeals.astro';
-import About from '../components/About.astro';
-import FAQ from '../components/FAQ.astro';
-import Footer from '../components/Footer.astro';
+/**
+ * Qurbani Foundation Homepage
+ * Dynamic template switching based on site_settings.homepage_template
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * HOW TO ADD A NEW HOMEPAGE TEMPLATE:
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 1. Create your template file in /src/templates/
+ *    Example: /src/templates/MyNewHomepageTemplate.astro
+ *    - Must include Layout, Navbar, Footer
+ *    - Can fetch its own data from supabase
+ *
+ * 2. Import it below in the TEMPLATE IMPORTS section
+ *    Example: import MyNewHomepageTemplate from '../templates/MyNewHomepageTemplate.astro';
+ *
+ * 3. Add it to the TEMPLATE_COMPONENTS mapping below
+ *    Example: 'my-new': MyNewHomepageTemplate,
+ *
+ * 4. Add to database (run SQL or use Node script):
+ *    INSERT INTO template_options (template_type, template_key, template_label, description, is_active, sort_order)
+ *    VALUES ('homepage', 'my-new', 'My New Template', 'Description here', true, 3);
+ *
+ * That's it! The template will appear in Admin > Settings > Templates
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+import { supabaseAdmin } from '../lib/supabase';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TEMPLATE IMPORTS - Add new template imports here
+// ═══════════════════════════════════════════════════════════════════════════
+import PennybillHomepageTemplate from '../templates/PennybillHomepageTemplate.astro';
+import ImmersiveHomepageTemplate from '../templates/ImmersiveHomepageTemplate.astro';
+import AlmustafaHomepageTemplate from '../templates/AlmustafaHomepageTemplate.astro';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TEMPLATE MAPPING - Map template_key to component
+// The key must match the template_key in the database
+// ═══════════════════════════════════════════════════════════════════════════
+const TEMPLATE_COMPONENTS: Record<string, any> = {
+  'pennybill': PennybillHomepageTemplate,
+  'immersive': ImmersiveHomepageTemplate,
+  'almustafa': AlmustafaHomepageTemplate,
+};
+
+// Default template if setting not found or invalid
+const DEFAULT_TEMPLATE = 'immersive';
+
+export const prerender = false;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Fetch homepage template setting from database
+// ═══════════════════════════════════════════════════════════════════════════
+let homepageTemplate = DEFAULT_TEMPLATE;
+
+try {
+  const { data: settings } = await supabaseAdmin
+    .from('site_settings')
+    .select('homepage_template')
+    .limit(1)
+    .single();
+
+  if (settings?.homepage_template && TEMPLATE_COMPONENTS[settings.homepage_template]) {
+    homepageTemplate = settings.homepage_template;
+  }
+} catch (e) {
+  console.error('Error fetching homepage template setting:', e);
+}
+
+// Get the component to render
+const TemplateComponent = TEMPLATE_COMPONENTS[homepageTemplate] || TEMPLATE_COMPONENTS[DEFAULT_TEMPLATE];
 ---
 
-<Layout title="Qurbani Foundation USA - Fulfill Your Qurbani Obligation | Eid al-Adha 2026">
-  <Navbar />
-  <main>
-    <Hero />
-    <Stats />
-    <DonationPackages />
-    <Appeals />
-    <About />
-    <FAQ />
-  </main>
-  <Footer />
-</Layout>
+<TemplateComponent />

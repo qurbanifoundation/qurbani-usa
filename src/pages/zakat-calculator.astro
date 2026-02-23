@@ -1,0 +1,940 @@
+---
+/**
+ * Zakat Calculator Page - Compact Design
+ */
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const nisabGoldGrams = 87.48;
+const nisabSilverGrams = 595;
+---
+
+<Layout title="Zakat Calculator 2026 | Calculate Your Zakat | Qurbani USA" description="Calculate your Zakat accurately. Covers cash, gold, silver, investments, business assets. 100% Zakat policy.">
+  <Navbar />
+
+  <style>
+    .calc-input {
+      width: 100%;
+      padding: 0.75rem 0.75rem 0.75rem 1.75rem;
+      font-size: 1rem;
+      background-color: #f5f5f5;
+      border: 1px solid #e5e5e5;
+      border-radius: 0.5rem;
+      outline: none;
+      color: #333;
+    }
+    .calc-input:focus {
+      background-color: #fff;
+      border-color: #024139;
+      box-shadow: 0 0 0 2px rgba(2, 65, 57, 0.2);
+    }
+    .calc-input::placeholder {
+      color: #999;
+    }
+    .calc-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .info-tip {
+      position: relative;
+      display: inline-flex;
+      cursor: help;
+    }
+    .info-tip svg {
+      width: 16px;
+      height: 16px;
+      color: #E1861D;
+    }
+    .info-tip:hover .info-tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    .info-tooltip {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 400;
+      width: 200px;
+      text-align: center;
+      margin-bottom: 8px;
+      z-index: 100;
+      transition: all 0.2s;
+    }
+    .info-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #333;
+    }
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .input-group {
+      position: relative;
+    }
+    .input-group span {
+      position: absolute;
+      left: 0.625rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 0.875rem;
+    }
+  </style>
+
+  <!-- Compact Hero -->
+  <section class="pt-32 pb-8 bg-gradient-to-r from-[#01201c] to-[#022e27]">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-yellow-400 text-[#024139] text-xs font-bold px-2 py-1 rounded">2026</span>
+            <span class="bg-[#024139] text-white text-xs font-medium px-2 py-1 rounded">100% Zakat Policy</span>
+          </div>
+          <h1 class="text-2xl md:text-3xl font-bold text-white" style="font-family: 'Signika', sans-serif;">
+            Zakat Calculator
+          </h1>
+        </div>
+        <div class="bg-white/10 rounded-xl px-4 py-3 relative">
+          <div id="live-badge" class="hidden absolute -top-1.5 -left-1.5 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="w-1 h-1 bg-white rounded-full animate-pulse"></span>
+            LIVE
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-center">
+              <p class="text-xs text-white/60">Gold Nisab</p>
+              <p class="text-lg font-bold text-yellow-300" id="nisab-gold">$0</p>
+            </div>
+            <div class="w-px h-10 bg-white/20"></div>
+            <div class="text-center">
+              <p class="text-xs text-white/60">Silver Nisab</p>
+              <p class="text-lg font-bold text-gray-300" id="nisab-silver">$0</p>
+            </div>
+          </div>
+          <p class="text-xs text-white/50 text-center mt-2" id="nisab-date">Current Nisab value as of – <span id="nisab-date-value">February 21, 2026</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calculator Grid -->
+  <section class="py-8 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="grid lg:grid-cols-3 gap-6">
+
+        <!-- Left Column: Assets -->
+        <div class="lg:col-span-2 space-y-4">
+
+          <!-- Assets Card -->
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-[#024139] text-white px-4 py-3 flex items-center justify-between">
+              <h2 class="font-bold flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Assets
+              </h2>
+              <span class="text-lg font-bold" id="total-assets-header">$0.00</span>
+            </div>
+
+            <div class="p-4 space-y-5">
+              <!-- Cash & Savings -->
+              <div>
+                <h3 class="section-title">
+                  <span class="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                  </span>
+                  Cash & Savings
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label class="calc-label">Cash on Hand <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Physical cash you have at home or in your wallet</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="cash" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Checking <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Balance in your checking/current bank accounts</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="cash" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Savings <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Balance in your savings accounts</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="cash" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Other Deposits <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">CDs, money market accounts, or other deposits</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="cash" placeholder="00.00" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gold & Silver -->
+              <div>
+                <h3 class="section-title">
+                  <span class="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"></path>
+                    </svg>
+                  </span>
+                  Gold & Silver
+                  <span class="text-xs font-normal text-gray-400">(in grams)</span>
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="calc-label">Gold (in grams) <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Total weight of gold jewelry, coins, or bars you own (excluding daily worn items by some scholars)</span></span></label>
+                    <div class="input-group">
+                      <span class="text-yellow-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                      </span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="gold-grams" placeholder="0" id="gold-grams" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Silver (in grams) <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Total weight of silver jewelry, coins, utensils, or bars you own</span></span></label>
+                    <div class="input-group">
+                      <span class="text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                      </span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="silver-grams" placeholder="0" id="silver-grams" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Investments -->
+              <div>
+                <h3 class="section-title">
+                  <span class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                  </span>
+                  Investments
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label class="calc-label">Stocks/Shares <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Current market value of stocks, mutual funds, ETFs, and shares</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="investments" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Crypto <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Current value of Bitcoin, Ethereum, and other cryptocurrencies</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="investments" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">401k/IRA <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Retirement accounts - consult a scholar as opinions vary on accessibility</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="investments" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Other <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Bonds, commodities, or any other investment assets</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="investments" placeholder="00.00" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Business Assets -->
+              <div>
+                <h3 class="section-title">
+                  <span class="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                  </span>
+                  Business Assets
+                </h3>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="calc-label">Business Cash <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Cash held in business accounts</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="business" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Inventory <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Value of goods held for sale in your business</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="business" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Receivables <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Money owed to your business that you expect to collect</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="business" placeholder="00.00" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Property & Rental Income -->
+              <div>
+                <h3 class="section-title">
+                  <span class="w-6 h-6 bg-teal-100 rounded flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                  </span>
+                  Property
+                  <span class="text-xs font-normal text-gray-400">(rental/investment only)</span>
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="calc-label">Rental Income Saved <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Accumulated rental income you haven't spent</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="property" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Investment Property Equity <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Value of property bought for investment/resale (not your home)</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="property" placeholder="00.00" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Money Owed to You -->
+              <div>
+                <h3 class="section-title">
+                  <span class="w-6 h-6 bg-orange-100 rounded flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </span>
+                  Money Owed to You
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="calc-label">Loans Given <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Money you've lent to others that you expect to be repaid</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="owed" placeholder="00.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="calc-label">Refunds Expected <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Tax refunds, deposits, or other money you're expecting back</span></span></label>
+                    <div class="input-group">
+                      <span>$</span>
+                      <input type="number" min="0" step="0.01" class="calc-input zakat-input" data-category="owed" placeholder="00.00" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liabilities Card -->
+          <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-[#B32629] text-white px-4 py-3 flex items-center justify-between">
+              <h2 class="font-bold flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Liabilities (Deductions)
+              </h2>
+              <span class="text-lg font-bold" id="total-liabilities-header">-$0.00</span>
+            </div>
+
+            <div class="p-4">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="calc-label">Money You Owe <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Personal loans, credit card debt, or money borrowed from others</span></span></label>
+                  <div class="input-group">
+                    <span>$</span>
+                    <input type="number" min="0" step="0.01" class="calc-input liability-input" placeholder="00.00" />
+                  </div>
+                </div>
+                <div>
+                  <label class="calc-label">Other Outgoings Due <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Bills, rent, taxes, or other payments due immediately</span></span></label>
+                  <div class="input-group">
+                    <span>$</span>
+                    <input type="number" min="0" step="0.01" class="calc-input liability-input" placeholder="00.00" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Results (Sticky) -->
+        <div class="lg:col-span-1">
+          <div class="lg:sticky lg:top-24 space-y-4">
+            <!-- Results Card -->
+            <div class="bg-gradient-to-br from-[#01201c] to-[#022e27] rounded-xl shadow-lg p-5 text-white">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold" style="font-family: 'Signika', sans-serif;">Your Zakat</h2>
+                <button id="print-results" class="text-white/60 hover:text-white transition p-1" title="Print Results">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Progress to Nisab -->
+              <div class="mb-4">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-white/60">Progress to Nisab</span>
+                  <span class="text-white/80" id="nisab-percent">0%</span>
+                </div>
+                <div class="h-2 bg-white/20 rounded-full overflow-hidden">
+                  <div id="nisab-progress" class="h-full bg-gradient-to-r from-yellow-400 to-green-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-white/70">Total Assets</span>
+                  <span class="font-semibold text-green-400" id="total-assets">$0.00</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-white/70">Liabilities</span>
+                  <span class="font-semibold text-red-400" id="total-liabilities">-$0.00</span>
+                </div>
+                <div class="border-t border-white/20 pt-3 flex justify-between">
+                  <span class="text-white/70">Net Wealth</span>
+                  <span class="font-semibold" id="net-wealth">$0.00</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-white/70">Nisab Threshold</span>
+                  <span class="text-sm" id="nisab-threshold">$0.00</span>
+                </div>
+              </div>
+
+              <div class="mt-5 pt-5 border-t border-white/20 text-center">
+                <p class="text-xs text-white/60 mb-1" id="zakat-status">Enter your assets above</p>
+                <p class="text-4xl font-bold text-yellow-300" style="font-family: 'Signika', sans-serif;" id="zakat-amount">$0.00</p>
+                <p class="text-xs text-white/50 mt-1">Zakat Due (2.5%)</p>
+              </div>
+
+              <div id="zakat-actions" class="mt-5 hidden">
+                <button type="button" id="pay-zakat-btn" onclick="addZakatToCart()" class="block w-full bg-[#B32629] hover:bg-[#8f1e20] text-white font-bold py-3 rounded-xl text-center transition-all text-sm cursor-pointer">
+                  Pay Your Zakat Now
+                </button>
+                <p class="text-center text-xs text-white/50 mt-2">100% goes to eligible recipients</p>
+
+                <!-- Email Results Form -->
+                <div class="mt-4 pt-4 border-t border-white/20">
+                  <button id="show-email-form" class="w-full text-sm text-white/70 hover:text-white flex items-center justify-center gap-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    Email My Results
+                  </button>
+
+                  <form id="email-results-form" class="hidden mt-3 space-y-3">
+                    <input
+                      type="email"
+                      id="zakat-email"
+                      placeholder="Your email"
+                      required
+                      class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
+                    />
+                    <div class="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        id="zakat-firstname"
+                        placeholder="First name"
+                        class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
+                      />
+                      <input
+                        type="text"
+                        id="zakat-lastname"
+                        placeholder="Last name"
+                        class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
+                      />
+                    </div>
+                    <input
+                      type="tel"
+                      id="zakat-phone"
+                      placeholder="Phone (optional)"
+                      class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
+                    />
+                    <label class="flex items-center gap-2 text-xs text-white/70 cursor-pointer">
+                      <input type="checkbox" id="zakat-reminder" class="rounded border-white/30 bg-white/10 text-yellow-400 focus:ring-yellow-400" />
+                      Remind me when Nisab changes
+                    </label>
+                    <button
+                      type="submit"
+                      id="submit-email-results"
+                      class="w-full bg-yellow-400 hover:bg-yellow-300 text-[#024139] font-bold py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2"
+                    >
+                      <span>Send My Results</span>
+                      <svg class="w-4 h-4 hidden animate-spin" id="email-spinner" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </button>
+                    <p id="email-result-message" class="hidden text-center text-xs"></p>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="bg-white rounded-xl shadow-sm p-4">
+              <h3 class="font-bold text-gray-800 text-sm mb-3">Quick Info</h3>
+              <div class="space-y-2 text-xs text-gray-600">
+                <p><strong class="text-[#024139]">Zakat Rate:</strong> 2.5% of net wealth above Nisab</p>
+                <p><strong class="text-[#024139]">Nisab:</strong> Based on 595g of silver (lower threshold)</p>
+                <p><strong class="text-[#024139]">When:</strong> After holding wealth for one lunar year</p>
+              </div>
+            </div>
+
+            <!-- Reset Button -->
+            <button id="reset-calc" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Reset Calculator
+            </button>
+
+            <!-- Privacy Badge -->
+            <div class="bg-blue-50 rounded-xl p-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <p class="text-xs text-blue-800">All calculations are done locally. Your data never leaves your device.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-8 bg-[#024139]">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-white mb-3" style="font-family: 'Signika', sans-serif;">
+        Ready to Fulfill Your Obligation?
+      </h2>
+      <p class="text-white/80 mb-6 max-w-2xl mx-auto">
+        Your Zakat transforms lives. Help provide food, water, education, and healthcare to those who need it most.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/zakat" class="inline-flex items-center justify-center gap-2 bg-[#B32629] hover:bg-[#8f1e20] text-white font-bold px-8 py-3 rounded-xl transition">
+          Pay Zakat Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+          </svg>
+        </a>
+        <a href="/zakat-eligibility" class="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-8 py-3 rounded-xl transition border border-white/20">
+          Learn About Zakat Eligibility
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-8 bg-white">
+    <div class="max-w-6xl mx-auto px-4">
+      <h2 class="text-xl font-bold text-gray-800 mb-6 text-center" style="font-family: 'Signika', sans-serif;">
+        Frequently Asked Questions
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="font-semibold text-gray-800 text-sm mb-2">What is Zakat?</h3>
+          <p class="text-xs text-gray-600">Zakat is the third pillar of Islam, requiring Muslims to give 2.5% of their qualifying wealth annually to those in need. It purifies wealth and helps redistribute resources to the less fortunate.</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="font-semibold text-gray-800 text-sm mb-2">What is Nisab?</h3>
+          <p class="text-xs text-gray-600">Nisab is the minimum wealth threshold. If your net assets exceed the Nisab value (equivalent to 87.48g of gold or 595g of silver), Zakat becomes obligatory.</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="font-semibold text-gray-800 text-sm mb-2">Gold vs Silver Nisab?</h3>
+          <p class="text-xs text-gray-600">Most scholars recommend using the silver Nisab as it's lower, meaning more people can pay Zakat and help more recipients. However, you may choose either standard.</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="font-semibold text-gray-800 text-sm mb-2">Is Zakat on my home?</h3>
+          <p class="text-xs text-gray-600">No, Zakat is not due on your primary residence or personal items like clothing and furniture. Only investment properties and rental income are Zakatable.</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="font-semibold text-gray-800 text-sm mb-2">When should I pay Zakat?</h3>
+          <p class="text-xs text-gray-600">Zakat is due when your wealth has been above the Nisab for one full lunar year. Many Muslims pay during Ramadan for extra blessings.</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="font-semibold text-gray-800 text-sm mb-2">Does 100% of my Zakat reach recipients?</h3>
+          <p class="text-xs text-gray-600">Yes! At Qurbani USA, we have a 100% Zakat policy. Every dollar of your Zakat goes directly to eligible recipients without any administrative deductions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Nisab thresholds in grams
+    const nisabGoldGrams = 87.48;
+    const nisabSilverGrams = 595;
+
+    // Default/fallback prices (updated February 2026)
+    let goldPricePerGram = 93.00;
+    let silverPricePerGram = 2.74;
+    let nisabGold = goldPricePerGram * nisabGoldGrams;
+    let nisabSilver = silverPricePerGram * nisabSilverGrams;
+
+    // Format currency
+    const formatCurrency = (amount: number) => {
+      return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    // Fetch live metal prices
+    async function fetchMetalPrices() {
+      try {
+        const response = await fetch('/api/metal-prices');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            goldPricePerGram = data.gold;
+            silverPricePerGram = data.silver;
+            nisabGold = goldPricePerGram * nisabGoldGrams;
+            nisabSilver = silverPricePerGram * nisabSilverGrams;
+
+            // Update displays
+            updateNisabDisplays();
+
+            // Update date from API timestamp or use today
+            const priceDate = data.timestamp ? new Date(data.timestamp) : new Date();
+            const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('nisab-date-value')!.textContent = priceDate.toLocaleDateString('en-US', dateOptions);
+
+            // Show live indicator if not using fallback
+            if (!data.fallback) {
+              const liveBadge = document.getElementById('live-badge');
+              if (liveBadge) {
+                liveBadge.classList.remove('hidden');
+              }
+            }
+
+            // Recalculate zakat with new prices
+            calculateZakat();
+          }
+        }
+      } catch (error) {
+        console.log('Using fallback metal prices');
+      }
+    }
+
+    // Update Nisab displays
+    function updateNisabDisplays() {
+      document.getElementById('nisab-gold')!.textContent = formatCurrency(nisabGold);
+      document.getElementById('nisab-silver')!.textContent = formatCurrency(nisabSilver);
+    }
+
+    // Initial display with default values
+    updateNisabDisplays();
+
+    // Update date initially
+    const today = new Date();
+    const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('nisab-date-value')!.textContent = today.toLocaleDateString('en-US', dateOptions);
+
+    // Fetch live prices
+    await fetchMetalPrices();
+
+    function calculateZakat() {
+      const zakatInputs = document.querySelectorAll('.zakat-input') as NodeListOf<HTMLInputElement>;
+      const liabilityInputs = document.querySelectorAll('.liability-input') as NodeListOf<HTMLInputElement>;
+
+      // Calculate total assets
+      let totalAssets = 0;
+      zakatInputs.forEach(input => {
+        const category = input.dataset.category;
+        const value = parseFloat(input.value) || 0;
+
+        // Convert gold/silver grams to USD
+        if (category === 'gold-grams') {
+          totalAssets += value * goldPricePerGram;
+        } else if (category === 'silver-grams') {
+          totalAssets += value * silverPricePerGram;
+        } else {
+          totalAssets += value;
+        }
+      });
+
+      // Calculate total liabilities
+      let totalLiabilities = 0;
+      liabilityInputs.forEach(input => {
+        totalLiabilities += parseFloat(input.value) || 0;
+      });
+
+      // Net wealth
+      const netWealth = totalAssets - totalLiabilities;
+
+      // Always use Silver Nisab (lower threshold, recommended by most scholars)
+      const selectedNisab = nisabSilver;
+
+      // Calculate Zakat
+      let zakatAmount = 0;
+      let zakatStatus = '';
+
+      if (netWealth <= 0) {
+        zakatStatus = 'No Zakat due (net wealth is zero or negative)';
+      } else if (netWealth < selectedNisab) {
+        zakatStatus = 'Below Nisab threshold - No Zakat due';
+      } else {
+        zakatAmount = netWealth * 0.025;
+        zakatStatus = 'Zakat is obligatory on your wealth';
+      }
+
+      // Update displays
+      document.getElementById('total-assets')!.textContent = formatCurrency(totalAssets);
+      document.getElementById('total-assets-header')!.textContent = formatCurrency(totalAssets);
+      document.getElementById('total-liabilities')!.textContent = `-${formatCurrency(totalLiabilities)}`;
+      document.getElementById('total-liabilities-header')!.textContent = `-${formatCurrency(totalLiabilities)}`;
+      document.getElementById('net-wealth')!.textContent = formatCurrency(netWealth);
+      document.getElementById('nisab-threshold')!.textContent = `${formatCurrency(selectedNisab)} (silver)`;
+      document.getElementById('zakat-status')!.textContent = zakatStatus;
+      document.getElementById('zakat-amount')!.textContent = formatCurrency(zakatAmount);
+
+      // Update progress bar
+      const progressPercent = Math.min((netWealth / selectedNisab) * 100, 100);
+      document.getElementById('nisab-progress')!.style.width = `${progressPercent}%`;
+      document.getElementById('nisab-percent')!.textContent = `${Math.round(progressPercent)}%`;
+
+      // Show/hide pay button
+      const zakatActions = document.getElementById('zakat-actions');
+      const payBtn = document.getElementById('pay-zakat-btn') as HTMLAnchorElement;
+
+      if (zakatAmount > 0) {
+        zakatActions?.classList.remove('hidden');
+        if (payBtn) {
+          payBtn.href = `/zakat?amount=${zakatAmount.toFixed(2)}`;
+        }
+      } else {
+        zakatActions?.classList.add('hidden');
+      }
+    }
+
+    // Print functionality
+    document.getElementById('print-results')?.addEventListener('click', () => {
+      const totalAssets = document.getElementById('total-assets')?.textContent;
+      const totalLiabilities = document.getElementById('total-liabilities')?.textContent;
+      const netWealth = document.getElementById('net-wealth')?.textContent;
+      const nisabThreshold = document.getElementById('nisab-threshold')?.textContent;
+      const zakatAmount = document.getElementById('zakat-amount')?.textContent;
+      const zakatStatus = document.getElementById('zakat-status')?.textContent;
+      const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const printContent = `
+        <html>
+          <head>
+            <title>Zakat Calculation - Qurbani USA</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; }
+              h1 { color: #024139; margin-bottom: 5px; }
+              .date { color: #666; margin-bottom: 30px; }
+              .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+              .label { color: #666; }
+              .value { font-weight: bold; }
+              .total { font-size: 32px; color: #024139; text-align: center; margin: 30px 0; }
+              .status { text-align: center; color: #666; font-style: italic; }
+              .footer { margin-top: 40px; text-align: center; color: #999; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <h1>Zakat Calculation</h1>
+            <p class="date">${date}</p>
+            <div class="row"><span class="label">Total Assets</span><span class="value">${totalAssets}</span></div>
+            <div class="row"><span class="label">Liabilities</span><span class="value">${totalLiabilities}</span></div>
+            <div class="row"><span class="label">Net Wealth</span><span class="value">${netWealth}</span></div>
+            <div class="row"><span class="label">Nisab Threshold</span><span class="value">${nisabThreshold}</span></div>
+            <p class="status">${zakatStatus}</p>
+            <p class="total">${zakatAmount}</p>
+            <p class="footer">Calculated using Qurbani USA Zakat Calculator<br>www.qurbani.com/zakat-calculator</p>
+          </body>
+        </html>
+      `;
+
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    });
+
+    // Add event listeners
+    const allInputs = document.querySelectorAll('.zakat-input, .liability-input');
+    allInputs.forEach(input => {
+      input.addEventListener('input', calculateZakat);
+    });
+
+
+    // Reset functionality
+    document.getElementById('reset-calc')?.addEventListener('click', () => {
+      const allInputs = document.querySelectorAll('.zakat-input, .liability-input') as NodeListOf<HTMLInputElement>;
+      allInputs.forEach(input => {
+        input.value = '';
+      });
+      calculateZakat();
+    });
+
+    // Email Results Form
+    const showEmailBtn = document.getElementById('show-email-form');
+    const emailForm = document.getElementById('email-results-form');
+
+    showEmailBtn?.addEventListener('click', () => {
+      emailForm?.classList.toggle('hidden');
+      showEmailBtn.classList.add('hidden');
+    });
+
+    // Handle email form submission
+    emailForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = (document.getElementById('zakat-email') as HTMLInputElement)?.value;
+      const firstName = (document.getElementById('zakat-firstname') as HTMLInputElement)?.value;
+      const lastName = (document.getElementById('zakat-lastname') as HTMLInputElement)?.value;
+      const phone = (document.getElementById('zakat-phone') as HTMLInputElement)?.value;
+      const wantsReminder = (document.getElementById('zakat-reminder') as HTMLInputElement)?.checked;
+
+      // Get calculated values
+      const zakatAmountText = document.getElementById('zakat-amount')?.textContent || '$0.00';
+      const totalAssetsText = document.getElementById('total-assets')?.textContent || '$0.00';
+      const zakatAmount = parseFloat(zakatAmountText.replace(/[$,]/g, ''));
+      const totalAssets = parseFloat(totalAssetsText.replace(/[$,]/g, ''));
+
+      // UI feedback
+      const submitBtn = document.getElementById('submit-email-results');
+      const spinner = document.getElementById('email-spinner');
+      const messageEl = document.getElementById('email-result-message');
+
+      if (submitBtn) submitBtn.setAttribute('disabled', 'true');
+      spinner?.classList.remove('hidden');
+      messageEl?.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/ghl/track-zakat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            firstName,
+            lastName,
+            phone,
+            zakatAmount,
+            totalAssets,
+            wantsReminder,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          messageEl!.textContent = 'Results sent to your email!';
+          messageEl!.className = 'text-center text-xs text-green-400';
+          messageEl?.classList.remove('hidden');
+
+          // Hide form after success
+          setTimeout(() => {
+            emailForm?.classList.add('hidden');
+            showEmailBtn?.classList.remove('hidden');
+            showEmailBtn!.innerHTML = `
+              <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="text-green-400">Email Sent!</span>
+            `;
+          }, 2000);
+        } else {
+          messageEl!.textContent = result.error || 'Failed to save. Try again.';
+          messageEl!.className = 'text-center text-xs text-red-400';
+          messageEl?.classList.remove('hidden');
+        }
+      } catch (error) {
+        messageEl!.textContent = 'Network error. Please try again.';
+        messageEl!.className = 'text-center text-xs text-red-400';
+        messageEl?.classList.remove('hidden');
+      } finally {
+        if (submitBtn) submitBtn.removeAttribute('disabled');
+        spinner?.classList.add('hidden');
+      }
+    });
+
+    // Initial calculation
+    calculateZakat();
+
+    // Add Zakat to Cart function
+    window.addZakatToCart = function() {
+      const zakatAmountText = document.getElementById('zakat-amount')?.textContent || '$0.00';
+      const zakatAmount = parseFloat(zakatAmountText.replace(/[$,]/g, ''));
+
+      if (zakatAmount <= 0) {
+        alert('Please calculate your Zakat first');
+        return;
+      }
+
+      // Add to cart using the global addToCart function
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: 'zakat-' + Date.now(),
+          name: 'Zakat',
+          description: 'Zakat Obligation',
+          amount: zakatAmount,
+          quantity: 1,
+          type: 'single',
+          campaignSlug: 'zakat',
+          image: null,
+        });
+      } else {
+        // Fallback: redirect to donate page with amount
+        window.location.href = '/donate?cause=zakat&amount=' + zakatAmount;
+      }
+    };
+  });
+</script>

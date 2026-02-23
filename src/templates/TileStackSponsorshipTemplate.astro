@@ -1,0 +1,970 @@
+---
+/**
+ * TILE STACK SPONSORSHIP TEMPLATE
+ * Inspired by Penny Appeal OrphanKind & Ramadan 30-day program
+ *
+ * Features:
+ * - Tile-based quantity selection (1, 2, 3, 5, 10 children)
+ * - Visual stacking effect
+ * - Social proof ("Most sponsors choose 2 children")
+ * - Country selection
+ * - Impact multiplier visualization
+ * - Animated selection feedback
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    id: string;
+    title: string;
+    subtitle?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    goal_amount?: number;
+    raised_amount?: number;
+    is_zakat_eligible?: boolean;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign, donationBoxTemplate } = Astro.props;
+
+// Sponsorship quantity tiles with social proof
+const quantityTiles = [
+  { qty: 1, label: '1 Child', monthly: 45, badge: null, popularity: 15 },
+  { qty: 2, label: '2 Children', monthly: 90, badge: 'Most Popular', popularity: 45 },
+  { qty: 3, label: '3 Children', monthly: 135, badge: null, popularity: 25 },
+  { qty: 5, label: '5 Children', monthly: 225, badge: 'Best Impact', popularity: 10 },
+  { qty: 10, label: '10 Children', monthly: 450, badge: null, popularity: 5 },
+];
+
+// Countries available
+const countries = [
+  { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', priceMultiplier: 1 },
+  { id: 'palestine', name: 'Palestine', flag: '🇵🇸', priceMultiplier: 1, urgent: true },
+  { id: 'yemen', name: 'Yemen', flag: '🇾🇪', priceMultiplier: 0.89 },
+  { id: 'syria', name: 'Syria', flag: '🇸🇾', priceMultiplier: 1 },
+  { id: 'afghanistan', name: 'Afghanistan', flag: '🇦🇫', priceMultiplier: 0.89 },
+];
+
+// What each sponsorship provides
+const benefits = [
+  { icon: 'book', label: 'Education' },
+  { icon: 'utensils', label: 'Food' },
+  { icon: 'heart', label: 'Healthcare' },
+  { icon: 'home', label: 'Shelter' },
+  { icon: 'shirt', label: 'Clothing' },
+  { icon: 'smile', label: 'Love & Care' },
+];
+
+// Recent sponsors will be handled dynamically via JavaScript
+---
+
+<Layout
+  title="Sponsor Orphans | Choose How Many Lives to Change | Qurbani Foundation"
+  description="Sponsor 1, 2, 3 or more orphans. Most sponsors choose 2 children. 100% Zakat eligible. See the impact multiply."
+>
+  <Navbar />
+
+  <main class="bg-gray-50 min-h-screen">
+    <!-- Hero Section -->
+    <section class="relative py-20 md:py-28 lg:py-32 overflow-hidden min-h-[400px] md:min-h-[480px]">
+      <!-- Background Image -->
+      <div class="absolute inset-0">
+        <img
+          src="/images/qurbani-foundation-orphan-sponsorship.jpg"
+          alt="Qurbani Foundation helping orphan children with school supplies"
+          class="w-full h-full object-cover object-[center_25%]"
+          loading="eager"
+        />
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8 pt-8 md:pt-12">
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+            How Many Lives Will <span class="text-[#fdc448]">You Change?</span>
+          </h1>
+
+          <p class="text-xl text-white/90 max-w-2xl mx-auto mb-2">
+            Join <strong class="text-white">15,847 sponsors</strong> who are transforming orphans' futures
+          </p>
+
+          <p class="text-white/70 text-sm">
+            Most sponsors choose to support <strong class="text-[#fdc448]">2-3 children</strong>
+          </p>
+        </div>
+
+        <!-- Live Activity Ticker -->
+        <div class="flex justify-center mb-8">
+          <div class="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-4">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <span class="text-white text-sm"><strong id="live-count">23</strong> people sponsoring right now</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Selection Area -->
+    <section class="py-12 -mt-8">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-3 gap-8">
+
+          <!-- Left Column: Selection -->
+          <div class="lg:col-span-2 space-y-8">
+
+            <!-- Step 1: Choose Country -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Choose a Region</h2>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="country-selector">
+                {countries.map((country, i) => (
+                  <button
+                    type="button"
+                    class={`country-btn relative p-4 rounded-xl border-2 transition-all hover:shadow-md ${i === 0 ? 'border-[#d97706] bg-[#d97706]/5 ring-2 ring-[#d97706]/20' : 'border-gray-200 hover:border-gray-300'}`}
+                    data-country={country.id}
+                    data-multiplier={country.priceMultiplier}
+                  >
+                    {country.urgent && (
+                      <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">URGENT</span>
+                    )}
+                    <div class="text-2xl mb-1">{country.flag}</div>
+                    <div class="text-xs font-medium text-gray-700">{country.name}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <!-- Step 2: Choose Quantity (Tile Stack) -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                  <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">How Many Children?</h2>
+                </div>
+                <div class="text-sm text-gray-500">
+                  <span class="text-[#d97706] font-semibold">45%</span> choose 2 children
+                </div>
+              </div>
+
+              <!-- Quantity Tiles -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4" id="quantity-tiles">
+                {quantityTiles.map((tile, i) => (
+                  <button
+                    type="button"
+                    class={`qty-tile relative p-4 rounded-xl border-2 transition-all hover:shadow-lg hover:-translate-y-1 ${i === 1 ? 'border-[#d97706] bg-[#d97706]/5 ring-2 ring-[#d97706]/20 scale-105' : 'border-gray-200 hover:border-gray-300'}`}
+                    data-qty={tile.qty}
+                    data-monthly={tile.monthly}
+                  >
+                    {tile.badge && (
+                      <span class={`absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap ${tile.badge === 'Most Popular' ? 'bg-[#fdc448] text-[#61470e]' : tile.badge === 'Best Impact' ? 'bg-[#d97706] text-white' : 'bg-purple-500 text-white'}`}>
+                        {tile.badge}
+                      </span>
+                    )}
+
+                    <!-- Child Icons -->
+                    <div class="flex justify-center items-end mb-2 h-12 gap-0.5">
+                      {Array.from({ length: Math.min(tile.qty, 5) }).map((_, idx) => (
+                        <svg
+                          class="w-6 h-10 text-gray-700"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          style={`opacity: ${1 - idx * 0.12};`}
+                        >
+                          <circle cx="12" cy="4" r="3"/>
+                          <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+                        </svg>
+                      ))}
+                      {tile.qty > 5 && (
+                        <span class="ml-1 text-sm font-semibold text-gray-700">+{tile.qty - 5}</span>
+                      )}
+                    </div>
+
+                    <div class="text-center">
+                      <div class="font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">{tile.label}</div>
+                      <div class="text-lg font-bold text-[#d97706]">${tile.monthly}<span class="text-xs text-gray-400">/mo</span></div>
+                    </div>
+
+                    <!-- Popularity bar -->
+                    <div class="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-[#fdc448] rounded-full" style={`width: ${tile.popularity}%`}></div>
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-1">{tile.popularity}% choose this</div>
+                  </button>
+                ))}
+              </div>
+
+              <!-- Custom Amount -->
+              <div class="mt-6 pt-6 border-t border-gray-100">
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" id="custom-toggle" class="w-5 h-5 rounded border-gray-300 text-[#d97706] focus:ring-[#d97706]" />
+                  <span class="text-sm text-gray-600">I want to sponsor a different number of children</span>
+                </label>
+                <div id="custom-qty-input" class="mt-4 hidden">
+                  <div class="flex items-center gap-4">
+                    <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
+                      <button type="button" id="custom-decrease" class="px-4 py-3 bg-gray-50 hover:bg-gray-100 transition">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </svg>
+                      </button>
+                      <input type="number" id="custom-qty" value="4" min="1" max="100" class="w-20 py-3 text-center text-xl font-bold text-gray-800 border-0 focus:ring-0" />
+                      <button type="button" id="custom-increase" class="px-4 py-3 bg-gray-50 hover:bg-gray-100 transition">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div>
+                      <span class="text-gray-500">children × $45 = </span>
+                      <span id="custom-total" class="text-xl font-bold text-[#d97706]">$180</span>
+                      <span class="text-gray-400">/mo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- What Sponsorship Provides -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+              <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+                Each Child Receives
+              </h3>
+              <div class="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                {benefits.map(benefit => (
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-[#d97706]/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                      {benefit.icon === 'book' && <svg class="w-6 h-6 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>}
+                      {benefit.icon === 'utensils' && <svg class="w-6 h-6 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>}
+                      {benefit.icon === 'heart' && <svg class="w-6 h-6 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>}
+                      {benefit.icon === 'home' && <svg class="w-6 h-6 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>}
+                      {benefit.icon === 'shirt' && <svg class="w-6 h-6 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>}
+                      {benefit.icon === 'smile' && <svg class="w-6 h-6 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                    </div>
+                    <span class="text-xs text-gray-600">{benefit.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <!-- Recent Sponsors (Social Proof) -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">
+                  Recent Sponsors
+                </h3>
+                <span class="flex items-center gap-1 text-xs text-green-600">
+                  <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Live
+                </span>
+              </div>
+              <div class="space-y-3" id="recent-sponsors">
+                <!-- Populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Summary & Checkout -->
+          <div class="lg:col-span-1">
+            <div class="sticky top-24">
+              <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-[#d97706] to-[#b45309] p-6 text-white text-center">
+                  <h3 class="text-xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">Your Impact</h3>
+                  <p class="text-white/70 text-sm">Transform lives with your sponsorship</p>
+                </div>
+
+                <!-- Summary -->
+                <div class="p-6">
+                  <!-- Selected Summary -->
+                  <div class="text-center mb-6">
+                    <div class="text-5xl font-bold text-[#d97706] mb-1" id="summary-qty" style="font-family: 'Signika', sans-serif;">2</div>
+                    <div class="text-gray-600">children will receive care</div>
+                  </div>
+
+                  <!-- Visual Stack -->
+                  <div class="flex justify-center items-end mb-6 gap-1" id="visual-stack">
+                    <svg class="w-10 h-14 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="4" r="3"/>
+                      <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+                    </svg>
+                    <svg class="w-10 h-14 text-gray-700 opacity-85" fill="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="4" r="3"/>
+                      <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+                    </svg>
+                  </div>
+
+                  <!-- Frequency Toggle -->
+                  <div class="flex bg-gray-100 rounded-xl p-1 mb-4">
+                    <button type="button" id="freq-monthly" class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition bg-white text-[#d97706] shadow-sm">
+                      Monthly
+                    </button>
+                    <button type="button" id="freq-yearly" class="flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition text-gray-500 hover:text-gray-700">
+                      Pay Yearly
+                    </button>
+                  </div>
+
+                  <!-- Country -->
+                  <div class="flex items-center justify-between py-3 border-t border-gray-100">
+                    <span class="text-gray-600">Region</span>
+                    <span class="font-medium text-gray-800" id="summary-country">🇵🇰 Pakistan</span>
+                  </div>
+
+                  <!-- Amount -->
+                  <div class="flex items-center justify-between py-3 border-t border-gray-100">
+                    <span class="text-gray-600" id="amount-label">Monthly</span>
+                    <span class="text-2xl font-bold text-[#d97706]" id="summary-amount">$90</span>
+                  </div>
+
+                  <!-- Daily Breakdown -->
+                  <div class="flex items-center justify-between py-3 border-t border-gray-100">
+                    <span class="text-gray-600">That's only</span>
+                    <span class="text-gray-800" id="summary-daily">$3.00/day</span>
+                  </div>
+
+                  <!-- CTA Button -->
+                  <button
+                    id="sponsor-btn"
+                    class="w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold text-lg py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    style="font-family: 'Signika', sans-serif;"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <span id="btn-text">Sponsor 2 Children</span>
+                  </button>
+
+                  <!-- Trust Badges -->
+                  <div class="flex items-center justify-center gap-4 mt-4 text-xs text-gray-500">
+                    <span class="flex items-center gap-1">
+                      <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                      </svg>
+                      Secure
+                    </span>
+                    <span>•</span>
+                    <span>Tax Deductible</span>
+                  </div>
+
+                  <!-- Zakat Badge -->
+                  <div class="mt-4 p-3 bg-[#fdc448]/20 rounded-xl text-center">
+                    <span class="text-sm font-semibold text-[#61470e]">✓ 100% Zakat Eligible</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hadith -->
+              <div class="mt-6 bg-[#d97706]/10 rounded-2xl p-5">
+                <p class="text-gray-700 italic text-sm leading-relaxed">
+                  "The one who cares for an orphan and myself will be together in Paradise like this"
+                </p>
+                <p class="text-[#d97706] font-semibold text-sm mt-2">
+                  — Prophet Muhammad ﷺ
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-8" style="font-family: 'Signika', sans-serif;">
+          Common Questions
+        </h2>
+        <div class="space-y-4">
+          <details class="bg-gray-50 rounded-xl p-4 group" open>
+            <summary class="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-800">
+              Why do most sponsors choose 2+ children?
+              <svg class="w-5 h-5 text-gray-500 group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </summary>
+            <p class="mt-3 text-gray-600">Many sponsors find that supporting multiple children multiplies both their impact and spiritual reward. It also ensures siblings can stay together and supports more vulnerable children in critical need.</p>
+          </details>
+          <details class="bg-gray-50 rounded-xl p-4 group">
+            <summary class="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-800">
+              Will I receive updates about my sponsored children?
+              <svg class="w-5 h-5 text-gray-500 group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </summary>
+            <p class="mt-3 text-gray-600">Yes! You'll receive individual profiles within 4-6 weeks, followed by annual progress reports with photos and updates on their education and wellbeing.</p>
+          </details>
+          <details class="bg-gray-50 rounded-xl p-4 group">
+            <summary class="flex items-center justify-between cursor-pointer list-none font-semibold text-gray-800">
+              Is this Zakat eligible?
+              <svg class="w-5 h-5 text-gray-500 group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </summary>
+            <p class="mt-3 text-gray-600">Yes, 100% of orphan sponsorship donations are Zakat eligible. The children we support meet all Islamic criteria for Zakat recipients.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Mobile CTA -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 shadow-lg">
+    <button
+      id="mobile-sponsor-btn"
+      class="w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold text-lg py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+      style="font-family: 'Signika', sans-serif;"
+    >
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+      <span id="mobile-btn-text">Sponsor 2 Children</span>
+    </button>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Elements
+    const countryBtns = document.querySelectorAll('.country-btn');
+    const qtyTiles = document.querySelectorAll('.qty-tile');
+    const customToggle = document.getElementById('custom-toggle') as HTMLInputElement;
+    const customQtyInput = document.getElementById('custom-qty-input');
+    const customQty = document.getElementById('custom-qty') as HTMLInputElement;
+    const customDecrease = document.getElementById('custom-decrease');
+    const customIncrease = document.getElementById('custom-increase');
+    const customTotal = document.getElementById('custom-total');
+    const freqMonthly = document.getElementById('freq-monthly');
+    const freqYearly = document.getElementById('freq-yearly');
+    const sponsorBtn = document.getElementById('sponsor-btn');
+    const mobileSponsorBtn = document.getElementById('mobile-sponsor-btn');
+
+    // Summary elements
+    const summaryQty = document.getElementById('summary-qty');
+    const summaryCountry = document.getElementById('summary-country');
+    const summaryAmount = document.getElementById('summary-amount');
+    const amountLabel = document.getElementById('amount-label');
+    const summaryDaily = document.getElementById('summary-daily');
+    const visualStack = document.getElementById('visual-stack');
+    const btnText = document.getElementById('btn-text');
+    const mobileBtnText = document.getElementById('mobile-btn-text');
+
+    // State
+    let selectedCountry = { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', multiplier: 1 };
+    let selectedQty = 2;
+    let basePrice = 45;
+    let isMonthly = true;
+    let isCustom = false;
+
+    // Update UI
+    const updateUI = () => {
+      const monthlyTotal = selectedQty * basePrice * selectedCountry.multiplier;
+      const yearlyTotal = monthlyTotal * 12;
+      const daily = monthlyTotal / 30;
+
+      // Summary
+      if (summaryQty) summaryQty.textContent = selectedQty.toString();
+      if (summaryCountry) summaryCountry.textContent = `${selectedCountry.flag} ${selectedCountry.name}`;
+
+      // Update amounts based on frequency selection
+      if (isMonthly) {
+        if (amountLabel) amountLabel.textContent = 'Monthly';
+        if (summaryAmount) summaryAmount.textContent = `$${monthlyTotal.toFixed(0)}`;
+        if (summaryDaily) summaryDaily.textContent = `$${daily.toFixed(2)}/day`;
+      } else {
+        if (amountLabel) amountLabel.textContent = 'Yearly';
+        if (summaryAmount) summaryAmount.textContent = `$${yearlyTotal.toLocaleString()}`;
+        if (summaryDaily) summaryDaily.textContent = `$${(yearlyTotal / 365).toFixed(2)}/day`;
+      }
+
+      // Button text
+      const childText = selectedQty === 1 ? 'Child' : 'Children';
+      const buttonLabel = `Sponsor ${selectedQty} ${childText}`;
+      if (btnText) btnText.textContent = buttonLabel;
+      if (mobileBtnText) mobileBtnText.textContent = buttonLabel;
+
+      // Visual stack
+      if (visualStack) {
+        const count = Math.min(selectedQty, 6);
+        let html = '';
+        for (let i = 0; i < count; i++) {
+          const opacity = 1 - i * 0.12;
+          html += `<svg class="w-10 h-14 text-gray-700" fill="currentColor" viewBox="0 0 24 24" style="opacity: ${opacity};">
+            <circle cx="12" cy="4" r="3"/>
+            <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+          </svg>`;
+        }
+        if (selectedQty > 6) {
+          html += `<span class="ml-2 text-lg font-bold text-gray-700">+${selectedQty - 6}</span>`;
+        }
+        visualStack.innerHTML = html;
+      }
+
+      // Custom total
+      if (customTotal && isCustom) {
+        customTotal.textContent = `$${monthlyTotal.toFixed(0)}`;
+      }
+    };
+
+    // Country selection
+    countryBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        countryBtns.forEach(b => {
+          b.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
+          b.classList.add('border-gray-200');
+        });
+        btn.classList.remove('border-gray-200');
+        btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
+
+        const el = btn as HTMLElement;
+        selectedCountry = {
+          id: el.dataset.country || 'pakistan',
+          name: el.querySelector('div:last-child')?.textContent || 'Pakistan',
+          flag: el.querySelector('div:first-child')?.textContent || '🇵🇰',
+          multiplier: parseFloat(el.dataset.multiplier || '1')
+        };
+        updateUI();
+      });
+    });
+
+    // Quantity tile selection
+    qtyTiles.forEach(tile => {
+      tile.addEventListener('click', () => {
+        isCustom = false;
+        if (customToggle) customToggle.checked = false;
+        if (customQtyInput) customQtyInput.classList.add('hidden');
+
+        qtyTiles.forEach(t => {
+          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          t.classList.add('border-gray-200');
+        });
+        tile.classList.remove('border-gray-200');
+        tile.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+
+        selectedQty = parseInt((tile as HTMLElement).dataset.qty || '2');
+        updateUI();
+      });
+    });
+
+    // Custom toggle
+    customToggle?.addEventListener('change', () => {
+      isCustom = customToggle.checked;
+      if (customQtyInput) {
+        customQtyInput.classList.toggle('hidden', !isCustom);
+      }
+      if (isCustom) {
+        qtyTiles.forEach(t => {
+          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          t.classList.add('border-gray-200');
+        });
+        selectedQty = parseInt(customQty?.value || '4');
+        updateUI();
+      }
+    });
+
+    // Custom quantity controls
+    customDecrease?.addEventListener('click', () => {
+      if (customQty && parseInt(customQty.value) > 1) {
+        customQty.value = (parseInt(customQty.value) - 1).toString();
+        selectedQty = parseInt(customQty.value);
+        updateUI();
+      }
+    });
+
+    customIncrease?.addEventListener('click', () => {
+      if (customQty && parseInt(customQty.value) < 100) {
+        customQty.value = (parseInt(customQty.value) + 1).toString();
+        selectedQty = parseInt(customQty.value);
+        updateUI();
+      }
+    });
+
+    customQty?.addEventListener('input', () => {
+      selectedQty = parseInt(customQty.value) || 1;
+      updateUI();
+    });
+
+    // Frequency toggle
+    freqMonthly?.addEventListener('click', () => {
+      isMonthly = true;
+      freqMonthly.classList.add('bg-white', 'text-[#d97706]', 'shadow-sm');
+      freqMonthly.classList.remove('text-gray-500');
+      freqYearly?.classList.remove('bg-white', 'text-[#d97706]', 'shadow-sm');
+      freqYearly?.classList.add('text-gray-500');
+      updateUI();
+    });
+
+    freqYearly?.addEventListener('click', () => {
+      isMonthly = false;
+      freqYearly.classList.add('bg-white', 'text-[#d97706]', 'shadow-sm');
+      freqYearly.classList.remove('text-gray-500');
+      freqMonthly?.classList.remove('bg-white', 'text-[#d97706]', 'shadow-sm');
+      freqMonthly?.classList.add('text-gray-500');
+      updateUI();
+    });
+
+    // Sponsor button - Add to cart
+    const handleSponsor = (e: Event) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const monthlyTotal = selectedQty * basePrice * selectedCountry.multiplier;
+      const amount = isMonthly ? monthlyTotal : monthlyTotal * 12;
+      const frequency = isMonthly ? 'monthly' : 'yearly';
+      const childText = selectedQty === 1 ? 'Child' : 'Children';
+
+      // Use the global addToCart function
+      if (typeof (window as any).addToCart === 'function') {
+        (window as any).addToCart({
+          id: `orphan-sponsorship-${selectedCountry.id}-${selectedQty}-${frequency}-${Date.now()}`,
+          type: 'orphan-sponsorship',
+          name: `Orphan Sponsorship (${selectedCountry.name})`,
+          amount: amount,
+          quantity: selectedQty,
+          description: `${selectedCountry.flag} ${selectedCountry.name} • ${selectedQty} ${childText} • ${isMonthly ? 'Monthly: $' + monthlyTotal + '/mo' : 'Yearly: $' + amount}`,
+          frequency: frequency,
+          country: selectedCountry.name,
+          countryCode: selectedCountry.id,
+          childrenCount: selectedQty,
+          pricePerChild: basePrice * selectedCountry.multiplier
+        });
+      }
+
+      // Add to recent sponsors feed
+      if (typeof (window as any).addRealSponsor === 'function') {
+        (window as any).addRealSponsor('Your Donation', selectedCountry.name, selectedQty);
+      }
+
+      // Show success feedback on button
+      const btnText = btn.querySelector('span');
+      const originalText = btnText?.textContent || '';
+      if (btnText) {
+        btnText.textContent = 'Added to Cart!';
+      }
+      btn.classList.remove('bg-[#d97706]');
+      btn.classList.add('bg-[#15803d]');
+
+      setTimeout(() => {
+        if (btnText) btnText.textContent = originalText;
+        btn.classList.remove('bg-[#15803d]');
+        btn.classList.add('bg-[#d97706]');
+      }, 2000);
+    };
+
+    sponsorBtn?.addEventListener('click', handleSponsor);
+    mobileSponsorBtn?.addEventListener('click', handleSponsor);
+
+    // Live counter animation
+    const liveCount = document.getElementById('live-count');
+    if (liveCount) {
+      setInterval(() => {
+        const current = parseInt(liveCount.textContent || '23');
+        const change = Math.random() > 0.5 ? 1 : -1;
+        liveCount.textContent = Math.max(15, Math.min(35, current + change)).toString();
+      }, 4000);
+    }
+
+    // ============ RECENT SPONSORS ============
+    const recentSponsorsContainer = document.getElementById('recent-sponsors');
+    const STORAGE_KEY = 'orphan_sponsors_data';
+    const MAX_SPONSOR_AGE = 10 * 60 * 60 * 1000; // 10 hours max age
+
+    // Pool of names
+    const namePool = [
+      { name: 'Ahmed R.', location: 'California' },
+      { name: 'Fatima K.', location: 'New York' },
+      { name: 'Omar S.', location: 'Texas' },
+      { name: 'Aisha M.', location: 'Illinois' },
+      { name: 'Ibrahim H.', location: 'Florida' },
+      { name: 'Yasmin A.', location: 'New Jersey' },
+      { name: 'Khalid M.', location: 'Michigan' },
+      { name: 'Mariam S.', location: 'Georgia' },
+      { name: 'Hassan B.', location: 'Virginia' },
+      { name: 'Nadia Z.', location: 'Pennsylvania' },
+      { name: 'Yusuf T.', location: 'Ohio' },
+      { name: 'Layla H.', location: 'North Carolina' },
+      { name: 'Bilal K.', location: 'Arizona' },
+      { name: 'Samira J.', location: 'Colorado' },
+      { name: 'Tariq N.', location: 'Washington' },
+      { name: 'Zainab Q.', location: 'Maryland' },
+    ];
+
+    interface Sponsor {
+      name: string;
+      location: string;
+      qty: number;
+      timestamp: number;
+      isReal?: boolean;
+    }
+
+    interface StoredData {
+      sponsors: Sponsor[];
+      scheduledFakes: number[]; // timestamps when fake sponsors should appear
+      lastRealDonation: number; // when last real donation happened
+    }
+
+    // Get stored data or initialize
+    const getStoredData = (): StoredData => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          return JSON.parse(stored);
+        }
+      } catch (e) {}
+
+      // Initialize with default sponsors
+      const now = Date.now();
+      return {
+        sponsors: [
+          { name: 'Ahmed R.', location: 'California', qty: 2, timestamp: now - 1 * 60 * 60 * 1000 },
+          { name: 'Fatima K.', location: 'New York', qty: 3, timestamp: now - 3 * 60 * 60 * 1000 },
+          { name: 'Omar S.', location: 'Texas', qty: 1, timestamp: now - 5 * 60 * 60 * 1000 },
+          { name: 'Aisha M.', location: 'Illinois', qty: 2, timestamp: now - 7 * 60 * 60 * 1000 },
+          { name: 'Ibrahim H.', location: 'Florida', qty: 5, timestamp: now - 9 * 60 * 60 * 1000 },
+        ],
+        scheduledFakes: [],
+        lastRealDonation: 0
+      };
+    };
+
+    // Save to localStorage
+    const saveData = (data: StoredData) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {}
+    };
+
+    // Get a random name not in current list
+    const getNewSponsor = (currentNames: string[]): Sponsor => {
+      const available = namePool.filter(n => !currentNames.includes(n.name));
+      const pick = available.length > 0
+        ? available[Math.floor(Math.random() * available.length)]
+        : namePool[Math.floor(Math.random() * namePool.length)];
+
+      return {
+        ...pick,
+        qty: [1, 2, 2, 2, 3, 3, 5][Math.floor(Math.random() * 7)],
+        timestamp: Date.now()
+      };
+    };
+
+    // Sort sponsors by timestamp (newest first)
+    const sortSponsors = (sponsors: Sponsor[]) => {
+      return sponsors.sort((a, b) => b.timestamp - a.timestamp);
+    };
+
+    // Load data
+    let storedData = getStoredData();
+    let displayedSponsors = storedData.sponsors;
+    let scheduledFakes = storedData.scheduledFakes;
+    let lastRealDonation = storedData.lastRealDonation;
+    const now = Date.now();
+
+    // Process any scheduled fake sponsors that are due
+    const dueSchedules = scheduledFakes.filter(t => t <= now);
+    const remainingSchedules = scheduledFakes.filter(t => t > now);
+
+    if (dueSchedules.length > 0) {
+      // Add fake sponsors for each due schedule
+      for (const scheduleTime of dueSchedules) {
+        const currentNames = displayedSponsors.map(s => s.name);
+        const newSponsor = getNewSponsor(currentNames);
+        // Set timestamp to when it was scheduled (with small random offset)
+        newSponsor.timestamp = scheduleTime + Math.floor(Math.random() * 10) * 60 * 1000;
+        displayedSponsors.push(newSponsor);
+      }
+
+      scheduledFakes = remainingSchedules;
+    }
+
+    // Sort and remove old sponsors
+    displayedSponsors = sortSponsors(displayedSponsors);
+
+    // Remove sponsors older than MAX_SPONSOR_AGE
+    displayedSponsors = displayedSponsors.filter(s => (now - s.timestamp) < MAX_SPONSOR_AGE);
+
+    // Keep only top 5
+    displayedSponsors = displayedSponsors.slice(0, 5);
+
+    // If less than 5, fill with spread-out fake sponsors
+    while (displayedSponsors.length < 5) {
+      const currentNames = displayedSponsors.map(s => s.name);
+      const newSponsor = getNewSponsor(currentNames);
+      const existingCount = displayedSponsors.length;
+      newSponsor.timestamp = now - (1 + existingCount * 2) * 60 * 60 * 1000;
+      displayedSponsors.push(newSponsor);
+    }
+
+    displayedSponsors = sortSponsors(displayedSponsors);
+    saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
+
+    // Format time ago
+    const formatTimeAgo = (timestamp: number) => {
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'Just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes === 1) return '1 min ago';
+      if (minutes < 60) return `${minutes} min ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours === 1) return '1 hour ago';
+      return `${hours} hours ago`;
+    };
+
+    // Render sponsors list
+    const renderSponsors = () => {
+      if (!recentSponsorsContainer) return;
+
+      const toShow = displayedSponsors.slice(0, 5);
+
+      recentSponsorsContainer.innerHTML = toShow.map(sponsor => `
+        <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 ${sponsor.isReal ? 'bg-amber-50 -mx-2 px-2 rounded-lg' : ''}">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-[#d97706] to-[#b45309] rounded-full flex items-center justify-center text-white font-bold">
+              ${sponsor.name.charAt(0)}
+            </div>
+            <div>
+              <div class="font-medium text-gray-800">${sponsor.name}</div>
+              <div class="text-xs text-gray-500">${sponsor.location}</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-medium text-gray-800">${sponsor.qty} ${sponsor.qty === 1 ? 'child' : 'children'}</div>
+            <div class="text-xs text-gray-400">${formatTimeAgo(sponsor.timestamp)}</div>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    // Schedule fake sponsors after a real donation
+    const scheduleFakeSponsors = () => {
+      const now = Date.now();
+
+      // Schedule fake donations: ~1 hour later, ~3 hours later, ~6 hours later
+      // Add randomness: ±15 minutes
+      const randomMinutes = () => (Math.random() - 0.5) * 30 * 60 * 1000; // ±15 min
+
+      scheduledFakes = [
+        now + 1 * 60 * 60 * 1000 + randomMinutes(),  // ~1 hour
+        now + 3 * 60 * 60 * 1000 + randomMinutes(),  // ~3 hours
+        now + 6 * 60 * 60 * 1000 + randomMinutes(),  // ~6 hours
+      ];
+
+      lastRealDonation = now;
+      saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
+    };
+
+    // Add real sponsor when someone donates
+    const addRealSponsor = (name: string, location: string, qty: number) => {
+      // Add new real sponsor
+      displayedSponsors.unshift({
+        name,
+        location,
+        qty,
+        timestamp: Date.now(),
+        isReal: true
+      });
+
+      // Sort by timestamp
+      displayedSponsors = sortSponsors(displayedSponsors);
+
+      // Remove oldest FAKE sponsors first to keep at 5
+      while (displayedSponsors.length > 5) {
+        let oldestFakeIndex = -1;
+
+        for (let i = displayedSponsors.length - 1; i >= 0; i--) {
+          if (!displayedSponsors[i].isReal) {
+            oldestFakeIndex = i;
+            break;
+          }
+        }
+
+        if (oldestFakeIndex !== -1) {
+          displayedSponsors.splice(oldestFakeIndex, 1);
+        } else {
+          // All real - remove oldest
+          displayedSponsors.pop();
+        }
+      }
+
+      // Schedule fake sponsors to appear after this real donation
+      scheduleFakeSponsors();
+
+      renderSponsors();
+    };
+
+    // Expose for external use
+    (window as any).addRealSponsor = addRealSponsor;
+
+    // Initialize
+    renderSponsors();
+
+    // Update times every minute
+    setInterval(() => {
+      renderSponsors();
+    }, 60000);
+
+    // Check for scheduled fakes every 5 minutes
+    setInterval(() => {
+      const now = Date.now();
+      const dueNow = scheduledFakes.filter(t => t <= now);
+
+      if (dueNow.length > 0) {
+        // Add the due fake sponsors
+        for (const t of dueNow) {
+          const currentNames = displayedSponsors.map(s => s.name);
+          const newSponsor = getNewSponsor(currentNames);
+          newSponsor.timestamp = t;
+          displayedSponsors.push(newSponsor);
+        }
+
+        // Remove processed schedules
+        scheduledFakes = scheduledFakes.filter(t => t > now);
+
+        // Sort and trim to 5
+        displayedSponsors = sortSponsors(displayedSponsors);
+
+        // Remove oldest fake if more than 5
+        while (displayedSponsors.length > 5) {
+          let oldestFakeIndex = -1;
+          for (let i = displayedSponsors.length - 1; i >= 0; i--) {
+            if (!displayedSponsors[i].isReal) {
+              oldestFakeIndex = i;
+              break;
+            }
+          }
+          if (oldestFakeIndex !== -1) {
+            displayedSponsors.splice(oldestFakeIndex, 1);
+          } else {
+            displayedSponsors.pop();
+          }
+        }
+
+        saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
+        renderSponsors();
+      }
+    }, 5 * 60 * 1000);
+
+    // Initialize
+    updateUI();
+  });
+</script>
+
+<style>
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  @media (max-width: 1023px) {
+    main {
+      padding-bottom: 100px;
+    }
+  }
+</style>

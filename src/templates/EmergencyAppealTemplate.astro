@@ -1,0 +1,599 @@
+---
+/**
+ * EMERGENCY APPEAL TEMPLATE
+ *
+ * A dramatic campaign page template for emergency/crisis appeals featuring:
+ * - Full-width hero with parallax effect
+ * - Urgent visual styling with red accents
+ * - Progress bar showing fundraising goal
+ * - Impact statistics section
+ * - Sticky donation box
+ * - Mobile-optimized design
+ *
+ * Color Palette:
+ * - Primary: #c41e3a (crimson red)
+ * - Secondary: #1a1a2e (dark navy)
+ * - Accent: #D97718 (orange)
+ * - Background: #f8f9fa (light gray)
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import ListStyleDonationBox from '../components/donation/ListStyleDonationBox.astro';
+import UrgentAppealDonationBox from '../components/donation/UrgentAppealDonationBox.astro';
+import TealYellowDonationBox from '../components/donation/TealYellowDonationBox.astro';
+import { supabaseAdmin } from '../lib/supabase';
+import { formatTextToHtml, formatLineBreaks } from '../lib/textFormatting';
+
+interface Props {
+  campaign: {
+    id: string;
+    title: string;
+    subtitle?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: Array<{ title?: string; content?: string; image?: string }>;
+    donation_options?: Array<{ amount: number; label?: string }>;
+    gallery_images?: string[];
+    goal_amount?: number;
+    raised_amount?: number;
+    country?: string;
+    category?: string;
+    is_zakat_eligible?: boolean;
+    impact_stats?: Array<{ value: string; label: string }>;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign, donationBoxTemplate = 'urgent-appeal' } = Astro.props;
+
+// Detect donation box template type
+const isUrgentAppeal = donationBoxTemplate === 'urgent-appeal';
+const isListStyle = donationBoxTemplate === 'list-style';
+const isTealYellow = donationBoxTemplate === 'teal-yellow';
+
+// Default colors for urgent-appeal template
+const defaultUrgentColors = {
+  bgColor: '#ffffff',
+  headerBgColor: '#c41e3a',
+  textColor: '#1f2937',
+  textMutedColor: '#6b7280',
+  accentColor: '#c41e3a',
+  accentTextColor: '#ffffff',
+  borderColor: '#e5e7eb',
+};
+
+// Fetch colors from database for urgent-appeal template
+let urgentColors = { ...defaultUrgentColors };
+if (isUrgentAppeal) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('template_colors')
+      .select('*')
+      .eq('template_name', 'urgent-appeal')
+      .single();
+    if (data) {
+      urgentColors = {
+        bgColor: data.bg_color || defaultUrgentColors.bgColor,
+        headerBgColor: data.header_bg_color || defaultUrgentColors.headerBgColor,
+        textColor: data.text_color || defaultUrgentColors.textColor,
+        textMutedColor: data.text_muted_color || defaultUrgentColors.textMutedColor,
+        accentColor: data.accent_color || defaultUrgentColors.accentColor,
+        accentTextColor: data.accent_text_color || defaultUrgentColors.accentTextColor,
+        borderColor: data.border_color || defaultUrgentColors.borderColor,
+      };
+    }
+  } catch (e) {
+    // Use defaults if fetch fails
+  }
+}
+
+const contentSections = campaign.content_sections || [];
+const galleryImages = campaign.gallery_images || [];
+// Handle impact_stats as either array or object format
+const rawImpactStats = campaign.impact_stats;
+let impactStats: { value: string; label: string }[] = [];
+
+if (Array.isArray(rawImpactStats)) {
+  // Already an array
+  impactStats = rawImpactStats;
+} else if (rawImpactStats && typeof rawImpactStats === 'object') {
+  // Convert object { key: value } to array [{ value, label }]
+  impactStats = Object.entries(rawImpactStats).map(([key, value]) => ({
+    value: String(value),
+    label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  }));
+} else {
+  // Default stats
+  impactStats = [
+    { value: '14M+', label: 'People Displaced' },
+    { value: '25M+', label: 'Need Urgent Aid' },
+    { value: '5M+', label: 'Children Affected' },
+    { value: '$50', label: 'Feeds a Family' },
+  ];
+}
+
+// Default donation options for emergency appeals
+const defaultDonationOptions = [
+  { amount: 50, label: 'Emergency food pack' },
+  { amount: 100, label: 'Medical supplies' },
+  { amount: 250, label: 'Family relief kit' },
+  { amount: 500, label: 'Emergency shelter' },
+  { amount: 1000, label: 'Community aid' },
+  { amount: 2500, label: 'Major impact' },
+];
+
+const donationOptions = campaign.donation_options?.length > 0
+  ? campaign.donation_options
+  : defaultDonationOptions;
+
+// Calculate progress
+const goalAmount = campaign.goal_amount || 100000;
+const raisedAmount = campaign.raised_amount || 0;
+const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100), 100);
+---
+
+<Layout
+  title={campaign.meta_title || `${campaign.title} - Urgent Appeal`}
+  description={campaign.meta_description || campaign.subtitle}
+  ogImage={campaign.featured_image}
+>
+  <Navbar />
+
+  <main class="min-h-screen bg-[#f8f9fa]">
+    <!-- Hero Section -->
+    <section class="relative min-h-[90vh] overflow-hidden">
+      <!-- Background Image with Parallax -->
+      <div class="absolute inset-0">
+        {campaign.featured_image ? (
+          <img
+            src={campaign.featured_image}
+            alt=""
+            class="absolute inset-0 w-full h-full object-cover scale-105"
+            id="hero-bg"
+          />
+        ) : (
+          <div class="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] via-[#2d2d44] to-[#1a1a2e]"></div>
+        )}
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40"></div>
+        <!-- Red tint for urgency -->
+        <div class="absolute inset-0 bg-gradient-to-br from-[#c41e3a]/20 to-transparent"></div>
+      </div>
+
+      <!-- Hero Content -->
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[90vh] flex flex-col justify-center">
+        <div class="pt-24 pb-16">
+          <!-- Urgent Badge -->
+          <div class="flex items-center gap-3 mb-6">
+            <span class="inline-flex items-center gap-2 bg-[#c41e3a] text-white text-sm font-bold px-4 py-2 rounded-full animate-pulse">
+              <span class="w-2 h-2 bg-white rounded-full animate-ping"></span>
+              URGENT APPEAL
+            </span>
+            {campaign.is_zakat_eligible && (
+              <span class="bg-[#008C70] text-white text-sm font-medium px-4 py-2 rounded-full">
+                Zakat Eligible
+              </span>
+            )}
+          </div>
+
+          <!-- Title -->
+          <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight max-w-4xl" style="font-family: 'Signika', sans-serif;">
+            {campaign.title}
+          </h1>
+
+          <!-- Subtitle -->
+          {campaign.subtitle && (
+            <div class="text-xl md:text-2xl text-white/90 max-w-3xl mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatLineBreaks(campaign.subtitle)}></div>
+          )}
+
+          <!-- Quick Stats Row -->
+          <div class="flex flex-wrap items-center gap-6 md:gap-10 text-white mb-10">
+            {impactStats.slice(0, 4).map((stat) => (
+              <div class="text-center">
+                <p class="text-3xl md:text-4xl font-bold text-[#D97718]" style="font-family: 'Signika', sans-serif;">
+                  {stat.value}
+                </p>
+                <p class="text-sm text-white/70">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-wrap gap-4">
+            <a
+              href="#donate"
+              class="inline-flex items-center gap-3 bg-[#c41e3a] hover:bg-[#a31830] text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 text-lg"
+              style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(196, 30, 58, 0.4);"
+            >
+              Donate Now
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </a>
+            <a
+              href="#learn-more"
+              class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl transition backdrop-blur-sm border border-white/20"
+            >
+              Learn More
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60 animate-bounce">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="py-16" id="learn-more">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <!-- Left Column - Content -->
+          <div class="lg:col-span-2 space-y-12">
+            <!-- Main Description -->
+            {campaign.description && (
+              <div class="bg-white rounded-2xl shadow-sm p-8">
+                <div class="prose prose-lg max-w-none" style="font-family: 'Lato', sans-serif;">
+                  <div class="text-gray-700 leading-relaxed" set:html={formatTextToHtml(campaign.description)}></div>
+                </div>
+              </div>
+            )}
+
+            <!-- Impact Section -->
+            <div class="bg-[#D97706] rounded-2xl p-8">
+              <h2 class="text-2xl font-bold mb-6 text-white" style="font-family: 'Signika', sans-serif;">
+                The Scale of the Crisis
+              </h2>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {impactStats.map((stat) => (
+                  <div class="text-center p-4 bg-white rounded-xl">
+                    <p class="text-3xl font-bold text-[#D97706] mb-1" style="font-family: 'Signika', sans-serif;">
+                      {stat.value}
+                    </p>
+                    <p class="text-sm text-[#D97706]">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <!-- Content Sections -->
+            {contentSections.length > 0 && (
+              <div class="space-y-8">
+                {contentSections.map((section, idx) => (
+                  <div class={`bg-white rounded-2xl shadow-sm overflow-hidden ${idx % 2 === 1 ? 'md:flex-row-reverse' : ''}`}>
+                    {section.image && (
+                      <img src={section.image} alt={section.title || ''} class="w-full h-64 object-cover" />
+                    )}
+                    <div class="p-8">
+                      {section.title && (
+                        <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+                          {section.title}
+                        </h3>
+                      )}
+                      {section.content && (
+                        <div class="text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(section.content)}></div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <!-- How Donations Help -->
+            <div class="bg-white rounded-2xl shadow-sm p-8">
+              <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+                How Your Donation Helps
+              </h2>
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                  <div class="w-12 h-12 bg-[#c41e3a]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-[#c41e3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-800">Emergency Food Packages</h4>
+                    <p class="text-sm text-gray-600">Nutritious meals for families who have lost everything</p>
+                  </div>
+                </div>
+                <div class="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                  <div class="w-12 h-12 bg-[#c41e3a]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-[#c41e3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-800">Medical Supplies</h4>
+                    <p class="text-sm text-gray-600">Essential medicines and medical equipment</p>
+                  </div>
+                </div>
+                <div class="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                  <div class="w-12 h-12 bg-[#c41e3a]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-[#c41e3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-800">Emergency Shelter</h4>
+                    <p class="text-sm text-gray-600">Safe temporary housing for displaced families</p>
+                  </div>
+                </div>
+                <div class="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                  <div class="w-12 h-12 bg-[#c41e3a]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-[#c41e3a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-800">Clean Water</h4>
+                    <p class="text-sm text-gray-600">Safe drinking water and hygiene supplies</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gallery -->
+            {galleryImages.length > 0 && (
+              <div class="bg-white rounded-2xl shadow-sm p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+                  On the Ground
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {galleryImages.map((img) => (
+                    <div class="aspect-square rounded-xl overflow-hidden group cursor-pointer">
+                      <img src={img} alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <!-- Right Column - Donation Box -->
+          <div class="lg:col-span-1">
+            <div class="sticky top-28" id="donate">
+              <!-- Donation Box - Configurable -->
+              {isListStyle ? (
+                <ListStyleDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  donationOptions={donationOptions}
+                />
+              ) : isUrgentAppeal ? (
+                <UrgentAppealDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  donationOptions={donationOptions}
+                  colors={urgentColors}
+                />
+              ) : (
+                <!-- Default: Use TealYellowDonationBox component -->
+                <TealYellowDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  donationOptions={donationOptions}
+                  title={campaign.title}
+                />
+              )}
+
+              <!-- Share Section -->
+              <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h4 class="font-bold text-gray-800 mb-4">Share This Appeal</h4>
+                <div class="flex gap-2">
+                  <button class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#1877f2] text-white rounded-lg hover:bg-[#1877f2]/90 transition text-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </button>
+                  <button class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-black text-white rounded-lg hover:bg-black/80 transition text-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </button>
+                  <button class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#25d366] text-white rounded-lg hover:bg-[#25d366]/90 transition text-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                  </button>
+                  <button class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm" id="copy-link-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="py-20 bg-gradient-to-br from-[#1a1a2e] to-[#2d2d44] relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.4\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+      </div>
+      <div class="relative max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Every Second Counts
+        </h2>
+        <p class="text-xl text-white/80 mb-10 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          Families are waiting for help right now. Your donation today could be the difference between hope and despair.
+        </p>
+        <a
+          href="#donate"
+          class="inline-flex items-center gap-3 bg-[#c41e3a] hover:bg-[#a31830] text-white font-bold px-12 py-5 rounded-xl transition-all hover:scale-105 text-lg"
+          style="box-shadow: 0 4px 30px rgba(196, 30, 58, 0.5); font-family: 'Signika', sans-serif;"
+        >
+          Donate Now - Save Lives
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script define:vars={{ campaignData: { slug: campaign.slug, title: campaign.title, image: campaign.featured_image }, donationOpts: donationOptions }}>
+  let selectedAmount = 250;
+  let selectedLabel = 'Family relief kit';
+  let donationType = 'single';
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const typeButtons = document.querySelectorAll('#btn-single, #btn-monthly');
+    const amountButtons = document.querySelectorAll('.amount-btn');
+    const customInput = document.getElementById('custom-amount');
+    const donateBtn = document.getElementById('donate-btn');
+    const copyLinkBtn = document.getElementById('copy-link-btn');
+
+    // Type toggle
+    typeButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        donationType = this.dataset.type;
+        typeButtons.forEach(b => {
+          if (b.dataset.type === donationType) {
+            b.classList.add('bg-[#c41e3a]', 'text-white');
+            b.classList.remove('text-gray-600');
+          } else {
+            b.classList.remove('bg-[#c41e3a]', 'text-white');
+            b.classList.add('text-gray-600');
+          }
+        });
+      });
+    });
+
+    // Amount buttons
+    amountButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        selectedAmount = parseInt(this.dataset.amount);
+        selectedLabel = this.dataset.label || '';
+
+        amountButtons.forEach(b => {
+          b.classList.remove('border-[#c41e3a]', 'bg-[#c41e3a]/5');
+          b.classList.add('border-gray-200', 'bg-white');
+        });
+
+        this.classList.remove('border-gray-200', 'bg-white');
+        this.classList.add('border-[#c41e3a]', 'bg-[#c41e3a]/5');
+
+        if (customInput) customInput.value = '';
+      });
+    });
+
+    // Custom amount
+    if (customInput) {
+      customInput.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value);
+          selectedLabel = 'Custom Amount';
+          amountButtons.forEach(b => {
+            b.classList.remove('border-[#c41e3a]', 'bg-[#c41e3a]/5');
+            b.classList.add('border-gray-200', 'bg-white');
+          });
+        }
+      });
+    }
+
+    // Donate button
+    if (donateBtn) {
+      donateBtn.addEventListener('click', function() {
+        if (!selectedAmount || selectedAmount < 1) {
+          alert('Please enter a valid amount');
+          return;
+        }
+
+        const itemId = `${campaignData.slug}-${selectedAmount}-${donationType}`;
+
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({
+            id: itemId,
+            name: campaignData.title,
+            label: selectedLabel || `$${selectedAmount} Donation`,
+            amount: selectedAmount,
+            quantity: 1,
+            type: donationType,
+            image: campaignData.image,
+            campaign: campaignData.slug
+          });
+        } else {
+          // Fallback - redirect to checkout
+          window.location.href = `/checkout?campaign=${campaignData.slug}&amount=${selectedAmount}&type=${donationType}`;
+        }
+      });
+    }
+
+    // Copy link
+    if (copyLinkBtn) {
+      copyLinkBtn.addEventListener('click', function() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          this.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+          setTimeout(() => {
+            this.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+          }, 2000);
+        });
+      });
+    }
+
+    // Set initial selection (third button)
+    if (amountButtons.length >= 3) {
+      const thirdBtn = amountButtons[2];
+      selectedAmount = parseInt(thirdBtn.dataset.amount);
+      selectedLabel = thirdBtn.dataset.label || '';
+    }
+  });
+</script>
+
+<style>
+  .prose h2 {
+    font-family: 'Signika', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  .prose h3 {
+    font-family: 'Signika', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose p {
+    color: #4b5563;
+    margin-bottom: 1rem;
+    line-height: 1.75;
+  }
+  .prose ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .prose ul li {
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+  }
+  .prose strong {
+    font-weight: 600;
+    color: #1f2937;
+  }
+</style>
