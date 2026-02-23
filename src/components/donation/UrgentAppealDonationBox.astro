@@ -1,0 +1,352 @@
+---
+/**
+ * Urgent Appeal Donation Box
+ * Red/urgent themed donation box with campaign title header
+ */
+
+interface Props {
+  campaignSlug: string;
+  campaignTitle: string;
+  campaignImage?: string;
+  donationOptions?: Array<{ amount: number; label?: string; description?: string }>;
+  colors?: {
+    bgColor?: string;
+    headerBgColor?: string;
+    textColor?: string;
+    textMutedColor?: string;
+    accentColor?: string;
+    accentTextColor?: string;
+    borderColor?: string;
+  };
+  textSettings?: {
+    titleText?: string;
+    subtitleText?: string;
+    buttonText?: string;
+    singleText?: string;
+    monthlyText?: string;
+    customAmountPlaceholder?: string;
+  };
+}
+
+const {
+  campaignSlug,
+  campaignTitle,
+  campaignImage,
+  donationOptions = [
+    { amount: 50, label: 'Emergency supplies' },
+    { amount: 100, label: 'Food package' },
+    { amount: 250, label: 'Medical aid' },
+    { amount: 500, label: 'Family support' },
+    { amount: 1000, label: 'Major impact' },
+    { amount: 2500, label: 'Save lives' },
+  ],
+  colors = {},
+  textSettings = {},
+} = Astro.props;
+
+const {
+  bgColor = '#ffffff',
+  headerBgColor = '#c41e3a',
+  textColor = '#1f2937',
+  textMutedColor = '#6b7280',
+  accentColor = '#c41e3a',
+  accentTextColor = '#ffffff',
+  borderColor = '#e5e7eb',
+} = colors;
+
+const {
+  titleText = campaignTitle,
+  subtitleText = 'Your donation saves lives',
+  buttonText = 'Donate Now',
+  singleText = 'One-Time',
+  monthlyText = 'Monthly',
+  customAmountPlaceholder = 'Other amount',
+} = textSettings;
+---
+
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+  <!-- Header -->
+  <div class="p-6 text-white text-center" style={`background: linear-gradient(135deg, ${headerBgColor} 0%, ${accentColor}dd 100%);`}>
+    <p class="text-sm opacity-80 mb-1">{subtitleText}</p>
+    <h3 class="text-2xl font-bold" style="font-family: 'Signika', sans-serif;">
+      {titleText}
+    </h3>
+  </div>
+
+  <div class="p-6">
+    <!-- Payment Type Toggle -->
+    <div class="flex rounded-xl bg-gray-100 p-1 mb-6">
+      <button
+        type="button"
+        class="urgent-type-btn flex-1 py-3 rounded-lg font-semibold transition text-sm"
+        data-type="single"
+        style={`background-color: ${accentColor}; color: ${accentTextColor};`}
+      >
+        {singleText}
+      </button>
+      <button
+        type="button"
+        class="urgent-type-btn flex-1 py-3 rounded-lg font-semibold transition text-sm text-gray-600"
+        data-type="monthly"
+      >
+        {monthlyText}
+      </button>
+    </div>
+
+    <!-- Donation Amount Cards -->
+    <div class="space-y-3 mb-4" id="urgent-amount-list">
+      {donationOptions.slice(0, 6).map((opt, index) => (
+        <button
+          type="button"
+          class="urgent-amount-btn w-full text-left group"
+          data-amount={opt.amount}
+          data-label={opt.label || `$${opt.amount} Donation`}
+        >
+          <div
+            class="flex items-stretch rounded-lg overflow-hidden border-2 transition-all duration-200"
+            style={index === 0
+              ? `border-color: ${accentColor}; background-color: ${accentColor}08;`
+              : `border-color: #e5e7eb; background-color: #f9fafb;`}
+            data-active-border={accentColor}
+            data-active-bg={`${accentColor}08`}
+          >
+            <!-- Left: Price Section -->
+            <div class="flex-shrink-0 w-24 py-4 px-3 flex flex-col items-center justify-center border-r border-gray-200">
+              <span class="text-2xl font-bold" style={`color: ${textColor};`}>${opt.amount.toLocaleString()}</span>
+              <span class="price-frequency text-[10px] uppercase tracking-wide text-gray-400 mt-0.5">USD</span>
+            </div>
+
+            <!-- Middle: Description Section -->
+            <div class="flex-1 py-4 px-4 flex items-center">
+              <p class="text-sm leading-snug" style={`color: ${textColor};`}>
+                {opt.description || opt.label || `Support with a $${opt.amount} donation`}
+              </p>
+            </div>
+
+            <!-- Right: Arrow Button -->
+            <div
+              class="urgent-arrow flex-shrink-0 w-12 flex items-center justify-center transition-all duration-200"
+              style={index === 0
+                ? `background-color: ${accentColor};`
+                : `background-color: #d1d5db;`}
+              data-active-bg={accentColor}
+              data-inactive-bg="#d1d5db"
+            >
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </button>
+      ))}
+
+      <!-- Custom Amount Section -->
+      <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
+        <p class="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Or enter custom amount</p>
+        <div
+          class="flex items-center rounded-lg overflow-hidden border-2 transition-all duration-200 bg-white"
+          id="custom-amount-row"
+          style={`border-color: #e5e7eb;`}
+          data-active-border={accentColor}
+        >
+          <!-- Input with $ prefix -->
+          <div class="flex-1 flex items-center px-4 py-3">
+            <span class="text-xl font-bold text-gray-400 mr-1">$</span>
+            <input
+              type="number"
+              id="urgent-custom-amount"
+              min="1"
+              placeholder="Enter amount"
+              class="flex-1 text-xl font-bold bg-transparent border-none outline-none"
+              style={`color: ${textColor};`}
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Donate Button -->
+      <button
+        type="button"
+        id="urgent-donate-btn"
+        class="w-full mt-6 font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 text-lg"
+        style={`background-color: ${accentColor}; color: ${accentTextColor}; font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px ${accentColor}40;`}
+      >
+        {buttonText}
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Trust Message -->
+    <div class="flex items-start gap-3 mt-2 pt-4 border-t border-gray-100">
+      <div class="flex-shrink-0 mt-0.5">
+        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+        </svg>
+      </div>
+      <p class="text-xs text-gray-500 leading-relaxed">
+        Donating through Qurbani Foundation is safe, secure, and easy with many payment options to choose from.
+        <a href="/donate" class="font-medium hover:underline" style={`color: ${accentColor};`}>View other ways to donate</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ campaignSlug, campaignTitle, campaignImage, donationOptions, accentColor }}>
+  let donationType = 'single';
+  let selectedAmount = donationOptions[0]?.amount || 50;
+  let selectedLabel = donationOptions[0]?.label || '';
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const typeButtons = document.querySelectorAll('.urgent-type-btn');
+    const amountButtons = document.querySelectorAll('.urgent-amount-btn');
+    const customInput = document.getElementById('urgent-custom-amount');
+    const customAmountRow = document.getElementById('custom-amount-row');
+    const donateBtn = document.getElementById('urgent-donate-btn');
+
+    // Helper to add item to cart
+    function addDonationToCart(amount, label) {
+      if (!amount || amount < 1) {
+        alert('Please enter a valid amount');
+        return;
+      }
+
+      const itemId = `${campaignSlug}-${amount}-${donationType}`;
+
+      window.addToCart({
+        id: itemId,
+        name: campaignTitle,
+        label: label || `$${amount} Donation`,
+        amount: amount,
+        quantity: 1,
+        type: donationType,
+        image: campaignImage,
+        campaign: campaignSlug
+      });
+    }
+
+    // Helper to update card styles
+    function setActiveCard(activeBtn) {
+      amountButtons.forEach(btn => {
+        const card = btn.querySelector('div[data-active-border]');
+        const arrow = btn.querySelector('.urgent-arrow');
+        const isActive = btn === activeBtn;
+
+        if (card) {
+          card.style.borderColor = isActive ? card.dataset.activeBorder : '#e5e7eb';
+          card.style.backgroundColor = isActive ? card.dataset.activeBg : '#f9fafb';
+        }
+        if (arrow) {
+          arrow.style.backgroundColor = isActive ? arrow.dataset.activeBg : arrow.dataset.inactiveBg;
+        }
+      });
+
+      // Reset custom amount row
+      if (customAmountRow) {
+        customAmountRow.style.borderColor = '#e5e7eb';
+      }
+    }
+
+    // Type toggle (One-Time / Monthly)
+    typeButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        donationType = this.dataset.type;
+        typeButtons.forEach(b => {
+          if (b.dataset.type === donationType) {
+            b.style.backgroundColor = accentColor;
+            b.style.color = '#ffffff';
+          } else {
+            b.style.backgroundColor = 'transparent';
+            b.style.color = '#4b5563';
+          }
+        });
+
+        // Update frequency labels under prices
+        const frequencyLabels = document.querySelectorAll('.price-frequency');
+        frequencyLabels.forEach(label => {
+          if (donationType === 'monthly') {
+            label.textContent = 'monthly';
+            label.style.fontStyle = 'italic';
+            label.style.textTransform = 'lowercase';
+          } else {
+            label.textContent = 'USD';
+            label.style.fontStyle = 'normal';
+            label.style.textTransform = 'uppercase';
+          }
+        });
+      });
+    });
+
+    // Amount card clicks - clicking selects, arrow also adds to cart immediately
+    amountButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        selectedAmount = parseInt(this.dataset.amount);
+        selectedLabel = this.dataset.label || '';
+
+        // Select this card
+        setActiveCard(this);
+
+        // Clear custom input
+        if (customInput) {
+          customInput.value = '';
+        }
+
+        // If clicking the arrow directly, also add to cart
+        if (e.target.closest('.urgent-arrow')) {
+          addDonationToCart(selectedAmount, selectedLabel);
+        }
+      });
+    });
+
+    // Custom amount input
+    if (customInput) {
+      customInput.addEventListener('focus', function() {
+        // Deselect all preset cards
+        amountButtons.forEach(btn => {
+          const card = btn.querySelector('div[data-active-border]');
+          const arrow = btn.querySelector('.urgent-arrow');
+          if (card) {
+            card.style.borderColor = '#e5e7eb';
+            card.style.backgroundColor = '#f9fafb';
+          }
+          if (arrow) {
+            arrow.style.backgroundColor = arrow.dataset.inactiveBg;
+          }
+        });
+
+        // Highlight custom row
+        if (customAmountRow) {
+          customAmountRow.style.borderColor = customAmountRow.dataset.activeBorder;
+        }
+      });
+
+      customInput.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value);
+          selectedLabel = 'Custom Amount';
+        }
+      });
+
+      customInput.addEventListener('blur', function() {
+        if (!this.value) {
+          if (customAmountRow) {
+            customAmountRow.style.borderColor = '#e5e7eb';
+          }
+        }
+      });
+    }
+
+    // Main Donate Button
+    if (donateBtn) {
+      donateBtn.addEventListener('click', function() {
+        // Check if custom input has value
+        if (customInput && customInput.value) {
+          selectedAmount = parseFloat(customInput.value);
+          selectedLabel = 'Custom Amount';
+        }
+        addDonationToCart(selectedAmount, selectedLabel);
+      });
+    }
+  });
+</script>

@@ -1,13 +1,22 @@
 ---
-const stats = [
-  { value: '18M+', label: 'People Reached', icon: 'users' },
-  { value: '2.1M', label: 'Disaster Beneficiaries', icon: 'heart' },
-  { value: '252K', label: 'Cataract Surgeries', icon: 'eye' },
-  { value: '1.1M', label: 'Eyeglasses Distributed', icon: 'glasses' },
-  { value: '16K', label: 'Hafiz Children Sponsored', icon: 'book' },
-  { value: '7.1K', label: 'Orphans Sponsored', icon: 'child' },
-  { value: '15.6K', label: 'Water Wells Installed', icon: 'water' }
+interface Props {
+  content?: {
+    items: { number: string; label: string; icon?: string }[];
+  };
+}
+
+const defaultStats = [
+  { number: '18M+', label: 'People Reached', icon: 'users' },
+  { number: '2.1M', label: 'Disaster Beneficiaries', icon: 'heart' },
+  { number: '252K', label: 'Cataract Surgeries', icon: 'eye' },
+  { number: '1.1M', label: 'Eyeglasses Distributed', icon: 'glasses' },
+  { number: '16K', label: 'Hafiz Children Sponsored', icon: 'book' },
+  { number: '7.1K', label: 'Orphans Sponsored', icon: 'child' },
+  { number: '15.6K', label: 'Water Wells Installed', icon: 'water' }
 ];
+
+const { content } = Astro.props;
+const stats = content?.items?.length ? content.items.map(s => ({ value: s.number, label: s.label, icon: s.icon || 'heart' })) : defaultStats.map(s => ({ value: s.number, label: s.label, icon: s.icon }));
 ---
 
 <!-- Change Lives Section with Video -->

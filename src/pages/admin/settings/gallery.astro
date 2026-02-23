@@ -1,0 +1,681 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+
+// Fetch existing slides
+let slides: any[] = [];
+try {
+  const { data, error } = await supabaseAdmin
+    .from('hero_slides')
+    .select('*')
+    .order('display_order', { ascending: true });
+
+  if (!error && data) {
+    slides = data;
+  }
+} catch (e) {
+  console.error('Failed to fetch slides:', e);
+}
+---
+
+<AdminLayout title="Hero Gallery" activeNav="settings">
+  <div class="max-w-6xl">
+    <SettingsTabs active="gallery" />
+
+    <!-- Toast Messages -->
+    <div id="successToast" class="hidden fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span id="successMessage">Saved successfully!</span>
+    </div>
+    <div id="errorToast" class="hidden fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span id="errorMessage">Error occurred</span>
+    </div>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Hero Gallery</h1>
+        <p class="text-gray-500 mt-1">Manage the homepage hero slider images</p>
+      </div>
+      <button
+        id="addSlideBtn"
+        class="flex items-center gap-2 bg-[#01534d] text-white px-4 py-2 rounded-lg hover:bg-[#013d39] transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add Slide
+      </button>
+    </div>
+
+    <!-- Slides Grid -->
+    <div id="slidesContainer" class="grid gap-4">
+      {slides.length === 0 ? (
+        <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
+          <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-600 mb-2">No slides yet</h3>
+          <p class="text-gray-500 mb-4">Add your first hero slide to get started</p>
+          <button
+            id="addFirstSlideBtn"
+            class="inline-flex items-center gap-2 bg-[#01534d] text-white px-4 py-2 rounded-lg hover:bg-[#013d39] transition"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add First Slide
+          </button>
+        </div>
+      ) : (
+        slides.map((slide, index) => (
+          <div
+            class="slide-item bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex"
+            data-id={slide.id}
+            data-order={slide.display_order}
+          >
+            <!-- Drag Handle & Image -->
+            <div class="flex-shrink-0 flex">
+              <div class="w-10 bg-gray-100 flex items-center justify-center cursor-move drag-handle hover:bg-gray-200">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                </svg>
+              </div>
+              <div class="w-48 h-32 bg-gray-200 relative">
+                <img
+                  src={slide.image_url}
+                  alt={slide.title || 'Slide'}
+                  class="w-full h-full object-cover"
+                />
+                {!slide.is_active && (
+                  <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">Inactive</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 p-4">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-semibold text-gray-800">{slide.title || 'Untitled Slide'}</h3>
+                  <p class="text-sm text-gray-500 mt-1">{slide.subtitle || 'No subtitle'}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class={`px-2 py-1 text-xs font-medium rounded ${slide.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {slide.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                  <span class="text-xs text-gray-400">Order: {slide.display_order}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 mt-3">
+                <button
+                  class="edit-slide-btn text-sm text-[#01534d] hover:underline"
+                  data-slide={JSON.stringify(slide)}
+                >
+                  Edit
+                </button>
+                <button
+                  class="toggle-slide-btn text-sm text-gray-500 hover:underline"
+                  data-id={slide.id}
+                  data-active={slide.is_active}
+                >
+                  {slide.is_active ? 'Deactivate' : 'Activate'}
+                </button>
+                <button
+                  class="delete-slide-btn text-sm text-red-500 hover:underline"
+                  data-id={slide.id}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+
+  <!-- Slide Modal -->
+  <div id="slideModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h3 id="modalTitle" class="text-lg font-bold text-gray-800">Add New Slide</h3>
+        <button type="button" id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <form id="slideForm" class="p-6 space-y-6">
+        <input type="hidden" id="slideId" name="id" />
+
+        <!-- Image Upload -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Slide Image *</label>
+          <div class="flex gap-4">
+            <div class="w-64 h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+              <img id="slideImagePreview" src="" alt="Preview" class="hidden w-full h-full object-cover" />
+              <div id="slideImagePlaceholder" class="text-center text-gray-400">
+                <svg class="w-10 h-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span class="text-xs">No image</span>
+              </div>
+            </div>
+            <div class="flex-1 space-y-2">
+              <input
+                type="text"
+                id="slideImageUrl"
+                name="image_url"
+                placeholder="Image URL"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-sm"
+                required
+              />
+              <div class="flex gap-2">
+                <label class="flex-1 cursor-pointer">
+                  <input type="file" id="slideImageUpload" accept="image/*" class="hidden" />
+                  <div class="flex items-center justify-center gap-2 px-3 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    Upload
+                  </div>
+                </label>
+                <button type="button" id="slideGalleryBtn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  Gallery
+                </button>
+              </div>
+              <p class="text-xs text-gray-500">Recommended: 1920x1080px, JPG or PNG</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title & Subtitle -->
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <input
+              type="text"
+              id="slideTitle"
+              name="title"
+              placeholder="e.g., A Muslim Charity Serving Humanity"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+            <input
+              type="text"
+              id="slideSubtitle"
+              name="subtitle"
+              placeholder="e.g., 100% of your Zakat reaches those in need"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+          </div>
+        </div>
+
+        <!-- Button Settings -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+            <input
+              type="text"
+              id="slideButtonText"
+              name="button_text"
+              value="Donate Now"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Button Link</label>
+            <input
+              type="text"
+              id="slideButtonLink"
+              name="button_link"
+              value="/donate"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+          </div>
+        </div>
+
+        <!-- Display Order & Active -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Display Order</label>
+            <input
+              type="number"
+              id="slideOrder"
+              name="display_order"
+              value="0"
+              min="0"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <label class="flex items-center gap-3 mt-2">
+              <input
+                type="checkbox"
+                id="slideActive"
+                name="is_active"
+                checked
+                class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
+              />
+              <span class="text-gray-700">Active (visible on homepage)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Overlay Color -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Overlay Color</label>
+          <div class="flex gap-2">
+            <input
+              type="color"
+              id="slideOverlayColor"
+              value="#255764"
+              class="w-12 h-10 rounded border border-gray-200 cursor-pointer"
+            />
+            <input
+              type="text"
+              id="slideOverlayText"
+              name="overlay_color"
+              value="rgba(37, 87, 100, 0.7)"
+              class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-sm"
+              placeholder="rgba(37, 87, 100, 0.7)"
+            />
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button type="button" id="cancelModalBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-6 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition flex items-center gap-2"
+          >
+            <span id="submitBtnText">Save Slide</span>
+            <svg id="submitSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Gallery Modal -->
+  <div id="galleryModal" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h3 class="text-lg font-bold text-gray-800">Select from Gallery</h3>
+        <button type="button" id="closeGalleryBtn" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto" style="max-height: calc(80vh - 130px);">
+        <div id="galleryLoading" class="flex items-center justify-center py-12">
+          <svg class="w-8 h-8 animate-spin text-[#01534d]" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <div id="galleryEmpty" class="hidden text-center py-12 text-gray-500">
+          <p>No images in gallery. Upload one first.</p>
+        </div>
+        <div id="galleryGrid" class="hidden grid grid-cols-3 sm:grid-cols-4 gap-3"></div>
+      </div>
+      <div class="p-4 border-t bg-gray-50 flex justify-end gap-3">
+        <button type="button" id="cancelGalleryBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+        <button type="button" id="selectGalleryBtn" disabled class="px-4 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] disabled:opacity-50">
+          Select Image
+        </button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  // Elements
+  const addSlideBtn = document.getElementById('addSlideBtn');
+  const addFirstSlideBtn = document.getElementById('addFirstSlideBtn');
+  const slideModal = document.getElementById('slideModal') as HTMLElement;
+  const slideForm = document.getElementById('slideForm') as HTMLFormElement;
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  const modalTitle = document.getElementById('modalTitle');
+  const submitBtnText = document.getElementById('submitBtnText');
+  const submitSpinner = document.getElementById('submitSpinner');
+
+  // Form fields
+  const slideId = document.getElementById('slideId') as HTMLInputElement;
+  const slideImageUrl = document.getElementById('slideImageUrl') as HTMLInputElement;
+  const slideImagePreview = document.getElementById('slideImagePreview') as HTMLImageElement;
+  const slideImagePlaceholder = document.getElementById('slideImagePlaceholder') as HTMLElement;
+  const slideImageUpload = document.getElementById('slideImageUpload') as HTMLInputElement;
+  const slideTitle = document.getElementById('slideTitle') as HTMLInputElement;
+  const slideSubtitle = document.getElementById('slideSubtitle') as HTMLInputElement;
+  const slideButtonText = document.getElementById('slideButtonText') as HTMLInputElement;
+  const slideButtonLink = document.getElementById('slideButtonLink') as HTMLInputElement;
+  const slideOrder = document.getElementById('slideOrder') as HTMLInputElement;
+  const slideActive = document.getElementById('slideActive') as HTMLInputElement;
+  const slideOverlayText = document.getElementById('slideOverlayText') as HTMLInputElement;
+
+  // Gallery elements
+  const slideGalleryBtn = document.getElementById('slideGalleryBtn');
+  const galleryModal = document.getElementById('galleryModal') as HTMLElement;
+  const closeGalleryBtn = document.getElementById('closeGalleryBtn');
+  const cancelGalleryBtn = document.getElementById('cancelGalleryBtn');
+  const selectGalleryBtn = document.getElementById('selectGalleryBtn') as HTMLButtonElement;
+  const galleryGrid = document.getElementById('galleryGrid') as HTMLElement;
+  const galleryLoading = document.getElementById('galleryLoading') as HTMLElement;
+  const galleryEmpty = document.getElementById('galleryEmpty') as HTMLElement;
+
+  // Toast
+  const successToast = document.getElementById('successToast') as HTMLElement;
+  const errorToast = document.getElementById('errorToast') as HTMLElement;
+  const successMessage = document.getElementById('successMessage') as HTMLElement;
+  const errorMessage = document.getElementById('errorMessage') as HTMLElement;
+
+  let selectedGalleryUrl: string | null = null;
+
+  function showToast(type: 'success' | 'error', message: string) {
+    const toast = type === 'success' ? successToast : errorToast;
+    const msgEl = type === 'success' ? successMessage : errorMessage;
+    msgEl.textContent = message;
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+  }
+
+  function updateImagePreview(url: string) {
+    if (url) {
+      slideImagePreview.src = url;
+      slideImagePreview.classList.remove('hidden');
+      slideImagePlaceholder.classList.add('hidden');
+    } else {
+      slideImagePreview.classList.add('hidden');
+      slideImagePlaceholder.classList.remove('hidden');
+    }
+  }
+
+  function openModal(slide?: any) {
+    if (slide) {
+      modalTitle!.textContent = 'Edit Slide';
+      submitBtnText!.textContent = 'Update Slide';
+      slideId.value = slide.id;
+      slideImageUrl.value = slide.image_url || '';
+      slideTitle.value = slide.title || '';
+      slideSubtitle.value = slide.subtitle || '';
+      slideButtonText.value = slide.button_text || 'Donate Now';
+      slideButtonLink.value = slide.button_link || '/donate';
+      slideOrder.value = slide.display_order?.toString() || '0';
+      slideActive.checked = slide.is_active !== false;
+      slideOverlayText.value = slide.overlay_color || 'rgba(37, 87, 100, 0.7)';
+      updateImagePreview(slide.image_url);
+    } else {
+      modalTitle!.textContent = 'Add New Slide';
+      submitBtnText!.textContent = 'Save Slide';
+      slideForm.reset();
+      slideId.value = '';
+      slideActive.checked = true;
+      slideOverlayText.value = 'rgba(37, 87, 100, 0.7)';
+      updateImagePreview('');
+    }
+    slideModal.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    slideModal.classList.add('hidden');
+  }
+
+  // Event listeners
+  addSlideBtn?.addEventListener('click', () => openModal());
+  addFirstSlideBtn?.addEventListener('click', () => openModal());
+  closeModalBtn?.addEventListener('click', closeModal);
+  cancelModalBtn?.addEventListener('click', closeModal);
+  slideModal?.addEventListener('click', (e) => {
+    if (e.target === slideModal) closeModal();
+  });
+
+  // Image URL input
+  slideImageUrl?.addEventListener('input', () => {
+    updateImagePreview(slideImageUrl.value);
+  });
+
+  // Image upload
+  slideImageUpload?.addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        slideImageUrl.value = result.url;
+        updateImagePreview(result.url);
+      } else {
+        showToast('error', result.error || 'Upload failed');
+      }
+    } catch (error) {
+      showToast('error', 'Upload failed');
+    }
+  });
+
+  // Gallery
+  slideGalleryBtn?.addEventListener('click', async () => {
+    galleryModal.classList.remove('hidden');
+    galleryLoading.classList.remove('hidden');
+    galleryGrid.classList.add('hidden');
+    galleryEmpty.classList.add('hidden');
+    selectedGalleryUrl = null;
+    selectGalleryBtn.disabled = true;
+
+    try {
+      const response = await fetch('/api/media/list');
+      const result = await response.json();
+      galleryLoading.classList.add('hidden');
+
+      if (!result.images || result.images.length === 0) {
+        galleryEmpty.classList.remove('hidden');
+        return;
+      }
+
+      galleryGrid.innerHTML = result.images.map((img: any) => `
+        <div class="gallery-item-wrapper relative group aspect-video">
+          <button type="button" class="gallery-item w-full h-full rounded-lg border-2 border-transparent hover:border-[#01534d] overflow-hidden bg-gray-100 focus:outline-none transition" data-url="${img.url}" data-name="${img.name}">
+            <img src="${img.url}" alt="${img.name}" class="w-full h-full object-cover" loading="lazy" />
+          </button>
+          <button type="button" class="delete-gallery-img absolute top-1 right-1 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700" data-name="${img.name}" title="Delete image">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+
+      galleryGrid.classList.remove('hidden');
+
+      // Selection handlers
+      document.querySelectorAll('#galleryGrid .gallery-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('#galleryGrid .gallery-item').forEach(i => i.classList.remove('border-[#01534d]', 'ring-2'));
+          item.classList.add('border-[#01534d]', 'ring-2');
+          selectedGalleryUrl = (item as HTMLElement).dataset.url || null;
+          selectGalleryBtn.disabled = false;
+        });
+      });
+
+      // Delete handlers
+      document.querySelectorAll('#galleryGrid .delete-gallery-img').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const filename = (btn as HTMLElement).dataset.name;
+          if (!filename) return;
+
+          if (!confirm('Delete this image? This cannot be undone.')) return;
+
+          try {
+            const response = await fetch('/api/media/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filename })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+              const wrapper = btn.closest('.gallery-item-wrapper');
+              wrapper?.remove();
+              if (galleryGrid.children.length === 0) {
+                galleryGrid.classList.add('hidden');
+                galleryEmpty.classList.remove('hidden');
+              }
+              showToast('success', 'Image deleted');
+            } else {
+              showToast('error', result.error || 'Delete failed');
+            }
+          } catch (error) {
+            showToast('error', 'Failed to delete');
+          }
+        });
+      });
+    } catch (error) {
+      galleryLoading.classList.add('hidden');
+      galleryEmpty.classList.remove('hidden');
+    }
+  });
+
+  closeGalleryBtn?.addEventListener('click', () => galleryModal.classList.add('hidden'));
+  cancelGalleryBtn?.addEventListener('click', () => galleryModal.classList.add('hidden'));
+
+  selectGalleryBtn?.addEventListener('click', () => {
+    if (selectedGalleryUrl) {
+      slideImageUrl.value = selectedGalleryUrl;
+      updateImagePreview(selectedGalleryUrl);
+      galleryModal.classList.add('hidden');
+    }
+  });
+
+  // Form submit
+  slideForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitSpinner?.classList.remove('hidden');
+
+    const formData = new FormData(slideForm);
+    const data: any = {
+      image_url: formData.get('image_url'),
+      title: formData.get('title'),
+      subtitle: formData.get('subtitle'),
+      button_text: formData.get('button_text'),
+      button_link: formData.get('button_link'),
+      display_order: parseInt(formData.get('display_order') as string) || 0,
+      is_active: slideActive.checked,
+      overlay_color: formData.get('overlay_color')
+    };
+
+    if (slideId.value) {
+      data.id = slideId.value;
+    }
+
+    try {
+      const response = await fetch('/api/hero-slides', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        showToast('success', slideId.value ? 'Slide updated!' : 'Slide added!');
+        closeModal();
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showToast('error', result.error || 'Failed to save');
+      }
+    } catch (error) {
+      showToast('error', 'Failed to save');
+    }
+
+    submitSpinner?.classList.add('hidden');
+  });
+
+  // Edit buttons
+  document.querySelectorAll('.edit-slide-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const slide = JSON.parse((btn as HTMLElement).dataset.slide || '{}');
+      openModal(slide);
+    });
+  });
+
+  // Toggle buttons
+  document.querySelectorAll('.toggle-slide-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = (btn as HTMLElement).dataset.id;
+      const isActive = (btn as HTMLElement).dataset.active === 'true';
+
+      try {
+        const response = await fetch('/api/hero-slides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, is_active: !isActive })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('success', isActive ? 'Slide deactivated' : 'Slide activated');
+          setTimeout(() => window.location.reload(), 1000);
+        }
+      } catch (error) {
+        showToast('error', 'Failed to update');
+      }
+    });
+  });
+
+  // Delete buttons
+  document.querySelectorAll('.delete-slide-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to delete this slide?')) return;
+
+      const id = (btn as HTMLElement).dataset.id;
+
+      try {
+        const response = await fetch('/api/hero-slides', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('success', 'Slide deleted');
+          setTimeout(() => window.location.reload(), 1000);
+        }
+      } catch (error) {
+        showToast('error', 'Failed to delete');
+      }
+    });
+  });
+</script>

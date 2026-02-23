@@ -1,0 +1,132 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+// Mock data - replace with Supabase queries
+const stats = [
+  { label: 'Total Donations', value: '$45,231', change: '+12.5%', positive: true },
+  { label: 'Active Campaigns', value: '24', change: '+3', positive: true },
+  { label: 'Donors This Month', value: '156', change: '+8.2%', positive: true },
+  { label: 'Avg. Donation', value: '$89', change: '-2.1%', positive: false },
+];
+
+const recentDonations = [
+  { id: 1, donor: 'Ahmed M.', amount: '$100', campaign: 'Gaza Emergency', date: '2 hours ago' },
+  { id: 2, donor: 'Sarah K.', amount: '$250', campaign: 'Orphan Sponsorship', date: '4 hours ago' },
+  { id: 3, donor: 'Mohammad A.', amount: '$50', campaign: 'Water for Life', date: '6 hours ago' },
+  { id: 4, donor: 'Fatima H.', amount: '$500', campaign: 'Most Needed', date: '8 hours ago' },
+  { id: 5, donor: 'Omar S.', amount: '$75', campaign: 'Food Aid', date: '12 hours ago' },
+];
+
+const topCampaigns = [
+  { name: 'Gaza Emergency Appeal', raised: 12500, goal: 50000 },
+  { name: 'Yemen Emergency Appeal', raised: 8200, goal: 25000 },
+  { name: 'Orphan Sponsorship', raised: 15000, goal: 30000 },
+  { name: 'Water for Life', raised: 6800, goal: 20000 },
+];
+---
+
+<AdminLayout title="Dashboard" activeNav="dashboard">
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    {stats.map((stat) => (
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500 mb-1">{stat.label}</p>
+        <div class="flex items-end justify-between">
+          <p class="text-3xl font-bold text-gray-800">{stat.value}</p>
+          <span class={`text-sm font-medium ${stat.positive ? 'text-green-600' : 'text-red-600'}`}>
+            {stat.change}
+          </span>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Recent Donations -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-800">Recent Donations</h2>
+          <a href="/admin/donations" class="text-sm text-[#01534d] hover:underline font-medium">View All</a>
+        </div>
+      </div>
+      <div class="divide-y divide-gray-100">
+        {recentDonations.map((donation) => (
+          <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 bg-[#01534d]/10 rounded-full flex items-center justify-center">
+                <span class="text-[#01534d] font-bold">{donation.donor.charAt(0)}</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-800">{donation.donor}</p>
+                <p class="text-sm text-gray-500">{donation.campaign}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-gray-800">{donation.amount}</p>
+              <p class="text-xs text-gray-400">{donation.date}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Top Campaigns -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-800">Top Campaigns</h2>
+          <a href="/admin/campaigns" class="text-sm text-[#01534d] hover:underline font-medium">Manage</a>
+        </div>
+      </div>
+      <div class="p-6 space-y-6">
+        {topCampaigns.map((campaign) => {
+          const percentage = Math.round((campaign.raised / campaign.goal) * 100);
+          return (
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <p class="font-medium text-gray-800">{campaign.name}</p>
+                <p class="text-sm text-gray-500">{percentage}%</p>
+              </div>
+              <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-[#01534d] rounded-full transition-all duration-500"
+                  style={`width: ${percentage}%`}
+                ></div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                ${campaign.raised.toLocaleString()} raised of ${campaign.goal.toLocaleString()}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
+    <div class="flex flex-wrap gap-4">
+      <a href="/admin/campaigns/new" class="inline-flex items-center gap-2 px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        New Campaign
+      </a>
+      <a href="/admin/donations" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        Export Donations
+      </a>
+      <a href="/admin/settings" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </div>
+</AdminLayout>

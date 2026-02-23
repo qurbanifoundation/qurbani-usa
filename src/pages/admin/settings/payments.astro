@@ -1,0 +1,322 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch payment settings
+let paymentSettings: any = {
+  stripe_enabled: true,
+  stripe_publishable_key: '',
+  stripe_secret_key: '',
+  google_pay_enabled: true,
+  apple_pay_enabled: true,
+  paypal_enabled: false,
+  paypal_client_id: '',
+  paypal_client_secret: '',
+  test_mode: true,
+};
+
+try {
+  const { data } = await supabaseAdmin
+    .from('site_settings')
+    .select('*')
+    .single();
+
+  if (data) {
+    paymentSettings = {
+      stripe_enabled: data.stripe_enabled ?? true,
+      stripe_publishable_key: data.stripe_publishable_key || '',
+      stripe_secret_key: data.stripe_secret_key || '',
+      google_pay_enabled: data.google_pay_enabled ?? true,
+      apple_pay_enabled: data.apple_pay_enabled ?? true,
+      paypal_enabled: data.paypal_enabled ?? false,
+      paypal_client_id: data.paypal_client_id || '',
+      paypal_client_secret: data.paypal_client_secret || '',
+      test_mode: data.payment_test_mode ?? true,
+    };
+  }
+} catch (e) {}
+---
+
+<AdminLayout title="Payment Settings" activeNav="settings">
+  <div class="max-w-4xl">
+    <SettingsTabs active="payments" />
+
+    <!-- Test Mode Banner -->
+    <div id="test-mode-banner" class={`mb-6 p-4 rounded-xl flex items-center justify-between ${paymentSettings.test_mode ? 'bg-amber-50 border border-amber-200' : 'bg-green-50 border border-green-200'}`}>
+      <div class="flex items-center gap-3">
+        <div class={`w-10 h-10 rounded-full flex items-center justify-center ${paymentSettings.test_mode ? 'bg-amber-100' : 'bg-green-100'}`}>
+          {paymentSettings.test_mode ? (
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          ) : (
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          )}
+        </div>
+        <div>
+          <p class={`font-semibold ${paymentSettings.test_mode ? 'text-amber-800' : 'text-green-800'}`}>
+            {paymentSettings.test_mode ? 'Test Mode Active' : 'Live Mode Active'}
+          </p>
+          <p class={`text-sm ${paymentSettings.test_mode ? 'text-amber-600' : 'text-green-600'}`}>
+            {paymentSettings.test_mode ? 'Payments are in test mode. No real charges will be made.' : 'Real payments are being processed.'}
+          </p>
+        </div>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="test-mode-toggle" class="sr-only peer" checked={!paymentSettings.test_mode} />
+        <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
+        <span class="ms-3 text-sm font-medium text-gray-700">Live Mode</span>
+      </label>
+    </div>
+
+    <form id="payment-settings-form">
+      <!-- Stripe Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-[#635bff]/10 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-[#635bff]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800">Stripe</h3>
+              <p class="text-sm text-gray-500">Accept card payments, Google Pay & Apple Pay</p>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="stripe_enabled" class="sr-only peer" checked={paymentSettings.stripe_enabled} />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#01534d]/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#01534d]"></div>
+          </label>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Publishable Key</label>
+            <input
+              type="text"
+              name="stripe_publishable_key"
+              value={paymentSettings.stripe_publishable_key}
+              placeholder="pk_live_... or pk_test_..."
+              class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+            <div class="relative">
+              <input
+                type="password"
+                name="stripe_secret_key"
+                value={paymentSettings.stripe_secret_key}
+                placeholder="sk_live_... or sk_test_..."
+                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent pr-20"
+              />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-700" onclick="togglePasswordVisibility(this)">
+                Show
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Your secret key is stored securely and never exposed to the client.</p>
+          </div>
+        </div>
+
+        <!-- Payment Methods within Stripe -->
+        <div class="mt-6 pt-6 border-t border-gray-100">
+          <p class="text-sm font-medium text-gray-700 mb-4">Payment Methods (via Stripe)</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Card Payments -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm0 2v2h16V6H4zm0 4v8h16v-8H4zm2 2h4v2H6v-2zm6 0h4v2h-4v-2z"/>
+                </svg>
+                <span class="font-medium text-gray-700">Cards</span>
+              </div>
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Always On</span>
+            </div>
+
+            <!-- Google Pay -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/>
+                </svg>
+                <span class="font-medium text-gray-700">Google Pay</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="google_pay_enabled" class="sr-only peer" checked={paymentSettings.google_pay_enabled} />
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#01534d]"></div>
+              </label>
+            </div>
+
+            <!-- Apple Pay -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                </svg>
+                <span class="font-medium text-gray-700">Apple Pay</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="apple_pay_enabled" class="sr-only peer" checked={paymentSettings.apple_pay_enabled} />
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#01534d]"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PayPal Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-[#0070ba]/10 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-[#0070ba]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800">PayPal</h3>
+              <p class="text-sm text-gray-500">Accept PayPal payments</p>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="paypal_enabled" class="sr-only peer" checked={paymentSettings.paypal_enabled} />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#01534d]/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#01534d]"></div>
+          </label>
+        </div>
+
+        <div class="space-y-4" id="paypal-fields">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Client ID</label>
+            <input
+              type="text"
+              name="paypal_client_id"
+              value={paymentSettings.paypal_client_id}
+              placeholder="Your PayPal Client ID"
+              class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Client Secret</label>
+            <div class="relative">
+              <input
+                type="password"
+                name="paypal_client_secret"
+                value={paymentSettings.paypal_client_secret}
+                placeholder="Your PayPal Client Secret"
+                class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent pr-20"
+              />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-700" onclick="togglePasswordVisibility(this)">
+                Show
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-500">
+          Changes will take effect immediately after saving.
+        </p>
+        <button
+          type="submit"
+          class="px-8 py-3 bg-[#01534d] text-white rounded-lg font-semibold hover:bg-[#013d39] transition flex items-center gap-2"
+        >
+          <span>Save Payment Settings</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+
+    <!-- Webhook Info -->
+    <div class="mt-8 bg-blue-50 rounded-xl p-6 border border-blue-100">
+      <h4 class="font-semibold text-blue-800 mb-2">Stripe Webhook Setup</h4>
+      <p class="text-sm text-blue-700 mb-3">
+        To receive payment confirmations and handle subscriptions, add this webhook URL in your Stripe Dashboard:
+      </p>
+      <div class="flex items-center gap-2 bg-white rounded-lg p-3 border border-blue-200">
+        <code class="flex-1 text-sm text-blue-900" id="webhook-url">https://your-domain.com/api/webhooks/stripe</code>
+        <button type="button" onclick="copyWebhookUrl()" class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200 transition">
+          Copy
+        </button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  function togglePasswordVisibility(btn: HTMLButtonElement) {
+    const input = btn.parentElement?.querySelector('input');
+    if (input) {
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+  }
+
+  function copyWebhookUrl() {
+    const url = document.getElementById('webhook-url')?.textContent;
+    if (url) {
+      navigator.clipboard.writeText(url);
+      alert('Webhook URL copied!');
+    }
+  }
+
+  // Form submission
+  document.getElementById('payment-settings-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const data = {
+      stripe_enabled: formData.get('stripe_enabled') === 'on',
+      stripe_publishable_key: formData.get('stripe_publishable_key'),
+      stripe_secret_key: formData.get('stripe_secret_key'),
+      google_pay_enabled: formData.get('google_pay_enabled') === 'on',
+      apple_pay_enabled: formData.get('apple_pay_enabled') === 'on',
+      paypal_enabled: formData.get('paypal_enabled') === 'on',
+      paypal_client_id: formData.get('paypal_client_id'),
+      paypal_client_secret: formData.get('paypal_client_secret'),
+      payment_test_mode: !(document.getElementById('test-mode-toggle') as HTMLInputElement)?.checked,
+    };
+
+    try {
+      const response = await fetch('/api/settings/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert('Payment settings saved successfully!');
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.message);
+      }
+    } catch (err) {
+      alert('Failed to save settings');
+    }
+  });
+
+  // Update webhook URL with actual domain
+  document.addEventListener('DOMContentLoaded', () => {
+    const webhookUrl = document.getElementById('webhook-url');
+    if (webhookUrl) {
+      webhookUrl.textContent = `${window.location.origin}/api/webhooks/stripe`;
+    }
+  });
+</script>

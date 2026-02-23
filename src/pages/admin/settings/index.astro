@@ -1,0 +1,385 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
+
+// Site settings - replace with Supabase data
+const siteSettings = {
+  siteName: 'Qurbani Foundation USA',
+  tagline: 'A Muslim Charity Serving Humanity',
+  email: 'info@qurbani.com',
+  phone: '+1 (703) 596-4900',
+  tollFree: '1-800-900-0027',
+  address: '123 Charity Lane, Washington DC, 20001',
+  defaultCurrency: 'USD',
+  defaultAmounts: '40, 50, 100',
+  defaultDonationBoxTemplate: 'most-needed',
+  defaultCampaignTemplate: 'standard',
+  zakatPolicy: '100% Zakat Policy - Every cent reaches those in need',
+};
+
+const donationBoxTemplates = [
+  { id: 'most-needed', name: 'Most Needed (Dark Teal)', description: 'Full featured with single/monthly toggle' },
+  { id: 'compact', name: 'Compact', description: 'Smaller version for sidebars' },
+  { id: 'hero', name: 'Hero Style', description: 'Lighter theme for hero sections' },
+];
+
+const campaignTemplates = [
+  { id: 'standard', name: 'Standard Campaign', description: 'Full page with hero, content, and sidebar donation box' },
+  { id: 'emergency', name: 'Emergency Appeal', description: 'Urgent styling with countdown and progress bar' },
+  { id: 'minimal', name: 'Minimal', description: 'Clean, simple layout focused on content' },
+];
+---
+
+<AdminLayout title="Settings" activeNav="settings">
+  <div class="max-w-4xl">
+    <SettingsTabs active="general" />
+
+    <!-- Success Toast -->
+    <div id="successToast" class="hidden fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>Settings saved successfully!</span>
+    </div>
+
+    <form id="settingsForm">
+      <!-- Site Information -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Site Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
+            <input
+              type="text"
+              name="siteName"
+              id="siteName"
+              value={siteSettings.siteName}
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tagline</label>
+            <input
+              type="text"
+              name="tagline"
+              id="tagline"
+              value={siteSettings.tagline}
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              value={siteSettings.email}
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <input
+              type="text"
+              name="phone"
+              id="phone"
+              value={siteSettings.phone}
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <input
+              type="text"
+              name="address"
+              id="address"
+              value={siteSettings.address}
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Default Templates -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Default Templates</h2>
+
+        <div class="space-y-6">
+          <!-- Donation Box Template -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Default Donation Box Template</label>
+            <p class="text-sm text-gray-500 mb-3">This template will be used when a campaign doesn't specify a custom template.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="donationBoxTemplates">
+              {donationBoxTemplates.map((template) => (
+                <label class={`template-option relative flex flex-col p-4 border-2 rounded-lg cursor-pointer transition ${
+                  siteSettings.defaultDonationBoxTemplate === template.id
+                    ? 'border-[#01534d] bg-[#01534d]/5'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`} data-template={template.id}>
+                  <input
+                    type="radio"
+                    name="donationBoxTemplate"
+                    value={template.id}
+                    checked={siteSettings.defaultDonationBoxTemplate === template.id}
+                    class="sr-only"
+                  />
+                  <span class="font-semibold text-gray-800">{template.name}</span>
+                  <span class="text-sm text-gray-500 mt-1">{template.description}</span>
+                  <span class={`checkmark absolute top-2 right-2 w-5 h-5 bg-[#01534d] rounded-full items-center justify-center ${
+                    siteSettings.defaultDonationBoxTemplate === template.id ? 'flex' : 'hidden'
+                  }`}>
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <!-- Campaign Page Template -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Default Campaign Page Template</label>
+            <p class="text-sm text-gray-500 mb-3">The default layout for new campaign pages.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="campaignTemplates">
+              {campaignTemplates.map((template) => (
+                <label class={`template-option relative flex flex-col p-4 border-2 rounded-lg cursor-pointer transition ${
+                  siteSettings.defaultCampaignTemplate === template.id
+                    ? 'border-[#01534d] bg-[#01534d]/5'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`} data-template={template.id}>
+                  <input
+                    type="radio"
+                    name="campaignTemplate"
+                    value={template.id}
+                    checked={siteSettings.defaultCampaignTemplate === template.id}
+                    class="sr-only"
+                  />
+                  <span class="font-semibold text-gray-800">{template.name}</span>
+                  <span class="text-sm text-gray-500 mt-1">{template.description}</span>
+                  <span class={`checkmark absolute top-2 right-2 w-5 h-5 bg-[#01534d] rounded-full items-center justify-center ${
+                    siteSettings.defaultCampaignTemplate === template.id ? 'flex' : 'hidden'
+                  }`}>
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donation Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Donation Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Default Currency</label>
+            <select name="defaultCurrency" id="defaultCurrency" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white">
+              <option value="USD" selected={siteSettings.defaultCurrency === 'USD'}>USD ($)</option>
+              <option value="GBP" selected={siteSettings.defaultCurrency === 'GBP'}>GBP (£)</option>
+              <option value="EUR" selected={siteSettings.defaultCurrency === 'EUR'}>EUR (€)</option>
+              <option value="CAD" selected={siteSettings.defaultCurrency === 'CAD'}>CAD ($)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Default Amounts</label>
+            <input
+              type="text"
+              name="defaultAmounts"
+              id="defaultAmounts"
+              value={siteSettings.defaultAmounts}
+              placeholder="Comma-separated amounts"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Zakat Policy Message</label>
+            <textarea
+              name="zakatPolicy"
+              id="zakatPolicy"
+              rows="2"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            >{siteSettings.zakatPolicy}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="flex justify-end gap-4">
+        <button type="button" id="cancelBtn">
+          Cancel
+        </button>
+        <button type="submit" id="saveBtn">
+          <span>Save Changes</span>
+          <svg id="saveSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</AdminLayout>
+
+<style>
+  #saveBtn {
+    background-color: #01534d !important;
+    color: white !important;
+    padding: 0.5rem 1.5rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    cursor: pointer !important;
+    border: none !important;
+    transition: background-color 0.2s !important;
+  }
+  #saveBtn:hover {
+    background-color: #013d39 !important;
+  }
+  #saveBtn:disabled {
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+  }
+  #cancelBtn {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    padding: 0.5rem 1.5rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
+  }
+  #cancelBtn:hover {
+    background-color: #f9fafb !important;
+  }
+</style>
+
+<script>
+  // Load saved settings from localStorage on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedSettings = localStorage.getItem('siteSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+
+      // Populate form fields
+      Object.keys(settings).forEach(key => {
+        const field = document.getElementById(key) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+        if (field) {
+          field.value = settings[key];
+        }
+      });
+
+      // Update template selections
+      if (settings.donationBoxTemplate) {
+        updateTemplateSelection('donationBoxTemplates', settings.donationBoxTemplate);
+      }
+      if (settings.campaignTemplate) {
+        updateTemplateSelection('campaignTemplates', settings.campaignTemplate);
+      }
+    }
+  });
+
+  function updateTemplateSelection(containerId: string, selectedValue: string) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('.template-option').forEach(label => {
+      const input = label.querySelector('input[type="radio"]') as HTMLInputElement;
+      const checkmark = label.querySelector('.checkmark') as HTMLElement;
+
+      if (input.value === selectedValue) {
+        label.classList.remove('border-gray-200');
+        label.classList.add('border-[#01534d]', 'bg-[#01534d]/5');
+        checkmark?.classList.remove('hidden');
+        checkmark?.classList.add('flex');
+        input.checked = true;
+      } else {
+        label.classList.remove('border-[#01534d]', 'bg-[#01534d]/5');
+        label.classList.add('border-gray-200');
+        checkmark?.classList.add('hidden');
+        checkmark?.classList.remove('flex');
+        input.checked = false;
+      }
+    });
+  }
+
+  // Handle template selection clicks
+  document.querySelectorAll('.template-option').forEach(label => {
+    label.addEventListener('click', () => {
+      const container = label.closest('[id$="Templates"]');
+      if (!container) return;
+
+      // Remove selection from all in this group
+      container.querySelectorAll('.template-option').forEach(l => {
+        l.classList.remove('border-[#01534d]', 'bg-[#01534d]/5');
+        l.classList.add('border-gray-200');
+        const checkmark = l.querySelector('.checkmark') as HTMLElement;
+        checkmark?.classList.add('hidden');
+        checkmark?.classList.remove('flex');
+      });
+
+      // Add selection to clicked
+      label.classList.remove('border-gray-200');
+      label.classList.add('border-[#01534d]', 'bg-[#01534d]/5');
+      const checkmark = label.querySelector('.checkmark') as HTMLElement;
+      checkmark?.classList.remove('hidden');
+      checkmark?.classList.add('flex');
+    });
+  });
+
+  // Form submission
+  const form = document.getElementById('settingsForm') as HTMLFormElement;
+  const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement;
+  const saveSpinner = document.getElementById('saveSpinner') as HTMLElement;
+  const successToast = document.getElementById('successToast') as HTMLElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Show loading state
+    saveBtn.disabled = true;
+    saveSpinner.classList.remove('hidden');
+
+    // Collect form data
+    const formData = new FormData(form);
+    const settings: Record<string, string> = {};
+
+    formData.forEach((value, key) => {
+      settings[key] = value as string;
+    });
+
+    // Simulate API call delay (replace with actual Supabase call)
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Save to localStorage
+    localStorage.setItem('siteSettings', JSON.stringify(settings));
+
+    // TODO: Save to Supabase
+    // const { error } = await supabase
+    //   .from('site_settings')
+    //   .upsert(settings);
+
+    // Hide loading state
+    saveBtn.disabled = false;
+    saveSpinner.classList.add('hidden');
+
+    // Show success toast
+    successToast.classList.remove('hidden');
+    setTimeout(() => {
+      successToast.classList.add('hidden');
+    }, 3000);
+
+    console.log('Settings saved:', settings);
+  });
+
+  // Cancel button - reload page to reset form
+  document.getElementById('cancelBtn')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+</script>

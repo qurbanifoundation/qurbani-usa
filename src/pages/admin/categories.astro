@@ -1,0 +1,424 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllCategories, categoryIcons } from '../../lib/categories';
+
+export const prerender = false;
+
+let categories: any[] = [];
+let fetchError = '';
+
+try {
+  categories = await getAllCategories();
+} catch (e: any) {
+  fetchError = e.message || 'Failed to fetch categories';
+}
+
+const availableIcons = Object.keys(categoryIcons);
+---
+
+<AdminLayout title="Categories" activeNav="categories">
+  <div class="max-w-4xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Manage Categories</h1>
+        <p class="text-gray-600 mt-1">Edit category names, colors, and display order for the mega menu.</p>
+      </div>
+      <button
+        id="add-category-btn"
+        class="px-4 py-2.5 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition flex items-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add Category
+      </button>
+    </div>
+
+    <!-- Error Message -->
+    {fetchError && (
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <p class="text-red-800">{fetchError}</p>
+        <p class="text-red-600 text-sm mt-2">
+          Make sure the categories table exists. Run: <code class="bg-red-100 px-1 rounded">node scripts/setup-categories.mjs</code>
+        </p>
+      </div>
+    )}
+
+    <!-- Categories List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div class="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div class="w-12">Order</div>
+          <div class="w-16">Icon</div>
+          <div class="flex-1">Category</div>
+          <div class="w-24 text-center">Menu</div>
+          <div class="w-24 text-center">Active</div>
+          <div class="w-32 text-right">Actions</div>
+        </div>
+      </div>
+
+      <div id="categories-list" class="divide-y divide-gray-100">
+        {categories.map((category, index) => (
+          <div
+            class="category-item flex items-center px-6 py-4 hover:bg-gray-50 transition"
+            data-id={category.id}
+            data-sort={category.sort_order}
+          >
+            <div class="w-12">
+              <input
+                type="number"
+                value={category.sort_order}
+                min="1"
+                class="sort-input w-10 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+                data-id={category.id}
+              />
+            </div>
+            <div class="w-16">
+              <div
+                class="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={`background-color: ${category.color}`}
+              >
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={categoryIcons[category.icon] || categoryIcons.heart} />
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="font-semibold text-gray-900">{category.label}</p>
+              <p class="text-sm text-gray-500">{category.slug}</p>
+            </div>
+            <div class="w-24 text-center">
+              <button
+                class="toggle-menu-btn px-3 py-1 rounded-full text-xs font-medium transition"
+                data-id={category.id}
+                data-active={category.show_in_menu}
+                style={category.show_in_menu ? 'background: #dcfce7; color: #166534;' : 'background: #f3f4f6; color: #6b7280;'}
+              >
+                {category.show_in_menu ? 'Visible' : 'Hidden'}
+              </button>
+            </div>
+            <div class="w-24 text-center">
+              <button
+                class="toggle-active-btn px-3 py-1 rounded-full text-xs font-medium transition"
+                data-id={category.id}
+                data-active={category.is_active}
+                style={category.is_active ? 'background: #dcfce7; color: #166534;' : 'background: #f3f4f6; color: #6b7280;'}
+              >
+                {category.is_active ? 'Active' : 'Inactive'}
+              </button>
+            </div>
+            <div class="w-32 flex items-center justify-end gap-2">
+              <button
+                class="edit-btn p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
+                data-category={JSON.stringify(category)}
+                title="Edit"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              <button
+                class="delete-btn p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                data-id={category.id}
+                data-label={category.label}
+                title="Delete"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {categories.length === 0 && !fetchError && (
+        <div class="px-6 py-12 text-center">
+          <p class="text-gray-500">No categories found. Add your first category above.</p>
+        </div>
+      )}
+    </div>
+
+    <!-- Help Text -->
+    <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <h4 class="font-semibold text-blue-900 mb-2">How it works:</h4>
+      <ul class="text-sm text-blue-800 space-y-1">
+        <li>• <strong>Order:</strong> Lower numbers appear first in the mega menu</li>
+        <li>• <strong>Menu:</strong> Toggle whether category shows in the mega menu</li>
+        <li>• <strong>Active:</strong> Inactive categories are completely hidden</li>
+        <li>• <strong>Slug:</strong> Must match the category value used in campaigns</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Edit/Add Modal -->
+  <div id="category-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-black/50" id="modal-backdrop"></div>
+      <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 id="modal-title" class="text-xl font-bold text-gray-900 mb-4">Edit Category</h3>
+
+        <form id="category-form" class="space-y-4">
+          <input type="hidden" id="category-id" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Label (Display Name)</label>
+            <input type="text" id="category-label" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent" placeholder="e.g., Emergency Relief" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Slug (URL-friendly ID)</label>
+            <input type="text" id="category-slug" required pattern="[a-z0-9-]+" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent font-mono text-sm" placeholder="e.g., emergency-relief" />
+            <p class="text-xs text-gray-500 mt-1">Lowercase letters, numbers, and hyphens only</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+              <div class="flex items-center gap-2">
+                <input type="color" id="category-color" value="#01534d" class="w-10 h-10 rounded cursor-pointer border-0" />
+                <input type="text" id="category-color-text" value="#01534d" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+              <select id="category-icon" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]">
+                <option value="emergency">Emergency</option>
+                <option value="water">Water</option>
+                <option value="food">Food</option>
+                <option value="orphan">Orphan</option>
+                <option value="education">Education</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="sadaqah">Sadaqah</option>
+                <option value="qurbani">Qurbani</option>
+                <option value="heart">Heart</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
+            <input type="number" id="category-sort" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]" />
+          </div>
+
+          <div class="flex items-center gap-6">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" id="category-active" checked class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+              <span class="text-sm text-gray-700">Active</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" id="category-menu" checked class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+              <span class="text-sm text-gray-700">Show in Menu</span>
+            </label>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <button type="button" id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+              Save Category
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
+</AdminLayout>
+
+<script is:inline>
+  const modal = document.getElementById('category-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const form = document.getElementById('category-form');
+  const toast = document.getElementById('toast');
+
+  function showToast(message, type = 'success') {
+    const icon = type === 'success'
+      ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+    toast.innerHTML = icon + '<span>' + message + '</span>';
+    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+
+    setTimeout(() => {
+      toast.className = 'hidden';
+    }, 3000);
+  }
+
+  function openModal(category = null) {
+    if (category) {
+      modalTitle.textContent = 'Edit Category';
+      document.getElementById('category-id').value = category.id;
+      document.getElementById('category-label').value = category.label;
+      document.getElementById('category-slug').value = category.slug;
+      document.getElementById('category-color').value = category.color;
+      document.getElementById('category-color-text').value = category.color;
+      document.getElementById('category-icon').value = category.icon;
+      document.getElementById('category-sort').value = category.sort_order;
+      document.getElementById('category-active').checked = category.is_active;
+      document.getElementById('category-menu').checked = category.show_in_menu;
+    } else {
+      modalTitle.textContent = 'Add Category';
+      form.reset();
+      document.getElementById('category-id').value = '';
+      document.getElementById('category-color').value = '#01534d';
+      document.getElementById('category-color-text').value = '#01534d';
+    }
+    modal.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+  }
+
+  // Color sync
+  document.getElementById('category-color').addEventListener('input', (e) => {
+    document.getElementById('category-color-text').value = e.target.value;
+  });
+  document.getElementById('category-color-text').addEventListener('input', (e) => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+      document.getElementById('category-color').value = e.target.value;
+    }
+  });
+
+  // Auto-generate slug from label
+  document.getElementById('category-label').addEventListener('input', (e) => {
+    const slugInput = document.getElementById('category-slug');
+    const idInput = document.getElementById('category-id');
+    // Only auto-generate if adding new (no ID) and slug is empty or was auto-generated
+    if (!idInput.value) {
+      slugInput.value = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+  });
+
+  // Open modal for add
+  document.getElementById('add-category-btn').addEventListener('click', () => openModal());
+
+  // Open modal for edit
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const category = JSON.parse(btn.dataset.category);
+      openModal(category);
+    });
+  });
+
+  // Close modal
+  document.getElementById('cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+
+  // Save category
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('category-id').value;
+    const data = {
+      label: document.getElementById('category-label').value,
+      slug: document.getElementById('category-slug').value,
+      color: document.getElementById('category-color').value,
+      icon: document.getElementById('category-icon').value,
+      sort_order: parseInt(document.getElementById('category-sort').value),
+      is_active: document.getElementById('category-active').checked,
+      show_in_menu: document.getElementById('category-menu').checked,
+    };
+
+    if (id) data.id = id;
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+
+      showToast(id ? 'Category updated' : 'Category created');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+
+  // Toggle menu visibility
+  document.querySelectorAll('.toggle-menu-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const currentState = btn.dataset.active === 'true';
+
+      try {
+        const res = await fetch('/api/categories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, show_in_menu: !currentState })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        window.location.reload();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Toggle active status
+  document.querySelectorAll('.toggle-active-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const currentState = btn.dataset.active === 'true';
+
+      try {
+        const res = await fetch('/api/categories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, is_active: !currentState })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        window.location.reload();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Sort order change
+  document.querySelectorAll('.sort-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const id = input.dataset.id;
+      const newOrder = parseInt(input.value);
+
+      try {
+        const res = await fetch('/api/categories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, sort_order: newOrder })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        showToast('Order updated');
+        setTimeout(() => window.location.reload(), 500);
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Delete category
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const label = btn.dataset.label;
+
+      if (!confirm(`Delete "${label}"? Campaigns using this category will need to be reassigned.`)) return;
+
+      try {
+        const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete');
+        showToast('Category deleted');
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+</script>

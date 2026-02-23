@@ -1,0 +1,386 @@
+---
+/**
+ * Our Impact Page
+ * Statistics, success stories, and program outcomes
+ */
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+// Impact statistics
+const impactStats = [
+  { number: "18M+", label: "Lives Impacted", icon: "users" },
+  { number: "53+", label: "Countries Served", icon: "globe" },
+  { number: "15.6K", label: "Water Wells Built", icon: "water" },
+  { number: "252K", label: "Cataract Surgeries", icon: "eye" },
+  { number: "7.1K", label: "Orphans Sponsored", icon: "heart" },
+  { number: "2.1M", label: "Emergency Aid Recipients", icon: "emergency" }
+];
+
+// Success stories
+const successStories = [
+  {
+    title: "Clean Water Transforms Village in Somalia",
+    location: "Mogadishu, Somalia",
+    category: "Water",
+    image: "https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=800&q=80",
+    quote: "Before the well, my children and I walked 5 miles every day for water. Now, our village has clean water steps away from our home.",
+    person: "Halima, 34",
+    impact: "Serving 500+ families daily"
+  },
+  {
+    title: "Sight Restored After 10 Years of Blindness",
+    location: "Dhaka, Bangladesh",
+    category: "Healthcare",
+    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80",
+    quote: "I had not seen my grandchildren's faces for years. After the surgery, I wept with joy seeing them for the first time.",
+    person: "Abdul Karim, 67",
+    impact: "One of 252,000+ surgeries performed"
+  },
+  {
+    title: "Orphan Sponsorship Changes Future",
+    location: "Cairo, Egypt",
+    category: "Education",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80",
+    quote: "I lost my parents when I was 8. Through sponsorship, I completed school and am now studying medicine to help others.",
+    person: "Yusuf, 19",
+    impact: "7,100+ orphans in our program"
+  }
+];
+
+// Program areas
+const programAreas = [
+  {
+    name: "Clean Water",
+    description: "Building wells and water systems in communities lacking access to clean water.",
+    stats: "15,600+ wells installed",
+    color: "#0096D6",
+    icon: "water"
+  },
+  {
+    name: "Healthcare",
+    description: "Providing medical care, surgeries, and mobile health clinics to underserved populations.",
+    stats: "252,000+ surgeries",
+    color: "#16a34a",
+    icon: "medical"
+  },
+  {
+    name: "Food Security",
+    description: "Distributing food packages, Qurbani meat, and supporting sustainable agriculture.",
+    stats: "5M+ food packages",
+    color: "#D97706",
+    icon: "food"
+  },
+  {
+    name: "Education",
+    description: "Building schools, providing supplies, and sponsoring children's education.",
+    stats: "16,000+ students",
+    color: "#7c3aed",
+    icon: "education"
+  },
+  {
+    name: "Emergency Relief",
+    description: "Rapid response to natural disasters, conflicts, and humanitarian crises.",
+    stats: "2.1M+ beneficiaries",
+    color: "#dc2626",
+    icon: "emergency"
+  },
+  {
+    name: "Orphan Care",
+    description: "Comprehensive support for orphaned children including housing, education, and healthcare.",
+    stats: "7,100+ orphans",
+    color: "#ec4899",
+    icon: "orphan"
+  }
+];
+---
+
+<Layout title="Our Impact | Qurbani USA - Measuring Change, Transforming Lives">
+  <Navbar />
+
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[500px] flex items-center overflow-hidden">
+      <div class="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1920&q=80"
+          alt="Community impact"
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/90 to-[#255764]/70"></div>
+      </div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+        <div class="max-w-3xl">
+          <span class="inline-block bg-[#D97706] text-white text-sm font-bold px-4 py-2 rounded-full mb-6" style="font-family: 'Signika', sans-serif;">
+            MEASURING CHANGE
+          </span>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+            Our Impact
+          </h1>
+          <p class="text-xl text-gray-200 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+            Every donation creates ripples of change. See how your generosity transforms lives and builds stronger communities around the world.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Impact Statistics -->
+    <section class="py-16 bg-gradient-to-br from-[#255764] to-[#1a4a55] -mt-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {impactStats.map((stat) => (
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+              <div class="text-3xl md:text-4xl font-bold text-[#D97706] mb-2" style="font-family: 'Signika', sans-serif;">
+                {stat.number}
+              </div>
+              <div class="text-white text-sm" style="font-family: 'Lato', sans-serif;">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Impact Video Section -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <div class="relative group cursor-pointer rounded-2xl overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=800&q=80"
+              alt="Watch our impact"
+              class="w-full h-[400px] object-cover"
+            />
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition">
+              <div class="w-20 h-20 bg-[#D97706] rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <span class="inline-block bg-[#255764]/10 text-[#255764] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+              WATCH OUR STORY
+            </span>
+            <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-6" style="font-family: 'Signika', sans-serif;">
+              See the Difference Your Donations Make
+            </h2>
+            <p class="text-gray-600 text-lg leading-relaxed mb-6" style="font-family: 'Lato', sans-serif;">
+              Behind every statistic is a real person whose life has been transformed. Watch how your generosity creates lasting change in communities across the globe.
+            </p>
+            <p class="text-gray-600 text-lg leading-relaxed mb-8" style="font-family: 'Lato', sans-serif;">
+              From providing clean water to restoring sight, from feeding families to educating children - your support makes it all possible.
+            </p>
+            <a href="/donate" class="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#c46a14] text-white font-bold px-8 py-4 rounded-lg transition" style="font-family: 'Signika', sans-serif;">
+              Donate Now
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Program Impact Areas -->
+    <section class="py-20 bg-stone-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-[#D97706]/10 text-[#D97706] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+            OUR PROGRAMS
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
+            Areas of Impact
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            We focus on sustainable programs that address the root causes of poverty and suffering.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {programAreas.map((program) => (
+            <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition group">
+              <div class="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={`background-color: ${program.color}20`}>
+                {program.icon === 'water' && (
+                  <svg class="w-8 h-8" style={`color: ${program.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                  </svg>
+                )}
+                {program.icon === 'medical' && (
+                  <svg class="w-8 h-8" style={`color: ${program.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                  </svg>
+                )}
+                {program.icon === 'food' && (
+                  <svg class="w-8 h-8" style={`color: ${program.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
+                )}
+                {program.icon === 'education' && (
+                  <svg class="w-8 h-8" style={`color: ${program.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                  </svg>
+                )}
+                {program.icon === 'emergency' && (
+                  <svg class="w-8 h-8" style={`color: ${program.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                )}
+                {program.icon === 'orphan' && (
+                  <svg class="w-8 h-8" style={`color: ${program.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                )}
+              </div>
+              <h3 class="text-xl font-bold text-[#333] mb-3" style="font-family: 'Signika', sans-serif;">
+                {program.name}
+              </h3>
+              <p class="text-gray-600 mb-4" style="font-family: 'Lato', sans-serif;">
+                {program.description}
+              </p>
+              <p class="font-bold" style={`color: ${program.color}; font-family: 'Signika', sans-serif;`}>
+                {program.stats}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Success Stories -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-[#255764]/10 text-[#255764] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+            REAL STORIES
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
+            Lives Transformed
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Behind every number is a human story. These are real people whose lives have been changed by your generosity.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+          {successStories.map((story) => (
+            <div class="bg-stone-50 rounded-2xl overflow-hidden group">
+              <div class="relative h-64 overflow-hidden">
+                <img
+                  src={story.image}
+                  alt={story.title}
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div class="absolute top-4 left-4">
+                  <span class="bg-[#D97706] text-white text-xs font-bold px-3 py-1 rounded-full" style="font-family: 'Signika', sans-serif;">
+                    {story.category}
+                  </span>
+                </div>
+              </div>
+              <div class="p-8">
+                <div class="flex items-center gap-2 text-gray-500 text-sm mb-3" style="font-family: 'Lato', sans-serif;">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  {story.location}
+                </div>
+                <h3 class="text-xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
+                  {story.title}
+                </h3>
+                <blockquote class="text-gray-600 italic mb-4 border-l-4 border-[#D97706] pl-4" style="font-family: 'Lato', sans-serif;">
+                  "{story.quote}"
+                </blockquote>
+                <p class="text-[#255764] font-semibold mb-2" style="font-family: 'Signika', sans-serif;">
+                  - {story.person}
+                </p>
+                <p class="text-gray-500 text-sm" style="font-family: 'Lato', sans-serif;">
+                  {story.impact}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div class="text-center mt-12">
+          <a href="/stories" class="inline-flex items-center gap-2 text-[#255764] font-bold hover:text-[#D97706] transition" style="font-family: 'Signika', sans-serif;">
+            Read More Stories
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Global Reach Map -->
+    <section class="py-20 bg-gradient-to-br from-[#255764] to-[#1a4a55]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-white/20 text-white text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+            GLOBAL PRESENCE
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+            Where We Work
+          </h2>
+          <p class="text-gray-300 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Operating in 53+ countries across Africa, Asia, the Middle East, and beyond.
+          </p>
+        </div>
+
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="text-center p-6 bg-white/10 rounded-xl">
+              <h3 class="text-xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">Africa</h3>
+              <p class="text-3xl font-bold text-[#D97706] mb-1" style="font-family: 'Signika', sans-serif;">22</p>
+              <p class="text-gray-300 text-sm" style="font-family: 'Lato', sans-serif;">Countries</p>
+            </div>
+            <div class="text-center p-6 bg-white/10 rounded-xl">
+              <h3 class="text-xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">Asia</h3>
+              <p class="text-3xl font-bold text-[#D97706] mb-1" style="font-family: 'Signika', sans-serif;">18</p>
+              <p class="text-gray-300 text-sm" style="font-family: 'Lato', sans-serif;">Countries</p>
+            </div>
+            <div class="text-center p-6 bg-white/10 rounded-xl">
+              <h3 class="text-xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">Middle East</h3>
+              <p class="text-3xl font-bold text-[#D97706] mb-1" style="font-family: 'Signika', sans-serif;">9</p>
+              <p class="text-gray-300 text-sm" style="font-family: 'Lato', sans-serif;">Countries</p>
+            </div>
+            <div class="text-center p-6 bg-white/10 rounded-xl">
+              <h3 class="text-xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">Other Regions</h3>
+              <p class="text-3xl font-bold text-[#D97706] mb-1" style="font-family: 'Signika', sans-serif;">4</p>
+              <p class="text-gray-300 text-sm" style="font-family: 'Lato', sans-serif;">Countries</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-[#D97706]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Be Part of Our Impact
+        </h2>
+        <p class="text-white/90 text-lg max-w-2xl mx-auto mb-8" style="font-family: 'Lato', sans-serif;">
+          Every donation, no matter the size, contributes to transforming lives. Join us in making a difference today.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a href="/donate" class="bg-white text-[#D97706] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition" style="font-family: 'Signika', sans-serif;">
+            Donate Now
+          </a>
+          <a href="/reports" class="bg-transparent border-2 border-white text-white font-bold px-8 py-4 rounded-lg hover:bg-white hover:text-[#D97706] transition" style="font-family: 'Signika', sans-serif;">
+            View Annual Reports
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

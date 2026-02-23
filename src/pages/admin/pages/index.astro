@@ -1,0 +1,437 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+
+export const prerender = false;
+
+// Get query params for filtering
+const url = new URL(Astro.request.url);
+const searchQuery = url.searchParams.get('search') || '';
+const statusFilter = url.searchParams.get('status') || 'all';
+
+// Fetch pages from Supabase
+let dbPages: any[] = [];
+let fetchError = '';
+
+try {
+  let query = supabaseAdmin
+    .from('pages')
+    .select('*')
+    .order('title', { ascending: true });
+
+  if (searchQuery) {
+    query = query.or(`title.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`);
+  }
+
+  if (statusFilter === 'published') {
+    query = query.eq('status', 'published');
+  } else if (statusFilter === 'draft') {
+    query = query.eq('status', 'draft');
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    fetchError = error.message;
+  } else {
+    dbPages = data || [];
+  }
+} catch (e: any) {
+  fetchError = e.message || 'Failed to fetch pages';
+}
+
+// Static pages that exist as .astro files (hardcoded list)
+const staticPages = [
+  { slug: '/', title: 'Homepage', template: 'home', type: 'static', file: 'index.astro' },
+  { slug: '/about', title: 'About Us', template: 'default', type: 'static', file: 'about.astro' },
+  { slug: '/contact', title: 'Contact', template: 'contact', type: 'static', file: 'contact.astro' },
+  { slug: '/donate', title: 'Donate', template: 'donate', type: 'static', file: 'donate.astro' },
+  { slug: '/food-packs', title: 'Food Packs', template: 'campaign', type: 'static', file: 'food-packs.astro' },
+  { slug: '/iftar', title: 'Iftar', template: 'campaign', type: 'static', file: 'iftar.astro' },
+  { slug: '/impact', title: 'Impact', template: 'default', type: 'static', file: 'impact.astro' },
+  { slug: '/media', title: 'Media', template: 'default', type: 'static', file: 'media.astro' },
+  { slug: '/reports', title: 'Reports', template: 'default', type: 'static', file: 'reports.astro' },
+  { slug: '/team', title: 'Our Team', template: 'default', type: 'static', file: 'team.astro' },
+  { slug: '/zakat-calculator', title: 'Zakat Calculator', template: 'zakat', type: 'static', file: 'zakat-calculator.astro' },
+  { slug: '/what-is-zakat', title: 'What is Zakat?', template: 'zakat', type: 'static', file: 'what-is-zakat.astro' },
+  { slug: '/zakat-eligibility', title: 'Zakat Eligibility', template: 'zakat', type: 'static', file: 'zakat-eligibility.astro' },
+  { slug: '/zakat-faq', title: 'Zakat FAQ', template: 'zakat', type: 'static', file: 'zakat-faq.astro' },
+  { slug: '/zakat-on-gold', title: 'Zakat on Gold', template: 'zakat', type: 'static', file: 'zakat-on-gold.astro' },
+  { slug: '/zakat-ul-fitr', title: 'Zakat ul-Fitr', template: 'zakat', type: 'static', file: 'zakat-ul-fitr.astro' },
+  { slug: '/fidya', title: 'Fidya', template: 'ramadan', type: 'static', file: 'fidya.astro' },
+  { slug: '/kaffarah', title: 'Kaffarah', template: 'ramadan', type: 'static', file: 'kaffarah.astro' },
+  { slug: '/30-days-of-ramadan', title: '30 Days of Ramadan', template: 'ramadan', type: 'static', file: '30-days-of-ramadan.astro' },
+];
+
+// Get slugs that exist in database
+const dbSlugs = new Set(dbPages.map(p => p.slug?.startsWith('/') ? p.slug : `/${p.slug}`));
+
+// Filter static pages - exclude ones that exist in database (to avoid duplicates)
+let filteredStaticPages = staticPages.filter(p => !dbSlugs.has(p.slug));
+
+// Apply search filter to static pages
+if (searchQuery) {
+  const search = searchQuery.toLowerCase();
+  filteredStaticPages = filteredStaticPages.filter(p =>
+    p.title.toLowerCase().includes(search) || p.slug.toLowerCase().includes(search)
+  );
+}
+
+// Combine both sources - DB pages marked as 'dynamic', static as 'static'
+// Database pages take priority (they're editable), static pages shown only if no DB entry
+const allPages = [
+  ...dbPages.map(p => ({ ...p, type: 'dynamic' })),
+  ...filteredStaticPages.map(p => ({ ...p, status: 'published', type: 'static' }))
+];
+
+// Filter by status if not showing all
+let displayPages = allPages;
+if (statusFilter === 'published') {
+  displayPages = allPages.filter(p => p.status === 'published');
+} else if (statusFilter === 'draft') {
+  displayPages = allPages.filter(p => p.status === 'draft');
+}
+
+// Sort alphabetically by title
+displayPages.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+// Stats
+const totalCount = displayPages.length;
+const publishedCount = displayPages.filter(p => p.status === 'published').length;
+const draftCount = displayPages.filter(p => p.status === 'draft').length;
+const staticCount = displayPages.filter(p => p.type === 'static').length;
+const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
+---
+
+<AdminLayout title="Pages" activeNav="pages">
+  <!-- Stats Bar -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total</p>
+      <p class="text-2xl font-bold text-gray-900 mt-1">{totalCount}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Published</p>
+      <p class="text-2xl font-bold text-green-600 mt-1">{publishedCount}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Draft</p>
+      <p class="text-2xl font-bold text-amber-600 mt-1">{draftCount}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Static Files</p>
+      <p class="text-2xl font-bold text-blue-600 mt-1">{staticCount}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Database</p>
+      <p class="text-2xl font-bold text-purple-600 mt-1">{dynamicCount}</p>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+      <!-- Search -->
+      <div class="relative flex-1 max-w-md">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search pages..."
+          value={searchQuery}
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-sm"
+        />
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-3">
+        <select id="status-filter" class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d] bg-white">
+          <option value="all" selected={statusFilter === 'all'}>All Status</option>
+          <option value="published" selected={statusFilter === 'published'}>Published</option>
+          <option value="draft" selected={statusFilter === 'draft'}>Draft</option>
+        </select>
+
+        <button id="clear-filters" class="px-3 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
+          Clear Filters
+        </button>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 lg:ml-auto">
+        <button
+          id="initContentBtn"
+          class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2"
+          title="Initialize default content for pages"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Initialize
+        </button>
+        <a href="/admin/pages/new" class="px-4 py-2.5 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#013d39] transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Page
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
+
+  <!-- Error Message -->
+  {fetchError && (
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-red-800">
+          <strong>Error:</strong> {fetchError}
+        </p>
+      </div>
+    </div>
+  )}
+
+  <!-- Empty State -->
+  {displayPages.length === 0 && !fetchError && (
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">No pages found</h3>
+      <p class="text-gray-500 mb-6 max-w-md mx-auto">
+        {searchQuery ? 'Try adjusting your search query' : 'Create your first page to get started'}
+      </p>
+      <a href="/admin/pages/new" class="px-4 py-2.5 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition inline-flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Create Page
+      </a>
+    </div>
+  )}
+
+  <!-- Pages Table -->
+  {displayPages.length > 0 && (
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Page</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Type</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Template</th>
+            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
+            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {displayPages.map((page) => (
+            <tr class="hover:bg-gray-50 transition" data-page-id={page.id}>
+              <td class="px-6 py-4">
+                <div>
+                  <p class="font-semibold text-gray-900">{page.title}</p>
+                  <p class="text-sm text-gray-500">{page.slug}</p>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                  page.type === 'static'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-purple-100 text-purple-800'
+                }`}>
+                  {page.type === 'static' ? 'Static File' : 'Database'}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-sm text-gray-700 capitalize">{page.template || 'default'}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                  page.status === 'published'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {page.status === 'published' ? 'Published' : 'Draft'}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-1">
+                  {page.type === 'dynamic' ? (
+                    <a
+                      href={`/admin/pages/${page.id}`}
+                      class="p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
+                      title="Edit"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </a>
+                  ) : (
+                    <span
+                      class="p-2 text-gray-300 cursor-not-allowed"
+                      title="Static files can only be edited in code"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </span>
+                  )}
+                  <a
+                    href={page.slug}
+                    target="_blank"
+                    class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    title="View Live"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                  </a>
+                  {page.type === 'dynamic' && (
+                    <button
+                      onclick={`deletePage('${page.id}', '${(page.title || '').replace(/'/g, "\\'")}')`}
+                      class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Delete"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+      <p class="text-sm text-gray-600">
+        Showing <span class="font-medium">{displayPages.length}</span> page{displayPages.length !== 1 ? 's' : ''}
+        {staticCount > 0 && <span class="text-gray-400 ml-2">({staticCount} static, {dynamicCount} database)</span>}
+      </p>
+    </div>
+  </div>
+  )}
+
+  <!-- Info Box -->
+  <div class="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <p class="text-blue-800 font-medium">About Page Types</p>
+        <p class="text-blue-700 text-sm mt-1">
+          <strong>Static Files</strong> are .astro files in the codebase - they can only be edited in code.<br>
+          <strong>Database Pages</strong> are stored in Supabase and can be edited from the admin panel.
+        </p>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const icon = type === 'success'
+      ? '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+    toast.innerHTML = icon + '<span>' + message + '</span>';
+    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${
+      type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+    }`;
+
+    setTimeout(() => {
+      toast.className = 'hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3';
+    }, 4000);
+  }
+
+  function applyFilters() {
+    const url = new URL(window.location.href);
+    const search = document.getElementById('search-input').value;
+    const status = document.getElementById('status-filter').value;
+
+    if (search) url.searchParams.set('search', search);
+    else url.searchParams.delete('search');
+
+    if (status !== 'all') url.searchParams.set('status', status);
+    else url.searchParams.delete('status');
+
+    window.location.href = url.toString();
+  }
+
+  function clearAllFilters() {
+    window.location.href = '/admin/pages';
+  }
+
+  async function deletePage(id, title) {
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/pages', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+
+      showToast('Page deleted successfully');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Search on Enter
+    document.getElementById('search-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applyFilters();
+    });
+
+    // Filter dropdowns
+    document.getElementById('status-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('clear-filters')?.addEventListener('click', clearAllFilters);
+
+    // Initialize content button
+    const initBtn = document.getElementById('initContentBtn');
+    initBtn?.addEventListener('click', async () => {
+      initBtn.disabled = true;
+      initBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Initializing...';
+
+      try {
+        const response = await fetch('/api/pages/init-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(result.message);
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to initialize content', 'error');
+      }
+
+      initBtn.disabled = false;
+      initBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Initialize';
+    });
+  });
+</script>

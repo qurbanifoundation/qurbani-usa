@@ -1,0 +1,457 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+import { getPageTemplates, getDonationBoxTemplates } from '../../../lib/templates';
+
+export const prerender = false;
+
+// Fetch templates from database (centralized)
+const pageTemplates = await getPageTemplates();
+const donationBoxTemplates = await getDonationBoxTemplates();
+
+// Fetch media for image selection
+let mediaFiles: any[] = [];
+try {
+  const { data } = await supabaseAdmin.storage.from('media').list('', { limit: 100 });
+  if (data) {
+    const { data: { publicUrl } } = supabaseAdmin.storage.from('media').getPublicUrl('');
+    mediaFiles = data
+      .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+      .map(file => ({
+        name: file.name,
+        url: `${publicUrl}${file.name}`
+      }));
+  }
+} catch (e) {}
+
+const categories = [
+  'Emergencies',
+  'Qurbani',
+  'Zakat',
+  'Ramadan',
+  'Water for Life',
+  'Food Aid',
+  'Orphan Sponsorship',
+  'Education',
+  'Sadaqah Jariyah',
+  'Healthcare',
+];
+---
+
+<AdminLayout title="New Campaign" activeNav="campaigns">
+  <div class="max-w-4xl">
+    <!-- Back Link -->
+    <a href="/admin/campaigns" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Back to Campaigns
+    </a>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50"></div>
+
+    <form id="campaignForm" class="space-y-6">
+      <!-- Basic Information -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Basic Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Title *</label>
+            <input
+              type="text"
+              name="title"
+              id="title"
+              required
+              placeholder="e.g., Gaza Emergency Appeal"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL Slug *</label>
+            <div class="flex">
+              <span class="inline-flex items-center px-3 border border-r-0 border-gray-200 rounded-l-lg bg-gray-50 text-gray-500 text-sm">
+                /campaigns/
+              </span>
+              <input
+                type="text"
+                name="slug"
+                id="slug"
+                required
+                placeholder="gaza-emergency"
+                class="flex-1 px-4 py-2 border border-gray-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              name="category"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option value={cat.toLowerCase().replace(/\s+/g, '-')}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Subtitle / Short Description</label>
+            <input
+              type="text"
+              name="subtitle"
+              placeholder="Brief description shown on cards"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Featured Image -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Featured Image</h2>
+        <div id="imagePreview" class="hidden mb-4">
+          <img id="previewImg" src="" alt="" class="w-full max-h-48 object-cover rounded-lg" />
+        </div>
+        <input type="hidden" name="featured_image" id="featured_image" />
+
+        <div class="flex gap-4">
+          <button
+            type="button"
+            onclick="openMediaModal()"
+            class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#01433f] transition"
+          >
+            Choose from Gallery
+          </button>
+          <input
+            type="url"
+            id="imageUrl"
+            placeholder="Or paste image URL"
+            class="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+          />
+          <button type="button" onclick="setImageFromUrl()" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+            Use URL
+          </button>
+        </div>
+      </div>
+
+      <!-- Campaign Content -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Campaign Content</h2>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Full Description</label>
+          <textarea
+            name="description"
+            rows="8"
+            placeholder="Write the full campaign description here. Just type plain text - formatting is automatic."
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+          ></textarea>
+          <p class="text-sm text-gray-400 mt-2">Just type plain text. Use blank lines for paragraph breaks. Use *asterisks* for bold.</p>
+        </div>
+      </div>
+
+      <!-- Fundraising Goal -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Fundraising Goal</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Goal Amount ($)</label>
+            <input
+              type="number"
+              name="goal_amount"
+              placeholder="50000"
+              min="0"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Initial Raised Amount ($)</label>
+            <input
+              type="number"
+              name="raised_amount"
+              placeholder="0"
+              min="0"
+              value="0"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Donation Options -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-bold text-gray-800">Donation Options</h2>
+          <button type="button" onclick="addDonationOption()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f] transition">
+            + Add Option
+          </button>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">Define preset donation amounts with labels</p>
+
+        <div id="donationOptions" class="space-y-3">
+          <!-- Options will be added here -->
+        </div>
+
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+          <p class="text-sm text-gray-600">Example: "$50 - Feed a family for a week"</p>
+        </div>
+      </div>
+
+      <!-- Status & Visibility -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">Status & Visibility</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" name="is_active" id="is_active" checked class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]" />
+            <label for="is_active" class="text-sm text-gray-700">Active (Published)</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" name="is_featured" id="is_featured" class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]" />
+            <label for="is_featured" class="text-sm text-gray-700">Featured Campaign</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" name="show_on_homepage" id="show_on_homepage" class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]" />
+            <label for="show_on_homepage" class="text-sm text-gray-700">Show on Homepage</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Template Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-2">Template Settings</h2>
+        <p class="text-sm text-gray-500 mb-6">Override the default templates for this campaign</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Page Template</label>
+            <select
+              name="page_template"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+            >
+              <option value="">Use Default</option>
+              {pageTemplates.map((template) => (
+                <option value={template.template_key}>{template.template_label}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Controls the overall page layout and style</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
+            <select
+              name="donation_box_template"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+            >
+              <option value="">Use Default</option>
+              {donationBoxTemplates.map((template) => (
+                <option value={template.template_key}>{template.template_label}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Controls the donation box appearance</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEO -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-6">SEO Settings</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
+            <input
+              type="text"
+              name="meta_title"
+              placeholder="Leave blank to use campaign title"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+            <textarea
+              name="meta_description"
+              rows="2"
+              placeholder="Brief description for search engines"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-4">
+        <a href="/admin/campaigns" class="px-6 py-2 border border-gray-200 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition">
+          Cancel
+        </a>
+        <button type="submit" class="px-6 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+          Create Campaign
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Media Modal -->
+  <div id="mediaModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="font-bold text-lg">Select Image</h3>
+        <button onclick="closeMediaModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4 overflow-y-auto max-h-[60vh]">
+        {mediaFiles.length === 0 ? (
+          <p class="text-center text-gray-500 py-8">No images in media library. <a href="/admin/settings/media" class="text-[#01534d] underline">Upload images</a></p>
+        ) : (
+          <div class="grid grid-cols-4 gap-4">
+            {mediaFiles.map((file) => (
+              <div
+                class="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-[#01534d] transition"
+                onclick={`selectImage('${file.url}')`}
+              >
+                <img src={file.url} alt={file.name} class="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  // Auto-generate slug from title
+  document.getElementById('title').addEventListener('input', function() {
+    const slug = this.value
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+    document.getElementById('slug').value = slug;
+  });
+
+  // Media modal
+  function openMediaModal() {
+    document.getElementById('mediaModal').classList.remove('hidden');
+  }
+
+  function closeMediaModal() {
+    document.getElementById('mediaModal').classList.add('hidden');
+  }
+
+  function selectImage(url) {
+    document.getElementById('featured_image').value = url;
+    document.getElementById('previewImg').src = url;
+    document.getElementById('imagePreview').classList.remove('hidden');
+    closeMediaModal();
+  }
+
+  function setImageFromUrl() {
+    const url = document.getElementById('imageUrl').value;
+    if (url) {
+      selectImage(url);
+    }
+  }
+
+  // Donation options
+  let donationOptions = [];
+
+  function addDonationOption() {
+    const container = document.getElementById('donationOptions');
+    const index = donationOptions.length;
+
+    const div = document.createElement('div');
+    div.className = 'flex gap-3 items-center';
+    div.id = `option-${index}`;
+    div.innerHTML = `
+      <input type="number" placeholder="Amount ($)" class="w-32 px-3 py-2 border border-gray-200 rounded-lg" data-field="amount" />
+      <input type="text" placeholder="Label (e.g., Feed a family)" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg" data-field="label" />
+      <button type="button" onclick="removeDonationOption(${index})" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </button>
+    `;
+    container.appendChild(div);
+    donationOptions.push({ amount: '', label: '' });
+  }
+
+  function removeDonationOption(index) {
+    document.getElementById(`option-${index}`).remove();
+    donationOptions[index] = null;
+  }
+
+  function getDonationOptions() {
+    const options = [];
+    document.querySelectorAll('#donationOptions > div').forEach(div => {
+      const amount = div.querySelector('[data-field="amount"]').value;
+      const label = div.querySelector('[data-field="label"]').value;
+      if (amount) {
+        options.push({ amount: parseFloat(amount), label: label || `$${amount}` });
+      }
+    });
+    return options;
+  }
+
+  // Toast
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    setTimeout(() => {
+      toast.className = 'hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50';
+    }, 3000);
+  }
+
+  // Form submission
+  document.getElementById('campaignForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+      title: formData.get('title'),
+      slug: formData.get('slug'),
+      subtitle: formData.get('subtitle') || null,
+      description: formData.get('description') || null,
+      featured_image: formData.get('featured_image') || null,
+      goal_amount: formData.get('goal_amount') ? parseFloat(formData.get('goal_amount')) : null,
+      raised_amount: formData.get('raised_amount') ? parseFloat(formData.get('raised_amount')) : 0,
+      donation_options: getDonationOptions(),
+      is_active: formData.get('is_active') === 'on',
+      is_featured: formData.get('is_featured') === 'on',
+      show_on_homepage: formData.get('show_on_homepage') === 'on',
+      meta_title: formData.get('meta_title') || null,
+      meta_description: formData.get('meta_description') || null,
+      page_template: formData.get('page_template') || null,
+      donation_box_template: formData.get('donation_box_template') || null,
+    };
+
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to create campaign');
+      }
+
+      showToast('Campaign created successfully!');
+      setTimeout(() => {
+        window.location.href = '/admin/campaigns';
+      }, 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+
+  // Add initial donation options
+  addDonationOption();
+  addDonationOption();
+  addDonationOption();
+</script>

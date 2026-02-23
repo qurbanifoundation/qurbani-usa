@@ -1,0 +1,355 @@
+---
+/**
+ * Ramadan 2026 Main Page
+ * Hub for all Ramadan giving options
+ */
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout title="Ramadan 2026 - Qurbani Foundation USA" description="Maximize your blessings this Ramadan. Give Fidya, Kaffarah, Zakat ul-Fitr, feed Iftar, and provide food packs to those in need.">
+  <Navbar />
+
+  <!-- Hero Section -->
+  <section class="relative pt-24 pb-20 overflow-hidden">
+    <!-- Background gradient with purple Ramadan theme -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[#012820] via-[#024139] to-[#013028]"></div>
+    <!-- Decorative pattern - crescent moons and stars -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.4\"%3E%3Cpath d=\"M30 30c0-8.284 6.716-15 15-15 1.657 0 3.258.268 4.758.764C45.722 8.396 38.463 3 30 3 16.193 3 5 14.193 5 28s11.193 25 25 25c8.463 0 15.722-5.396 19.758-12.764A15.014 15.014 0 0145 41c-8.284 0-15-6.716-15-15z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+    <!-- Decorative elements -->
+    <div class="absolute top-20 right-10 w-32 h-32 bg-[#fdc448]/20 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-10 left-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+
+    <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-4xl mx-auto">
+        <!-- Breadcrumb -->
+        <div class="flex items-center justify-center gap-2 text-white/60 text-sm mb-6">
+          <a href="/" class="hover:text-white transition">Home</a>
+          <span>/</span>
+          <span class="text-white">Ramadan 2026</span>
+        </div>
+
+        <!-- Crescent Moon Icon -->
+        <div class="w-20 h-20 mx-auto mb-6 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
+          <svg class="w-10 h-10 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+          </svg>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Ramadan <span class="text-[#fdc448]">2026</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-white/90 mb-4 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+          The blessed month of fasting, prayer, and charity
+        </p>
+
+        <p class="text-base text-white/70 max-w-2xl mx-auto mb-10" style="font-family: 'Lato', sans-serif;">
+          "Whoever feeds a fasting person will have a reward like that of the fasting person, without any reduction in his reward."
+          <span class="block mt-2 text-sm italic">- Prophet Muhammad (PBUH)</span>
+        </p>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <p class="text-2xl md:text-3xl font-bold text-[#fdc448]" style="font-family: 'Signika', sans-serif;">$10</p>
+            <p class="text-sm text-white/70">Fidya per day</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <p class="text-2xl md:text-3xl font-bold text-[#fdc448]" style="font-family: 'Signika', sans-serif;">$300</p>
+            <p class="text-sm text-white/70">Kaffarah</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <p class="text-2xl md:text-3xl font-bold text-[#fdc448]" style="font-family: 'Signika', sans-serif;">$15</p>
+            <p class="text-sm text-white/70">Zakat ul-Fitr</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <p class="text-2xl md:text-3xl font-bold text-[#fdc448]" style="font-family: 'Signika', sans-serif;">$5</p>
+            <p class="text-sm text-white/70">Feed Iftar</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave divider -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-16">
+        <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="#f8f9fa"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Ramadan Giving Options -->
+  <section class="bg-[#f8f9fa] py-16">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Ways to Give This <span class="text-[#024139]">Ramadan</span>
+        </h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          Maximize your blessings during the holiest month. Every act of charity is multiplied in reward.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Fidya Card -->
+        <a href="/fidya" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+          <div class="h-48 bg-gradient-to-br from-[#16a34a] to-[#15803d] relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <svg class="w-20 h-20 text-white/90 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
+              $10/day
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#16a34a] transition" style="font-family: 'Signika', sans-serif;">
+              Fidya
+            </h3>
+            <p class="text-gray-600 text-sm mb-4">
+              For those who cannot fast due to illness, old age, or pregnancy. Feed one person for each missed day.
+            </p>
+            <span class="inline-flex items-center gap-2 text-[#16a34a] font-semibold text-sm group-hover:gap-3 transition-all">
+              Pay Fidya
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- Kaffarah Card -->
+        <a href="/kaffarah" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+          <div class="h-48 bg-gradient-to-br from-[#dc2626] to-[#b91c1c] relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <svg class="w-20 h-20 text-white/90 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
+              $300
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#dc2626] transition" style="font-family: 'Signika', sans-serif;">
+              Kaffarah
+            </h3>
+            <p class="text-gray-600 text-sm mb-4">
+              Expiation for deliberately breaking a fast without a valid reason. Feed 60 people for each day broken.
+            </p>
+            <span class="inline-flex items-center gap-2 text-[#dc2626] font-semibold text-sm group-hover:gap-3 transition-all">
+              Pay Kaffarah
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- Zakat ul-Fitr Card -->
+        <a href="/zakat-ul-fitr" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+          <div class="h-48 bg-gradient-to-br from-[#0096D6] to-[#0077b3] relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <svg class="w-20 h-20 text-white/90 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+            </svg>
+            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
+              $15/person
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#0096D6] transition" style="font-family: 'Signika', sans-serif;">
+              Zakat ul-Fitr
+            </h3>
+            <p class="text-gray-600 text-sm mb-4">
+              Obligatory charity given before Eid prayer. Purifies your fast and provides for the needy on Eid.
+            </p>
+            <span class="inline-flex items-center gap-2 text-[#0096D6] font-semibold text-sm group-hover:gap-3 transition-all">
+              Pay Zakat ul-Fitr
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- Feed Iftar Card -->
+        <a href="/iftar" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+          <div class="h-48 bg-gradient-to-br from-[#ea580c] to-[#c2410c] relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <svg class="w-20 h-20 text-white/90 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 3a1 1 0 011-1h.01a1 1 0 010 2H7a1 1 0 01-1-1zm2 3a1 1 0 00-2 0v1a2 2 0 00-2 2v1a2 2 0 00-2 2v.683a3.7 3.7 0 011.055.485 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0A3.7 3.7 0 0118 12.683V12a2 2 0 00-2-2V9a2 2 0 00-2-2V6a1 1 0 10-2 0v1h-1V6a1 1 0 10-2 0v1H8V6zm10 8.868a3.704 3.704 0 01-4.055-.036 1.704 1.704 0 00-1.89 0 3.704 3.704 0 01-4.11 0 1.704 1.704 0 00-1.89 0A3.704 3.704 0 012 14.868V17a1 1 0 001 1h14a1 1 0 001-1v-2.132z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
+              $5/meal
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#ea580c] transition" style="font-family: 'Signika', sans-serif;">
+              Feed Iftar
+            </h3>
+            <p class="text-gray-600 text-sm mb-4">
+              Provide a nutritious iftar meal to a fasting person. Share the blessings of breaking fast together.
+            </p>
+            <span class="inline-flex items-center gap-2 text-[#ea580c] font-semibold text-sm group-hover:gap-3 transition-all">
+              Feed Someone Today
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- Food Packs Card -->
+        <a href="/food-packs" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+          <div class="h-48 bg-gradient-to-br from-[#eab308] to-[#ca8a04] relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <svg class="w-20 h-20 text-white/90 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"></path>
+            </svg>
+            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
+              From $50
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#eab308] transition" style="font-family: 'Signika', sans-serif;">
+              Food Packs
+            </h3>
+            <p class="text-gray-600 text-sm mb-4">
+              Provide a family with essential food supplies for the entire month of Ramadan.
+            </p>
+            <span class="inline-flex items-center gap-2 text-[#ca8a04] font-semibold text-sm group-hover:gap-3 transition-all">
+              Provide Food Packs
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        <!-- General Ramadan Donation Card -->
+        <a href="/donate" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+          <div class="h-48 bg-gradient-to-br from-[#024139] to-[#012820] relative overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <svg class="w-20 h-20 text-white/90 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+            </svg>
+            <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full">
+              Any Amount
+            </div>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#024139] transition" style="font-family: 'Signika', sans-serif;">
+              Ramadan Donation
+            </h3>
+            <p class="text-gray-600 text-sm mb-4">
+              Give a general donation to support our Ramadan programs wherever the need is greatest.
+            </p>
+            <span class="inline-flex items-center gap-2 text-[#024139] font-semibold text-sm group-hover:gap-3 transition-all">
+              Donate Now
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Virtues of Ramadan -->
+  <section class="py-16 bg-white">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          The Virtues of <span class="text-[#024139]">Ramadan</span>
+        </h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+          Ramadan is a time of spiritual reflection, self-improvement, and heightened devotion to Allah.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Virtue 1 -->
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#024139]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Gates of Paradise Open</h3>
+          <p class="text-gray-600 text-sm">
+            "When the month of Ramadan begins, the gates of Paradise are opened and the gates of Hellfire are closed." - Hadith
+          </p>
+        </div>
+
+        <!-- Virtue 2 -->
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#fdc448]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#ca8a04]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Rewards Multiplied</h3>
+          <p class="text-gray-600 text-sm">
+            Every good deed performed during Ramadan is multiplied many times over. Charity given is especially blessed.
+          </p>
+        </div>
+
+        <!-- Virtue 3 -->
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#16a34a]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Forgiveness & Mercy</h3>
+          <p class="text-gray-600 text-sm">
+            "Whoever fasts during Ramadan with faith and seeking reward, all his past sins will be forgiven." - Hadith
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-br from-[#024139] to-[#012820] relative overflow-hidden">
+    <!-- Decorative elements -->
+    <div class="absolute top-0 right-0 w-64 h-64 bg-[#fdc448]/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Make This Ramadan Count
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        Your generosity can transform lives. Help us provide food, support, and hope to those in need during this blessed month.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/donate"
+          class="inline-flex items-center gap-2 bg-[#fdc448] hover:bg-[#efb000] text-[#61470e] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+          style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(253, 196, 72, 0.4);"
+        >
+          Donate Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+        <a
+          href="/zakat-calculator"
+          class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl transition border border-white/20"
+        >
+          Calculate Your Zakat
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>

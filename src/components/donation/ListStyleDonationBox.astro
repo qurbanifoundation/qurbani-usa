@@ -1,0 +1,646 @@
+---
+/**
+ * LIST STYLE DONATION BOX
+ *
+ * A row-based donation box with:
+ * - Underline-style toggle tabs
+ * - Full-width amount rows with descriptions
+ * - Custom amount input row
+ * - Large orange donate button
+ */
+
+interface Props {
+  campaignSlug: string;
+  campaignTitle: string;
+  campaignImage?: string;
+  donationOptions: Array<{ amount: number; label?: string }>;
+  colors?: {
+    bgColor?: string;
+    textColor?: string;
+    textMutedColor?: string;
+    accentColor?: string;
+    accentTextColor?: string;
+    borderColor?: string;
+  };
+  textSettings?: {
+    titleText?: string;
+    subtitleText?: string;
+    buttonText?: string;
+    singleText?: string;
+    monthlyText?: string;
+    customAmountPlaceholder?: string;
+    trustMessageText?: string;
+    trustLinkText?: string;
+    trustLinkUrl?: string;
+  };
+}
+
+const {
+  campaignSlug,
+  campaignTitle,
+  campaignImage,
+  donationOptions,
+  colors = {},
+  textSettings = {}
+} = Astro.props;
+
+// Default colors for this style
+const defaultColors = {
+  bgColor: '#f5f5f5',
+  textColor: '#374151',
+  textMutedColor: '#6b7280',
+  accentColor: '#D97706',
+  accentTextColor: '#ffffff',
+  borderColor: '#e5e7eb',
+};
+
+const c = { ...defaultColors, ...colors };
+const t = {
+  titleText: textSettings.titleText || campaignTitle,
+  subtitleText: textSettings.subtitleText || '100% reaches those in need',
+  buttonText: textSettings.buttonText || 'DONATE NOW',
+  singleText: textSettings.singleText || 'Donate once',
+  monthlyText: textSettings.monthlyText || 'Donate monthly',
+  customAmountPlaceholder: textSettings.customAmountPlaceholder || 'Other amount',
+  trustMessageText: textSettings.trustMessageText || 'Donating through Qurbani Foundation is safe, secure, and easy with many payment options to choose from.',
+  trustLinkText: textSettings.trustLinkText || 'View other ways to donate',
+  trustLinkUrl: textSettings.trustLinkUrl || '/donate',
+};
+
+// Default description for amounts
+const defaultDescription = 'support for local, vetted nonprofit organizations worldwide';
+
+const uniqueId = Math.random().toString(36).substring(7);
+---
+
+<div class="list-donation-box" id={`donation-box-${uniqueId}`} style={`background-color: ${c.bgColor};`}>
+  <!-- Toggle Tabs -->
+  <div class="donation-tabs" style={`border-bottom: 2px solid ${c.borderColor};`}>
+    <button
+      type="button"
+      class="tab-btn active"
+      data-type="single"
+      style={`color: ${c.textColor}; border-bottom-color: ${c.accentColor};`}
+    >
+      {t.singleText}
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      data-type="monthly"
+      style={`color: ${c.textMutedColor};`}
+    >
+      {t.monthlyText}
+    </button>
+  </div>
+
+  <!-- Amount Rows -->
+  <div class="amount-rows">
+    {donationOptions.map((opt, index) => {
+      const isSelected = index === 2;
+      return (
+        <button
+          type="button"
+          class={`amount-row ${isSelected ? 'selected' : ''}`}
+          data-amount={opt.amount}
+          data-label={opt.label || defaultDescription}
+          style={isSelected
+            ? `background-color: ${c.accentColor}; color: ${c.accentTextColor}; border-color: ${c.accentColor};`
+            : `background-color: #ffffff; color: ${c.textColor}; border-color: ${c.borderColor};`
+          }
+          data-active-bg={c.accentColor}
+          data-active-text={c.accentTextColor}
+          data-inactive-bg="#ffffff"
+          data-inactive-text={c.textColor}
+          data-border={c.borderColor}
+        >
+          <div class="amount-info">
+            <div class="amount-value">
+              <span class="amount-number">${opt.amount.toLocaleString()}</span>
+              <span class="amount-sub">
+                <span class="amount-currency">USD</span>
+                <span class="amount-frequency">once</span>
+              </span>
+            </div>
+            <div class="amount-description" style={isSelected ? `color: ${c.accentTextColor};` : `color: ${c.textMutedColor};`}>
+              {opt.label || defaultDescription}
+            </div>
+          </div>
+          <div class="amount-arrow" style={isSelected
+            ? `background-color: rgba(0,0,0,0.15); color: ${c.accentTextColor};`
+            : `background-color: ${c.borderColor}; color: ${c.textMutedColor};`
+          }>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </div>
+        </button>
+      );
+    })}
+
+    <!-- Custom Amount Row -->
+    <div class="custom-amount-row" style={`background-color: #ffffff; border-color: ${c.borderColor};`}>
+      <div class="custom-input-wrapper">
+        <span class="currency-symbol" style={`color: ${c.textColor};`}>$</span>
+        <input
+          type="number"
+          class="custom-input"
+          placeholder=""
+          min="1"
+          style={`color: ${c.textColor};`}
+          data-active-bg={c.accentColor}
+          data-active-text={c.accentTextColor}
+        />
+      </div>
+      <div class="custom-label" style={`color: ${c.textMutedColor};`}>{t.customAmountPlaceholder}</div>
+      <button type="button" class="custom-arrow" style={`background-color: ${c.borderColor}; color: ${c.textMutedColor};`}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Donate Button -->
+  <div class="donate-btn-wrapper" style="background-color: #e8e8e8; padding: 16px;">
+    <button
+      type="button"
+      class="donate-btn"
+      style={`background-color: ${c.accentColor}; color: ${c.accentTextColor};`}
+    >
+      {t.buttonText}
+    </button>
+  </div>
+
+  <!-- Trust Message -->
+  <div class="trust-message" style={`background-color: ${c.bgColor}; border-top: 1px solid ${c.borderColor};`}>
+    <div class="trust-icon" style={`color: ${c.textMutedColor};`}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+      </svg>
+    </div>
+    <div class="trust-text">
+      <span style={`color: ${c.textMutedColor};`}>{t.trustMessageText}</span>
+      {t.trustLinkText && (
+        <a href={t.trustLinkUrl} class="trust-link" style={`color: ${c.accentColor};`}>
+          {t.trustLinkText}
+        </a>
+      )}
+    </div>
+  </div>
+</div>
+
+<style>
+  .list-donation-box {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.25), 0 4px 20px -5px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  /* Toggle Tabs */
+  .donation-tabs {
+    display: flex;
+    background-color: #ffffff;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 16px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab-btn.active {
+    border-bottom-width: 3px;
+    border-bottom-style: solid;
+  }
+
+  .tab-btn:hover:not(.active) {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  /* Amount Rows */
+  .amount-rows {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .amount-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border: none;
+    border-bottom: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+    text-align: left;
+  }
+
+  .amount-row:hover:not(.selected) {
+    background-color: #f9f9f9 !important;
+  }
+
+  .amount-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+  }
+
+  .amount-value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 70px;
+  }
+
+  .amount-number {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .amount-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .amount-currency {
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    opacity: 0.7;
+    font-style: normal;
+  }
+
+  .amount-frequency {
+    font-size: 11px;
+    font-weight: 400;
+    font-style: italic;
+    opacity: 0.6;
+  }
+
+  .amount-description {
+    font-size: 14px;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .amount-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  /* Custom Amount Row */
+  .custom-amount-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid;
+    gap: 16px;
+  }
+
+  .custom-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 70px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #fff;
+  }
+
+  .currency-symbol {
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .custom-input {
+    width: 60px;
+    border: none;
+    outline: none;
+    font-size: 18px;
+    font-weight: 500;
+    background: transparent;
+  }
+
+  .custom-input::-webkit-outer-spin-button,
+  .custom-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .custom-input[type=number] {
+    -moz-appearance: textfield;
+  }
+
+  .custom-label {
+    flex: 1;
+    font-size: 14px;
+  }
+
+  .custom-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .custom-arrow:hover {
+    opacity: 0.8;
+  }
+
+  /* Donate Button */
+  .donate-btn-wrapper {
+    padding: 16px;
+  }
+
+  .donate-btn {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .donate-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  /* Trust Message */
+  .trust-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .trust-icon {
+    flex-shrink: 0;
+    opacity: 0.5;
+    margin-top: 2px;
+  }
+
+  .trust-text {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .trust-link {
+    display: inline;
+    font-weight: 500;
+    text-decoration: none;
+    margin-left: 4px;
+  }
+
+  .trust-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .amount-info {
+      gap: 12px;
+    }
+
+    .amount-number {
+      font-size: 20px;
+    }
+
+    .amount-description {
+      font-size: 13px;
+    }
+  }
+</style>
+
+<script define:vars={{ campaignSlug, campaignTitle, campaignImage, uniqueId, accentColor: c.accentColor, accentTextColor: c.accentTextColor, textColor: c.textColor, textMutedColor: c.textMutedColor, borderColor: c.borderColor }}>
+  document.addEventListener('DOMContentLoaded', function() {
+    const box = document.getElementById(`donation-box-${uniqueId}`);
+    if (!box) return;
+
+    const tabBtns = box.querySelectorAll('.tab-btn');
+    const amountRows = box.querySelectorAll('.amount-row');
+    const customInput = box.querySelector('.custom-input');
+    const customRow = box.querySelector('.custom-amount-row');
+    const customArrow = box.querySelector('.custom-arrow');
+    const donateBtn = box.querySelector('.donate-btn');
+
+    let selectedAmount = 80; // Default to third option ($80 in screenshot)
+    let selectedLabel = '';
+    let donationType = 'single';
+
+    // Tab switching
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        donationType = this.dataset.type;
+        tabBtns.forEach(b => {
+          if (b.dataset.type === donationType) {
+            b.classList.add('active');
+            b.style.borderBottomColor = accentColor;
+            b.style.color = textColor;
+          } else {
+            b.classList.remove('active');
+            b.style.borderBottomColor = 'transparent';
+            b.style.color = textMutedColor;
+          }
+        });
+        // Update frequency text on all amount rows
+        const frequencyTexts = box.querySelectorAll('.amount-frequency');
+        frequencyTexts.forEach(freq => {
+          freq.textContent = donationType === 'monthly' ? 'monthly' : 'once';
+        });
+      });
+    });
+
+    // Amount row selection
+    amountRows.forEach(row => {
+      row.addEventListener('click', function() {
+        selectAmount(parseInt(this.dataset.amount), this.dataset.label);
+
+        // Update visual state
+        amountRows.forEach(r => {
+          const arrow = r.querySelector('.amount-arrow');
+          const desc = r.querySelector('.amount-description');
+          if (r === this) {
+            r.classList.add('selected');
+            r.style.backgroundColor = accentColor;
+            r.style.color = accentTextColor;
+            r.style.borderColor = accentColor;
+            if (arrow) {
+              arrow.style.backgroundColor = 'rgba(0,0,0,0.15)';
+              arrow.style.color = accentTextColor;
+            }
+            if (desc) desc.style.color = accentTextColor;
+          } else {
+            r.classList.remove('selected');
+            r.style.backgroundColor = '#ffffff';
+            r.style.color = textColor;
+            r.style.borderColor = borderColor;
+            if (arrow) {
+              arrow.style.backgroundColor = borderColor;
+              arrow.style.color = textMutedColor;
+            }
+            if (desc) desc.style.color = textMutedColor;
+          }
+        });
+
+        // Clear custom input
+        if (customInput) customInput.value = '';
+        resetCustomRowStyle();
+      });
+    });
+
+    function selectAmount(amount, label) {
+      selectedAmount = amount;
+      selectedLabel = label || `$${amount} Donation`;
+    }
+
+    function resetCustomRowStyle() {
+      if (customRow) {
+        customRow.style.backgroundColor = '#ffffff';
+        customRow.style.borderColor = borderColor;
+      }
+      if (customArrow) {
+        customArrow.style.backgroundColor = borderColor;
+        customArrow.style.color = textMutedColor;
+      }
+    }
+
+    function setCustomRowActive() {
+      // Deselect all amount rows
+      amountRows.forEach(r => {
+        const arrow = r.querySelector('.amount-arrow');
+        const desc = r.querySelector('.amount-description');
+        r.classList.remove('selected');
+        r.style.backgroundColor = '#ffffff';
+        r.style.color = textColor;
+        r.style.borderColor = borderColor;
+        if (arrow) {
+          arrow.style.backgroundColor = borderColor;
+          arrow.style.color = textMutedColor;
+        }
+        if (desc) desc.style.color = textMutedColor;
+      });
+
+      // Highlight custom row
+      if (customRow) {
+        customRow.style.backgroundColor = '#fff7ed';
+        customRow.style.borderColor = accentColor;
+      }
+      if (customArrow) {
+        customArrow.style.backgroundColor = accentColor;
+        customArrow.style.color = accentTextColor;
+      }
+    }
+
+    // Custom amount input
+    if (customInput) {
+      customInput.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value);
+          selectedLabel = 'Custom Amount';
+          setCustomRowActive();
+        } else {
+          resetCustomRowStyle();
+        }
+      });
+
+      customInput.addEventListener('focus', function() {
+        if (this.value) {
+          setCustomRowActive();
+        }
+      });
+    }
+
+    // Custom arrow click - same as pressing donate with custom amount
+    if (customArrow) {
+      customArrow.addEventListener('click', function() {
+        if (customInput && customInput.value) {
+          handleDonate();
+        } else {
+          customInput?.focus();
+        }
+      });
+    }
+
+    // Donate button
+    function handleDonate() {
+      if (!selectedAmount || selectedAmount < 1) {
+        alert('Please select or enter an amount');
+        return;
+      }
+
+      const itemId = `${campaignSlug}-${selectedAmount}-${donationType}`;
+
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: itemId,
+          name: campaignTitle,
+          label: selectedLabel || `$${selectedAmount} Donation`,
+          amount: selectedAmount,
+          quantity: 1,
+          type: donationType,
+          image: campaignImage,
+          campaign: campaignSlug
+        });
+      } else {
+        console.error('addToCart function not found');
+      }
+    }
+
+    if (donateBtn) {
+      donateBtn.addEventListener('click', handleDonate);
+    }
+
+    // Arrow clicks on amount rows also trigger donate
+    amountRows.forEach(row => {
+      const arrow = row.querySelector('.amount-arrow');
+      if (arrow) {
+        arrow.addEventListener('click', function(e) {
+          e.stopPropagation();
+          selectAmount(parseInt(row.dataset.amount), row.dataset.label);
+          handleDonate();
+        });
+      }
+    });
+
+    // Initialize with third option selected (like in screenshot)
+    if (amountRows.length >= 3) {
+      const thirdRow = amountRows[2];
+      selectAmount(parseInt(thirdRow.dataset.amount), thirdRow.dataset.label);
+    }
+  });
+</script>

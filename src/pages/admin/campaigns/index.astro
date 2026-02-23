@@ -1,0 +1,971 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+import { getPageTemplates, getDonationBoxTemplates } from '../../../lib/templates';
+import { getAllCategories } from '../../../lib/categories';
+
+export const prerender = false;
+
+// Get query params for filtering
+const url = new URL(Astro.request.url);
+const searchQuery = url.searchParams.get('search') || '';
+const categoryFilter = url.searchParams.get('category') || 'all';
+const statusFilter = url.searchParams.get('status') || 'all';
+const templateFilter = url.searchParams.get('template') || 'all';
+const page = parseInt(url.searchParams.get('page') || '1');
+const perPage = 25;
+
+// Fetch campaigns from Supabase with filters
+let campaigns: any[] = [];
+let totalCount = 0;
+let fetchError = '';
+
+try {
+  let query = supabaseAdmin
+    .from('campaigns')
+    .select('*', { count: 'exact' });
+
+  // Apply filters - search in name, title, and slug only (not description to avoid false matches)
+  if (searchQuery) {
+    const searchTerm = searchQuery.replace(/[%_]/g, '\\$&'); // Escape special chars
+    query = query.or(`name.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,slug.ilike.%${searchTerm}%`);
+  }
+
+  if (categoryFilter !== 'all') {
+    query = query.eq('category', categoryFilter);
+  }
+
+  if (statusFilter === 'active') {
+    query = query.eq('is_active', true);
+  } else if (statusFilter === 'inactive') {
+    query = query.eq('is_active', false);
+  } else if (statusFilter === 'featured') {
+    query = query.eq('is_featured', true);
+  }
+
+  if (templateFilter !== 'all') {
+    query = query.eq('page_template', templateFilter);
+  }
+
+  // Get total count first
+  const { count } = await query;
+  totalCount = count || 0;
+
+  // Build data query with same filters
+  let dataQuery = supabaseAdmin
+    .from('campaigns')
+    .select('*');
+
+  // Apply same search filter to data query
+  if (searchQuery) {
+    const searchTerm = searchQuery.replace(/[%_]/g, '\\$&'); // Escape special chars
+    dataQuery = dataQuery.or(`name.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,slug.ilike.%${searchTerm}%`);
+  }
+  if (categoryFilter !== 'all') {
+    dataQuery = dataQuery.eq('category', categoryFilter);
+  }
+  if (statusFilter === 'active') {
+    dataQuery = dataQuery.eq('is_active', true);
+  } else if (statusFilter === 'inactive') {
+    dataQuery = dataQuery.eq('is_active', false);
+  } else if (statusFilter === 'featured') {
+    dataQuery = dataQuery.eq('is_featured', true);
+  }
+  if (templateFilter !== 'all') {
+    dataQuery = dataQuery.eq('page_template', templateFilter);
+  }
+
+  const result = await dataQuery
+    .order('is_featured', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range((page - 1) * perPage, page * perPage - 1);
+
+  if (result.error) {
+    fetchError = result.error.message;
+  } else {
+    campaigns = result.data || [];
+  }
+} catch (e: any) {
+  fetchError = e.message || 'Failed to fetch campaigns';
+}
+
+const totalPages = Math.ceil(totalCount / perPage);
+
+// Fetch categories from database (cached for performance)
+const dbCategories = await getAllCategories();
+const categories = [
+  { value: 'all', label: 'All Categories' },
+  ...dbCategories.map(cat => ({ value: cat.slug, label: cat.label }))
+];
+
+// Fetch templates from database (auto-populates when new templates are added)
+const pageTemplatesData = await getPageTemplates();
+const donationBoxTemplatesData = await getDonationBoxTemplates();
+
+// Fetch default template settings
+let defaultPageTemplate = 'green-with-yellow';
+let defaultDonationBoxTemplate = 'teal-yellow';
+try {
+  const { data: settingsData } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_campaign_page_template, default_donation_box_template')
+    .limit(1);
+  if (settingsData && settingsData.length > 0) {
+    defaultPageTemplate = settingsData[0].default_campaign_page_template || defaultPageTemplate;
+    defaultDonationBoxTemplate = settingsData[0].default_donation_box_template || defaultDonationBoxTemplate;
+  }
+} catch (e) {
+  console.error('Error fetching default templates:', e);
+}
+
+// Find default template labels
+const defaultPageLabel = pageTemplatesData.find(t => t.template_key === defaultPageTemplate)?.template_label || defaultPageTemplate;
+const defaultDonationLabel = donationBoxTemplatesData.find(t => t.template_key === defaultDonationBoxTemplate)?.template_label || defaultDonationBoxTemplate;
+
+// Transform to dropdown format with "Use Default" option first
+const pageTemplates = [
+  { value: '', label: `Use Default (${defaultPageLabel})` },
+  ...pageTemplatesData.map(t => ({
+    value: t.template_key,
+    label: t.template_label
+  }))
+];
+
+const donationBoxTemplates = [
+  { value: '', label: `Use Default (${defaultDonationLabel})` },
+  ...donationBoxTemplatesData.map(t => ({
+    value: t.template_key,
+    label: t.template_label
+  }))
+];
+
+// Calculate pagination numbers
+const paginationNumbers: number[] = [];
+const maxVisiblePages = 5;
+if (totalPages <= maxVisiblePages) {
+  for (let i = 1; i <= totalPages; i++) {
+    paginationNumbers.push(i);
+  }
+} else if (page <= 3) {
+  for (let i = 1; i <= maxVisiblePages; i++) {
+    paginationNumbers.push(i);
+  }
+} else if (page >= totalPages - 2) {
+  for (let i = totalPages - 4; i <= totalPages; i++) {
+    paginationNumbers.push(i);
+  }
+} else {
+  for (let i = page - 2; i <= page + 2; i++) {
+    paginationNumbers.push(i);
+  }
+}
+---
+
+<AdminLayout title="Campaigns" activeNav="campaigns">
+  <!-- Stats Bar -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total</p>
+      <p class="text-2xl font-bold text-gray-900 mt-1">{totalCount}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Active</p>
+      <p class="text-2xl font-bold text-green-600 mt-1">{campaigns.filter(c => c.is_active).length}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Featured</p>
+      <p class="text-2xl font-bold text-amber-600 mt-1">{campaigns.filter(c => c.is_featured).length}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Emergency</p>
+      <p class="text-2xl font-bold text-red-600 mt-1">{campaigns.filter(c => c.category === 'emergencies').length}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Zakat Eligible</p>
+      <p class="text-2xl font-bold text-[#01534d] mt-1">{campaigns.filter(c => c.is_zakat_eligible).length}</p>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+      <!-- Search -->
+      <div class="relative flex-1 max-w-md">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search campaigns..."
+          value={searchQuery}
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-sm"
+        />
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-3">
+        <select id="category-filter" class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d] bg-white">
+          {categories.map(cat => (
+            <option value={cat.value} selected={categoryFilter === cat.value}>{cat.label}</option>
+          ))}
+        </select>
+
+        <select id="status-filter" class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d] bg-white">
+          <option value="all" selected={statusFilter === 'all'}>All Status</option>
+          <option value="active" selected={statusFilter === 'active'}>Active</option>
+          <option value="inactive" selected={statusFilter === 'inactive'}>Inactive</option>
+          <option value="featured" selected={statusFilter === 'featured'}>Featured</option>
+        </select>
+
+        <select id="template-filter" class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d] bg-white">
+          <option value="all" selected={templateFilter === 'all'}>All Templates</option>
+          {pageTemplates.filter(t => t.value).map(t => (
+            <option value={t.value} selected={templateFilter === t.value}>{t.label}</option>
+          ))}
+        </select>
+
+        <button id="clear-filters" class="px-3 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
+          Clear Filters
+        </button>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 lg:ml-auto">
+        <a href="/admin/campaigns/import" class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+          </svg>
+          Import
+        </a>
+        <a href="/admin/campaigns/new" class="px-4 py-2.5 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#013d39] transition flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Campaign
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar (hidden by default) -->
+  <div id="bulk-actions-bar" class="hidden bg-[#01534d] rounded-xl p-4 mb-4 shadow-lg">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+      <div class="flex items-center gap-3 text-white">
+        <span id="selected-count" class="text-lg font-semibold">0</span>
+        <span class="text-white/80">campaigns selected</span>
+        <button id="clear-selection" class="ml-2 text-white/60 hover:text-white transition text-sm underline">
+          Clear selection
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 lg:ml-auto">
+        <!-- Bulk Update Section -->
+        <div class="flex items-center gap-3 border-r border-white/20 pr-4">
+          <select id="bulk-category" class="px-3 py-2 border-0 rounded-lg text-sm bg-white/20 text-white focus:ring-2 focus:ring-white/50" title="Move selected campaigns to a different category">
+            <option value="" disabled selected>Category...</option>
+            {categories.filter(c => c.value !== 'all').map(c => (
+              <option value={c.value}>{c.label}</option>
+            ))}
+          </select>
+
+          <select id="bulk-page-template" class="px-3 py-2 border-0 rounded-lg text-sm bg-white/20 text-white focus:ring-2 focus:ring-white/50" title="Change page template for selected campaigns">
+            <option value="" disabled selected>Page Template...</option>
+            {pageTemplates.map(t => (
+              <option value={t.value}>{t.label}</option>
+            ))}
+          </select>
+
+          <select id="bulk-donation-template" class="px-3 py-2 border-0 rounded-lg text-sm bg-white/20 text-white focus:ring-2 focus:ring-white/50" title="Change donation box template for selected campaigns">
+            <option value="" disabled selected>Donation Box...</option>
+            {donationBoxTemplates.map(t => (
+              <option value={t.value}>{t.label}</option>
+            ))}
+          </select>
+
+          <button id="apply-bulk-update" class="px-4 py-2 bg-white text-[#01534d] rounded-lg text-sm font-semibold hover:bg-gray-100 transition" title="Apply changes to selected campaigns">
+            Apply Changes
+          </button>
+        </div>
+
+        <!-- Fetch Data Section -->
+        <div class="flex items-center gap-2 border-r border-white/20 pr-4">
+          <span class="text-white/60 text-xs mr-1">Fetch:</span>
+          <button id="bulk-fetch-stats" class="px-3 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition flex items-center gap-1.5" title="Fetch crisis statistics for selected campaigns">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Crisis Stats
+          </button>
+          <button id="bulk-fetch-images" class="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition flex items-center gap-1.5" title="Fetch stock images for selected campaigns">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Stock Images
+          </button>
+        </div>
+
+        <!-- Status Actions Section -->
+        <div class="flex items-center gap-2">
+          <span class="text-white/60 text-xs mr-1">Status:</span>
+          <button id="bulk-activate" class="px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition" title="Make selected campaigns visible on website">
+            Activate
+          </button>
+          <button id="bulk-deactivate" class="px-3 py-2 bg-gray-500 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition" title="Hide selected campaigns from website">
+            Deactivate
+          </button>
+          <button id="bulk-delete" class="px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition" title="Permanently delete selected campaigns">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
+
+  <!-- Error Message -->
+  {fetchError && (
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-red-800">
+          <strong>Error:</strong> {fetchError}
+        </p>
+      </div>
+    </div>
+  )}
+
+  <!-- Empty State -->
+  {campaigns.length === 0 && !fetchError && (
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">No campaigns found</h3>
+      <p class="text-gray-500 mb-6 max-w-md mx-auto">
+        {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all'
+          ? 'Try adjusting your filters or search query'
+          : 'Create your first campaign to start accepting donations'}
+      </p>
+      <div class="flex items-center justify-center gap-3">
+        {(searchQuery || categoryFilter !== 'all' || statusFilter !== 'all') && (
+          <button onclick="clearAllFilters()" class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">
+            Clear Filters
+          </button>
+        )}
+        <a href="/admin/campaigns/new" class="px-4 py-2.5 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Create Campaign
+        </a>
+      </div>
+    </div>
+  )}
+
+  <!-- Campaigns Table -->
+  {campaigns.length > 0 && (
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="w-12 px-4 py-4">
+              <input
+                type="checkbox"
+                id="select-all"
+                class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]"
+              />
+            </th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Campaign</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Category</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Page Template</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Donation Box</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Created</th>
+            <th class="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {campaigns.map((campaign) => {
+            const name = campaign.name || campaign.title || 'Untitled';
+            return (
+              <tr class="hover:bg-gray-50 transition campaign-row" data-id={campaign.id}>
+                <td class="px-4 py-4">
+                  <input
+                    type="checkbox"
+                    class="campaign-checkbox w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]"
+                    data-id={campaign.id}
+                  />
+                </td>
+                <td class="px-4 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      {campaign.featured_image ? (
+                        <img src={campaign.featured_image} alt="" class="w-full h-full object-cover" />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-semibold text-gray-900 truncate max-w-[200px]" title={name}>{name}</p>
+                      <p class="text-xs text-gray-500 truncate max-w-[200px]">/appeals/{campaign.slug}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-4">
+                  {campaign.category ? (
+                    <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                      campaign.category === 'emergencies'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {campaign.category.replace(/-/g, ' ')}
+                    </span>
+                  ) : (
+                    <span class="text-gray-400 text-sm">-</span>
+                  )}
+                </td>
+                <td class="px-4 py-4">
+                  <div class="flex flex-col gap-1">
+                    <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium w-fit ${
+                      campaign.is_active
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {campaign.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    <div class="flex gap-1">
+                      {campaign.is_featured && (
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">Featured</span>
+                      )}
+                      {campaign.is_zakat_eligible && (
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#01534d]/10 text-[#01534d]">Zakat</span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-4">
+                  <span class="text-sm text-gray-700">{campaign.page_template || 'Default'}</span>
+                </td>
+                <td class="px-4 py-4">
+                  <span class="text-sm text-gray-700">{campaign.donation_box_template || 'Default'}</span>
+                </td>
+                <td class="px-4 py-4">
+                  <span class="text-sm text-gray-600">
+                    {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
+                  </span>
+                </td>
+                <td class="px-4 py-4">
+                  <div class="flex items-center justify-end gap-1">
+                    <a
+                      href={`/admin/campaigns/${campaign.id}`}
+                      class="p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
+                      title="Edit"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </a>
+                    <a
+                      href={`/appeals/${campaign.slug}`}
+                      target="_blank"
+                      class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      title="View Live"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                    </a>
+                    <button
+                      onclick={`deleteCampaign('${campaign.id}', '${name.replace(/'/g, "\\'")}')`}
+                      class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Delete"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div class="text-sm text-gray-600">
+          Showing <span class="font-medium">{(page - 1) * perPage + 1}</span> to <span class="font-medium">{Math.min(page * perPage, totalCount)}</span> of <span class="font-medium">{totalCount}</span> campaigns
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            onclick={`goToPage(${page - 1})`}
+            disabled={page <= 1}
+            class={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+              page <= 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Previous
+          </button>
+
+          {paginationNumbers.map((pageNum) => (
+            <button
+              onclick={`goToPage(${pageNum})`}
+              class={`w-10 h-10 rounded-lg text-sm font-medium transition ${
+                pageNum === page
+                  ? 'bg-[#01534d] text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+
+          <button
+            onclick={`goToPage(${page + 1})`}
+            disabled={page >= totalPages}
+            class={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+              page >= totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+  )}
+</AdminLayout>
+
+<script is:inline>
+  const selectedCampaigns = new Set();
+
+  function updateBulkActionsBar() {
+    const bar = document.getElementById('bulk-actions-bar');
+    const countEl = document.getElementById('selected-count');
+
+    if (selectedCampaigns.size > 0) {
+      bar.classList.remove('hidden');
+      countEl.textContent = selectedCampaigns.size;
+    } else {
+      bar.classList.add('hidden');
+    }
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const icon = type === 'success'
+      ? '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+    toast.innerHTML = icon + '<span>' + message + '</span>';
+    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${
+      type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+    }`;
+
+    setTimeout(() => {
+      toast.className = 'hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3';
+    }, 4000);
+  }
+
+  function goToPage(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+  }
+
+  function applyFilters() {
+    const url = new URL(window.location.href);
+    const search = document.getElementById('search-input').value;
+    const category = document.getElementById('category-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const template = document.getElementById('template-filter').value;
+
+    if (search) url.searchParams.set('search', search);
+    else url.searchParams.delete('search');
+
+    if (category !== 'all') url.searchParams.set('category', category);
+    else url.searchParams.delete('category');
+
+    if (status !== 'all') url.searchParams.set('status', status);
+    else url.searchParams.delete('status');
+
+    if (template !== 'all') url.searchParams.set('template', template);
+    else url.searchParams.delete('template');
+
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+  }
+
+  function clearAllFilters() {
+    window.location.href = '/admin/campaigns';
+  }
+
+  async function deleteCampaign(id, title) {
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/campaigns?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete');
+      }
+      showToast('Campaign deleted successfully');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  }
+
+  async function bulkUpdate(updates) {
+    if (selectedCampaigns.size === 0) {
+      showToast('No campaigns selected', 'error');
+      return;
+    }
+
+    if (!updates || Object.keys(updates).length === 0) {
+      showToast('Please select at least one field to update', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/campaigns/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedCampaigns),
+          updates
+        })
+      });
+
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error('Server returned invalid response: ' + text.substring(0, 100));
+      }
+
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+
+      showToast(data.message);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  }
+
+  async function bulkDelete() {
+    if (selectedCampaigns.size === 0) {
+      showToast('No campaigns selected', 'error');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedCampaigns.size} campaigns? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/campaigns/bulk-update', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedCampaigns) })
+      });
+
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error('Server returned invalid response');
+      }
+
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+
+      showToast(data.message);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  }
+
+  async function bulkFetchCrisisStats() {
+    if (selectedCampaigns.size === 0) {
+      showToast('No campaigns selected', 'error');
+      return;
+    }
+
+    const count = selectedCampaigns.size;
+    if (!confirm(`Fetch crisis statistics for ${count} campaign(s)? This will update the "Scale of Crisis" section for each.`)) {
+      return;
+    }
+
+    const btn = document.getElementById('bulk-fetch-stats');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Fetching...';
+
+    showToast(`Fetching stats for ${count} campaigns...`, 'success');
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const campaignId of selectedCampaigns) {
+      try {
+        // First get campaign details
+        const campaignRes = await fetch(`/api/campaigns?id=${campaignId}`);
+        if (!campaignRes.ok) throw new Error('Failed to fetch campaign');
+        const campaign = await campaignRes.json();
+
+        const title = campaign.title || campaign.name || '';
+        const country = campaign.country || '';
+        const category = campaign.category || '';
+
+        // Fetch crisis stats
+        const statsRes = await fetch('/api/campaigns/crisis-stats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, country, category })
+        });
+
+        if (!statsRes.ok) throw new Error('Failed to fetch stats');
+        const statsData = await statsRes.json();
+
+        if (statsData.success && statsData.stats) {
+          // Update campaign with new stats
+          const updateRes = await fetch('/api/campaigns', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: campaignId,
+              impact_stats: statsData.stats
+            })
+          });
+
+          if (!updateRes.ok) throw new Error('Failed to save stats');
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error fetching stats for campaign ${campaignId}:`, error);
+        errorCount++;
+      }
+    }
+
+    // Restore button
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+
+    if (errorCount === 0) {
+      showToast(`Successfully updated crisis stats for ${successCount} campaigns`);
+    } else {
+      showToast(`Updated ${successCount} campaigns, ${errorCount} failed`, errorCount > successCount ? 'error' : 'success');
+    }
+
+    if (successCount > 0) {
+      setTimeout(() => window.location.reload(), 1500);
+    }
+  }
+
+  async function bulkFetchStockImages() {
+    if (selectedCampaigns.size === 0) {
+      showToast('No campaigns selected', 'error');
+      return;
+    }
+
+    const count = selectedCampaigns.size;
+    if (!confirm(`Fetch stock images for ${count} campaign(s)? This will add images to each campaign's gallery.`)) {
+      return;
+    }
+
+    const btn = document.getElementById('bulk-fetch-images');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Fetching...';
+
+    showToast(`Fetching images for ${count} campaigns...`, 'success');
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const campaignId of selectedCampaigns) {
+      try {
+        // First get campaign details
+        const campaignRes = await fetch(`/api/campaigns?id=${campaignId}`);
+        if (!campaignRes.ok) throw new Error('Failed to fetch campaign');
+        const campaign = await campaignRes.json();
+
+        const title = campaign.title || campaign.name || '';
+        const country = campaign.country || '';
+        const category = campaign.category || '';
+
+        // Fetch stock images
+        const imagesRes = await fetch('/api/images/stock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, country, category, count: 6 })
+        });
+
+        if (!imagesRes.ok) throw new Error('Failed to fetch images');
+        const imagesData = await imagesRes.json();
+
+        if (imagesData.success && imagesData.images && imagesData.images.length > 0) {
+          // Get existing gallery images
+          const existingImages = campaign.gallery_images || [];
+          const newImageUrls = imagesData.images.map(img => img.url);
+
+          // Merge (avoid duplicates)
+          const allImages = [...new Set([...existingImages, ...newImageUrls])];
+
+          // Update campaign with merged gallery
+          const updateRes = await fetch('/api/campaigns', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: campaignId,
+              gallery_images: allImages,
+              // Also set featured image if not set
+              ...(campaign.featured_image ? {} : { featured_image: newImageUrls[0] })
+            })
+          });
+
+          if (!updateRes.ok) throw new Error('Failed to save images');
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error fetching images for campaign ${campaignId}:`, error);
+        errorCount++;
+      }
+    }
+
+    // Restore button
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+
+    if (errorCount === 0) {
+      showToast(`Successfully added images to ${successCount} campaigns`);
+    } else {
+      showToast(`Updated ${successCount} campaigns, ${errorCount} failed`, errorCount > successCount ? 'error' : 'success');
+    }
+
+    if (successCount > 0) {
+      setTimeout(() => window.location.reload(), 1500);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Select All
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.campaign-checkbox');
+
+    selectAll?.addEventListener('change', (e) => {
+      checkboxes.forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) {
+          selectedCampaigns.add(cb.dataset.id);
+        } else {
+          selectedCampaigns.delete(cb.dataset.id);
+        }
+      });
+      updateBulkActionsBar();
+    });
+
+    // Individual checkboxes
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          selectedCampaigns.add(cb.dataset.id);
+        } else {
+          selectedCampaigns.delete(cb.dataset.id);
+        }
+        selectAll.checked = selectedCampaigns.size === checkboxes.length;
+        selectAll.indeterminate = selectedCampaigns.size > 0 && selectedCampaigns.size < checkboxes.length;
+        updateBulkActionsBar();
+      });
+    });
+
+    // Clear selection
+    document.getElementById('clear-selection')?.addEventListener('click', () => {
+      selectedCampaigns.clear();
+      checkboxes.forEach(cb => cb.checked = false);
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+      updateBulkActionsBar();
+    });
+
+    // Search on Enter
+    document.getElementById('search-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applyFilters();
+    });
+
+    // Filter dropdowns
+    document.getElementById('category-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('status-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('template-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('clear-filters')?.addEventListener('click', clearAllFilters);
+
+    // Bulk actions
+    document.getElementById('bulk-activate')?.addEventListener('click', () => {
+      bulkUpdate({ is_active: true });
+    });
+
+    document.getElementById('bulk-deactivate')?.addEventListener('click', () => {
+      bulkUpdate({ is_active: false });
+    });
+
+    document.getElementById('bulk-delete')?.addEventListener('click', bulkDelete);
+
+    // Bulk fetch actions
+    document.getElementById('bulk-fetch-stats')?.addEventListener('click', bulkFetchCrisisStats);
+    document.getElementById('bulk-fetch-images')?.addEventListener('click', bulkFetchStockImages);
+
+    document.getElementById('apply-bulk-update')?.addEventListener('click', () => {
+      const categoryEl = document.getElementById('bulk-category');
+      const pageTemplateEl = document.getElementById('bulk-page-template');
+      const donationTemplateEl = document.getElementById('bulk-donation-template');
+
+      // Check if any dropdown has been changed from initial "Select..." state
+      const categoryChanged = categoryEl.selectedIndex > 0;
+      const pageChanged = pageTemplateEl.selectedIndex > 0;
+      const donationChanged = donationTemplateEl.selectedIndex > 0;
+
+      if (!categoryChanged && !pageChanged && !donationChanged) {
+        showToast('Please select at least one option to update', 'error');
+        return;
+      }
+
+      const updates = {};
+      if (categoryChanged) updates.category = categoryEl.value;
+      // Empty string means "Use Default" = set to null in database
+      if (pageChanged) updates.page_template = pageTemplateEl.value || null;
+      if (donationChanged) updates.donation_box_template = donationTemplateEl.value || null;
+
+      bulkUpdate(updates);
+    });
+  });
+</script>
+
+<style>
+  .campaign-checkbox:checked + .campaign-row {
+    background-color: #f0fdf4;
+  }
+</style>

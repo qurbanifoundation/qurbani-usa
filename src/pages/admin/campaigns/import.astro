@@ -1,0 +1,497 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getAllCategories } from '../../../lib/categories';
+
+export const prerender = false;
+
+// Fetch categories from database
+const categories = await getAllCategories();
+const categoriesJson = JSON.stringify(categories.map(c => ({ value: c.slug, label: c.label })));
+---
+
+<AdminLayout title="Import Campaigns" activeNav="import">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Import Campaigns</h1>
+      <p class="text-gray-600 mt-1">Enter campaign URLs to automatically extract and create campaigns with Qurbani Foundation branding.</p>
+    </div>
+
+    <!-- URL Input Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">Enter Campaign URLs</h2>
+      <p class="text-sm text-gray-500 mb-4">Paste one URL per line. We'll automatically extract campaign information from each page.</p>
+
+      <textarea
+        id="urls-input"
+        rows="8"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent resize-y font-mono text-sm"
+        placeholder="https://muslimcharity.org.uk/appeals/gaza
+https://muslimcharity.org.uk/appeals/safe-water
+https://muslimcharity.org.uk/appeals/sponsor-an-orphan-child"
+      ></textarea>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">Import Settings</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Left Column: Category & Options -->
+        <div class="space-y-4">
+          <div>
+            <label class="flex items-center gap-2 text-sm text-gray-700 mb-2">
+              <input type="checkbox" id="auto-category" checked class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+              <span class="font-medium">Auto-detect category from content</span>
+            </label>
+            <select id="default-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]">
+              {categories.map(cat => (
+                <option value={cat.slug}>{cat.label}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Used when auto-detect is off or no match found</p>
+          </div>
+
+          <div>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" id="spin-content" checked class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+              <span class="font-medium">Spin content for uniqueness</span>
+            </label>
+            <p class="text-xs text-gray-500 mt-1">Rewrites text to avoid duplicate content issues</p>
+          </div>
+
+          <div>
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" id="use-stock-images" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+              <span class="font-medium">Use keyword-targeted stock images</span>
+            </label>
+            <p class="text-xs text-gray-500 mt-1">Fetches Unsplash images matching campaign keywords (e.g., "Syria water crisis") - no branding</p>
+          </div>
+        </div>
+
+        <!-- Right Column: Keyword Replacements -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Keyword Replacements
+          </label>
+          <div id="replacements-list" class="space-y-2 mb-3">
+            <div class="replacement-row flex items-center gap-2">
+              <input type="text" placeholder="Find..." value="Muslim Charity" class="replacement-find flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]" />
+              <span class="text-gray-400">→</span>
+              <input type="text" placeholder="Replace with..." value="Qurbani Foundation" class="replacement-replace flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]" />
+              <button type="button" class="remove-replacement text-gray-400 hover:text-red-500 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button type="button" id="add-replacement" class="text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add another replacement
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end mt-6 pt-4 border-t border-gray-200">
+        <button
+          id="fetch-btn"
+          class="px-6 py-2.5 bg-[#01534d] text-white font-semibold rounded-lg hover:bg-[#013d39] transition flex items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+          </svg>
+          Fetch & Extract Campaigns
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div id="progress-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-[#01534d]"></div>
+        <span id="progress-text" class="text-gray-700">Processing URLs...</span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        <div id="progress-bar" class="bg-[#01534d] h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Extracted Campaigns Section -->
+    <div id="campaigns-section" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Extracted Campaigns</h2>
+        <div class="flex items-center gap-3">
+          <span id="campaigns-count" class="text-sm text-gray-500">0 campaigns</span>
+          <button
+            id="save-all-btn"
+            class="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Save All Campaigns
+          </button>
+        </div>
+      </div>
+
+      <div id="campaigns-list" class="space-y-4">
+        <!-- Campaign cards will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No campaigns extracted yet</h3>
+      <p class="text-gray-500">Enter URLs above and click "Fetch & Extract" to get started.</p>
+    </div>
+
+    <!-- Success Message -->
+    <div id="success-message" class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 z-50">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span id="success-text">Campaigns saved successfully!</span>
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ categoriesJson }}>
+  const categories = JSON.parse(categoriesJson);
+  let extractedCampaigns = [];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+
+    const urlsInput = document.getElementById('urls-input');
+    const fetchBtn = document.getElementById('fetch-btn');
+    const progressSection = document.getElementById('progress-section');
+    const progressText = document.getElementById('progress-text');
+    const progressBar = document.getElementById('progress-bar');
+    const campaignsSection = document.getElementById('campaigns-section');
+    const campaignsList = document.getElementById('campaigns-list');
+    const campaignsCount = document.getElementById('campaigns-count');
+    const emptyState = document.getElementById('empty-state');
+    const saveAllBtn = document.getElementById('save-all-btn');
+    const successMessage = document.getElementById('success-message');
+    const successTextEl = document.getElementById('success-text');
+    const autoCategoryCheckbox = document.getElementById('auto-category');
+    const defaultCategorySelect = document.getElementById('default-category');
+    const spinContentCheckbox = document.getElementById('spin-content');
+    const useStockImagesCheckbox = document.getElementById('use-stock-images');
+    const replacementsList = document.getElementById('replacements-list');
+    const addReplacementBtn = document.getElementById('add-replacement');
+
+    // Debug: check all elements found
+    console.log('Elements found:', {
+      urlsInput: !!urlsInput,
+      fetchBtn: !!fetchBtn,
+      progressSection: !!progressSection,
+      campaignsSection: !!campaignsSection,
+      emptyState: !!emptyState
+    });
+
+    // Replacement row management
+    addReplacementBtn.addEventListener('click', function() {
+      const row = document.createElement('div');
+      row.className = 'replacement-row flex items-center gap-2';
+      row.innerHTML = `
+        <input type="text" placeholder="Find..." class="replacement-find flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]" />
+        <span class="text-gray-400">→</span>
+        <input type="text" placeholder="Replace with..." class="replacement-replace flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]" />
+        <button type="button" class="remove-replacement text-gray-400 hover:text-red-500 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      `;
+      replacementsList.appendChild(row);
+      attachRemoveHandler(row.querySelector('.remove-replacement'));
+    });
+
+    function attachRemoveHandler(btn) {
+      if (!btn) return;
+      btn.addEventListener('click', function() {
+        const rows = replacementsList.querySelectorAll('.replacement-row');
+        if (rows.length > 1) {
+          btn.closest('.replacement-row').remove();
+        }
+      });
+    }
+
+    // Attach to existing remove buttons
+    document.querySelectorAll('.remove-replacement').forEach(attachRemoveHandler);
+
+    function getReplacements() {
+      const replacements = [];
+      replacementsList.querySelectorAll('.replacement-row').forEach(function(row) {
+        const findInput = row.querySelector('.replacement-find');
+        const replaceInput = row.querySelector('.replacement-replace');
+        const find = findInput ? findInput.value.trim() : '';
+        const replace = replaceInput ? replaceInput.value.trim() : '';
+        if (find && replace) {
+          replacements.push({ find: find, replace: replace });
+        }
+      });
+      return replacements;
+    }
+
+    fetchBtn.addEventListener('click', async function() {
+      console.log('Fetch button clicked');
+      const urls = urlsInput.value
+        .split('\n')
+        .map(function(url) { return url.trim(); })
+        .filter(function(url) { return url.length > 0 && url.startsWith('http'); });
+
+      console.log('URLs to process:', urls);
+
+      if (urls.length === 0) {
+        alert('Please enter at least one valid URL');
+        return;
+      }
+
+      // Show progress
+      console.log('Showing progress section...');
+      progressSection.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      campaignsSection.classList.add('hidden');
+      fetchBtn.disabled = true;
+      fetchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      console.log('Progress section visible:', !progressSection.classList.contains('hidden'));
+
+      extractedCampaigns = [];
+      let completed = 0;
+      const replacements = getReplacements();
+      const spinContent = spinContentCheckbox.checked;
+      const useStockImages = useStockImagesCheckbox.checked;
+
+      console.log('Replacements:', replacements);
+      console.log('Spin content:', spinContent);
+      console.log('Use stock images:', useStockImages);
+
+      for (const url of urls) {
+        progressText.textContent = 'Processing ' + (completed + 1) + ' of ' + urls.length + ': ' + url.substring(0, 50) + '...';
+        progressBar.style.width = ((completed / urls.length) * 100) + '%';
+
+        try {
+          console.log('Fetching:', url);
+          const response = await fetch('/api/campaigns/scrape', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url, replacements: replacements, spinContent: spinContent, useStockImages: useStockImages })
+          });
+
+          const responseText = await response.text();
+          console.log('Raw response for', url, ':', responseText.substring(0, 200));
+
+          let result;
+          try {
+            result = JSON.parse(responseText);
+          } catch (parseErr) {
+            console.error('JSON parse error for', url, ':', parseErr);
+            console.error('Response text was:', responseText.substring(0, 500));
+            continue;
+          }
+
+          console.log('Parsed result for', url, '- success:', result.success, '- has data:', !!result.data);
+
+          if (result.success && result.data) {
+            // Override category if auto-detect is off
+            if (!autoCategoryCheckbox.checked) {
+              result.data.category = defaultCategorySelect.value;
+            }
+            extractedCampaigns.push(result.data);
+            console.log('Added campaign:', result.data.name);
+          } else {
+            console.error('Failed to scrape ' + url + ':', result.error || 'No data returned');
+          }
+        } catch (error) {
+          console.error('Error processing ' + url + ':', error);
+        }
+
+        completed++;
+      }
+
+      progressBar.style.width = '100%';
+      progressText.textContent = 'Completed! Extracted ' + extractedCampaigns.length + ' campaigns.';
+      console.log('Extraction complete. Campaigns:', extractedCampaigns);
+      alert('Extracted ' + extractedCampaigns.length + ' campaigns. Check console for details.');
+
+      // Hide progress after a moment
+      setTimeout(function() {
+        console.log('Hiding progress, showing campaigns...');
+        progressSection.classList.add('hidden');
+        fetchBtn.disabled = false;
+        fetchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+        if (extractedCampaigns.length > 0) {
+          console.log('Rendering ' + extractedCampaigns.length + ' campaigns...');
+          try {
+            renderCampaigns();
+            campaignsSection.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            console.log('Campaigns rendered successfully');
+          } catch (err) {
+            console.error('Error rendering campaigns:', err);
+            alert('Error rendering campaigns: ' + err.message);
+          }
+        } else {
+          console.log('No campaigns to show');
+          emptyState.classList.remove('hidden');
+        }
+      }, 1000);
+    });
+
+    function getCategoryColor(slug) {
+      const colors = {
+        'emergencies': 'red',
+        'water-for-life': 'cyan',
+        'food-aid': 'green',
+        'orphan-sponsorship': 'pink',
+        'education': 'yellow',
+        'healthcare': 'emerald',
+        'sadaqah-jariyah': 'blue',
+        'qurbani': 'gray'
+      };
+      return colors[slug] || 'gray';
+    }
+
+    function renderCampaigns() {
+      campaignsList.innerHTML = '';
+      campaignsCount.textContent = extractedCampaigns.length + ' campaign' + (extractedCampaigns.length !== 1 ? 's' : '');
+
+      extractedCampaigns.forEach(function(campaign, index) {
+        const color = getCategoryColor(campaign.category);
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden';
+
+        const categoryOptions = categories.map(function(cat) {
+          return '<option value="' + cat.value + '"' + (cat.value === campaign.category ? ' selected' : '') + '>' + cat.label + '</option>';
+        }).join('');
+
+        card.innerHTML =
+          '<div class="flex">' +
+            '<div class="w-48 h-44 flex-shrink-0 bg-gray-100">' +
+              (campaign.featured_image
+                ? '<img src="' + campaign.featured_image + '" alt="' + campaign.name + '" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML=\'<div class=\\\'w-full h-full flex items-center justify-center text-gray-400\\\'>No image</div>\'" />'
+                : '<div class="w-full h-full flex items-center justify-center text-gray-400">No image</div>'
+              ) +
+            '</div>' +
+            '<div class="flex-1 p-4">' +
+              '<div class="flex items-start justify-between mb-2">' +
+                '<div class="flex-1">' +
+                  '<input type="text" value="' + campaign.name.replace(/"/g, '&quot;') + '" data-index="' + index + '" data-field="name" class="campaign-field text-lg font-bold text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-[#01534d] focus:ring-0 px-0 py-0.5 w-full" />' +
+                  '<div class="flex items-center gap-2 mt-1 flex-wrap">' +
+                    '<select data-index="' + index + '" data-field="category" class="campaign-field px-2 py-0.5 bg-gray-100 text-gray-800 text-xs font-medium rounded border-0">' + categoryOptions + '</select>' +
+                    (campaign.country ? '<span class="text-xs text-gray-500">' + campaign.country + '</span>' : '') +
+                    (campaign.is_zakat_eligible ? '<span class="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">Zakat Eligible</span>' : '') +
+                    (campaign.is_featured ? '<span class="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-medium rounded">Featured</span>' : '') +
+                  '</div>' +
+                '</div>' +
+                '<button class="remove-btn text-gray-400 hover:text-red-500 transition p-1 ml-2" data-index="' + index + '">' +
+                  '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>' +
+                '</button>' +
+              '</div>' +
+              '<textarea data-index="' + index + '" data-field="description" class="campaign-field w-full text-sm text-gray-600 border-0 border-b border-transparent hover:border-gray-300 focus:border-[#01534d] focus:ring-0 px-0 py-1 resize-none" rows="2">' + campaign.description + '</textarea>' +
+              '<div class="flex items-center gap-4 mt-3 text-xs text-gray-500">' +
+                '<span>Slug: <code class="bg-gray-100 px-1 rounded">' + campaign.slug + '</code></span>' +
+                '<span>Template: ' + campaign.page_template + '</span>' +
+                '<span>Goal: $' + campaign.goal_amount.toLocaleString() + '</span>' +
+              '</div>' +
+              '<div class="text-xs text-gray-400 mt-2 truncate">' +
+                'Source: <a href="' + campaign.sourceUrl + '" target="_blank" class="hover:text-[#01534d]">' + campaign.sourceUrl + '</a>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+        campaignsList.appendChild(card);
+      });
+
+      // Add event listeners for field changes
+      document.querySelectorAll('.campaign-field').forEach(function(field) {
+        field.addEventListener('change', function(e) {
+          const target = e.target;
+          const index = parseInt(target.dataset.index || '0');
+          const fieldName = target.dataset.field;
+          extractedCampaigns[index][fieldName] = target.value;
+        });
+      });
+
+      // Add event listeners for remove buttons
+      document.querySelectorAll('.remove-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          const target = e.currentTarget;
+          const index = parseInt(target.dataset.index || '0');
+          extractedCampaigns.splice(index, 1);
+          renderCampaigns();
+
+          if (extractedCampaigns.length === 0) {
+            campaignsSection.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+          }
+        });
+      });
+    }
+
+    saveAllBtn.addEventListener('click', async function() {
+      if (extractedCampaigns.length === 0) {
+        alert('No campaigns to save');
+        return;
+      }
+
+      saveAllBtn.disabled = true;
+      saveAllBtn.innerHTML = '<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Saving...';
+
+      try {
+        const response = await fetch('/api/campaigns/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campaigns: extractedCampaigns })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          successTextEl.textContent = result.message;
+          successMessage.classList.remove('hidden');
+
+          setTimeout(function() {
+            successMessage.classList.add('hidden');
+          }, 5000);
+
+          // Clear the form
+          extractedCampaigns = [];
+          urlsInput.value = '';
+          campaignsSection.classList.add('hidden');
+          emptyState.classList.remove('hidden');
+        } else {
+          alert('Error saving campaigns: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        alert('Failed to save campaigns. Please try again.');
+      }
+
+      saveAllBtn.disabled = false;
+      saveAllBtn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        Save All Campaigns
+      `;
+    });
+  });
+</script>
+
+<style>
+  .campaign-field:focus {
+    outline: none;
+  }
+</style>

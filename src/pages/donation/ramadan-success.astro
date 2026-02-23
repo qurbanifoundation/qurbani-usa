@@ -1,0 +1,161 @@
+---
+/**
+ * 30 Days of Ramadan - Donation Success Page
+ * Shows success message and management link
+ */
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+// Get token from query params
+const token = Astro.url.searchParams.get('token');
+const managementUrl = token ? `/manage-donation/${token}` : null;
+---
+
+<Layout title="Donation Successful - 30 Days of Ramadan | Qurbani USA">
+  <Navbar />
+
+  <main class="min-h-screen bg-gradient-to-br from-[#01201c] via-[#022e27] to-[#011a15] pt-24 pb-16">
+    <!-- Stars pattern -->
+    <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg width=\"100\" height=\"100\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.3\"%3E%3Ccircle cx=\"10\" cy=\"10\" r=\"1\"/%3E%3Ccircle cx=\"30\" cy=\"50\" r=\"0.5\"/%3E%3Ccircle cx=\"70\" cy=\"20\" r=\"1\"/%3E%3Ccircle cx=\"90\" cy=\"80\" r=\"0.5\"/%3E%3Ccircle cx=\"50\" cy=\"90\" r=\"1\"/%3E%3Ccircle cx=\"20\" cy=\"70\" r=\"0.5\"/%3E%3Ccircle cx=\"80\" cy=\"40\" r=\"1\"/%3E%3Ccircle cx=\"40\" cy=\"30\" r=\"0.5\"/%3E%3Ccircle cx=\"60\" cy=\"60\" r=\"1\"/%3E%3C/g%3E%3C/svg%3E');"></div>
+
+    <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Success Card -->
+      <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center">
+        <!-- Success Icon -->
+        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Donation Successful
+        </h1>
+
+        <!-- Message -->
+        <p class="text-lg text-gray-600 mb-6">
+          <span class="text-[#024139] font-semibold">JazakAllah Khairan</span> for making your donation with us!
+        </p>
+
+        <p class="text-gray-500 mb-8">
+          Your automated giving is now set up. We'll process your donations each night after Maghrib throughout Ramadan.
+        </p>
+
+        <!-- Management Link -->
+        {managementUrl && (
+          <div class="bg-gray-50 rounded-xl p-6 mb-8">
+            <p class="text-sm text-gray-500 mb-2">Your secret link is:</p>
+            <div class="flex items-center gap-2 justify-center flex-wrap">
+              <a
+                href={managementUrl}
+                class="text-[#024139] hover:underline break-all text-sm font-medium"
+              >
+                {Astro.url.origin}{managementUrl}
+              </a>
+              <button
+                id="copy-link-btn"
+                class="p-2 hover:bg-gray-200 rounded-lg transition"
+                data-url={`${Astro.url.origin}${managementUrl}`}
+                title="Copy link"
+              >
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-3">
+              Save this link to track your donation progress anytime
+            </p>
+          </div>
+        )}
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          {managementUrl && (
+            <a
+              href={managementUrl}
+              class="inline-flex items-center justify-center gap-2 bg-[#024139] text-white font-bold px-8 py-4 rounded-xl hover:bg-[#013028] transition"
+              style="font-family: 'Signika', sans-serif;"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Manage Your Donation
+            </a>
+          )}
+          <a
+            href="/"
+            class="inline-flex items-center justify-center gap-2 bg-gray-100 text-gray-700 font-bold px-8 py-4 rounded-xl hover:bg-gray-200 transition"
+            style="font-family: 'Signika', sans-serif;"
+          >
+            Back to Home
+          </a>
+        </div>
+
+        <!-- What's Next -->
+        <div class="mt-10 pt-8 border-t">
+          <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            What Happens Next?
+          </h3>
+          <div class="grid md:grid-cols-3 gap-4 text-left">
+            <div class="p-4 bg-[#024139]/5 rounded-xl">
+              <div class="w-8 h-8 bg-[#024139] rounded-full flex items-center justify-center text-white font-bold text-sm mb-2">1</div>
+              <p class="text-sm text-gray-600">
+                <strong class="text-gray-800">Confirmation Email</strong><br>
+                You'll receive an email confirming your setup
+              </p>
+            </div>
+            <div class="p-4 bg-[#024139]/5 rounded-xl">
+              <div class="w-8 h-8 bg-[#024139] rounded-full flex items-center justify-center text-white font-bold text-sm mb-2">2</div>
+              <p class="text-sm text-gray-600">
+                <strong class="text-gray-800">Daily Donations</strong><br>
+                We process your giving after Maghrib each night
+              </p>
+            </div>
+            <div class="p-4 bg-[#024139]/5 rounded-xl">
+              <div class="w-8 h-8 bg-[#024139] rounded-full flex items-center justify-center text-white font-bold text-sm mb-2">3</div>
+              <p class="text-sm text-gray-600">
+                <strong class="text-gray-800">Tax Receipt</strong><br>
+                Receive detailed receipt after Ramadan ends
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hadith -->
+      <div class="text-center mt-8">
+        <blockquote class="text-white/80 italic text-lg">
+          "The most beloved deed to Allah is the most regular and constant even if it were little."
+        </blockquote>
+        <p class="text-white/50 text-sm mt-2">- Prophet Muhammad ﷺ</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.getElementById('copy-link-btn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    const url = btn.dataset.url;
+
+    if (url) {
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.innerHTML = '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+
+        setTimeout(() => {
+          btn.innerHTML = '<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  });
+</script>

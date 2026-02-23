@@ -1,0 +1,339 @@
+---
+/**
+ * Fidya Page
+ * Explains Fidya and provides donation options ($10/day)
+ */
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Pay Fidya - Qurbani Foundation USA" description="Pay your Fidya online. $10 per missed fast to feed a person in need. For those unable to fast due to illness, old age, or pregnancy.">
+  <Navbar />
+
+  <!-- Hero Section -->
+  <section class="relative pt-24 pb-20 overflow-hidden">
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e]"></div>
+    <!-- Decorative pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.4\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+
+    <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto">
+        <!-- Breadcrumb -->
+        <div class="flex items-center justify-center gap-2 text-white/60 text-sm mb-6">
+          <a href="/" class="hover:text-white transition">Home</a>
+          <span>/</span>
+          <a href="/ramadan" class="hover:text-white transition">Ramadan 2026</a>
+          <span>/</span>
+          <span class="text-white">Fidya</span>
+        </div>
+
+        <!-- Heart Icon -->
+        <div class="w-20 h-20 mx-auto mb-6 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
+          <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+          </svg>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Pay Your <span class="text-[#fdc448]">Fidya</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-white/90 mb-4 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+          Feed the hungry for each fast you cannot keep
+        </p>
+
+        <div class="inline-block bg-white/20 backdrop-blur-sm text-white text-xl font-bold px-6 py-3 rounded-full border border-white/30">
+          $10 per day
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave divider -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-16">
+        <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="py-16 bg-white">
+    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-2 gap-12 items-start">
+        <!-- Left Column - Information -->
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+            What is <span class="text-[#16a34a]">Fidya</span>?
+          </h2>
+
+          <div class="prose prose-lg max-w-none text-gray-600" style="font-family: 'Lato', sans-serif;">
+            <p class="mb-4">
+              Fidya is a religious donation of money or food made to help those in need. It is required when someone is unable to fast during Ramadan due to valid reasons and cannot make up the missed fasts later.
+            </p>
+
+            <p class="mb-6">
+              The payment of Fidya provides meals for those who are less fortunate, ensuring that while you may be unable to fast, you can still gain the blessings of Ramadan through charity.
+            </p>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              Who Should Pay Fidya?
+            </h3>
+
+            <ul class="space-y-3 mb-6">
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#16a34a] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span><strong>Elderly individuals</strong> who are too weak to fast and unlikely to regain the strength to do so</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#16a34a] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span><strong>Chronically ill patients</strong> with long-term illnesses that prevent fasting</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#16a34a] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span><strong>Pregnant or nursing mothers</strong> who fear harm to themselves or their baby</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#16a34a] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span><strong>People with medical conditions</strong> requiring regular medication or food intake</span>
+              </li>
+            </ul>
+
+            <div class="bg-[#16a34a]/10 border-l-4 border-[#16a34a] p-4 rounded-r-lg mb-6">
+              <p class="text-sm text-gray-700 italic">
+                "And upon those who are able [to fast, but with hardship] - a ransom [as substitute] of feeding a poor person [each day]."
+                <span class="block mt-1 font-semibold">- Quran 2:184</span>
+              </p>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              How is Fidya Calculated?
+            </h3>
+
+            <p class="mb-4">
+              Fidya is calculated based on the cost of one meal (approximately the cost of 1.5 kg of staple food) multiplied by the number of fasts missed. Our Fidya rate is <strong>$10 per day</strong>, which provides two meals to a person in need.
+            </p>
+
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+              <h4 class="font-bold text-gray-800 mb-3">Quick Calculation:</h4>
+              <ul class="space-y-2 text-sm">
+                <li>1 day missed = $10</li>
+                <li>Full Ramadan (30 days) = $300</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Donation Box -->
+        <div class="lg:sticky lg:top-24">
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#16a34a] to-[#22c55e] p-6 text-center">
+              <h3 class="text-2xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">
+                Pay Your Fidya
+              </h3>
+              <p class="text-white/80 text-sm">$10 per missed fast</p>
+            </div>
+
+            <div class="p-6">
+              <!-- Days Selection -->
+              <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Number of Days</label>
+                <div class="grid grid-cols-4 gap-2 mb-3">
+                  <button class="fidya-days-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#16a34a] transition" data-days="1">1</button>
+                  <button class="fidya-days-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#16a34a] transition" data-days="5">5</button>
+                  <button class="fidya-days-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#16a34a] transition" data-days="10">10</button>
+                  <button class="fidya-days-btn py-3 border-2 border-[#16a34a] rounded-lg bg-[#16a34a]/10 text-[#16a34a] font-bold text-sm" data-days="30">30</button>
+                </div>
+                <div class="relative">
+                  <input type="number" id="fidya-custom-days" min="1" placeholder="Custom days" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#16a34a] focus:border-[#16a34a] outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Total Amount -->
+              <div class="bg-[#16a34a]/10 rounded-xl p-4 mb-6 text-center">
+                <p class="text-sm text-gray-600 mb-1">Total Amount</p>
+                <p class="text-4xl font-bold text-[#16a34a]" id="fidya-total">$300</p>
+                <p class="text-xs text-gray-500 mt-1"><span id="fidya-days-display">30</span> days x $10</p>
+              </div>
+
+              <!-- Add to Cart Button -->
+              <button
+                id="fidya-add-to-cart"
+                class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+                style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Add Fidya to Cart
+              </button>
+
+              <p class="text-center text-xs text-gray-500 mt-4">
+                100% of your Fidya reaches those in need
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div class="mt-6 bg-gray-50 rounded-xl p-4">
+            <p class="text-sm font-semibold text-gray-700 mb-3">Other Ramadan Giving:</p>
+            <div class="space-y-2">
+              <a href="/kaffarah" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
+                <span class="text-sm font-medium text-gray-700">Kaffarah</span>
+                <span class="text-xs text-gray-500">$300</span>
+              </a>
+              <a href="/zakat-ul-fitr" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
+                <span class="text-sm font-medium text-gray-700">Zakat ul-Fitr</span>
+                <span class="text-xs text-gray-500">$15/person</span>
+              </a>
+              <a href="/iftar" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
+                <span class="text-sm font-medium text-gray-700">Feed Iftar</span>
+                <span class="text-xs text-gray-500">$5/meal</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-16 bg-[#f8f9fa]">
+    <div class="max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+        Frequently Asked Questions
+      </h2>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">What is the difference between Fidya and Kaffarah?</h3>
+          <p class="text-gray-600">Fidya is for those who cannot fast due to valid reasons (illness, old age, pregnancy) and cannot make up the fasts. Kaffarah is for those who deliberately break their fast without a valid excuse and must pay a larger penalty.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Can I pay Fidya in advance?</h3>
+          <p class="text-gray-600">Yes, you can pay Fidya at the beginning of Ramadan for all the fasts you know you will miss. This allows us to distribute food to those in need throughout the month.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Where does my Fidya go?</h3>
+          <p class="text-gray-600">Your Fidya donation provides meals to impoverished individuals and families in countries where food insecurity is prevalent. We ensure your donation reaches those most in need.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Is Fidya tax-deductible?</h3>
+          <p class="text-gray-600">Yes, as Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization, your Fidya donation is tax-deductible to the extent allowed by law.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-br from-[#16a34a] to-[#15803d] relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Feed the Hungry This Ramadan
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        Your Fidya ensures that those who are fasting are fed. Make a difference in someone's Ramadan today.
+      </p>
+      <a
+        href="/ramadan"
+        class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#16a34a] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+        style="font-family: 'Signika', sans-serif;"
+      >
+        Explore All Ramadan Giving
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const daysButtons = document.querySelectorAll('.fidya-days-btn');
+    const customDaysInput = document.getElementById('fidya-custom-days') as HTMLInputElement;
+    const totalDisplay = document.getElementById('fidya-total');
+    const daysDisplay = document.getElementById('fidya-days-display');
+    const addToCartBtn = document.getElementById('fidya-add-to-cart');
+
+    const FIDYA_RATE = 10;
+    let selectedDays = 30;
+
+    function updateTotal() {
+      const total = selectedDays * FIDYA_RATE;
+      if (totalDisplay) totalDisplay.textContent = `$${total}`;
+      if (daysDisplay) daysDisplay.textContent = selectedDays.toString();
+    }
+
+    function selectDays(days: number) {
+      selectedDays = days;
+      daysButtons.forEach(btn => {
+        btn.classList.remove('border-[#16a34a]', 'bg-[#16a34a]/10', 'text-[#16a34a]');
+        btn.classList.add('border-gray-200', 'text-gray-700');
+        if (parseInt(btn.getAttribute('data-days') || '0') === days) {
+          btn.classList.add('border-[#16a34a]', 'bg-[#16a34a]/10', 'text-[#16a34a]');
+          btn.classList.remove('border-gray-200', 'text-gray-700');
+        }
+      });
+      updateTotal();
+    }
+
+    daysButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const days = parseInt(btn.getAttribute('data-days') || '30');
+        if (customDaysInput) customDaysInput.value = '';
+        selectDays(days);
+      });
+    });
+
+    customDaysInput?.addEventListener('input', () => {
+      const days = parseInt(customDaysInput.value) || 1;
+      selectedDays = Math.max(1, days);
+      daysButtons.forEach(btn => {
+        btn.classList.remove('border-[#16a34a]', 'bg-[#16a34a]/10', 'text-[#16a34a]');
+        btn.classList.add('border-gray-200', 'text-gray-700');
+      });
+      updateTotal();
+    });
+
+    addToCartBtn?.addEventListener('click', () => {
+      const total = selectedDays * FIDYA_RATE;
+
+      if (typeof (window as any).addToCart === 'function') {
+        (window as any).addToCart({
+          id: `fidya-${selectedDays}-${Date.now()}`,
+          type: 'donation',
+          name: 'Fidya',
+          amount: total,
+          quantity: 1,
+          description: `${selectedDays} days x $${FIDYA_RATE}`,
+          frequency: 'single'
+        });
+      }
+    });
+
+    // Initialize
+    updateTotal();
+  });
+</script>

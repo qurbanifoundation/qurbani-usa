@@ -1,0 +1,378 @@
+---
+/**
+ * Zakat ul-Fitr Page
+ * Explains Zakat ul-Fitr and provides donation options ($15/person)
+ */
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Pay Zakat ul-Fitr - Qurbani Foundation USA" description="Pay your Zakat ul-Fitr online. $15 per person before Eid prayer. Obligatory charity that purifies your fast and provides for the needy on Eid.">
+  <Navbar />
+
+  <!-- Hero Section -->
+  <section class="relative pt-24 pb-20 overflow-hidden">
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[#0077b3] via-[#0096D6] to-[#00b4d8]"></div>
+    <!-- Decorative pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.4\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+
+    <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto">
+        <!-- Breadcrumb -->
+        <div class="flex items-center justify-center gap-2 text-white/60 text-sm mb-6">
+          <a href="/" class="hover:text-white transition">Home</a>
+          <span>/</span>
+          <a href="/ramadan" class="hover:text-white transition">Ramadan 2026</a>
+          <span>/</span>
+          <span class="text-white">Zakat ul-Fitr</span>
+        </div>
+
+        <!-- Icon -->
+        <div class="w-20 h-20 mx-auto mb-6 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
+          <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+          </svg>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+          Pay <span class="text-[#fdc448]">Zakat ul-Fitr</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-white/90 mb-4 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+          Purify your fast and bring joy to the needy on Eid
+        </p>
+
+        <div class="inline-block bg-white/20 backdrop-blur-sm text-white text-xl font-bold px-6 py-3 rounded-full border border-white/30">
+          $15 per person
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave divider -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-16">
+        <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="py-16 bg-white">
+    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-2 gap-12 items-start">
+        <!-- Left Column - Information -->
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+            What is <span class="text-[#0096D6]">Zakat ul-Fitr</span>?
+          </h2>
+
+          <div class="prose prose-lg max-w-none text-gray-600" style="font-family: 'Lato', sans-serif;">
+            <p class="mb-4">
+              Zakat ul-Fitr, also known as Fitrana or Sadaqat ul-Fitr, is an obligatory charity that every Muslim must pay before the Eid ul-Fitr prayer at the end of Ramadan. It serves two important purposes: to purify the fasting person from any indecent act or speech, and to provide food for the needy so they can also celebrate Eid.
+            </p>
+
+            <p class="mb-6">
+              Unlike Zakat (annual wealth tax), Zakat ul-Fitr is obligatory on every Muslim, regardless of age, who possesses food in excess of their needs. It must be paid on behalf of yourself and all dependents in your household.
+            </p>
+
+            <div class="bg-[#0096D6]/10 border-l-4 border-[#0096D6] p-4 rounded-r-lg mb-6">
+              <p class="text-sm text-gray-700 italic">
+                "The Messenger of Allah (PBUH) enjoined Zakat ul-Fitr on the one who fasts to shield him from any indecent act or speech, and for the purpose of providing food for the needy."
+                <span class="block mt-1 font-semibold">- Abu Dawud</span>
+              </p>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              Who Must Pay Zakat ul-Fitr?
+            </h3>
+
+            <ul class="space-y-3 mb-6">
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Every Muslim who has food beyond their immediate needs</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Parents must pay on behalf of minor children</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Paid for all dependents in the household</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Includes newborns if born before Eid prayer</span>
+              </li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              When Should It Be Paid?
+            </h3>
+
+            <p class="mb-4">
+              Zakat ul-Fitr must be paid <strong>before the Eid prayer</strong>. The preferred time is the day or two before Eid. However, you can pay earlier during Ramadan to ensure the charity reaches those in need in time for Eid celebrations.
+            </p>
+
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
+              <p class="text-sm text-gray-700">
+                <strong>Important:</strong> If Zakat ul-Fitr is paid after the Eid prayer, it becomes a regular sadaqah (charity) and does not fulfill the obligation. Please pay before Eid prayer to ensure your obligation is met.
+              </p>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+              <h4 class="font-bold text-gray-800 mb-3">Quick Calculation:</h4>
+              <ul class="space-y-2 text-sm">
+                <li>1 person = $15</li>
+                <li>Family of 4 = $60</li>
+                <li>Family of 5 = $75</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Donation Box -->
+        <div class="lg:sticky lg:top-24">
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#0096D6] to-[#00b4d8] p-6 text-center">
+              <h3 class="text-2xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">
+                Pay Zakat ul-Fitr
+              </h3>
+              <p class="text-white/80 text-sm">$15 per person</p>
+            </div>
+
+            <div class="p-6">
+              <!-- People Selection -->
+              <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Number of People</label>
+                <div class="grid grid-cols-4 gap-2 mb-3">
+                  <button class="fitr-people-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#0096D6] transition" data-people="1">1</button>
+                  <button class="fitr-people-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#0096D6] transition" data-people="2">2</button>
+                  <button class="fitr-people-btn py-3 border-2 border-[#0096D6] rounded-lg bg-[#0096D6]/10 text-[#0096D6] font-bold text-sm" data-people="4">4</button>
+                  <button class="fitr-people-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#0096D6] transition" data-people="5">5</button>
+                </div>
+                <div class="relative">
+                  <input type="number" id="fitr-custom-people" min="1" placeholder="Custom number of people" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0096D6] focus:border-[#0096D6] outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Total Amount -->
+              <div class="bg-[#0096D6]/10 rounded-xl p-4 mb-6 text-center">
+                <p class="text-sm text-gray-600 mb-1">Total Amount</p>
+                <p class="text-4xl font-bold text-[#0096D6]" id="fitr-total">$60</p>
+                <p class="text-xs text-gray-500 mt-1"><span id="fitr-people-display">4</span> people x $15</p>
+              </div>
+
+              <!-- Family Quick Add -->
+              <div class="border border-gray-200 rounded-lg p-4 mb-6">
+                <p class="text-sm font-semibold text-gray-700 mb-3">Quick Family Calculation:</p>
+                <div class="space-y-2">
+                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="3">
+                    <span class="text-sm">Couple + 1 child</span>
+                    <span class="text-sm font-bold text-[#0096D6]">$45</span>
+                  </button>
+                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="4">
+                    <span class="text-sm">Couple + 2 children</span>
+                    <span class="text-sm font-bold text-[#0096D6]">$60</span>
+                  </button>
+                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="5">
+                    <span class="text-sm">Couple + 3 children</span>
+                    <span class="text-sm font-bold text-[#0096D6]">$75</span>
+                  </button>
+                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="6">
+                    <span class="text-sm">Couple + 4 children</span>
+                    <span class="text-sm font-bold text-[#0096D6]">$90</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Add to Cart Button -->
+              <button
+                id="fitr-add-to-cart"
+                class="w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+                style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(0, 150, 214, 0.3);"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Add Zakat ul-Fitr to Cart
+              </button>
+
+              <p class="text-center text-xs text-gray-500 mt-4">
+                Ensure your family's Eid obligation is fulfilled
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div class="mt-6 bg-gray-50 rounded-xl p-4">
+            <p class="text-sm font-semibold text-gray-700 mb-3">Other Ramadan Giving:</p>
+            <div class="space-y-2">
+              <a href="/fidya" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
+                <span class="text-sm font-medium text-gray-700">Fidya</span>
+                <span class="text-xs text-gray-500">$10/day</span>
+              </a>
+              <a href="/kaffarah" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
+                <span class="text-sm font-medium text-gray-700">Kaffarah</span>
+                <span class="text-xs text-gray-500">$300</span>
+              </a>
+              <a href="/iftar" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
+                <span class="text-sm font-medium text-gray-700">Feed Iftar</span>
+                <span class="text-xs text-gray-500">$5/meal</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-16 bg-[#f8f9fa]">
+    <div class="max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+        Frequently Asked Questions
+      </h2>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">What is the difference between Zakat and Zakat ul-Fitr?</h3>
+          <p class="text-gray-600">Zakat is the annual obligatory charity (2.5% of wealth above nisab), while Zakat ul-Fitr is a flat amount paid per person at the end of Ramadan before Eid prayer. Zakat ul-Fitr is obligatory on all Muslims regardless of wealth, while Zakat is only obligatory on those who meet the nisab threshold.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Can I pay Zakat ul-Fitr early in Ramadan?</h3>
+          <p class="text-gray-600">Yes, you can pay Zakat ul-Fitr any time during Ramadan. In fact, paying early is encouraged to ensure the charity reaches those in need in time for them to benefit from it on Eid day.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Do I need to pay for a baby born during Ramadan?</h3>
+          <p class="text-gray-600">If a baby is born before the Eid prayer, Zakat ul-Fitr should be paid on their behalf. If the baby is born after the Eid prayer, Zakat ul-Fitr is not obligatory for that child for this year.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Who receives Zakat ul-Fitr?</h3>
+          <p class="text-gray-600">Zakat ul-Fitr is distributed to those eligible for Zakat - primarily the poor and needy who do not have enough food for themselves and their families. The goal is to enable them to celebrate Eid without worrying about food.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-br from-[#0096D6] to-[#0077b3] relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Share the Joy of Eid
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        Your Zakat ul-Fitr ensures that everyone can celebrate Eid with dignity. Pay for your family and help others experience the joy of this blessed day.
+      </p>
+      <a
+        href="/ramadan"
+        class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#0096D6] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+        style="font-family: 'Signika', sans-serif;"
+      >
+        Explore All Ramadan Giving
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const peopleButtons = document.querySelectorAll('.fitr-people-btn');
+    const familyButtons = document.querySelectorAll('.fitr-family-btn');
+    const customPeopleInput = document.getElementById('fitr-custom-people') as HTMLInputElement;
+    const totalDisplay = document.getElementById('fitr-total');
+    const peopleDisplay = document.getElementById('fitr-people-display');
+    const addToCartBtn = document.getElementById('fitr-add-to-cart');
+
+    const FITR_RATE = 15;
+    let selectedPeople = 4;
+
+    function updateTotal() {
+      const total = selectedPeople * FITR_RATE;
+      if (totalDisplay) totalDisplay.textContent = `$${total}`;
+      if (peopleDisplay) peopleDisplay.textContent = selectedPeople.toString();
+    }
+
+    function selectPeople(people: number) {
+      selectedPeople = people;
+      peopleButtons.forEach(btn => {
+        btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
+        btn.classList.add('border-gray-200', 'text-gray-700');
+        if (parseInt(btn.getAttribute('data-people') || '0') === people) {
+          btn.classList.add('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
+          btn.classList.remove('border-gray-200', 'text-gray-700');
+        }
+      });
+      updateTotal();
+    }
+
+    peopleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const people = parseInt(btn.getAttribute('data-people') || '4');
+        if (customPeopleInput) customPeopleInput.value = '';
+        selectPeople(people);
+      });
+    });
+
+    familyButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const people = parseInt(btn.getAttribute('data-people') || '4');
+        if (customPeopleInput) customPeopleInput.value = '';
+        selectPeople(people);
+      });
+    });
+
+    customPeopleInput?.addEventListener('input', () => {
+      const people = parseInt(customPeopleInput.value) || 1;
+      selectedPeople = Math.max(1, people);
+      peopleButtons.forEach(btn => {
+        btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
+        btn.classList.add('border-gray-200', 'text-gray-700');
+      });
+      updateTotal();
+    });
+
+    addToCartBtn?.addEventListener('click', () => {
+      const total = selectedPeople * FITR_RATE;
+
+      if (typeof (window as any).addToCart === 'function') {
+        (window as any).addToCart({
+          id: `zakat-ul-fitr-${selectedPeople}-${Date.now()}`,
+          type: 'donation',
+          name: 'Zakat ul-Fitr',
+          amount: total,
+          quantity: 1,
+          description: `${selectedPeople} people x $${FITR_RATE}`,
+          frequency: 'single'
+        });
+      }
+    });
+
+    // Initialize
+    updateTotal();
+  });
+</script>

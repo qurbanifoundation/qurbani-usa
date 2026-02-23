@@ -16,9 +16,22 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.local
 
 # macOS-specific files
 .DS_Store
+
+# Local scripts with secrets
+.claude/settings.local.json
+create-table-rpc.mjs
+create-table.mjs
+run-migration.mjs
+setup-db.mjs
+scripts/update-stripe-keys.mjs
+run-sql.scpt
+
+# Reference files
+reference/
 
 # jetbrains setting folder
 .idea/

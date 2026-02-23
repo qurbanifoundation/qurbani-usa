@@ -1,0 +1,998 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+import { getPageTemplates, getDonationBoxTemplates } from '../../../lib/templates';
+
+export const prerender = false;
+
+const { slug: id } = Astro.params;
+
+// Fetch campaign from Supabase
+let campaign: any = null;
+let fetchError = '';
+
+try {
+  const { data, error } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    fetchError = error.message;
+  } else {
+    campaign = data;
+  }
+} catch (e: any) {
+  fetchError = e.message || 'Failed to fetch campaign';
+}
+
+if (!campaign && !fetchError) {
+  return Astro.redirect('/admin/campaigns');
+}
+
+// Fetch templates from database (centralized)
+const pageTemplates = await getPageTemplates();
+const donationBoxTemplates = await getDonationBoxTemplates();
+
+// Fetch media for image selection
+let mediaFiles: any[] = [];
+try {
+  const { data } = await supabaseAdmin.storage.from('media').list('', { limit: 100 });
+  if (data) {
+    const { data: { publicUrl } } = supabaseAdmin.storage.from('media').getPublicUrl('');
+    mediaFiles = data
+      .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+      .map(file => ({
+        name: file.name,
+        url: `${publicUrl}${file.name}`
+      }));
+  }
+} catch (e) {}
+---
+
+<AdminLayout title={campaign ? `Edit: ${campaign.title}` : 'Campaign Not Found'} activeNav="campaigns">
+  <div class="max-w-5xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <a href="/admin/campaigns" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Campaigns
+      </a>
+      {campaign && (
+        <a
+          href={`/campaigns/${campaign.slug}`}
+          target="_blank"
+          class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+          </svg>
+          Preview Page
+        </a>
+      )}
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50"></div>
+
+    {fetchError ? (
+      <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <p class="text-red-800 mb-4">Error: {fetchError}</p>
+        <a href="/admin/campaigns" class="text-[#01534d] underline">Return to campaigns</a>
+      </div>
+    ) : campaign ? (
+      <form id="campaignForm" class="space-y-6">
+        <input type="hidden" name="id" value={campaign.id} />
+
+        <!-- Basic Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-gray-800 mb-6">Basic Information</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Title *</label>
+              <input
+                type="text"
+                name="title"
+                required
+                value={campaign.title || campaign.name || ''}
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">URL Slug</label>
+              <div class="flex">
+                <span class="inline-flex items-center px-3 border border-r-0 border-gray-200 rounded-l-lg bg-gray-50 text-gray-500 text-sm">/campaigns/</span>
+                <input
+                  type="text"
+                  name="slug"
+                  value={campaign.slug}
+                  class="flex-1 px-4 py-2 border border-gray-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="is_active" checked={campaign.is_active} class="w-4 h-4 text-[#01534d] rounded" />
+                  <span class="text-sm">Active</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="is_featured" checked={campaign.is_featured} class="w-4 h-4 text-[#01534d] rounded" />
+                  <span class="text-sm">Featured</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="show_on_homepage" checked={campaign.show_on_homepage} class="w-4 h-4 text-[#01534d] rounded" />
+                  <span class="text-sm">Homepage</span>
+                </label>
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Subtitle / Short Description</label>
+              <input
+                type="text"
+                name="subtitle"
+                value={campaign.subtitle || ''}
+                placeholder="Brief description shown on cards and hero"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Image -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-bold text-gray-800">Featured Image (Hero)</h2>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                id="customSearchQuery"
+                placeholder="Custom search (e.g., syria relief)"
+                class="w-48 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button type="button" id="fetchStockBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Fetch Stock Images
+              </button>
+            </div>
+          </div>
+          {/* Use same fallback chain as front-end: featured_image || hero_image_url || image_url */}
+          <div id="featuredImagePreview" class={(campaign.featured_image || campaign.hero_image_url || campaign.image_url) ? 'mb-4' : 'hidden mb-4'}>
+            <img id="featuredImg" src={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} alt="" class="w-full max-h-48 object-cover rounded-lg" />
+          </div>
+          <input type="hidden" name="featured_image" id="featured_image" value={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} />
+          <div class="flex gap-3 flex-wrap">
+            <button type="button" onclick="openMediaModal('featured')" class="px-4 py-2 bg-[#01534d] text-white rounded-lg text-sm hover:bg-[#01433f]">
+              Choose from Gallery
+            </button>
+            <input type="url" id="featuredImageUrl" placeholder="Or paste image URL" class="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+            <button type="button" onclick="setFeaturedFromUrl()" class="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Use URL</button>
+          </div>
+          <!-- Stock Images Preview (shown after fetch) -->
+          <div id="stockImagesPreview" class="hidden mt-4 border-t border-gray-200 pt-4">
+            <p class="text-sm font-medium text-gray-700 mb-3">Select a stock image:</p>
+            <div id="stockImagesGrid" class="grid grid-cols-4 gap-3"></div>
+          </div>
+        </div>
+
+        <!-- Main Description -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-gray-800 mb-6">Main Description</h2>
+          <textarea
+            name="description"
+            rows="8"
+            placeholder="Main campaign description. Just type plain text - formatting is automatic."
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+          >{campaign.description || ''}</textarea>
+          <p class="text-xs text-gray-400 mt-2">Just type plain text. Use blank lines for paragraph breaks. Use *asterisks* for bold.</p>
+        </div>
+
+        <!-- Crisis Stats / Impact Stats -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-bold text-gray-800">Crisis Statistics</h2>
+              <p class="text-sm text-gray-500">Stats shown in "The Scale of the Crisis" section</p>
+            </div>
+            <button type="button" id="fetchCrisisStatsBtn" class="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              Fetch Crisis Stats
+            </button>
+          </div>
+          <div id="crisisStats" class="space-y-3">
+            <!-- Stats added via JS -->
+          </div>
+          <button type="button" onclick="addCrisisStat()" class="mt-4 text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add stat manually
+          </button>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-bold text-gray-800">Content Sections</h2>
+              <p class="text-sm text-gray-500">Add additional sections with titles, text, and images</p>
+            </div>
+            <button type="button" onclick="addContentSection()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
+              + Add Section
+            </button>
+          </div>
+          <div id="contentSections" class="space-y-4">
+            <!-- Sections added via JS -->
+          </div>
+        </div>
+
+        <!-- Gallery Images -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-bold text-gray-800">Gallery Images</h2>
+              <p class="text-sm text-gray-500">Images shown in "Your Donations in Action" section</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                id="gallerySearchQuery"
+                placeholder="Custom search"
+                class="w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button type="button" onclick="fetchStockForGallery()" class="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Fetch Stock
+              </button>
+              <button type="button" onclick="openMediaModal('gallery')" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
+                + Add Images
+              </button>
+            </div>
+          </div>
+          <div id="galleryImages" class="grid grid-cols-4 md:grid-cols-6 gap-3">
+            <!-- Images added via JS -->
+          </div>
+          <p id="noGalleryText" class="text-gray-400 text-sm text-center py-4">No gallery images yet</p>
+        </div>
+
+        <!-- Donation Options -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-lg font-bold text-gray-800">Donation Options</h2>
+              <p class="text-sm text-gray-500">Preset amounts shown in donation box</p>
+            </div>
+            <button type="button" onclick="addDonationOption()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
+              + Add Option
+            </button>
+          </div>
+          <div id="donationOptions" class="space-y-3">
+            <!-- Options added via JS -->
+          </div>
+        </div>
+
+        <!-- SEO Settings -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-gray-800 mb-6">SEO Settings</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
+              <input type="text" name="meta_title" value={campaign.meta_title || ''} placeholder="Leave blank to use campaign title" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+              <textarea name="meta_description" rows="2" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]">{campaign.meta_description || ''}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Settings -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-gray-800 mb-2">Template Settings</h2>
+          <p class="text-sm text-gray-500 mb-6">Override the default templates for this campaign</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Page Template</label>
+              <select
+                name="page_template"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+              >
+                <option value="" selected={!campaign.page_template}>Use Default</option>
+                {pageTemplates.map((template) => (
+                  <option value={template.template_key} selected={campaign.page_template === template.template_key}>
+                    {template.template_label}
+                  </option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-400 mt-1">Controls the overall page layout and style</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
+              <select
+                name="donation_box_template"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+              >
+                <option value="" selected={!campaign.donation_box_template}>Use Default</option>
+                {donationBoxTemplates.map((template) => (
+                  <option value={template.template_key} selected={campaign.donation_box_template === template.template_key}>
+                    {template.template_label}
+                  </option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-400 mt-1">Controls the donation box appearance</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-between">
+          <button type="button" onclick="deleteCampaign()" class="px-6 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium">
+            Delete Campaign
+          </button>
+          <div class="flex gap-4">
+            <a href="/admin/campaigns" class="px-6 py-2 border border-gray-200 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+            <button type="submit" class="px-6 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#01433f]">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    ) : null}
+  </div>
+
+  <!-- Media Modal -->
+  <div id="mediaModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="font-bold text-lg">Select or Upload Image</h3>
+        <button onclick="closeMediaModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="p-4 border-b border-gray-200 bg-gray-50">
+        <div id="uploadArea" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
+          <input type="file" id="imageUpload" accept="image/*" class="hidden" />
+          <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p class="text-gray-600 font-medium">Click to upload a new image</p>
+          <p class="text-gray-400 text-sm mt-1">or drag and drop</p>
+        </div>
+        <div id="uploadProgress" class="hidden mt-3">
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div id="progressBar" class="h-full bg-[#01534d] transition-all" style="width: 0%"></div>
+            </div>
+            <span id="progressText" class="text-sm text-gray-600">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gallery Section -->
+      <div class="p-4 overflow-y-auto max-h-[40vh]">
+        <p class="text-sm text-gray-500 mb-3 font-medium">Or choose from gallery:</p>
+        {mediaFiles.length === 0 ? (
+          <p class="text-center text-gray-400 py-4">No images in gallery yet</p>
+        ) : (
+          <div class="grid grid-cols-4 gap-3">
+            {mediaFiles.map((file) => (
+              <div
+                class="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 hover:shadow-lg transition media-item"
+                data-url={file.url}
+              >
+                <img src={file.url} alt={file.name} class="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{
+  campaignId: campaign?.id,
+  campaignTitle: campaign?.title || campaign?.name || '',
+  campaignCategory: campaign?.category || '',
+  campaignCountry: campaign?.country || '',
+  existingOptions: campaign?.donation_options || [],
+  existingSections: campaign?.content_sections || [],
+  existingGallery: campaign?.gallery_images || [],
+  existingImpactStats: campaign?.impact_stats || []
+}}>
+  let mediaTarget = 'featured';
+  let galleryImages = [...existingGallery];
+  let contentSections = [...existingSections];
+  let crisisStats = Array.isArray(existingImpactStats) ? [...existingImpactStats] : [];
+  let sectionIndex = 0;
+  let optionIndex = 0;
+  let statIndex = 0;
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Stock Images Button Handler
+    const fetchStockBtn = document.getElementById('fetchStockBtn');
+    if (fetchStockBtn) {
+      fetchStockBtn.addEventListener('click', fetchStockImages);
+    }
+
+    // Crisis Stats Button Handler
+    const fetchCrisisStatsBtn = document.getElementById('fetchCrisisStatsBtn');
+    if (fetchCrisisStatsBtn) {
+      fetchCrisisStatsBtn.addEventListener('click', fetchCrisisStats);
+    }
+
+    // Load existing donation options
+    if (existingOptions.length > 0) {
+      existingOptions.forEach(opt => addDonationOption(opt.amount, opt.label));
+    } else {
+      addDonationOption(50, 'Feed a family');
+      addDonationOption(100, 'Provide clean water');
+      addDonationOption(250, 'Medical supplies');
+    }
+
+    // Load existing content sections
+    existingSections.forEach(section => {
+      addContentSection(section.title, section.content, section.image);
+    });
+
+    // Load existing crisis stats
+    if (crisisStats.length > 0) {
+      crisisStats.forEach(stat => addCrisisStat(stat.value, stat.label));
+    }
+
+    // Load existing gallery
+    renderGallery();
+
+    // Media modal click handlers
+    document.querySelectorAll('.media-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const url = this.dataset.url;
+        handleImageSelection(url);
+      });
+    });
+
+    // Upload area click
+    const uploadArea = document.getElementById('uploadArea');
+    const imageUpload = document.getElementById('imageUpload');
+
+    uploadArea.addEventListener('click', () => imageUpload.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('border-blue-500', 'bg-blue-50');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('border-blue-500', 'bg-blue-50');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) uploadImage(files[0]);
+    });
+
+    imageUpload.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) uploadImage(e.target.files[0]);
+    });
+  });
+
+  // Handle image selection (from gallery or upload)
+  function handleImageSelection(url) {
+    if (mediaTarget === 'featured') {
+      selectFeaturedImage(url);
+    } else if (mediaTarget === 'gallery') {
+      addGalleryImage(url);
+    } else if (mediaTarget.startsWith('section-')) {
+      const idx = mediaTarget.replace('section-', '');
+      document.querySelector(`#section-${idx} .section-image`).value = url;
+      document.querySelector(`#section-${idx} .section-img-preview`).src = url;
+      document.querySelector(`#section-${idx} .section-img-preview`).classList.remove('hidden');
+    }
+    closeMediaModal();
+  }
+
+  // Upload image function
+  async function uploadImage(file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    progressDiv.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Simulate progress
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) {
+          progressBar.style.width = progress + '%';
+          progressText.textContent = progress + '%';
+        }
+      }, 100);
+
+      const res = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      clearInterval(progressInterval);
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+
+      progressBar.style.width = '100%';
+      progressText.textContent = '100%';
+
+      // Use the uploaded image
+      setTimeout(() => {
+        progressDiv.classList.add('hidden');
+        handleImageSelection(data.url);
+      }, 500);
+
+    } catch (error) {
+      progressDiv.classList.add('hidden');
+      alert('Upload failed: ' + error.message);
+    }
+  }
+
+  // Media Modal
+  window.openMediaModal = function(target) {
+    mediaTarget = target;
+    document.getElementById('mediaModal').classList.remove('hidden');
+  };
+
+  window.closeMediaModal = function() {
+    document.getElementById('mediaModal').classList.add('hidden');
+  };
+
+  // Featured Image
+  window.selectFeaturedImage = function(url) {
+    document.getElementById('featured_image').value = url;
+    document.getElementById('featuredImg').src = url;
+    document.getElementById('featuredImagePreview').classList.remove('hidden');
+  };
+
+  window.setFeaturedFromUrl = function() {
+    const url = document.getElementById('featuredImageUrl').value;
+    if (url) selectFeaturedImage(url);
+  };
+
+  // Gallery Images
+  window.addGalleryImage = function(url) {
+    if (!galleryImages.includes(url)) {
+      galleryImages.push(url);
+      renderGallery();
+    }
+  };
+
+  window.removeGalleryImage = function(url) {
+    galleryImages = galleryImages.filter(img => img !== url);
+    renderGallery();
+  };
+
+  function renderGallery() {
+    const container = document.getElementById('galleryImages');
+    const noText = document.getElementById('noGalleryText');
+
+    if (galleryImages.length === 0) {
+      container.innerHTML = '';
+      noText.classList.remove('hidden');
+      return;
+    }
+
+    noText.classList.add('hidden');
+    container.innerHTML = galleryImages.map(url => `
+      <div class="relative group aspect-square">
+        <img src="${url}" class="w-full h-full object-cover rounded-lg" />
+        <button type="button" onclick="removeGalleryImage('${url}')" class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  // Content Sections
+  window.addContentSection = function(title = '', content = '', image = '') {
+    const container = document.getElementById('contentSections');
+    const idx = sectionIndex++;
+
+    const div = document.createElement('div');
+    div.id = `section-${idx}`;
+    div.className = 'border border-gray-200 rounded-lg p-4 space-y-3';
+    div.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-medium text-gray-700">Section ${idx + 1}</span>
+        <button type="button" onclick="removeSection(${idx})" class="text-red-500 hover:bg-red-50 p-1 rounded">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      </div>
+      <input type="text" placeholder="Section Title" value="${title}" class="section-title w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <textarea placeholder="Section Content (HTML supported)" rows="4" class="section-content w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">${content}</textarea>
+      <div class="flex gap-2 items-center">
+        <input type="hidden" class="section-image" value="${image}" />
+        <img src="${image}" class="section-img-preview w-16 h-16 object-cover rounded ${image ? '' : 'hidden'}" />
+        <button type="button" onclick="openMediaModal('section-${idx}')" class="px-3 py-1.5 border border-gray-200 rounded text-sm hover:bg-gray-50">Add Image</button>
+      </div>
+    `;
+    container.appendChild(div);
+  };
+
+  window.removeSection = function(idx) {
+    document.getElementById(`section-${idx}`).remove();
+  };
+
+  // Crisis Stats
+  window.addCrisisStat = function(value = '', label = '') {
+    const container = document.getElementById('crisisStats');
+    const idx = statIndex++;
+
+    const div = document.createElement('div');
+    div.id = `stat-${idx}`;
+    div.className = 'flex gap-3 items-center';
+    div.innerHTML = `
+      <input type="text" placeholder="Value (e.g., 2.3M)" value="${value}" class="stat-value w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold" />
+      <input type="text" placeholder="Label (e.g., People Displaced)" value="${label}" class="stat-label flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <button type="button" onclick="removeStat(${idx})" class="p-2 text-red-500 hover:bg-red-50 rounded">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    `;
+    container.appendChild(div);
+  };
+
+  window.removeStat = function(idx) {
+    document.getElementById(`stat-${idx}`).remove();
+  };
+
+  // Fetch Crisis Stats from API
+  async function fetchCrisisStats() {
+    const btn = document.getElementById('fetchCrisisStatsBtn');
+    const title = document.querySelector('input[name="title"]').value;
+
+    if (!title) {
+      showToast('Please enter a campaign title first', 'error');
+      return;
+    }
+
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = `
+      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Fetching...
+    `;
+
+    try {
+      const res = await fetch('/api/campaigns/crisis-stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title,
+          category: campaignCategory,
+          country: campaignCountry
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to fetch stats');
+      }
+
+      const data = await res.json();
+
+      // Clear existing stats
+      document.getElementById('crisisStats').innerHTML = '';
+      statIndex = 0;
+
+      // Add new stats
+      data.stats.forEach(stat => addCrisisStat(stat.value, stat.label));
+
+      showToast(`Fetched ${data.stats.length} crisis statistics`);
+
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        Fetch Crisis Stats
+      `;
+    }
+  }
+
+  // Collect crisis stats data
+  function getCrisisStats() {
+    const stats = [];
+    document.querySelectorAll('#crisisStats > div').forEach(div => {
+      const value = div.querySelector('.stat-value').value;
+      const label = div.querySelector('.stat-label').value;
+      if (value && label) stats.push({ value, label });
+    });
+    return stats;
+  }
+
+  // Donation Options
+  window.addDonationOption = function(amount = '', label = '') {
+    const container = document.getElementById('donationOptions');
+    const idx = optionIndex++;
+
+    const div = document.createElement('div');
+    div.id = `option-${idx}`;
+    div.className = 'flex gap-3 items-center';
+    div.innerHTML = `
+      <input type="number" placeholder="Amount ($)" value="${amount}" class="opt-amount w-28 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <input type="text" placeholder="Label (e.g., Feed a family)" value="${label}" class="opt-label flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <button type="button" onclick="removeOption(${idx})" class="p-2 text-red-500 hover:bg-red-50 rounded">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    `;
+    container.appendChild(div);
+  };
+
+  window.removeOption = function(idx) {
+    document.getElementById(`option-${idx}`).remove();
+  };
+
+  // Collect data
+  function getDonationOptions() {
+    const options = [];
+    document.querySelectorAll('#donationOptions > div').forEach(div => {
+      const amount = div.querySelector('.opt-amount').value;
+      const label = div.querySelector('.opt-label').value;
+      if (amount) options.push({ amount: parseFloat(amount), label: label || `$${amount}` });
+    });
+    return options;
+  }
+
+  function getContentSections() {
+    const sections = [];
+    document.querySelectorAll('#contentSections > div').forEach(div => {
+      const title = div.querySelector('.section-title').value;
+      const content = div.querySelector('.section-content').value;
+      const image = div.querySelector('.section-image').value;
+      if (title || content) sections.push({ title, content, image });
+    });
+    return sections;
+  }
+
+  // Toast
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+    setTimeout(() => { toast.className = 'hidden'; }, 3000);
+  }
+
+  // Delete
+  window.deleteCampaign = async function() {
+    if (!confirm(`Delete "${campaignTitle}"? This cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`/api/campaigns?id=${campaignId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      showToast('Campaign deleted');
+      setTimeout(() => { window.location.href = '/admin/campaigns'; }, 1000);
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  };
+
+  // Fetch Stock Images
+  async function fetchStockImages() {
+    const btn = document.getElementById('fetchStockBtn');
+    const title = document.querySelector('input[name="title"]').value;
+    const customQuery = document.getElementById('customSearchQuery').value.trim();
+
+    // Use custom query if provided, otherwise use campaign title
+    const searchTitle = customQuery || title;
+
+    if (!searchTitle) {
+      showToast('Please enter a campaign title or custom search query', 'error');
+      return;
+    }
+
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = `
+      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Searching...
+    `;
+
+    try {
+      const res = await fetch('/api/images/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: searchTitle,
+          category: campaignCategory,
+          country: campaignCountry,
+          count: 8
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to fetch images');
+      }
+
+      const data = await res.json();
+
+      // Show the preview section
+      const previewSection = document.getElementById('stockImagesPreview');
+      const grid = document.getElementById('stockImagesGrid');
+
+      previewSection.classList.remove('hidden');
+
+      // Render images
+      grid.innerHTML = data.images.map((img, idx) => `
+        <div class="relative group cursor-pointer stock-img-option" data-url="${img.url}">
+          <img src="${img.thumbnail}" alt="Stock image ${idx + 1}" class="w-full aspect-video object-cover rounded-lg border-2 border-transparent group-hover:border-purple-500 transition" />
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition flex items-center justify-center">
+            <span class="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-purple-600 px-2 py-1 rounded">Select</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handlers to each image
+      grid.querySelectorAll('.stock-img-option').forEach(el => {
+        el.addEventListener('click', function() {
+          const url = this.dataset.url;
+          selectFeaturedImage(url);
+          showToast('Stock image selected!');
+
+          // Highlight selected
+          grid.querySelectorAll('.stock-img-option img').forEach(img => {
+            img.classList.remove('border-green-500', 'border-2');
+            img.classList.add('border-transparent');
+          });
+          this.querySelector('img').classList.remove('border-transparent');
+          this.querySelector('img').classList.add('border-green-500', 'border-2');
+        });
+      });
+
+      showToast(`Found ${data.images.length} images for: ${data.keywords.join(', ')}`);
+
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        Fetch Stock Images
+      `;
+    }
+  }
+
+  // Also add stock images to gallery
+  window.fetchStockForGallery = async function() {
+    const title = document.querySelector('input[name="title"]').value;
+    const customQuery = document.getElementById('gallerySearchQuery').value.trim();
+
+    // Use custom query if provided, otherwise use campaign title
+    const searchTitle = customQuery || title;
+
+    if (!searchTitle) {
+      showToast('Please enter a campaign title or custom search query', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/images/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: searchTitle,
+          category: campaignCategory,
+          country: campaignCountry,
+          count: 4
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch images');
+
+      const data = await res.json();
+
+      // Add to gallery
+      data.images.forEach(img => {
+        if (!galleryImages.includes(img.url)) {
+          galleryImages.push(img.url);
+        }
+      });
+
+      renderGallery();
+      showToast(`Added ${data.images.length} stock images to gallery`);
+
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  };
+
+  // Form Submit
+  document.getElementById('campaignForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+      id: formData.get('id'),
+      name: formData.get('title'),
+      title: formData.get('title'),
+      slug: formData.get('slug'),
+      subtitle: formData.get('subtitle') || null,
+      description: formData.get('description') || null,
+      featured_image: formData.get('featured_image') || null,
+      gallery_images: galleryImages,
+      content_sections: getContentSections(),
+      donation_options: getDonationOptions(),
+      impact_stats: getCrisisStats(),
+      is_active: formData.get('is_active') === 'on',
+      is_featured: formData.get('is_featured') === 'on',
+      show_on_homepage: formData.get('show_on_homepage') === 'on',
+      meta_title: formData.get('meta_title') || null,
+      meta_description: formData.get('meta_description') || null,
+      page_template: formData.get('page_template') || null,
+      donation_box_template: formData.get('donation_box_template') || null,
+    };
+
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to save');
+      }
+
+      showToast('Campaign saved successfully!');
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  });
+</script>

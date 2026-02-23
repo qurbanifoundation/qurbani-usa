@@ -1,0 +1,253 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+import { defaultHomepageContent } from '../../lib/homepage';
+
+export const prerender = false;
+
+// Fetch hero slides
+let heroSlides: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('hero_slides')
+    .select('*')
+    .order('display_order', { ascending: true });
+  heroSlides = data || [];
+} catch (e) {}
+
+// Fetch homepage content
+let homepageContent = defaultHomepageContent;
+try {
+  const { data } = await supabaseAdmin
+    .from('homepage_content')
+    .select('*')
+    .eq('id', 'main')
+    .single();
+  if (data) {
+    homepageContent = {
+      about: { ...defaultHomepageContent.about, ...data.about },
+      stats: { ...defaultHomepageContent.stats, ...data.stats },
+      faq: { ...defaultHomepageContent.faq, ...data.faq }
+    };
+  }
+} catch (e) {}
+---
+
+<AdminLayout title="Edit Homepage" activeNav="settings">
+  <div class="max-w-6xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Edit Homepage</h1>
+        <p class="text-gray-500">Manage all content displayed on your homepage</p>
+      </div>
+      <a href="/" target="_blank" class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+        </svg>
+        View Live Site
+      </a>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50"></div>
+
+    <!-- Homepage Sections Overview -->
+    <div class="space-y-6">
+
+      <!-- Section 1: Hero Banner -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-[#255764] to-[#1a4a55] p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Hero Banner / Slider</h2>
+              <p class="text-white/70 text-sm">Main banner with title, subtitle, and call-to-action buttons</p>
+            </div>
+          </div>
+          <a href="/admin/settings/gallery" class="px-4 py-2 bg-white text-[#255764] rounded-lg font-medium hover:bg-gray-100 transition text-sm">
+            Edit Hero Slides →
+          </a>
+        </div>
+        <div class="p-4">
+          {heroSlides.length === 0 ? (
+            <p class="text-gray-500 text-center py-4">No hero slides yet. <a href="/admin/settings/gallery" class="text-[#01534d] hover:underline">Add your first slide</a></p>
+          ) : (
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {heroSlides.slice(0, 3).map((slide) => (
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                  <div class="h-24 bg-gray-100 relative">
+                    {slide.image_url && <img src={slide.image_url} alt="" class="w-full h-full object-cover" />}
+                    {!slide.is_active && <div class="absolute inset-0 bg-black/50 flex items-center justify-center"><span class="text-white text-xs">Inactive</span></div>}
+                  </div>
+                  <div class="p-3">
+                    <p class="font-medium text-gray-800 text-sm truncate">{slide.title || 'Untitled'}</p>
+                    <p class="text-gray-500 text-xs truncate">{slide.subtitle || 'No subtitle'}</p>
+                    <p class="text-[#01534d] text-xs mt-1">Button: {slide.button_text || 'None'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {heroSlides.length > 3 && (
+            <p class="text-center text-sm text-gray-500 mt-3">+{heroSlides.length - 3} more slides</p>
+          )}
+        </div>
+      </div>
+
+      <!-- Section 2: Stats / Impact -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-[#ef7c01] to-[#fdc448] p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Stats & Impact Numbers</h2>
+              <p class="text-white/70 text-sm">Achievement highlights carousel</p>
+            </div>
+          </div>
+          <a href="/admin/settings/homepage" class="px-4 py-2 bg-white text-[#ef7c01] rounded-lg font-medium hover:bg-gray-100 transition text-sm">
+            Edit Stats →
+          </a>
+        </div>
+        <div class="p-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {homepageContent.stats.items.slice(0, 4).map((stat) => (
+              <div class="text-center p-3 bg-gray-50 rounded-lg">
+                <p class="text-xl font-bold text-[#255764]">{stat.number}</p>
+                <p class="text-xs text-gray-600">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: About -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-[#01534d] to-[#255764] p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">About Section</h2>
+              <p class="text-white/70 text-sm">What is Qurbani - text and features</p>
+            </div>
+          </div>
+          <a href="/admin/settings/homepage" class="px-4 py-2 bg-white text-[#01534d] rounded-lg font-medium hover:bg-gray-100 transition text-sm">
+            Edit About →
+          </a>
+        </div>
+        <div class="p-4">
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <p class="font-medium text-gray-800 mb-1">{homepageContent.about.title}</p>
+              <p class="text-sm text-gray-600 line-clamp-2" set:html={homepageContent.about.paragraphs[0]}></p>
+            </div>
+            {homepageContent.about.image && (
+              <div class="w-24 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                <img src={homepageContent.about.image} alt="" class="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: FAQ -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-[#333] to-[#555] p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">FAQ Section</h2>
+              <p class="text-white/70 text-sm">{homepageContent.faq.items.length} questions</p>
+            </div>
+          </div>
+          <a href="/admin/settings/homepage" class="px-4 py-2 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition text-sm">
+            Edit FAQ →
+          </a>
+        </div>
+        <div class="p-4">
+          <div class="space-y-2">
+            {homepageContent.faq.items.slice(0, 3).map((faq) => (
+              <div class="flex items-center gap-2 text-sm">
+                <span class="text-[#ef7c01]">Q:</span>
+                <span class="text-gray-700 truncate">{faq.question}</span>
+              </div>
+            ))}
+            {homepageContent.faq.items.length > 3 && (
+              <p class="text-xs text-gray-500">+{homepageContent.faq.items.length - 3} more questions</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Donation Packages (Coming Soon) -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden opacity-75">
+        <div class="bg-gradient-to-r from-gray-400 to-gray-500 p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Donation Packages</h2>
+              <p class="text-white/70 text-sm">Qurbani pricing cards</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 bg-white/20 text-white rounded-full text-xs">Coming Soon</span>
+        </div>
+        <div class="p-4 text-center text-gray-500 text-sm">
+          Donation packages editor will be available soon
+        </div>
+      </div>
+
+      <!-- Section 6: Appeals (Coming Soon) -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden opacity-75">
+        <div class="bg-gradient-to-r from-gray-400 to-gray-500 p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Appeals / Campaigns</h2>
+              <p class="text-white/70 text-sm">Featured appeals carousel</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 bg-white/20 text-white rounded-full text-xs">Coming Soon</span>
+        </div>
+        <div class="p-4 text-center text-gray-500 text-sm">
+          Appeals editor will be available soon - currently managed via Campaigns
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Links -->
+    <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+      <h3 class="font-medium text-blue-800 mb-2">Quick Reference</h3>
+      <ul class="text-sm text-blue-700 space-y-1">
+        <li>• <strong>Hero Banner</strong> (title, subtitle, buttons, images) → <a href="/admin/settings/gallery" class="underline">Settings → Hero Gallery</a></li>
+        <li>• <strong>About, Stats, FAQ</strong> sections → <a href="/admin/settings/homepage" class="underline">Settings → Homepage</a></li>
+        <li>• <strong>Header/Footer, Logo</strong> → <a href="/admin/settings/header-footer" class="underline">Settings → Header & Footer</a></li>
+        <li>• <strong>Upload Images</strong> → <a href="/admin/settings/media" class="underline">Settings → Media Library</a></li>
+      </ul>
+    </div>
+  </div>
+</AdminLayout>

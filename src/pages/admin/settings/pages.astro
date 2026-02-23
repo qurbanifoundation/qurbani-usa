@@ -1,0 +1,306 @@
+---
+// Pages management has moved to /admin/pages
+return Astro.redirect('/admin/pages');
+---
+
+<AdminLayout title="Settings" activeNav="settings">
+  <div class="max-w-6xl">
+    <SettingsTabs active="pages" />
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <input
+            type="text"
+            placeholder="Search pages..."
+            class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent w-64"
+          />
+          <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        <select class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white">
+          <option value="all">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          id="initContentBtn"
+          class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+          title="Initialize default content for pages that don't have any"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Initialize Content
+        </button>
+        <a
+          href="/admin/pages/new"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Page
+        </a>
+      </div>
+    </div>
+
+    <!-- Pages Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Page</th>
+            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Template</th>
+            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
+            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Last Modified</th>
+            <th class="text-right px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100" id="pagesTableBody">
+          {error ? (
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center">
+                <div class="text-red-600 mb-2">Error loading pages</div>
+                <div class="text-sm text-gray-500">{error}</div>
+              </td>
+            </tr>
+          ) : pages.length === 0 ? (
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center">
+                <div class="text-gray-500 mb-2">No pages found</div>
+                <a href="/admin/pages/new" class="text-[#01534d] hover:underline">Create your first page</a>
+              </td>
+            </tr>
+          ) : (
+            pages.map((page) => (
+              <tr class="hover:bg-gray-50 transition" data-page-id={page.id}>
+                <td class="px-6 py-4">
+                  <div>
+                    <p class="font-semibold text-gray-800">{page.title}</p>
+                    <p class="text-sm text-gray-500">{page.slug?.startsWith('/') ? page.slug : `/${page.slug}`}</p>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="px-3 py-1.5 bg-gray-100 rounded-lg text-sm text-gray-700">
+                    {(page.template || 'default').charAt(0).toUpperCase() + (page.template || 'default').slice(1)}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    page.status === 'published'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {page.status === 'published' ? 'Published' : 'Draft'}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="text-sm text-gray-500">
+                    {page.updated_at ? new Date(page.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center justify-end gap-2">
+                    <a
+                      href={`/admin/pages/${page.id}`}
+                      class="p-2 text-gray-500 hover:text-[#01534d] hover:bg-gray-100 rounded-lg transition"
+                      title="Edit"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </a>
+                    <a
+                      href={`/${page.slug}`}
+                      target="_blank"
+                      class="p-2 text-gray-500 hover:text-[#01534d] hover:bg-gray-100 rounded-lg transition"
+                      title="View"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                    </a>
+                    <button
+                      type="button"
+                      class="delete-page-btn p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Delete"
+                      data-page-id={page.id}
+                      data-page-title={page.title}
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between mt-6">
+      <p class="text-sm text-gray-500">Showing {pages.length} page{pages.length !== 1 ? 's' : ''}</p>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Delete Page</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete "<span id="deletePageTitle"></span>"? This action cannot be undone.</p>
+        <div class="flex justify-end gap-3">
+          <button type="button" id="cancelDeleteBtn" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+          <button type="button" id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Delete Page
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="successToast" class="hidden fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span id="successMessage">Page deleted successfully!</span>
+    </div>
+
+    <div id="errorToast" class="hidden fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span id="errorMessage">Error deleting page</span>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  // Initialize Content button
+  const initContentBtn = document.getElementById('initContentBtn') as HTMLButtonElement;
+
+  initContentBtn?.addEventListener('click', async () => {
+    initContentBtn.disabled = true;
+    initContentBtn.innerHTML = `
+      <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Initializing...
+    `;
+
+    try {
+      const response = await fetch('/api/pages/init-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        successMessage.textContent = result.message;
+        successToast.classList.remove('hidden');
+        setTimeout(() => {
+          successToast.classList.add('hidden');
+          window.location.reload();
+        }, 2000);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      errorMessage.textContent = error.message || 'Failed to initialize content';
+      errorToast.classList.remove('hidden');
+      setTimeout(() => errorToast.classList.add('hidden'), 5000);
+    }
+
+    initContentBtn.disabled = false;
+    initContentBtn.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      Initialize Content
+    `;
+  });
+
+  const deleteModal = document.getElementById('deleteModal') as HTMLElement;
+  const deletePageTitle = document.getElementById('deletePageTitle') as HTMLElement;
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn') as HTMLButtonElement;
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn') as HTMLButtonElement;
+  const successToast = document.getElementById('successToast') as HTMLElement;
+  const errorToast = document.getElementById('errorToast') as HTMLElement;
+  const successMessage = document.getElementById('successMessage') as HTMLElement;
+  const errorMessage = document.getElementById('errorMessage') as HTMLElement;
+
+  let pageToDelete: string | null = null;
+
+  // Delete button handlers
+  document.querySelectorAll('.delete-page-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pageToDelete = (btn as HTMLElement).dataset.pageId || null;
+      const title = (btn as HTMLElement).dataset.pageTitle || 'this page';
+      deletePageTitle.textContent = title;
+      deleteModal.classList.remove('hidden');
+    });
+  });
+
+  // Cancel delete
+  cancelDeleteBtn?.addEventListener('click', () => {
+    deleteModal.classList.add('hidden');
+    pageToDelete = null;
+  });
+
+  // Click outside modal to close
+  deleteModal?.addEventListener('click', (e) => {
+    if (e.target === deleteModal) {
+      deleteModal.classList.add('hidden');
+      pageToDelete = null;
+    }
+  });
+
+  // Confirm delete
+  confirmDeleteBtn?.addEventListener('click', async () => {
+    if (!pageToDelete) return;
+
+    confirmDeleteBtn.disabled = true;
+    confirmDeleteBtn.textContent = 'Deleting...';
+
+    try {
+      const response = await fetch('/api/pages', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pageToDelete })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove row from table
+        const row = document.querySelector(`tr[data-page-id="${pageToDelete}"]`);
+        row?.remove();
+
+        // Show success toast
+        successMessage.textContent = 'Page deleted successfully!';
+        successToast.classList.remove('hidden');
+        setTimeout(() => successToast.classList.add('hidden'), 3000);
+
+        // Hide modal
+        deleteModal.classList.add('hidden');
+      } else {
+        throw new Error(result.error || 'Delete failed');
+      }
+    } catch (error: any) {
+      errorMessage.textContent = error.message || 'Failed to delete page';
+      errorToast.classList.remove('hidden');
+      setTimeout(() => errorToast.classList.add('hidden'), 5000);
+    }
+
+    confirmDeleteBtn.disabled = false;
+    confirmDeleteBtn.textContent = 'Delete Page';
+    pageToDelete = null;
+  });
+</script>

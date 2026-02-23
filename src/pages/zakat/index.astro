@@ -1,0 +1,376 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout title="Pay Your Zakat | Qurbani USA - 100% Zakat Policy">
+  <Navbar />
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[500px] flex items-center" style="background: linear-gradient(135deg, #255764 0%, #1a3d47 100%);">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?w=1920'); background-size: cover; background-position: center;"></div>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/95 to-[#255764]/80"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="text-white">
+            <div class="inline-flex items-center gap-2 bg-[#0096D6] text-white text-sm font-bold px-4 py-2 rounded-full mb-6">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+              </svg>
+              THIRD PILLAR OF ISLAM
+            </div>
+
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6" style="font-family: 'Signika', sans-serif;">
+              Pay Your <span class="text-[#fdc448]">Zakat</span>
+            </h1>
+
+            <p class="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Fulfill your obligation and purify your wealth. 100% of your Zakat reaches those in need through our verified distribution channels across 50+ countries.
+            </p>
+
+            <div class="flex flex-wrap gap-4 mb-8">
+              <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm">100% Zakat Policy</span>
+              </div>
+              <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm">Shariah Compliant</span>
+              </div>
+              <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-sm">Tax Deductible</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donation Box -->
+          <div class="bg-white rounded-xl p-6 md:p-8 shadow-2xl" style="font-family: 'Signika', sans-serif;">
+            <div class="text-center mb-6">
+              <p class="text-[#0096D6] italic text-sm" style="font-family: 'Playfair Display', serif;">Give Zakat</p>
+              <h2 class="text-2xl font-bold text-gray-800">Pay Your Zakat Now</h2>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-6">
+              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="100">
+                <span class="block text-gray-800">$100</span>
+              </button>
+              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="250">
+                <span class="block text-gray-800">$250</span>
+              </button>
+              <button class="zakat-amount-btn py-4 border-2 border-[#0096D6] bg-[#0096D6]/10 rounded-lg font-bold text-lg" data-amount="500">
+                <span class="block text-[#0096D6]">$500</span>
+              </button>
+              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="1000">
+                <span class="block text-gray-800">$1,000</span>
+              </button>
+              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="2500">
+                <span class="block text-gray-800">$2,500</span>
+              </button>
+              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="5000">
+                <span class="block text-gray-800">$5,000</span>
+              </button>
+            </div>
+
+            <div class="mb-6">
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">$</span>
+                <input
+                  type="number"
+                  id="zakat-custom-amount"
+                  placeholder="Enter your Zakat amount"
+                  class="w-full pl-10 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:border-[#0096D6] focus:outline-none text-lg font-semibold"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <button id="zakat-donate-btn" class="w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-4 rounded-lg transition text-lg flex items-center justify-center gap-2 uppercase tracking-wide">
+              <span>Pay Zakat Now</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </button>
+
+            <div class="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              <span>Secure payment powered by Stripe</span>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+              <a href="/zakat-calculator" class="text-[#0096D6] hover:underline text-sm font-medium">
+                Not sure how much? Use our Zakat Calculator
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zakat Categories Section -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            Where Your Zakat Goes
+          </h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Your Zakat is distributed according to the eight categories mentioned in the Quran, ensuring it reaches those most deserving.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="bg-gradient-to-br from-[#255764] to-[#1a3d47] rounded-xl p-6 text-white">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">The Poor (Al-Fuqara)</h3>
+            <p class="text-sm text-gray-200" style="font-family: 'Lato', sans-serif;">Those who do not have enough to meet their basic needs.</p>
+          </div>
+
+          <div class="bg-gradient-to-br from-[#D97706] to-[#b45309] rounded-xl p-6 text-white">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">The Needy (Al-Masakin)</h3>
+            <p class="text-sm text-gray-200" style="font-family: 'Lato', sans-serif;">Those who have some income but not enough to meet their needs.</p>
+          </div>
+
+          <div class="bg-gradient-to-br from-[#0096D6] to-[#0077b3] rounded-xl p-6 text-white">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Orphan Support</h3>
+            <p class="text-sm text-gray-200" style="font-family: 'Lato', sans-serif;">Providing care, education, and support for orphaned children.</p>
+          </div>
+
+          <div class="bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] rounded-xl p-6 text-white">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Education</h3>
+            <p class="text-sm text-gray-200" style="font-family: 'Lato', sans-serif;">Building schools and providing education to underprivileged communities.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Give Zakat Section -->
+    <section class="py-16 bg-stone-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+              Why Give Your Zakat Through Us?
+            </h2>
+
+            <div class="space-y-6">
+              <div class="flex gap-4">
+                <div class="w-12 h-12 bg-[#0096D6] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">100% Zakat Policy</h3>
+                  <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">Every single cent of your Zakat reaches those in need. Our operational costs are covered by separate funds.</p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Shariah Compliant</h3>
+                  <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">Our Zakat distribution is overseen by qualified Islamic scholars to ensure compliance with Islamic principles.</p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="w-12 h-12 bg-[#255764] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Global Reach</h3>
+                  <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">We distribute Zakat in over 50 countries, reaching the most vulnerable communities worldwide.</p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="w-12 h-12 bg-[#16a34a] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Full Transparency</h3>
+                  <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">We provide detailed reports on how your Zakat is distributed and the impact it creates.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <img
+              src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800"
+              alt="Zakat distribution"
+              class="rounded-xl shadow-lg"
+            />
+            <div class="absolute -bottom-6 -left-6 bg-[#0096D6] text-white p-6 rounded-xl shadow-lg">
+              <p class="text-4xl font-bold" style="font-family: 'Signika', sans-serif;">50+</p>
+              <p class="text-sm" style="font-family: 'Lato', sans-serif;">Countries Served</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zakat Info Banner -->
+    <section class="py-12 bg-[#0096D6]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="text-white text-center md:text-left">
+            <h3 class="text-2xl md:text-3xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Not Sure How Much Zakat You Owe?</h3>
+            <p class="text-blue-100" style="font-family: 'Lato', sans-serif;">Use our easy Zakat Calculator to determine your obligation in minutes.</p>
+          </div>
+          <a href="/zakat-calculator" class="bg-white text-[#0096D6] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+            Calculate Your Zakat
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Links Section -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            Learn More About Zakat
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <a href="/what-is-zakat" class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+            <div class="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#D97706] transition" style="font-family: 'Signika', sans-serif;">What is Zakat?</h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Learn about the importance and significance of Zakat in Islam.</p>
+          </a>
+
+          <a href="/zakat-faq" class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+            <div class="w-12 h-12 bg-[#7c3aed] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#7c3aed] transition" style="font-family: 'Signika', sans-serif;">Zakat FAQ</h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Get answers to commonly asked questions about Zakat.</p>
+          </a>
+
+          <a href="/zakat-on-gold" class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+            <div class="w-12 h-12 bg-[#eab308] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#eab308] transition" style="font-family: 'Signika', sans-serif;">Zakat on Gold & Silver</h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Understand how to calculate Zakat on precious metals.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const amountBtns = document.querySelectorAll('.zakat-amount-btn');
+    const customInput = document.getElementById('zakat-custom-amount') as HTMLInputElement;
+    const donateBtn = document.getElementById('zakat-donate-btn');
+
+    let selectedAmount = 500;
+
+    function updateButtonStyle(btn: Element, isSelected: boolean) {
+      const span = btn.querySelector('span');
+      if (isSelected) {
+        btn.classList.remove('border-gray-200');
+        btn.classList.add('border-[#0096D6]', 'bg-[#0096D6]/10');
+        if (span) {
+          span.classList.remove('text-gray-800');
+          span.classList.add('text-[#0096D6]');
+        }
+      } else {
+        btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10');
+        btn.classList.add('border-gray-200');
+        if (span) {
+          span.classList.remove('text-[#0096D6]');
+          span.classList.add('text-gray-800');
+        }
+      }
+    }
+
+    amountBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        amountBtns.forEach(b => updateButtonStyle(b, false));
+        updateButtonStyle(btn, true);
+        selectedAmount = parseInt(btn.getAttribute('data-amount') || '500');
+        if (customInput) customInput.value = '';
+      });
+    });
+
+    customInput?.addEventListener('input', () => {
+      if (customInput.value) {
+        amountBtns.forEach(b => updateButtonStyle(b, false));
+        selectedAmount = parseInt(customInput.value) || 0;
+      }
+    });
+
+    donateBtn?.addEventListener('click', () => {
+      if (selectedAmount > 0 && typeof (window as any).addToCart === 'function') {
+        (window as any).addToCart({
+          id: `zakat-${Date.now()}`,
+          type: 'donation',
+          name: 'Zakat',
+          amount: selectedAmount,
+          quantity: 1,
+          description: 'Zakat Donation - 100% Policy',
+          frequency: 'single'
+        });
+      }
+    });
+  });
+</script>

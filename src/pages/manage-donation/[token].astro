@@ -1,0 +1,343 @@
+---
+/**
+ * Manage Your Donation - Dashboard
+ * Access with unique token (no auth required)
+ */
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+const { token } = Astro.params;
+
+// Fetch donation data server-side
+let donation = null;
+let nights = [];
+let progress = { total: 0, completed: 0, percent: 0 };
+let nextDonation = null;
+let error = null;
+
+try {
+  const response = await fetch(`${Astro.url.origin}/api/automated-donations/${token}`);
+  const data = await response.json();
+
+  if (data.success) {
+    donation = data.donation;
+    nights = data.nights;
+    progress = data.progress;
+    nextDonation = data.next_donation;
+  } else {
+    error = data.error || 'Donation not found';
+  }
+} catch (e) {
+  error = 'Failed to load donation data';
+}
+
+// Format date helper
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+// Get status color
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'completed': return 'bg-green-100 text-green-700';
+    case 'pending': return 'bg-yellow-100 text-yellow-700';
+    case 'processing': return 'bg-blue-100 text-blue-700';
+    case 'failed': return 'bg-red-100 text-red-700';
+    case 'cancelled': return 'bg-gray-100 text-gray-700';
+    default: return 'bg-gray-100 text-gray-700';
+  }
+}
+---
+
+<Layout title={donation ? `Manage Donation - ${donation.donor_name}` : 'Donation Not Found'}>
+  <Navbar />
+
+  <main class="min-h-screen bg-gray-50 pt-24 pb-16">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      {error ? (
+        <!-- Error State -->
+        <div class="text-center py-20">
+          <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Donation Not Found</h1>
+          <p class="text-gray-600 mb-8">The donation link may be invalid or expired.</p>
+          <a href="/30-days-of-ramadan" class="inline-flex items-center gap-2 bg-[#024139] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#013028] transition">
+            Create New Donation
+          </a>
+        </div>
+      ) : (
+        <>
+          <!-- Header -->
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-[#024139] rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">
+              Manage Your Donation
+            </h1>
+            <p class="text-gray-600">Track your 30 Days of Ramadan automated giving</p>
+          </div>
+
+          <!-- Main Content Grid -->
+          <div class="grid lg:grid-cols-3 gap-6 mb-8">
+            <!-- Donor Info Card -->
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+              <h2 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Donation Details</h2>
+
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="border-b pb-3">
+                  <p class="text-sm text-gray-500">Donor</p>
+                  <p class="font-medium text-gray-800">{donation.donor_name}</p>
+                </div>
+                <div class="border-b pb-3">
+                  <p class="text-sm text-gray-500">Email</p>
+                  <p class="font-medium text-gray-800">{donation.donor_email}</p>
+                </div>
+                <div class="border-b pb-3">
+                  <p class="text-sm text-gray-500">Status</p>
+                  <span class={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(donation.status)}`}>
+                    {donation.status.charAt(0).toUpperCase() + donation.status.slice(1)}
+                  </span>
+                </div>
+                <div class="border-b pb-3">
+                  <p class="text-sm text-gray-500">Schedule</p>
+                  <p class="font-medium text-gray-800">
+                    {donation.schedule_type === 'all-30' ? 'All 30 Nights' :
+                     donation.schedule_type === 'last-10' ? 'Last 10 Nights' : 'Odd Nights Only'}
+                  </p>
+                </div>
+                <div class="border-b pb-3">
+                  <p class="text-sm text-gray-500">Causes</p>
+                  <p class="font-medium text-gray-800">
+                    {donation.causes?.map((c: any) => c.cause).join(', ') || 'Various'}
+                  </p>
+                </div>
+                <div class="border-b pb-3">
+                  <p class="text-sm text-gray-500">Total Amount</p>
+                  <p class="font-bold text-[#024139] text-xl">${donation.total_amount?.toFixed(2)}</p>
+                </div>
+                {nextDonation && (
+                  <div class="sm:col-span-2 border-b pb-3">
+                    <p class="text-sm text-gray-500">Next Donation Date</p>
+                    <p class="font-medium text-gray-800">
+                      {formatDate(nextDonation.date)} - Night {nextDonation.night_number} (${nextDonation.amount?.toFixed(2)})
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <!-- Cancel Button (if pending/active) -->
+              {(donation.status === 'pending' || donation.status === 'active') && (
+                <div class="mt-6 pt-4 border-t">
+                  <button
+                    id="cancel-btn"
+                    class="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-2"
+                    data-token={token}
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Cancel Automated Giving
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <!-- Progress Card -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+              <h2 class="text-lg font-bold text-gray-800 mb-4 text-center" style="font-family: 'Signika', sans-serif;">
+                Fulfillment Progress
+              </h2>
+
+              <!-- Circular Progress -->
+              <div class="relative w-40 h-40 mx-auto mb-4">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <!-- Background circle -->
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    stroke-width="8"
+                  />
+                  <!-- Progress circle -->
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#024139"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-dasharray={`${progress.percent * 2.83} 283`}
+                    class="transition-all duration-500"
+                  />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-3xl font-bold text-[#024139]">{progress.percent}%</span>
+                </div>
+              </div>
+
+              <p class="text-center text-gray-600 text-sm">
+                <span class="font-bold text-[#024139]">{progress.completed}</span> of <span class="font-bold">{progress.total}</span> nights completed
+              </p>
+
+              <!-- Quick Stats -->
+              <div class="grid grid-cols-2 gap-3 mt-6">
+                <div class="bg-green-50 rounded-xl p-3 text-center">
+                  <p class="text-2xl font-bold text-green-600">{progress.completed}</p>
+                  <p class="text-xs text-green-700">Completed</p>
+                </div>
+                <div class="bg-yellow-50 rounded-xl p-3 text-center">
+                  <p class="text-2xl font-bold text-yellow-600">{progress.total - progress.completed}</p>
+                  <p class="text-xs text-yellow-700">Remaining</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donation Breakdown Table -->
+          <div class="bg-white rounded-2xl shadow-sm p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              Donation Breakdown by Date
+            </h2>
+
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-[#024139] text-white">
+                    <th class="px-4 py-3 text-left text-sm font-semibold rounded-tl-lg">Night</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Date</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Amount</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold rounded-tr-lg">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  {nights.map((night: any, index: number) => {
+                    const isOdd = [21, 23, 25, 27, 29].includes(night.night_number);
+                    const is27th = night.night_number === 27;
+
+                    return (
+                      <tr class={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${is27th ? 'bg-yellow-50' : ''}`}>
+                        <td class="px-4 py-3">
+                          <div class="flex items-center gap-2">
+                            <span class={`px-2 py-1 rounded-full text-xs font-bold ${
+                              is27th ? 'bg-yellow-500 text-white' :
+                              isOdd ? 'bg-[#024139] text-white' :
+                              'bg-gray-200 text-gray-700'
+                            }`}>
+                              {night.night_number}
+                            </span>
+                            {is27th && (
+                              <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                              </svg>
+                            )}
+                          </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                          {formatDate(night.scheduled_date)}
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-800">
+                          ${night.amount?.toFixed(2)}
+                        </td>
+                        <td class="px-4 py-3">
+                          <span class={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(night.status)}`}>
+                            {night.status.charAt(0).toUpperCase() + night.status.slice(1)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Copy URL Section -->
+          <div class="mt-6 text-center">
+            <button
+              id="copy-url-btn"
+              class="inline-flex items-center gap-2 bg-[#1e1b4b] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#312e81] transition"
+              data-url={`${Astro.url.origin}/manage-donation/${token}`}
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              Copy Page URL
+            </button>
+            <p class="text-sm text-gray-500 mt-2">Save this link to access your donation anytime</p>
+          </div>
+        </>
+      )}
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Copy URL functionality
+  document.getElementById('copy-url-btn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    const url = btn.dataset.url;
+
+    if (url) {
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!';
+
+        setTimeout(() => {
+          btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copy Page URL';
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  });
+
+  // Cancel donation functionality
+  document.getElementById('cancel-btn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget as HTMLButtonElement;
+    const token = btn.dataset.token;
+
+    if (!confirm('Are you sure you want to cancel your automated giving? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/automated-donations/${token}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel' })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Your automated giving has been cancelled.');
+        window.location.reload();
+      } else {
+        alert(data.error || 'Failed to cancel donation');
+      }
+    } catch (err) {
+      alert('An error occurred. Please try again.');
+    }
+  });
+</script>

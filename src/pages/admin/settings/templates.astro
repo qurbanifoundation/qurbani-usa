@@ -1,0 +1,2152 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
+import TemplateColorEditor from '../../../components/admin/TemplateColorEditor.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates } from '../../../lib/templates';
+
+export const prerender = false;
+
+// Fetch templates from database (centralized)
+const pageTemplates = await getPageTemplates();
+const donationBoxTemplates = await getDonationBoxTemplates();
+const appealsPageTemplates = await getAppealsPageTemplates();
+const orphanSponsorshipTemplates = await getOrphanSponsorshipTemplates();
+const homepageTemplates = await getHomepageTemplates();
+
+// Fetch current settings
+let settings: any = null;
+try {
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template')
+    .limit(1);
+
+  if (data && data.length > 0) {
+    settings = data[0];
+  }
+} catch (e) {
+  console.error('Error fetching site settings:', e);
+}
+
+const currentDonationBoxTemplate = settings?.default_donation_box_template || 'teal-yellow';
+const currentCampaignPageTemplate = settings?.default_campaign_page_template || 'green-with-yellow';
+const currentAppealsPageTemplate = settings?.default_appeals_page_template || 'green';
+const currentOrphanSponsorshipTemplate = settings?.orphan_sponsorship_template || 'orphan-sponsorship';
+const currentHomepageTemplate = settings?.homepage_template || 'pennybill';
+
+// Default colors for each template
+const defaultColors: Record<string, any> = {
+  'teal-yellow': {
+    bg_color: '#255764',
+    text_color: '#ffffff',
+    text_muted_color: 'rgba(255,255,255,0.7)',
+    accent_color: '#fdc448',
+    accent_text_color: '#61470e',
+    border_color: 'rgba(255,255,255,0.3)',
+    active_bg_color: 'rgba(253,196,72,0.2)',
+    active_text_color: '#ffffff',
+    inactive_btn_bg: 'transparent',
+    toggle_active_color: 'rgba(255,255,255,0.2)',
+  },
+  'dark-teal': {
+    bg_color: '#004139',
+    text_color: '#ffffff',
+    text_muted_color: '#d4c4a8',
+    accent_color: '#c41e3a',
+    accent_text_color: '#ffffff',
+    border_color: '#108D70',
+    active_bg_color: '#ECF0EE',
+    active_text_color: '#004139',
+    inactive_btn_bg: '#005A4C',
+    toggle_active_color: '#108D70',
+  },
+  'white': {
+    bg_color: '#ffffff',
+    text_color: '#1f2937',
+    text_muted_color: '#6b7280',
+    accent_color: '#01534d',
+    accent_text_color: '#ffffff',
+    border_color: '#01534d',
+    active_bg_color: '#01534d',
+    active_text_color: '#ffffff',
+    inactive_btn_bg: 'transparent',
+    toggle_active_color: '#01534d',
+  },
+  'compact': {
+    bg_color: '#1a4a55',
+    text_color: '#ffffff',
+    text_muted_color: 'rgba(255,255,255,0.7)',
+    accent_color: '#fdc448',
+    accent_text_color: '#61470e',
+    border_color: 'rgba(255,255,255,0.3)',
+    active_bg_color: 'rgba(253,196,72,0.2)',
+    active_text_color: '#ffffff',
+    inactive_btn_bg: 'transparent',
+    toggle_active_color: 'rgba(255,255,255,0.2)',
+  },
+  'list-style': {
+    bg_color: '#f5f5f5',
+    text_color: '#374151',
+    text_muted_color: '#6b7280',
+    accent_color: '#D97706',
+    accent_text_color: '#ffffff',
+    border_color: '#e5e7eb',
+    active_bg_color: '#D97706',
+    active_text_color: '#ffffff',
+    inactive_btn_bg: '#ffffff',
+    toggle_active_color: '#D97706',
+  },
+  'urgent-appeal': {
+    bg_color: '#ffffff',
+    header_bg_color: '#c41e3a',
+    text_color: '#1f2937',
+    text_muted_color: '#6b7280',
+    accent_color: '#c41e3a',
+    accent_text_color: '#ffffff',
+    border_color: '#e5e7eb',
+    active_bg_color: '#c41e3a10',
+    active_text_color: '#1f2937',
+    inactive_btn_bg: '#ffffff',
+    toggle_active_color: '#c41e3a',
+  },
+};
+
+// Fetch template colors from database
+let templateColors: Record<string, any> = {};
+let customTemplates: any[] = [];
+const builtInTemplates = ['teal-yellow', 'dark-teal', 'white', 'compact', 'list-style', 'urgent-appeal'];
+
+try {
+  const { data } = await supabaseAdmin
+    .from('template_colors')
+    .select('*');
+  if (data) {
+    data.forEach((t: any) => {
+      templateColors[t.template_name] = t;
+      // Identify custom templates (not built-in)
+      if (!builtInTemplates.includes(t.template_name)) {
+        customTemplates.push(t);
+      }
+    });
+  }
+} catch (e) {}
+
+// Merge database colors with defaults (database overrides defaults)
+const getColors = (templateName: string) => {
+  const defaults = defaultColors[templateName] || defaultColors['teal-yellow'];
+  const dbColors = templateColors[templateName] || {};
+  return {
+    bg_color: dbColors.bg_color || defaults.bg_color,
+    text_color: dbColors.text_color || defaults.text_color,
+    text_muted_color: dbColors.text_muted_color || defaults.text_muted_color,
+    accent_color: dbColors.accent_color || defaults.accent_color,
+    accent_text_color: dbColors.accent_text_color || defaults.accent_text_color,
+    border_color: dbColors.border_color || defaults.border_color,
+    active_bg_color: dbColors.active_bg_color || defaults.active_bg_color,
+    active_text_color: dbColors.active_text_color || defaults.active_text_color,
+    inactive_btn_bg: dbColors.inactive_btn_bg || defaults.inactive_btn_bg,
+    toggle_active_color: dbColors.toggle_active_color || defaults.toggle_active_color,
+  };
+};
+
+const tealYellowColors = getColors('teal-yellow');
+const darkTealColors = getColors('dark-teal');
+const whiteColors = getColors('white');
+const compactColors = getColors('compact');
+const listStyleColors = getColors('list-style');
+---
+
+<AdminLayout title="Settings" activeNav="settings">
+  <div class="max-w-6xl">
+    <SettingsTabs active="templates" />
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50"></div>
+
+    <!-- Default Templates Settings -->
+    <div class="mb-10 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-2">Default Templates</h2>
+      <p class="text-sm text-gray-500 mb-6">Set the default templates used across the site. Individual campaigns can override these settings.</p>
+
+      <form id="defaultTemplatesForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Default Donation Box Template</label>
+          <select
+            name="default_donation_box_template"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {donationBoxTemplates.map((template) => (
+              <option value={template.template_key} selected={currentDonationBoxTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Used when no specific template is set for a campaign</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Default Campaign Page Template</label>
+          <select
+            name="default_campaign_page_template"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {pageTemplates.map((template) => (
+              <option value={template.template_key} selected={currentCampaignPageTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Used when no specific template is set for a campaign</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Appeals Page Template</label>
+          <select
+            name="default_appeals_page_template"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {appealsPageTemplates.map((template) => (
+              <option value={template.template_key} selected={currentAppealsPageTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Template used for the /appeals listing page</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Orphan Sponsorship Template</label>
+          <select
+            name="orphan_sponsorship_template"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {orphanSponsorshipTemplates.map((template) => (
+              <option value={template.template_key} selected={currentOrphanSponsorshipTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Template used for orphan sponsorship pages</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Homepage Template</label>
+          <select
+            name="homepage_template"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {homepageTemplates.map((template) => (
+              <option value={template.template_key} selected={currentHomepageTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Template used for the homepage (index page)</p>
+        </div>
+        <div class="md:col-span-2 flex items-center gap-4">
+          <button type="submit" class="px-6 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+            Save Default Templates
+          </button>
+          <button type="button" id="resetAllCampaignsBtn" class="px-6 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition">
+            Apply to All Campaigns
+          </button>
+          <span class="text-xs text-gray-400">Clears individual campaign template overrides</span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Donation Box Templates -->
+    <div class="mb-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">Donation Box Templates</h2>
+          <p class="text-sm text-gray-500 mt-1">Choose and customize templates for donation widgets across the site.</p>
+        </div>
+        <button onclick="openCreateTemplateModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Create Template
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Teal Yellow Template (NEW) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'teal-yellow' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Donation Box Preview -->
+            <div class="rounded-lg p-4 transform scale-90 origin-top" style={`background-color: ${tealYellowColors.bg_color};`}>
+              <h3 class="font-bold text-sm text-center mb-1" style={`color: ${tealYellowColors.text_color};`}>Make a Donation</h3>
+              <p class="text-xs text-center mb-3" style={`color: ${tealYellowColors.text_muted_color};`}>100% reaches those in need</p>
+
+              <!-- Toggle -->
+              <div class="flex rounded-lg p-0.5 mb-3" style={`background-color: ${tealYellowColors.toggle_active_color};`}>
+                <button class="flex-1 py-1 text-xs font-medium rounded" style={`background-color: ${tealYellowColors.toggle_active_color}; color: ${tealYellowColors.text_color};`}>Single</button>
+                <button class="flex-1 py-1 text-xs font-medium rounded" style={`color: ${tealYellowColors.text_muted_color};`}>Monthly</button>
+              </div>
+
+              <!-- Amounts -->
+              <div class="grid grid-cols-2 gap-1 mb-3">
+                <button class="py-1.5 text-xs rounded border-2 font-bold" style={`background-color: ${tealYellowColors.active_bg_color}; border-color: ${tealYellowColors.accent_color}; color: ${tealYellowColors.active_text_color};`}>$300</button>
+                <button class="py-1.5 text-xs rounded border" style={`border-color: ${tealYellowColors.border_color}; color: ${tealYellowColors.text_color}; background-color: ${tealYellowColors.inactive_btn_bg};`}>$400</button>
+                <button class="py-1.5 text-xs rounded border" style={`border-color: ${tealYellowColors.border_color}; color: ${tealYellowColors.text_color}; background-color: ${tealYellowColors.inactive_btn_bg};`}>$600</button>
+                <button class="py-1.5 text-xs rounded border" style={`border-color: ${tealYellowColors.border_color}; color: ${tealYellowColors.text_color}; background-color: ${tealYellowColors.inactive_btn_bg};`}>$3,500</button>
+              </div>
+
+              <!-- Custom Amount -->
+              <div class="flex items-center bg-white rounded mb-3">
+                <span class="px-2 text-gray-400 text-xs">$</span>
+                <input type="text" placeholder="Other" class="w-full py-1.5 text-xs outline-none" readonly />
+              </div>
+
+              <!-- Donate Button -->
+              <button class="w-full py-2 text-xs font-bold rounded" style={`background-color: ${tealYellowColors.accent_color}; color: ${tealYellowColors.accent_text_color}; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);`}>
+                Donate Now
+              </button>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Teal Yellow</h3>
+            <p class="text-sm text-gray-500 mb-4">Teal background with yellow/gold accent buttons. Modern rounded corners with shadow effects.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-[#255764]/10 text-[#255764] text-xs rounded">Teal Background</span>
+              <span class="px-2 py-1 bg-[#fdc448]/20 text-[#61470e] text-xs rounded">Yellow Buttons</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Trust Badges</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('teal-yellow')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('teal-yellow', 'Teal Yellow')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="teal-yellow" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Most Needed Template (Dark Teal) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'dark-teal' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Donation Box Preview -->
+            <div class="rounded-lg p-4 transform scale-90 origin-top" style={`background-color: ${darkTealColors.bg_color};`}>
+              <p class="text-xs mb-2 text-center" style={`color: ${darkTealColors.text_muted_color};`}>GIVE WHERE MOST NEEDED</p>
+              <h3 class="font-bold text-sm text-center mb-3" style={`color: ${darkTealColors.text_color};`}>Most Needed</h3>
+
+              <!-- Toggle -->
+              <div class="flex rounded-full p-0.5 mb-3 border-2" style={`border-color: ${darkTealColors.border_color};`}>
+                <button class="flex-1 py-1 text-xs font-medium rounded-full" style={`background-color: ${darkTealColors.toggle_active_color}; color: ${darkTealColors.text_color};`}>Single</button>
+                <button class="flex-1 py-1 text-xs font-medium rounded-full" style={`color: ${darkTealColors.text_muted_color};`}>Monthly</button>
+              </div>
+
+              <!-- Amounts -->
+              <div class="grid grid-cols-3 gap-1 mb-3">
+                <button class="py-1.5 text-xs rounded border-2" style={`background-color: ${darkTealColors.inactive_btn_bg}; border-color: ${darkTealColors.border_color}; color: ${darkTealColors.text_color};`}>$40</button>
+                <button class="py-1.5 text-xs rounded border-2 font-bold" style={`background-color: ${darkTealColors.active_bg_color}; border-color: ${darkTealColors.border_color}; color: ${darkTealColors.active_text_color};`}>$50</button>
+                <button class="py-1.5 text-xs rounded border-2" style={`background-color: ${darkTealColors.inactive_btn_bg}; border-color: ${darkTealColors.border_color}; color: ${darkTealColors.text_color};`}>$100</button>
+              </div>
+
+              <!-- Custom Amount -->
+              <div class="flex items-center bg-white rounded mb-3">
+                <span class="px-2 text-gray-400 text-xs">$</span>
+                <input type="text" placeholder="Other" class="w-full py-1.5 text-xs outline-none" readonly />
+              </div>
+
+              <!-- Donate Button -->
+              <button class="w-full py-2 text-xs font-bold rounded" style={`background-color: ${darkTealColors.accent_color}; color: ${darkTealColors.accent_text_color};`}>
+                DONATE NOW
+              </button>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Dark Teal</h3>
+            <p class="text-sm text-gray-500 mb-4">Full featured donation box with single/monthly toggle, preset amounts, and fund type selection.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Single/Monthly Toggle</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Preset Amounts</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Custom Amount</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('dark-teal')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('dark-teal', 'Dark Teal')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="dark-teal" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Template -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'compact' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Compact Preview -->
+            <div class="rounded-lg p-3 transform scale-90 origin-top" style={`background-color: ${compactColors.bg_color};`}>
+              <h3 class="font-bold text-sm text-center mb-3" style={`color: ${compactColors.text_color};`}>Quick Donate</h3>
+
+              <!-- Amounts Row -->
+              <div class="flex gap-1 mb-2">
+                <button class="flex-1 py-1.5 text-xs rounded font-bold" style={`background-color: ${compactColors.active_bg_color}; color: ${compactColors.active_text_color};`}>$25</button>
+                <button class="flex-1 py-1.5 text-xs rounded border" style={`background-color: ${compactColors.inactive_btn_bg}; border-color: ${compactColors.border_color}; color: ${compactColors.text_color};`}>$50</button>
+                <button class="flex-1 py-1.5 text-xs rounded border" style={`background-color: ${compactColors.inactive_btn_bg}; border-color: ${compactColors.border_color}; color: ${compactColors.text_color};`}>$100</button>
+              </div>
+
+              <!-- Donate Button -->
+              <button class="w-full py-2 text-xs font-bold rounded" style={`background-color: ${compactColors.accent_color}; color: ${compactColors.accent_text_color};`}>
+                DONATE
+              </button>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Compact</h3>
+            <p class="text-sm text-gray-500 mb-4">Smaller version perfect for sidebars and narrow spaces. Quick and easy donation flow.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Preset Amounts</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Minimal Design</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('compact')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('compact', 'Compact')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="compact" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- List Style Template (NEW) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'list-style' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini List Style Preview -->
+            <div class="rounded-lg overflow-hidden transform scale-90 origin-top" style={`background-color: ${listStyleColors.bg_color};`}>
+              <!-- Tabs -->
+              <div class="flex bg-white border-b-2" style={`border-color: ${listStyleColors.border_color};`}>
+                <div class="flex-1 py-2 text-xs font-medium text-center border-b-2" style={`border-color: ${listStyleColors.accent_color}; color: ${listStyleColors.text_color};`}>Donate once</div>
+                <div class="flex-1 py-2 text-xs text-center" style={`color: ${listStyleColors.text_muted_color};`}>Donate monthly</div>
+              </div>
+
+              <!-- Amount Rows -->
+              <div class="text-xs">
+                <div class="flex items-center justify-between p-2 bg-white border-b" style={`border-color: ${listStyleColors.border_color}; color: ${listStyleColors.text_color};`}>
+                  <span class="font-semibold">$30</span>
+                  <span class="text-gray-400">›</span>
+                </div>
+                <div class="flex items-center justify-between p-2 border-b" style={`background-color: ${listStyleColors.accent_color}; color: ${listStyleColors.accent_text_color};`}>
+                  <span class="font-semibold">$80</span>
+                  <span>›</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-white" style={`color: ${listStyleColors.text_color};`}>
+                  <span class="font-semibold">$250</span>
+                  <span class="text-gray-400">›</span>
+                </div>
+              </div>
+
+              <!-- Donate Button -->
+              <div class="p-2 bg-gray-200">
+                <button class="w-full py-2 text-xs font-bold rounded" style={`background-color: ${listStyleColors.accent_color}; color: ${listStyleColors.accent_text_color};`}>
+                  DONATE NOW
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">List Style</h3>
+            <p class="text-sm text-gray-500 mb-4">Row-based layout with full-width amount options. Clean, professional look with tabbed navigation.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">Row Layout</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Tab Navigation</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Descriptions</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('list-style')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('list-style', 'List Style')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="list-style" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- White/Light Template -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'white' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Hero Preview -->
+            <div class="rounded-lg p-4 border-2 transform scale-90 origin-top" style={`background-color: ${whiteColors.bg_color}; border-color: ${whiteColors.border_color};`}>
+              <div class="text-center mb-3">
+                <p class="text-xs font-medium mb-1" style={`color: ${whiteColors.accent_color};`}>MAKE A DIFFERENCE TODAY</p>
+                <h3 class="font-bold text-sm" style={`color: ${whiteColors.text_color};`}>Support Our Cause</h3>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="mb-3">
+                <div class="flex justify-between text-xs mb-1">
+                  <span style={`color: ${whiteColors.text_muted_color};`}>$12,500 raised</span>
+                  <span style={`color: ${whiteColors.text_muted_color};`}>75%</span>
+                </div>
+                <div class="w-full h-1.5 bg-gray-200 rounded-full">
+                  <div class="w-3/4 h-full rounded-full" style={`background-color: ${whiteColors.accent_color};`}></div>
+                </div>
+              </div>
+
+              <!-- Amounts -->
+              <div class="grid grid-cols-4 gap-1 mb-3">
+                <button class="py-1.5 border text-xs rounded" style={`border-color: ${whiteColors.border_color}; color: ${whiteColors.text_color}; background-color: ${whiteColors.inactive_btn_bg};`}>$25</button>
+                <button class="py-1.5 text-xs rounded font-bold" style={`background-color: ${whiteColors.active_bg_color}; color: ${whiteColors.active_text_color};`}>$50</button>
+                <button class="py-1.5 border text-xs rounded" style={`border-color: ${whiteColors.border_color}; color: ${whiteColors.text_color}; background-color: ${whiteColors.inactive_btn_bg};`}>$100</button>
+                <button class="py-1.5 border text-xs rounded" style={`border-color: ${whiteColors.border_color}; color: ${whiteColors.text_color}; background-color: ${whiteColors.inactive_btn_bg};`}>$250</button>
+              </div>
+
+              <!-- Donate Button -->
+              <button class="w-full py-2 text-xs font-bold rounded" style={`background-color: ${whiteColors.accent_color}; color: ${whiteColors.accent_text_color};`}>
+                DONATE NOW
+              </button>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">White / Light</h3>
+            <p class="text-sm text-gray-500 mb-4">Light-themed donation box with white background, teal accents, and optional progress bar.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Light Theme</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Progress Bar</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Teal Accents</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('white')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('white', 'White / Light')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="white" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Urgent Appeal Template -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'urgent-appeal' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Urgent Donation Box Preview -->
+            <div class="rounded-lg overflow-hidden transform scale-90 origin-top bg-white shadow-lg">
+              <!-- Red Header -->
+              <div class="bg-gradient-to-r from-[#c41e3a] to-[#a31830] p-3 text-white text-center">
+                <p class="text-[10px] opacity-80">Your donation saves lives</p>
+                <h3 class="font-bold text-xs">Campaign Title</h3>
+              </div>
+              <div class="p-3">
+                <!-- Toggle -->
+                <div class="flex rounded-lg bg-gray-100 p-0.5 mb-2">
+                  <button class="flex-1 py-1 text-[10px] font-medium rounded bg-[#c41e3a] text-white">One-Time</button>
+                  <button class="flex-1 py-1 text-[10px] font-medium rounded text-gray-500">Monthly</button>
+                </div>
+                <!-- Amounts -->
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                  <button class="py-1 text-[10px] rounded border border-gray-200 font-bold">$50</button>
+                  <button class="py-1 text-[10px] rounded border border-gray-200 font-bold">$100</button>
+                  <button class="py-1 text-[10px] rounded border-2 border-[#c41e3a] bg-[#c41e3a]/5 font-bold">$250</button>
+                </div>
+                <!-- Donate Button -->
+                <button class="w-full py-1.5 text-[10px] font-bold rounded bg-[#c41e3a] text-white">
+                  Donate Now →
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Urgent Appeal</h3>
+            <p class="text-sm text-gray-500 mb-4">Red/urgent themed donation box with campaign header. Perfect for emergency appeals.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded">Urgent Styling</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Campaign Header</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Trust Badges</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('urgent-appeal')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('urgent-appeal', 'Urgent Appeal')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="urgent-appeal" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Templates -->
+        {customTemplates.map((template: any) => {
+          const colors = getColors(template.template_name);
+          const displayName = template.template_label || template.template_name.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          return (
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div class="p-4 bg-gray-100 relative">
+                {currentDonationBoxTemplate === template.template_name && (
+                  <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                    Default
+                  </span>
+                )}
+                <span class="absolute top-2 left-2 px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded z-10">
+                  Custom
+                </span>
+                <div class="rounded-lg p-4 transform scale-90 origin-top" style={`background-color: ${colors.bg_color};`}>
+                  <h3 class="font-bold text-sm text-center mb-1" style={`color: ${colors.text_color};`}>Make a Donation</h3>
+                  <p class="text-xs text-center mb-3" style={`color: ${colors.text_muted_color};`}>100% reaches those in need</p>
+                  <div class="flex rounded-lg p-0.5 mb-3" style={`background-color: ${colors.toggle_active_color};`}>
+                    <button class="flex-1 py-1 text-xs font-medium rounded" style={`background-color: ${colors.toggle_active_color}; color: ${colors.text_color};`}>Single</button>
+                    <button class="flex-1 py-1 text-xs font-medium rounded" style={`color: ${colors.text_muted_color};`}>Monthly</button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-1 mb-3">
+                    <button class="py-1.5 text-xs rounded border-2 font-bold" style={`background-color: ${colors.active_bg_color}; border-color: ${colors.accent_color}; color: ${colors.active_text_color};`}>$300</button>
+                    <button class="py-1.5 text-xs rounded border" style={`border-color: ${colors.border_color}; color: ${colors.text_color}; background-color: ${colors.inactive_btn_bg};`}>$400</button>
+                  </div>
+                  <button class="w-full py-2 text-xs font-bold rounded" style={`background-color: ${colors.accent_color}; color: ${colors.accent_text_color};`}>
+                    Donate Now
+                  </button>
+                </div>
+              </div>
+              <div class="p-5">
+                <h3 class="font-semibold text-gray-800 mb-2">{displayName}</h3>
+                <p class="text-sm text-gray-500 mb-4">Custom template created from existing settings.</p>
+                <div class="flex items-center gap-2">
+                  <button onclick={`openColorEditor('${template.template_name}')`} class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                    Edit
+                  </button>
+                  <button onclick={`duplicateTemplate('${template.template_name}', '${displayName}')`} class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                  </button>
+                  <button onclick={`deleteTemplate('${template.template_name}', '${displayName}')`} class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition" title="Delete">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                  <button data-set-default data-template-type="default_donation_box_template" data-template-value={template.template_name} class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                    Set Default
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    <!-- Campaign Page Templates -->
+    <div>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">Campaign Page Templates</h2>
+          <p class="text-sm text-gray-500 mt-1">Page layouts for campaign and appeal pages.</p>
+        </div>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Create Template
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Sticky Sidebar Template -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Preview -->
+          <div class="h-48 bg-gray-100 p-4 relative">
+            {currentCampaignPageTemplate === 'green-with-yellow' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Page Preview -->
+            <div class="bg-white rounded shadow-sm h-full flex flex-col transform scale-90 origin-top overflow-hidden">
+              <!-- Hero with gradient overlay -->
+              <div class="h-14 bg-gradient-to-r from-[#1a4a55] to-[#255764] relative flex">
+                <!-- Left: Text content -->
+                <div class="flex-1 p-2 flex flex-col justify-center">
+                  <div class="h-1 bg-[#ef7c01] rounded w-8 mb-1"></div>
+                  <div class="h-2 bg-white/80 rounded w-16 mb-1"></div>
+                  <div class="h-1 bg-white/50 rounded w-12"></div>
+                </div>
+                <!-- Right: Donation box in hero -->
+                <div class="w-12 bg-[#255764] m-1 rounded p-1">
+                  <div class="h-1 bg-white/50 rounded mb-1"></div>
+                  <div class="h-2 bg-[#fdc448] rounded"></div>
+                </div>
+              </div>
+              <!-- Content with sticky sidebar -->
+              <div class="flex-1 p-2 flex gap-2 bg-white">
+                <!-- Main Content -->
+                <div class="flex-1">
+                  <div class="h-1.5 bg-gray-200 rounded mb-1 w-3/4"></div>
+                  <div class="h-1 bg-gray-100 rounded mb-1"></div>
+                  <div class="h-1 bg-gray-100 rounded mb-2 w-5/6"></div>
+                  <div class="h-4 bg-gradient-to-r from-[#01534d] to-[#255764] rounded p-1">
+                    <div class="flex justify-between">
+                      <div class="h-1 bg-white/50 rounded w-4"></div>
+                      <div class="h-1 bg-white/50 rounded w-4"></div>
+                      <div class="h-1 bg-white/50 rounded w-4"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Sticky Sidebar -->
+                <div class="w-10 bg-[#255764] rounded p-1">
+                  <div class="h-0.5 bg-white/50 rounded mb-1"></div>
+                  <div class="h-2 bg-[#fdc448] rounded mb-1"></div>
+                  <div class="h-0.5 bg-white/30 rounded"></div>
+                </div>
+              </div>
+              <!-- Orange CTA Footer -->
+              <div class="h-6 bg-gradient-to-r from-[#ef7c01] to-[#fdc448] flex items-center justify-center">
+                <div class="h-2 bg-white rounded w-10"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Sticky Sidebar</h3>
+            <p class="text-sm text-gray-500 mb-4">Full-width hero with sticky sidebar donation box. Teal/green primary with yellow accents.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-[#255764]/10 text-[#255764] text-xs rounded">Sticky Donation Box</span>
+              <span class="px-2 py-1 bg-[#fdc448]/20 text-[#61470e] text-xs rounded">Yellow Accents</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Impact Stats</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Preview
+              </button>
+              <button class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button data-set-default data-template-type="default_campaign_page_template" data-template-value="green-with-yellow" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Urgent Appeal Template -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Preview -->
+          <div class="h-48 bg-gray-100 p-4 relative">
+            {currentCampaignPageTemplate === 'emergency-appeal' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Page Preview -->
+            <div class="bg-white rounded shadow-sm h-full flex flex-col transform scale-90 origin-top">
+              <!-- Hero with urgent styling -->
+              <div class="h-12 bg-red-700 flex items-center justify-center">
+                <div class="text-center">
+                  <div class="h-1.5 bg-white/50 rounded w-16 mx-auto mb-1"></div>
+                  <div class="h-1 bg-white/30 rounded w-12 mx-auto"></div>
+                </div>
+              </div>
+              <!-- Progress bar -->
+              <div class="px-2 py-1 border-b">
+                <div class="h-1.5 bg-gray-200 rounded-full">
+                  <div class="w-2/3 h-full bg-red-600 rounded-full"></div>
+                </div>
+              </div>
+              <!-- Content -->
+              <div class="flex-1 p-2">
+                <div class="h-2 bg-gray-200 rounded mb-1 w-full"></div>
+                <div class="h-1.5 bg-gray-100 rounded mb-1"></div>
+                <div class="h-6 bg-red-600 rounded mt-2"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Urgent Appeal</h3>
+            <p class="text-sm text-gray-500 mb-4">Urgent styling with countdown timer, progress bar, and prominent donation options.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded">Urgent Styling</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Progress Bar</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Countdown</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Preview
+              </button>
+              <button class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button data-set-default data-template-type="default_campaign_page_template" data-template-value="emergency-appeal" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Color Editor Modals -->
+  <TemplateColorEditor templateName="teal-yellow" templateLabel="Teal Yellow" />
+  <TemplateColorEditor templateName="dark-teal" templateLabel="Dark Teal" />
+  <TemplateColorEditor templateName="white" templateLabel="White / Light" />
+  <TemplateColorEditor templateName="compact" templateLabel="Compact" />
+  <TemplateColorEditor templateName="list-style" templateLabel="List Style" />
+  <TemplateColorEditor templateName="urgent-appeal" templateLabel="Urgent Appeal" />
+
+  <!-- Custom Template Editors -->
+  {customTemplates.map((template: any) => {
+    const displayName = template.template_label || template.template_name.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return <TemplateColorEditor templateName={template.template_name} templateLabel={displayName} />;
+  })}
+
+  <!-- Create/Duplicate Template Modal -->
+  <div id="create-template-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full">
+      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="create-modal-title" class="font-bold text-lg">Create New Template</h3>
+        <button onclick="closeCreateTemplateModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6">
+        <form id="create-template-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+            <input
+              type="text"
+              id="new-template-name"
+              name="template_name"
+              placeholder="e.g., My Custom Template"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+              required
+            />
+            <p class="text-xs text-gray-400 mt-1">This will be used as the template identifier (lowercase, hyphens)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+            <input
+              type="text"
+              id="new-template-label"
+              name="template_label"
+              placeholder="e.g., My Custom Template"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Copy Settings From</label>
+            <div class="space-y-2">
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="copy_from" value="" checked class="text-[#01534d] focus:ring-[#01534d]" />
+                <div>
+                  <span class="font-medium text-gray-800">Start Fresh</span>
+                  <p class="text-xs text-gray-500">Create with default settings</p>
+                </div>
+              </label>
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="copy_from" value="teal-yellow" class="text-[#01534d] focus:ring-[#01534d]" />
+                <div>
+                  <span class="font-medium text-gray-800">Teal Yellow</span>
+                  <p class="text-xs text-gray-500">Teal background with yellow accents</p>
+                </div>
+              </label>
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="copy_from" value="dark-teal" class="text-[#01534d] focus:ring-[#01534d]" />
+                <div>
+                  <span class="font-medium text-gray-800">Dark Teal</span>
+                  <p class="text-xs text-gray-500">Dark green with red accent button</p>
+                </div>
+              </label>
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="copy_from" value="white" class="text-[#01534d] focus:ring-[#01534d]" />
+                <div>
+                  <span class="font-medium text-gray-800">White / Light</span>
+                  <p class="text-xs text-gray-500">Light theme with teal accents</p>
+                </div>
+              </label>
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="copy_from" value="compact" class="text-[#01534d] focus:ring-[#01534d]" />
+                <div>
+                  <span class="font-medium text-gray-800">Compact</span>
+                  <p class="text-xs text-gray-500">Minimal design for small spaces</p>
+                </div>
+              </label>
+              <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <input type="radio" name="copy_from" value="list-style" class="text-[#01534d] focus:ring-[#01534d]" />
+                <div>
+                  <span class="font-medium text-gray-800">List Style</span>
+                  <p class="text-xs text-gray-500">Row-based layout with descriptions</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+        <button onclick="closeCreateTemplateModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Cancel
+        </button>
+        <button onclick="createNewTemplate()" class="px-4 py-2 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#013d39]">
+          Create Template
+        </button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  // Default colors for each template (used for reset functionality)
+  const templateDefaultColors = {
+    'teal-yellow': {
+      bg_color: '#255764',
+      text_color: '#ffffff',
+      text_muted_color: 'rgba(255,255,255,0.7)',
+      accent_color: '#fdc448',
+      accent_text_color: '#61470e',
+      border_color: 'rgba(255,255,255,0.3)',
+      active_bg_color: 'rgba(253,196,72,0.2)',
+      active_text_color: '#ffffff',
+      inactive_btn_bg: 'transparent',
+      toggle_active_color: 'rgba(255,255,255,0.2)',
+    },
+    'dark-teal': {
+      bg_color: '#004139',
+      text_color: '#ffffff',
+      text_muted_color: '#d4c4a8',
+      accent_color: '#c41e3a',
+      accent_text_color: '#ffffff',
+      border_color: '#108D70',
+      active_bg_color: '#ECF0EE',
+      active_text_color: '#004139',
+      inactive_btn_bg: '#005A4C',
+      toggle_active_color: '#108D70',
+    },
+    'white': {
+      bg_color: '#ffffff',
+      text_color: '#1f2937',
+      text_muted_color: '#6b7280',
+      accent_color: '#01534d',
+      accent_text_color: '#ffffff',
+      border_color: '#01534d',
+      active_bg_color: '#01534d',
+      active_text_color: '#ffffff',
+      inactive_btn_bg: 'transparent',
+      toggle_active_color: '#01534d',
+    },
+    'compact': {
+      bg_color: '#1a4a55',
+      text_color: '#ffffff',
+      text_muted_color: 'rgba(255,255,255,0.7)',
+      accent_color: '#fdc448',
+      accent_text_color: '#61470e',
+      border_color: 'rgba(255,255,255,0.3)',
+      active_bg_color: 'rgba(253,196,72,0.2)',
+      active_text_color: '#ffffff',
+      inactive_btn_bg: 'transparent',
+      toggle_active_color: 'rgba(255,255,255,0.2)',
+    },
+    'list-style': {
+      bg_color: '#f5f5f5',
+      text_color: '#374151',
+      text_muted_color: '#6b7280',
+      accent_color: '#D97706',
+      accent_text_color: '#ffffff',
+      border_color: '#e5e7eb',
+      active_bg_color: '#D97706',
+      active_text_color: '#ffffff',
+      inactive_btn_bg: '#ffffff',
+      toggle_active_color: '#D97706',
+    },
+    'urgent-appeal': {
+      bg_color: '#ffffff',
+      header_bg_color: '#c41e3a',
+      text_color: '#1f2937',
+      text_muted_color: '#6b7280',
+      accent_color: '#c41e3a',
+      accent_text_color: '#ffffff',
+      border_color: '#e5e7eb',
+      active_bg_color: '#c41e3a10',
+      active_text_color: '#1f2937',
+      inactive_btn_bg: '#ffffff',
+      toggle_active_color: '#c41e3a',
+    },
+  };
+
+  // Toast notification
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+    setTimeout(() => { toast.className = 'hidden'; }, 3000);
+  }
+
+  // Color Editor Functions
+  async function openColorEditor(templateName) {
+    const modal = document.getElementById(`color-editor-${templateName}`);
+    if (!modal) return;
+
+    // Fetch current settings from API
+    try {
+      const res = await fetch(`/api/settings/template-colors?template=${templateName}`);
+      const settings = await res.json();
+
+      // Populate form fields
+      const form = document.getElementById(`color-form-${templateName}`);
+      if (form && settings) {
+        // Color fields
+        const colorFields = ['bg_color', 'header_bg_color', 'text_color', 'text_muted_color', 'accent_color', 'accent_text_color',
+                       'border_color', 'active_bg_color', 'active_text_color', 'inactive_btn_bg', 'toggle_active_color'];
+
+        colorFields.forEach(field => {
+          const colorInput = form.querySelector(`[name="${field}"]`);
+          const textInput = form.querySelector(`[name="${field}_text"]`);
+          if (colorInput && settings[field]) {
+            // Handle rgba/transparent values - convert to hex for color picker
+            let colorValue = settings[field];
+            if (colorValue.startsWith('rgba') || colorValue === 'transparent') {
+              colorInput.value = '#000000'; // Default for non-hex values
+            } else {
+              colorInput.value = colorValue;
+            }
+            if (textInput) {
+              textInput.value = settings[field];
+            }
+          }
+        });
+
+        // Text fields
+        const textFields = ['title_text', 'subtitle_text', 'button_text', 'single_text', 'monthly_text', 'custom_amount_placeholder'];
+        textFields.forEach(field => {
+          const input = form.querySelector(`[name="${field}"]`);
+          if (input && settings[field]) {
+            input.value = settings[field];
+          }
+        });
+
+        // Size fields
+        const sizeFields = ['subtitle_size', 'title_size', 'button_size', 'amount_size'];
+        sizeFields.forEach(field => {
+          const select = form.querySelector(`[name="${field}"]`);
+          if (select && settings[field]) {
+            select.value = settings[field];
+          }
+        });
+
+        // Update live preview
+        updateColorPreview(templateName, settings);
+        updateTextPreview(templateName, settings);
+      }
+    } catch (e) {
+      console.error('Error fetching settings:', e);
+    }
+
+    modal.classList.remove('hidden');
+
+    // Setup color input sync
+    setupColorSync(templateName);
+
+    // Setup text input sync for live preview
+    setupTextSync(templateName);
+
+    // Setup click-to-edit on preview elements
+    setupClickToEdit(templateName);
+  }
+
+  function closeColorEditor(templateName) {
+    const modal = document.getElementById(`color-editor-${templateName}`);
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    // Also close any open color picker
+    closeColorPicker(templateName);
+  }
+
+  function closeColorPicker(templateName) {
+    const popup = document.getElementById(`color-picker-popup-${templateName}`);
+    if (popup) {
+      popup.classList.add('hidden');
+    }
+  }
+
+  function setupClickToEdit(templateName) {
+    const modal = document.getElementById(`color-editor-${templateName}`);
+    if (!modal) return;
+
+    // Find all clickable elements in the preview
+    const clickableElements = modal.querySelectorAll('.clickable-color-element, .clickable-color-area');
+
+    clickableElements.forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const field = this.dataset.colorField;
+        const label = this.dataset.colorLabel;
+        const secondaryField = this.dataset.secondaryField;
+        const secondaryLabel = this.dataset.secondaryLabel;
+
+        if (field) {
+          showColorPicker(templateName, field, label, secondaryField, secondaryLabel, e);
+        }
+      });
+    });
+  }
+
+  function showColorPicker(templateName, field, label, secondaryField, secondaryLabel, event) {
+    const popup = document.getElementById(`color-picker-popup-${templateName}`);
+    const labelEl = document.getElementById(`color-picker-label-${templateName}`);
+    const fieldsContainer = document.getElementById(`color-picker-fields-${templateName}`);
+    const form = document.getElementById(`color-form-${templateName}`);
+
+    if (!popup || !labelEl || !fieldsContainer || !form) return;
+
+    // Set label
+    labelEl.textContent = label;
+
+    // Build fields HTML
+    let fieldsHTML = '';
+
+    // Primary field - get value from form's text input
+    const primaryTextInput = form.querySelector(`[name="${field}_text"]`);
+    const primaryValue = primaryTextInput && primaryTextInput.value ? primaryTextInput.value : '#000000';
+
+    fieldsHTML += `
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">${label}</label>
+        <div class="flex gap-2">
+          <input type="color" id="popup-${field}-${templateName}" value="${primaryValue.startsWith('#') ? primaryValue : '#000000'}" class="w-12 h-10 rounded border cursor-pointer" />
+          <input type="text" id="popup-${field}-text-${templateName}" value="${primaryValue}" placeholder="${primaryValue}" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+        </div>
+      </div>
+    `;
+
+    // Secondary field if exists
+    if (secondaryField && secondaryLabel) {
+      const secondaryTextInput = form.querySelector(`[name="${secondaryField}_text"]`);
+      let secondaryValue = secondaryTextInput && secondaryTextInput.value ? secondaryTextInput.value : (templateDefaults[secondaryField] || '#000000');
+
+      fieldsHTML += `
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">${secondaryLabel}</label>
+          <div class="flex gap-2">
+            <input type="color" id="popup-${secondaryField}-${templateName}" value="${secondaryValue.startsWith('#') ? secondaryValue : '#000000'}" class="w-12 h-10 rounded border cursor-pointer" />
+            <input type="text" id="popup-${secondaryField}-text-${templateName}" value="${secondaryValue}" placeholder="${secondaryValue}" class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+          </div>
+        </div>
+      `;
+    }
+
+    // Get default values for reset button
+    const defaults = templateDefaultColors[templateName] || {};
+    const primaryDefault = defaults[field] || '';
+    const secondaryDefault = secondaryField ? (defaults[secondaryField] || '') : '';
+
+    fieldsHTML += `
+      <div class="flex gap-2 mt-2">
+        <button type="button" onclick="applyColorFromPicker('${templateName}', '${field}', '${secondaryField || ''}')" class="flex-1 px-4 py-2 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#013d39]">
+          Apply
+        </button>
+        <button type="button" onclick="resetColorToDefault('${templateName}', '${field}', '${primaryDefault}', '${secondaryField || ''}', '${secondaryDefault}')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 border border-gray-200" title="Reset to default color">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+      </div>
+    `;
+
+    fieldsContainer.innerHTML = fieldsHTML;
+
+    // Setup sync for popup inputs
+    const popupColorInput = document.getElementById(`popup-${field}-${templateName}`);
+    const popupTextInput = document.getElementById(`popup-${field}-text-${templateName}`);
+
+    if (popupColorInput && popupTextInput) {
+      popupColorInput.addEventListener('input', function() {
+        popupTextInput.value = this.value;
+      });
+      popupTextInput.addEventListener('input', function() {
+        if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+          popupColorInput.value = this.value;
+        }
+      });
+    }
+
+    if (secondaryField) {
+      const secColorInput = document.getElementById(`popup-${secondaryField}-${templateName}`);
+      const secTextInput = document.getElementById(`popup-${secondaryField}-text-${templateName}`);
+
+      if (secColorInput && secTextInput) {
+        secColorInput.addEventListener('input', function() {
+          secTextInput.value = this.value;
+        });
+        secTextInput.addEventListener('input', function() {
+          if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+            secColorInput.value = this.value;
+          }
+        });
+      }
+    }
+
+    // Position popup near the click
+    const rect = event.target.getBoundingClientRect();
+    const modalRect = document.getElementById(`color-editor-${templateName}`).getBoundingClientRect();
+
+    popup.style.top = (rect.bottom - modalRect.top + 10) + 'px';
+    popup.style.left = Math.max(10, Math.min(rect.left - modalRect.left, modalRect.width - 300)) + 'px';
+
+    popup.classList.remove('hidden');
+
+    // Highlight the corresponding field in the form
+    highlightField(templateName, field);
+  }
+
+  function applyColorFromPicker(templateName, field, secondaryField) {
+    const form = document.getElementById(`color-form-${templateName}`);
+
+    // Apply primary field
+    const popupTextInput = document.getElementById(`popup-${field}-text-${templateName}`);
+    if (popupTextInput && form) {
+      const formColorInput = form.querySelector(`[name="${field}"]`);
+      const formTextInput = form.querySelector(`[name="${field}_text"]`);
+
+      if (formColorInput && formTextInput) {
+        formTextInput.value = popupTextInput.value;
+        if (/^#[0-9A-Fa-f]{6}$/.test(popupTextInput.value)) {
+          formColorInput.value = popupTextInput.value;
+        }
+      }
+    }
+
+    // Apply secondary field if exists
+    if (secondaryField) {
+      const secPopupTextInput = document.getElementById(`popup-${secondaryField}-text-${templateName}`);
+      if (secPopupTextInput && form) {
+        const secFormColorInput = form.querySelector(`[name="${secondaryField}"]`);
+        const secFormTextInput = form.querySelector(`[name="${secondaryField}_text"]`);
+
+        if (secFormColorInput && secFormTextInput) {
+          secFormTextInput.value = secPopupTextInput.value;
+          if (/^#[0-9A-Fa-f]{6}$/.test(secPopupTextInput.value)) {
+            secFormColorInput.value = secPopupTextInput.value;
+          }
+        }
+      }
+    }
+
+    // Update preview
+    updateLivePreview(templateName, form);
+
+    // Check contrast and warn if needed
+    checkColorContrast(templateName, form);
+
+    // Close popup
+    closeColorPicker(templateName);
+  }
+
+  // Reset color to default value
+  function resetColorToDefault(templateName, field, defaultValue, secondaryField, secondaryDefault) {
+    // Update popup inputs with default values
+    const popupColorInput = document.getElementById(`popup-${field}-${templateName}`);
+    const popupTextInput = document.getElementById(`popup-${field}-text-${templateName}`);
+
+    if (popupColorInput && popupTextInput && defaultValue) {
+      popupTextInput.value = defaultValue;
+      // Only set color picker if it's a valid hex color
+      if (/^#[0-9A-Fa-f]{6}$/.test(defaultValue)) {
+        popupColorInput.value = defaultValue;
+      }
+    }
+
+    // Handle secondary field if exists
+    if (secondaryField && secondaryDefault) {
+      const secPopupColorInput = document.getElementById(`popup-${secondaryField}-${templateName}`);
+      const secPopupTextInput = document.getElementById(`popup-${secondaryField}-text-${templateName}`);
+
+      if (secPopupColorInput && secPopupTextInput) {
+        secPopupTextInput.value = secondaryDefault;
+        if (/^#[0-9A-Fa-f]{6}$/.test(secondaryDefault)) {
+          secPopupColorInput.value = secondaryDefault;
+        }
+      }
+    }
+
+    // Apply the reset values immediately
+    applyColorFromPicker(templateName, field, secondaryField);
+  }
+
+  // Function to check if colors have enough contrast
+  function checkColorContrast(templateName, form) {
+    const bgColor = form.querySelector('[name="bg_color_text"]')?.value || '#255764';
+    const textColor = form.querySelector('[name="text_color_text"]')?.value || '#ffffff';
+
+    // Simple brightness comparison
+    const getBrightness = (color) => {
+      // Handle hex colors
+      if (color.startsWith('#')) {
+        const hex = color.slice(1);
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        return (r * 299 + g * 587 + b * 114) / 1000;
+      }
+      // Handle rgba - assume light if contains high values
+      if (color.includes('rgba') || color.includes('rgb')) {
+        const matches = color.match(/\d+/g);
+        if (matches && matches.length >= 3) {
+          const r = parseInt(matches[0]);
+          const g = parseInt(matches[1]);
+          const b = parseInt(matches[2]);
+          return (r * 299 + g * 587 + b * 114) / 1000;
+        }
+      }
+      return 128; // Default to mid-range
+    };
+
+    const bgBrightness = getBrightness(bgColor);
+    const textBrightness = getBrightness(textColor);
+    const contrast = Math.abs(bgBrightness - textBrightness);
+
+    // Show warning if contrast is too low
+    const warningEl = document.getElementById(`contrast-warning-${templateName}`);
+    if (contrast < 80) {
+      if (!warningEl) {
+        const preview = document.getElementById(`preview-${templateName}`);
+        if (preview) {
+          const warning = document.createElement('div');
+          warning.id = `contrast-warning-${templateName}`;
+          warning.className = 'absolute top-2 left-2 right-2 bg-yellow-100 border border-yellow-400 text-yellow-800 text-xs px-3 py-2 rounded-lg z-20';
+          warning.innerHTML = '<strong>Low contrast!</strong> Text may be hard to see. Consider changing the Title Text color.';
+          preview.style.position = 'relative';
+          preview.insertBefore(warning, preview.firstChild);
+        }
+      }
+    } else if (warningEl) {
+      warningEl.remove();
+    }
+  }
+
+  function highlightField(templateName, field) {
+    // Remove highlight from all fields
+    const allFields = document.querySelectorAll(`#color-form-${templateName} .color-field-group`);
+    allFields.forEach(f => f.classList.remove('highlight'));
+
+    // Add highlight to the target field
+    const targetField = document.getElementById(`field-${field}-${templateName}`);
+    if (targetField) {
+      targetField.classList.add('highlight');
+      // Scroll the details open if needed
+      const details = targetField.closest('details');
+      if (details) {
+        details.open = true;
+      }
+      // Remove highlight after animation
+      setTimeout(() => {
+        targetField.classList.remove('highlight');
+      }, 2000);
+    }
+  }
+
+  function setupColorSync(templateName) {
+    const form = document.getElementById(`color-form-${templateName}`);
+    if (!form) return;
+
+    const fields = ['bg_color', 'text_color', 'text_muted_color', 'accent_color', 'accent_text_color',
+                   'border_color', 'active_bg_color', 'active_text_color', 'inactive_btn_bg', 'toggle_active_color'];
+
+    fields.forEach(field => {
+      const colorInput = form.querySelector(`[name="${field}"]`);
+      const textInput = form.querySelector(`[name="${field}_text"]`);
+
+      if (colorInput && textInput) {
+        // Sync color picker to text input
+        colorInput.addEventListener('input', function() {
+          textInput.value = this.value;
+          updateLivePreview(templateName, form);
+          // Check contrast when bg or text color changes
+          if (field === 'bg_color' || field === 'text_color') {
+            checkColorContrast(templateName, form);
+          }
+        });
+
+        // Sync text input to color picker
+        textInput.addEventListener('input', function() {
+          const val = this.value.trim();
+          // Only update color picker if it's a valid hex color
+          if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            colorInput.value = val;
+          }
+          updateLivePreview(templateName, form);
+          // Check contrast when bg or text color changes
+          if (field === 'bg_color' || field === 'text_color') {
+            checkColorContrast(templateName, form);
+          }
+        });
+      }
+    });
+  }
+
+  function updateLivePreview(templateName, form) {
+    const preview = document.getElementById(`preview-${templateName}`);
+    if (!preview) return;
+
+    const getVal = (name) => {
+      const textInput = form.querySelector(`[name="${name}_text"]`);
+      return textInput ? textInput.value : '';
+    };
+
+    // Update preview background
+    preview.style.backgroundColor = getVal('bg_color') || '#255764';
+
+    // Update title
+    const title = preview.querySelector('.preview-title');
+    if (title) title.style.color = getVal('text_color') || '#ffffff';
+
+    // Update subtitle
+    const subtitle = preview.querySelector('.preview-subtitle');
+    if (subtitle) subtitle.style.color = getVal('text_muted_color') || 'rgba(255,255,255,0.7)';
+
+    // Update toggle container
+    const toggle = preview.querySelector('.preview-toggle');
+    if (toggle) {
+      toggle.style.backgroundColor = 'rgba(255,255,255,0.1)';
+      const activeToggle = toggle.querySelector('.preview-toggle-active');
+      if (activeToggle) {
+        activeToggle.style.backgroundColor = getVal('toggle_active_color') || 'rgba(255,255,255,0.2)';
+        activeToggle.style.color = getVal('text_color') || '#ffffff';
+      }
+      const inactiveToggle = toggle.querySelector('.preview-toggle-inactive');
+      if (inactiveToggle) {
+        inactiveToggle.style.color = getVal('text_muted_color') || 'rgba(255,255,255,0.7)';
+      }
+    }
+
+    // Update amount buttons
+    const activeBtn = preview.querySelector('.preview-btn-active');
+    if (activeBtn) {
+      activeBtn.style.backgroundColor = getVal('active_bg_color') || 'rgba(253,196,72,0.2)';
+      activeBtn.style.borderColor = getVal('accent_color') || '#fdc448';
+      activeBtn.style.color = getVal('active_text_color') || '#ffffff';
+    }
+
+    const inactiveBtns = preview.querySelectorAll('.preview-btn');
+    inactiveBtns.forEach(btn => {
+      btn.style.backgroundColor = getVal('inactive_btn_bg') || 'transparent';
+      btn.style.borderColor = getVal('border_color') || 'rgba(255,255,255,0.3)';
+      btn.style.color = getVal('text_color') || '#ffffff';
+    });
+
+    // Update custom amount input
+    const customInput = preview.querySelector('.preview-custom-input');
+    if (customInput) {
+      customInput.style.borderColor = getVal('border_color') || 'rgba(255,255,255,0.3)';
+    }
+
+    // Update donate button
+    const donateBtn = preview.querySelector('.preview-donate-btn');
+    if (donateBtn) {
+      donateBtn.style.backgroundColor = getVal('accent_color') || '#fdc448';
+      donateBtn.style.color = getVal('accent_text_color') || '#61470e';
+    }
+
+    // Update trust badges
+    const badges = preview.querySelectorAll('.text-xs.flex.items-center');
+    badges.forEach(badge => {
+      badge.style.color = getVal('text_muted_color') || 'rgba(255,255,255,0.6)';
+    });
+  }
+
+  function updateColorPreview(templateName, colors) {
+    const preview = document.getElementById(`preview-${templateName}`);
+    if (!preview || !colors) return;
+
+    // Update background
+    preview.style.backgroundColor = colors.bg_color || '#255764';
+
+    // Update header background (for urgent-appeal template)
+    const header = preview.querySelector('.preview-header');
+    if (header && colors.header_bg_color) {
+      header.style.background = `linear-gradient(135deg, ${colors.header_bg_color} 0%, ${colors.header_bg_color}dd 100%)`;
+    }
+
+    // Update title
+    const title = preview.querySelector('.preview-title');
+    if (title) title.style.color = colors.text_color || '#ffffff';
+
+    // Update subtitle
+    const subtitle = preview.querySelector('.preview-subtitle');
+    if (subtitle) subtitle.style.color = colors.text_muted_color || 'rgba(255,255,255,0.7)';
+
+    // Update toggle container
+    const toggle = preview.querySelector('.preview-toggle');
+    if (toggle) {
+      const activeToggle = toggle.querySelector('.preview-toggle-active');
+      if (activeToggle) {
+        // For urgent-appeal, use accent_color for toggle; for others use toggle_active_color
+        const isUrgentAppeal = templateName === 'urgent-appeal';
+        if (isUrgentAppeal) {
+          activeToggle.style.backgroundColor = colors.accent_color || '#c41e3a';
+          activeToggle.style.color = colors.accent_text_color || '#ffffff';
+        } else {
+          activeToggle.style.backgroundColor = colors.toggle_active_color || 'rgba(255,255,255,0.2)';
+          activeToggle.style.color = colors.text_color || '#ffffff';
+        }
+      }
+      const inactiveToggle = toggle.querySelector('.preview-toggle-inactive');
+      if (inactiveToggle) {
+        inactiveToggle.style.color = colors.text_muted_color || 'rgba(255,255,255,0.7)';
+      }
+    }
+
+    // Update amount buttons
+    const isUrgentAppeal = templateName === 'urgent-appeal';
+    const activeBtn = preview.querySelector('.preview-btn-active');
+    if (activeBtn) {
+      activeBtn.style.backgroundColor = colors.active_bg_color || 'rgba(253,196,72,0.2)';
+      activeBtn.style.borderColor = colors.accent_color || '#fdc448';
+      activeBtn.style.color = colors.active_text_color || (isUrgentAppeal ? '#1f2937' : '#ffffff');
+    }
+
+    const inactiveBtns = preview.querySelectorAll('.preview-btn');
+    inactiveBtns.forEach(btn => {
+      btn.style.backgroundColor = colors.inactive_btn_bg || (isUrgentAppeal ? '#ffffff' : 'transparent');
+      btn.style.borderColor = colors.border_color || (isUrgentAppeal ? '#e5e7eb' : 'rgba(255,255,255,0.3)');
+      btn.style.color = colors.text_color || (isUrgentAppeal ? '#1f2937' : '#ffffff');
+    });
+
+    // Update donate button
+    const donateBtn = preview.querySelector('.preview-donate-btn');
+    if (donateBtn) {
+      donateBtn.style.backgroundColor = colors.accent_color || '#fdc448';
+      donateBtn.style.color = colors.accent_text_color || '#61470e';
+    }
+
+    // Update custom amount input
+    const customInput = preview.querySelector('.preview-custom-input');
+    if (customInput) {
+      customInput.style.borderColor = colors.border_color || 'rgba(255,255,255,0.3)';
+    }
+
+    // Update trust badges
+    const badges = preview.querySelectorAll('.text-xs.flex.items-center');
+    badges.forEach(badge => {
+      badge.style.color = colors.text_muted_color || 'rgba(255,255,255,0.6)';
+    });
+  }
+
+  function updateTextPreview(templateName, settings) {
+    const preview = document.getElementById(`preview-${templateName}`);
+    if (!preview || !settings) return;
+
+    // Font size mapping
+    const fontSizeMap = {
+      'text-xs': '0.75rem',
+      'text-sm': '0.875rem',
+      'text-base': '1rem',
+      'text-lg': '1.125rem',
+      'text-xl': '1.25rem',
+      'text-2xl': '1.5rem',
+    };
+
+    // Update title text and size
+    const title = preview.querySelector('.preview-title');
+    if (title) {
+      if (settings.title_text) title.textContent = settings.title_text;
+      if (settings.title_size) title.style.fontSize = fontSizeMap[settings.title_size] || '1.25rem';
+    }
+
+    // Update subtitle text and size
+    const subtitle = preview.querySelector('.preview-subtitle');
+    if (subtitle) {
+      if (settings.subtitle_text) subtitle.textContent = settings.subtitle_text;
+      if (settings.subtitle_size) subtitle.style.fontSize = fontSizeMap[settings.subtitle_size] || '0.875rem';
+    }
+
+    // Update donate button text and size
+    const donateBtn = preview.querySelector('.donate-btn-text');
+    if (donateBtn) {
+      if (settings.button_text) donateBtn.textContent = settings.button_text;
+    }
+    const donateBtnEl = preview.querySelector('.preview-donate-btn');
+    if (donateBtnEl && settings.button_size) {
+      donateBtnEl.style.fontSize = fontSizeMap[settings.button_size] || '1.125rem';
+    }
+
+    // Update toggle button labels
+    const toggleActive = preview.querySelector('.preview-toggle-active');
+    if (toggleActive && settings.single_text) {
+      toggleActive.textContent = settings.single_text;
+    }
+    const toggleInactive = preview.querySelector('.preview-toggle-inactive');
+    if (toggleInactive && settings.monthly_text) {
+      toggleInactive.textContent = settings.monthly_text;
+    }
+
+    // Update custom amount placeholder
+    const customInput = preview.querySelector('.preview-custom-input');
+    if (customInput && settings.custom_amount_placeholder) {
+      customInput.placeholder = settings.custom_amount_placeholder;
+    }
+
+    // Update amount button sizes
+    if (settings.amount_size) {
+      const amountBtns = preview.querySelectorAll('.preview-btn, .preview-btn-active');
+      amountBtns.forEach(btn => {
+        const amountSpan = btn.querySelector('span.text-lg');
+        if (amountSpan) amountSpan.style.fontSize = fontSizeMap[settings.amount_size] || '1.125rem';
+      });
+    }
+  }
+
+  function setupTextSync(templateName) {
+    const form = document.getElementById(`color-form-${templateName}`);
+    const preview = document.getElementById(`preview-${templateName}`);
+    if (!form || !preview) return;
+
+    // Font size mapping
+    const fontSizeMap = {
+      'text-xs': '0.75rem',
+      'text-sm': '0.875rem',
+      'text-base': '1rem',
+      'text-lg': '1.125rem',
+      'text-xl': '1.25rem',
+      'text-2xl': '1.5rem',
+    };
+
+    // Title text
+    const titleInput = form.querySelector('[name="title_text"]');
+    if (titleInput) {
+      titleInput.addEventListener('input', function() {
+        const title = preview.querySelector('.preview-title');
+        if (title) title.textContent = this.value;
+      });
+    }
+
+    // Title size
+    const titleSizeSelect = form.querySelector('[name="title_size"]');
+    if (titleSizeSelect) {
+      titleSizeSelect.addEventListener('change', function() {
+        const title = preview.querySelector('.preview-title');
+        if (title) title.style.fontSize = fontSizeMap[this.value] || '1.25rem';
+      });
+    }
+
+    // Subtitle text
+    const subtitleInput = form.querySelector('[name="subtitle_text"]');
+    if (subtitleInput) {
+      subtitleInput.addEventListener('input', function() {
+        const subtitle = preview.querySelector('.preview-subtitle');
+        if (subtitle) subtitle.textContent = this.value;
+      });
+    }
+
+    // Subtitle size
+    const subtitleSizeSelect = form.querySelector('[name="subtitle_size"]');
+    if (subtitleSizeSelect) {
+      subtitleSizeSelect.addEventListener('change', function() {
+        const subtitle = preview.querySelector('.preview-subtitle');
+        if (subtitle) subtitle.style.fontSize = fontSizeMap[this.value] || '0.875rem';
+      });
+    }
+
+    // Button text
+    const buttonTextInput = form.querySelector('[name="button_text"]');
+    if (buttonTextInput) {
+      buttonTextInput.addEventListener('input', function() {
+        const btnText = preview.querySelector('.donate-btn-text');
+        if (btnText) btnText.textContent = this.value;
+      });
+    }
+
+    // Button size
+    const buttonSizeSelect = form.querySelector('[name="button_size"]');
+    if (buttonSizeSelect) {
+      buttonSizeSelect.addEventListener('change', function() {
+        const donateBtn = preview.querySelector('.preview-donate-btn');
+        if (donateBtn) donateBtn.style.fontSize = fontSizeMap[this.value] || '1.125rem';
+      });
+    }
+
+    // Amount size
+    const amountSizeSelect = form.querySelector('[name="amount_size"]');
+    if (amountSizeSelect) {
+      amountSizeSelect.addEventListener('change', function() {
+        const amountBtns = preview.querySelectorAll('.preview-btn span.text-lg, .preview-btn-active span.text-lg');
+        amountBtns.forEach(span => {
+          span.style.fontSize = fontSizeMap[this.value] || '1.125rem';
+        });
+      });
+    }
+
+    // Single payment text
+    const singleInput = form.querySelector('[name="single_text"]');
+    if (singleInput) {
+      singleInput.addEventListener('input', function() {
+        const toggleActive = preview.querySelector('.preview-toggle-active');
+        if (toggleActive) toggleActive.textContent = this.value;
+      });
+    }
+
+    // Monthly payment text
+    const monthlyInput = form.querySelector('[name="monthly_text"]');
+    if (monthlyInput) {
+      monthlyInput.addEventListener('input', function() {
+        const toggleInactive = preview.querySelector('.preview-toggle-inactive');
+        if (toggleInactive) toggleInactive.textContent = this.value;
+      });
+    }
+
+    // Custom amount placeholder
+    const placeholderInput = form.querySelector('[name="custom_amount_placeholder"]');
+    if (placeholderInput) {
+      placeholderInput.addEventListener('input', function() {
+        const customInput = preview.querySelector('.preview-custom-input');
+        if (customInput) customInput.placeholder = this.value;
+      });
+    }
+  }
+
+  async function saveTemplateColors(templateName) {
+    const form = document.getElementById(`color-form-${templateName}`);
+    if (!form) return;
+
+    const getColorVal = (name) => {
+      const textInput = form.querySelector(`[name="${name}_text"]`);
+      return textInput ? textInput.value.trim() : '';
+    };
+
+    const getTextVal = (name) => {
+      const input = form.querySelector(`[name="${name}"]`);
+      return input ? input.value.trim() : '';
+    };
+
+    const data = {
+      template_name: templateName,
+      // Colors
+      bg_color: getColorVal('bg_color'),
+      text_color: getColorVal('text_color'),
+      text_muted_color: getColorVal('text_muted_color'),
+      accent_color: getColorVal('accent_color'),
+      accent_text_color: getColorVal('accent_text_color'),
+      border_color: getColorVal('border_color'),
+      active_bg_color: getColorVal('active_bg_color'),
+      active_text_color: getColorVal('active_text_color'),
+      inactive_btn_bg: getColorVal('inactive_btn_bg'),
+      toggle_active_color: getColorVal('toggle_active_color'),
+      // Text labels
+      title_text: getTextVal('title_text'),
+      subtitle_text: getTextVal('subtitle_text'),
+      button_text: getTextVal('button_text'),
+      single_text: getTextVal('single_text'),
+      monthly_text: getTextVal('monthly_text'),
+      custom_amount_placeholder: getTextVal('custom_amount_placeholder'),
+      // Font sizes
+      subtitle_size: getTextVal('subtitle_size'),
+      title_size: getTextVal('title_size'),
+      button_size: getTextVal('button_size'),
+      amount_size: getTextVal('amount_size'),
+      // Trust message
+      trust_message_text: getTextVal('trust_message_text'),
+      trust_link_text: getTextVal('trust_link_text'),
+      trust_link_url: getTextVal('trust_link_url'),
+    };
+
+    // Collect default amounts
+    const defaultAmounts = [];
+    for (let i = 1; i <= 6; i++) {
+      const amountInput = form.querySelector(`[name="amount_${i}"]`);
+      const labelInput = form.querySelector(`[name="label_${i}"]`);
+      if (amountInput && amountInput.value) {
+        defaultAmounts.push({
+          amount: parseInt(amountInput.value),
+          label: labelInput ? labelInput.value : ''
+        });
+      }
+    }
+    if (defaultAmounts.length > 0) {
+      data.default_amounts = defaultAmounts;
+    }
+
+    try {
+      const res = await fetch('/api/settings/template-colors', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to save');
+      }
+
+      showToast('Settings saved successfully!');
+      closeColorEditor(templateName);
+      // Reload page to update previews
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  }
+
+  // Handle default templates form submission
+  document.getElementById('defaultTemplatesForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+      default_donation_box_template: formData.get('default_donation_box_template'),
+      default_campaign_page_template: formData.get('default_campaign_page_template'),
+      default_appeals_page_template: formData.get('default_appeals_page_template'),
+      orphan_sponsorship_template: formData.get('orphan_sponsorship_template'),
+      homepage_template: formData.get('homepage_template'),
+    };
+
+    try {
+      const res = await fetch('/api/settings/templates', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to save');
+      }
+
+      showToast('Templates saved! Refreshing...');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  });
+
+  // Handle "Set Default" buttons for individual templates
+  document.querySelectorAll('[data-set-default]').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const templateType = this.dataset.templateType;
+      const templateValue = this.dataset.templateValue;
+
+      try {
+        const data = {};
+        data[templateType] = templateValue;
+
+        const res = await fetch('/api/settings/templates', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+          const result = await res.json();
+          throw new Error(result.error || 'Failed to save');
+        }
+
+        showToast(`${templateValue} is now the default!`);
+        window.location.reload();
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    });
+  });
+
+  // Handle "Apply to All Campaigns" button
+  document.getElementById('resetAllCampaignsBtn')?.addEventListener('click', async function() {
+    if (!confirm('This will clear all individual campaign template settings, making them use the site defaults. Continue?')) {
+      return;
+    }
+
+    this.disabled = true;
+    this.textContent = 'Applying...';
+
+    try {
+      const res = await fetch('/api/campaigns/clear-templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to reset');
+      }
+
+      showToast('All campaigns now use site default templates!');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      showToast(e.message, 'error');
+      this.disabled = false;
+      this.textContent = 'Apply to All Campaigns';
+    }
+  });
+
+  // Font size update function
+  function updateFontSize(templateName, element, value) {
+    const preview = document.getElementById(`preview-${templateName}`);
+    if (!preview) return;
+
+    const fontSizeMap = {
+      'text-xs': '0.75rem',
+      'text-sm': '0.875rem',
+      'text-base': '1rem',
+      'text-lg': '1.125rem',
+      'text-xl': '1.25rem',
+      'text-2xl': '1.5rem',
+    };
+
+    const fontSize = fontSizeMap[value] || '1rem';
+
+    if (element === 'title') {
+      const title = preview.querySelector('.preview-title');
+      if (title) title.style.fontSize = fontSize;
+    } else if (element === 'subtitle') {
+      const subtitle = preview.querySelector('.preview-subtitle');
+      if (subtitle) subtitle.style.fontSize = fontSize;
+    } else if (element === 'button') {
+      const btn = preview.querySelector('.preview-donate-btn');
+      if (btn) btn.style.fontSize = fontSize;
+    } else if (element === 'amount') {
+      const amounts = preview.querySelectorAll('.preview-btn span, .preview-btn-active span');
+      amounts.forEach(span => span.style.fontSize = fontSize);
+    }
+  }
+
+  // Create/Duplicate Template Modal Functions
+  function openCreateTemplateModal(copyFrom = '', copyLabel = '') {
+    const modal = document.getElementById('create-template-modal');
+    const titleEl = document.getElementById('create-modal-title');
+    const nameInput = document.getElementById('new-template-name');
+    const labelInput = document.getElementById('new-template-label');
+
+    if (!modal) return;
+
+    // Reset form
+    document.getElementById('create-template-form').reset();
+
+    if (copyFrom && copyLabel) {
+      // Duplicating existing template
+      titleEl.textContent = `Duplicate "${copyLabel}" Template`;
+      nameInput.value = copyFrom + '-copy';
+      labelInput.value = copyLabel + ' Copy';
+      // Select the copy_from radio
+      const radio = document.querySelector(`input[name="copy_from"][value="${copyFrom}"]`);
+      if (radio) radio.checked = true;
+    } else {
+      // Creating new template
+      titleEl.textContent = 'Create New Template';
+      nameInput.value = '';
+      labelInput.value = '';
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeCreateTemplateModal() {
+    const modal = document.getElementById('create-template-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function duplicateTemplate(templateName, templateLabel) {
+    openCreateTemplateModal(templateName, templateLabel);
+  }
+
+  async function createNewTemplate() {
+    const nameInput = document.getElementById('new-template-name');
+    const labelInput = document.getElementById('new-template-label');
+    const copyFromInput = document.querySelector('input[name="copy_from"]:checked');
+
+    const templateName = nameInput.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const templateLabel = labelInput.value.trim();
+    const copyFrom = copyFromInput ? copyFromInput.value : '';
+
+    if (!templateName || !templateLabel) {
+      showToast('Please fill in all fields', 'error');
+      return;
+    }
+
+    // Validate template name format
+    if (!/^[a-z0-9-]+$/.test(templateName)) {
+      showToast('Template name can only contain lowercase letters, numbers, and hyphens', 'error');
+      return;
+    }
+
+    try {
+      let templateData = {
+        template_name: templateName,
+        template_label: templateLabel,
+      };
+
+      // If copying from existing template, fetch its settings
+      if (copyFrom) {
+        const res = await fetch(`/api/settings/template-colors?template=${copyFrom}`);
+        if (res.ok) {
+          const sourceSettings = await res.json();
+          // Copy all settings except the name
+          delete sourceSettings.id;
+          delete sourceSettings.template_name;
+          delete sourceSettings.created_at;
+          delete sourceSettings.updated_at;
+          templateData = { ...templateData, ...sourceSettings };
+        }
+      }
+
+      // Create the new template
+      const res = await fetch('/api/settings/template-colors', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template_name: templateName, ...templateData })
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to create template');
+      }
+
+      showToast(`Template "${templateLabel}" created successfully!`);
+      closeCreateTemplateModal();
+
+      // Reload page to show new template
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  }
+
+  // Reset all colors to defaults for a template
+  function resetAllColors(templateName) {
+    if (!confirm('Are you sure you want to reset all colors to their default values? This will update the preview but you still need to save to apply changes.')) {
+      return;
+    }
+
+    const defaults = templateDefaultColors[templateName];
+    if (!defaults) {
+      showToast('No defaults found for this template', 'error');
+      return;
+    }
+
+    const form = document.getElementById(`color-form-${templateName}`);
+    if (!form) return;
+
+    // Reset all color fields
+    Object.keys(defaults).forEach(field => {
+      const colorInput = form.querySelector(`[name="${field}"]`);
+      const textInput = form.querySelector(`[name="${field}_text"]`);
+
+      if (textInput) {
+        textInput.value = defaults[field];
+      }
+      if (colorInput && /^#[0-9A-Fa-f]{6}$/.test(defaults[field])) {
+        colorInput.value = defaults[field];
+      }
+    });
+
+    // Update preview
+    updateLivePreview(templateName, form);
+    showToast('Colors reset to defaults. Click Save to apply.', 'success');
+  }
+
+  // Expose functions globally for onclick handlers
+  window.openColorEditor = openColorEditor;
+  window.closeColorEditor = closeColorEditor;
+  window.saveTemplateColors = saveTemplateColors;
+  window.closeColorPicker = closeColorPicker;
+  window.applyColorFromPicker = applyColorFromPicker;
+  window.resetColorToDefault = resetColorToDefault;
+  window.resetAllColors = resetAllColors;
+  window.updateFontSize = updateFontSize;
+  window.openCreateTemplateModal = openCreateTemplateModal;
+  window.closeCreateTemplateModal = closeCreateTemplateModal;
+  window.duplicateTemplate = duplicateTemplate;
+  window.createNewTemplate = createNewTemplate;
+
+  // Delete template function
+  async function deleteTemplate(templateName, templateLabel) {
+    if (!confirm(`Are you sure you want to delete the "${templateLabel}" template? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/settings/template-colors?template=${templateName}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Failed to delete template');
+      }
+
+      showToast(`Template "${templateLabel}" deleted successfully!`);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  }
+
+  window.deleteTemplate = deleteTemplate;
+</script>

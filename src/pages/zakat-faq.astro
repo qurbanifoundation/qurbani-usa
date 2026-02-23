@@ -1,0 +1,258 @@
+---
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const faqs = [
+  {
+    question: "What is Zakat?",
+    answer: "Zakat is one of the Five Pillars of Islam. It is an obligatory form of charity that requires Muslims who meet certain wealth criteria (nisab) to donate 2.5% of their qualifying wealth annually to those in need. The word 'Zakat' means 'purification' and 'growth', as it purifies one's wealth and increases blessings."
+  },
+  {
+    question: "Who is required to pay Zakat?",
+    answer: "Zakat is obligatory on every Muslim who possesses wealth above the nisab threshold for a complete lunar year. The person must be an adult, sane, free, and possess wealth beyond their basic needs. Both men and women are required to pay Zakat if they meet these conditions."
+  },
+  {
+    question: "What is the Nisab threshold?",
+    answer: "Nisab is the minimum amount of wealth a Muslim must possess before Zakat becomes obligatory. It is equivalent to 87.48 grams of gold or 612.36 grams of silver. In current monetary terms, this is approximately $5,500 USD (based on silver) or higher (based on gold). Most scholars recommend using the silver value to ensure more people can benefit."
+  },
+  {
+    question: "How much Zakat do I need to pay?",
+    answer: "Zakat is calculated at 2.5% (or 1/40) of your total qualifying wealth that has been in your possession for one complete lunar year. This includes cash, savings, investments, gold, silver, business inventory, and rental income. Debts you owe can be deducted from your total assets."
+  },
+  {
+    question: "What types of wealth are subject to Zakat?",
+    answer: "Zakatable wealth includes: cash and bank balances, gold and silver (including jewelry), stocks and investments, business inventory and merchandise, rental income, agricultural produce, and livestock. Personal items like your home, car, clothing, and household items are generally not subject to Zakat."
+  },
+  {
+    question: "Who can receive Zakat?",
+    answer: "The Quran specifies eight categories of Zakat recipients (Surah At-Tawbah, 9:60): the poor (al-fuqara), the needy (al-masakin), Zakat administrators, those whose hearts are to be reconciled, freeing slaves, those in debt, in the cause of Allah, and travelers in need. Zakat cannot be given to one's parents, grandparents, children, grandchildren, or spouses."
+  },
+  {
+    question: "When should I pay my Zakat?",
+    answer: "Zakat should be paid once a lunar year has passed since your wealth reached the nisab threshold. Many Muslims choose to pay during Ramadan due to the increased rewards, but it can be paid at any time. It's recommended to set a specific date each year to calculate and pay your Zakat."
+  },
+  {
+    question: "Can I pay Zakat in installments?",
+    answer: "Yes, you can pay Zakat in installments throughout the year, as long as the full amount is paid by your Zakat anniversary date. Some scholars also allow paying Zakat in advance before the lunar year is complete, which is particularly common during Ramadan."
+  },
+  {
+    question: "Is Zakat tax-deductible in the USA?",
+    answer: "Yes, Zakat paid to a registered 501(c)(3) nonprofit organization like Qurbani USA is tax-deductible in the United States. You will receive a donation receipt for your tax records. Please consult with a tax professional for specific advice regarding your situation."
+  },
+  {
+    question: "What is the difference between Zakat and Sadaqah?",
+    answer: "Zakat is obligatory charity with specific rules about who must pay, how much, and who can receive it. Sadaqah is voluntary charity that can be given in any amount, at any time, to anyone in need. While Zakat has a fixed rate of 2.5%, Sadaqah has no minimum or maximum limits."
+  },
+  {
+    question: "Do I pay Zakat on my retirement accounts (401k, IRA)?",
+    answer: "Scholars have different opinions on this. Some say Zakat is due on the current value if you can access the funds, while others say it's only due upon withdrawal. A common approach is to pay Zakat on the accessible portion. We recommend consulting with a knowledgeable scholar for your specific situation."
+  },
+  {
+    question: "Is Zakat due on gold jewelry that I wear?",
+    answer: "There is scholarly difference on this matter. The Hanafi school holds that Zakat is due on all gold and silver jewelry regardless of use. The Shafi'i, Maliki, and Hanbali schools generally exempt jewelry worn regularly for permissible purposes. It's advisable to follow the opinion of your local scholar or err on the side of caution."
+  },
+  {
+    question: "What happens if I miss paying Zakat?",
+    answer: "If you miss paying Zakat, it remains a debt upon you that must be fulfilled. You should calculate the Zakat for the years you missed and pay it as soon as possible. Sincere repentance (tawbah) should also be made for the delay. Unlike prayers, Zakat can be made up at any time."
+  },
+  {
+    question: "Can I give Zakat to family members?",
+    answer: "You cannot give Zakat to your direct ascendants (parents, grandparents) or descendants (children, grandchildren), or to your spouse. However, you can give Zakat to other relatives such as siblings, aunts, uncles, cousins, nieces, and nephews if they qualify as Zakat recipients."
+  },
+  {
+    question: "How does Qurbani USA distribute Zakat?",
+    answer: "Qurbani USA follows a 100% Zakat policy, meaning every dollar of your Zakat reaches those in need. We distribute Zakat to eligible recipients in over 50 countries, focusing on the poor and needy, orphans, refugees, and those affected by disasters. Our distribution is overseen by Islamic scholars to ensure Shariah compliance."
+  }
+];
+---
+
+<Layout title="Zakat FAQ - Common Questions About Zakat | Qurbani USA">
+  <Navbar />
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[400px] flex items-center" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920'); background-size: cover; background-position: center;"></div>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#7c3aed]/95 to-[#7c3aed]/80"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
+        <div class="text-center text-white max-w-3xl mx-auto">
+          <div class="inline-flex items-center gap-2 bg-white/20 text-white text-sm font-bold px-4 py-2 rounded-full mb-6 backdrop-blur-sm">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+            </svg>
+            FREQUENTLY ASKED QUESTIONS
+          </div>
+
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6" style="font-family: 'Signika', sans-serif;">
+            Zakat <span class="text-[#fdc448]">FAQ</span>
+          </h1>
+
+          <p class="text-lg md:text-xl text-purple-100 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+            Find answers to the most commonly asked questions about Zakat, its calculation, distribution, and Islamic guidelines.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="space-y-4">
+          {faqs.map((faq, index) => (
+            <div class="faq-item border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                class="faq-trigger w-full flex items-center justify-between p-6 text-left bg-white hover:bg-stone-50 transition"
+                data-index={index}
+              >
+                <span class="text-lg font-bold text-gray-800 pr-4" style="font-family: 'Signika', sans-serif;">{faq.question}</span>
+                <svg class="faq-icon w-6 h-6 text-[#7c3aed] flex-shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div class="faq-content hidden">
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                  {faq.answer}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Still Have Questions Section -->
+    <section class="py-16 bg-stone-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-[#255764] to-[#1a3d47] rounded-2xl p-8 md:p-12 text-center text-white">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4" style="font-family: 'Signika', sans-serif;">
+            Still Have Questions?
+          </h2>
+          <p class="text-lg text-gray-200 mb-8 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Our team is here to help you understand your Zakat obligations and ensure your donations are distributed according to Islamic principles.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/contact" class="bg-white text-[#255764] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition flex items-center justify-center gap-2" style="font-family: 'Signika', sans-serif;">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              Contact Us
+            </a>
+            <a href="/zakat-calculator" class="bg-[#0096D6] text-white font-bold px-8 py-4 rounded-lg hover:bg-[#0077b3] transition flex items-center justify-center gap-2" style="font-family: 'Signika', sans-serif;">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+              Calculate Your Zakat
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-[#0096D6]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="text-white text-center md:text-left">
+            <h3 class="text-2xl md:text-3xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Ready to Pay Your Zakat?</h3>
+            <p class="text-blue-100" style="font-family: 'Lato', sans-serif;">100% of your Zakat reaches those in need through our verified distribution channels.</p>
+          </div>
+          <a href="/zakat" class="bg-white text-[#0096D6] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+            Pay Zakat Now
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Related Links -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+            Learn More About Zakat
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <a href="/what-is-zakat" class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+            <div class="w-12 h-12 bg-[#D97706] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#D97706] transition" style="font-family: 'Signika', sans-serif;">What is Zakat?</h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Learn about the importance and significance of Zakat in Islam.</p>
+          </a>
+
+          <a href="/zakat" class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+            <div class="w-12 h-12 bg-[#0096D6] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#0096D6] transition" style="font-family: 'Signika', sans-serif;">Pay Your Zakat</h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Fulfill your obligation with our secure and trusted platform.</p>
+          </a>
+
+          <a href="/zakat-on-gold" class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+            <div class="w-12 h-12 bg-[#eab308] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-[#eab308] transition" style="font-family: 'Signika', sans-serif;">Zakat on Gold & Silver</h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Understand how to calculate Zakat on precious metals.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const faqItems = document.querySelectorAll('.faq-item');
+
+    faqItems.forEach(item => {
+      const trigger = item.querySelector('.faq-trigger');
+      const content = item.querySelector('.faq-content');
+      const icon = item.querySelector('.faq-icon');
+
+      trigger?.addEventListener('click', () => {
+        const isOpen = !content?.classList.contains('hidden');
+
+        // Close all other items
+        faqItems.forEach(otherItem => {
+          const otherContent = otherItem.querySelector('.faq-content');
+          const otherIcon = otherItem.querySelector('.faq-icon');
+          otherContent?.classList.add('hidden');
+          otherIcon?.classList.remove('rotate-180');
+        });
+
+        // Toggle current item
+        if (!isOpen) {
+          content?.classList.remove('hidden');
+          icon?.classList.add('rotate-180');
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .faq-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .faq-icon.rotate-180 {
+    transform: rotate(180deg);
+  }
+</style>

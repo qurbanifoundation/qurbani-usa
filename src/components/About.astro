@@ -1,4 +1,18 @@
 ---
+import { defaultHomepageContent } from '../lib/homepage';
+
+interface Props {
+  content?: typeof defaultHomepageContent.about;
+}
+
+const { content = defaultHomepageContent.about } = Astro.props;
+
+const iconMap: Record<string, string> = {
+  check: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  location: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+  checkmark: 'M5 13l4 4L19 7',
+  mail: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+};
 ---
 
 <section id="about" class="py-20 bg-[#f8f9fa]">
@@ -6,73 +20,35 @@
     <div class="grid lg:grid-cols-2 gap-12 items-center">
       <div>
         <span class="inline-block bg-[#ef7c01]/10 text-[#ef7c01] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
-          ABOUT QURBANI
+          {content.badge}
         </span>
         <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-6" style="font-family: 'Signika', sans-serif;">
-          What is Qurbani?
+          {content.title}
         </h2>
         <div class="space-y-4 text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">
-          <p>
-            <strong class="text-[#333]">Qurbani</strong> (also known as Udhiyah) is the Islamic tradition of
-            sacrificing an animal during Eid al-Adha. It commemorates Prophet Ibrahim's (AS) willingness to
-            sacrifice his son in obedience to Allah (SWT).
-          </p>
-          <p>
-            It is <strong class="text-[#333]">obligatory (Wajib)</strong> for every Muslim who possesses the
-            nisab (minimum threshold of wealth). The meat is then distributed to family, friends,
-            and most importantly—to those in need.
-          </p>
-          <p>
-            At <strong class="text-[#333]">Qurbani Foundation USA</strong>, we partner with trusted local
-            organizations in 70+ countries to perform your sacrifice according to strict Islamic guidelines and distribute
-            fresh meat to families who rarely have access to protein.
-          </p>
+          {content.paragraphs.map((p) => (
+            <p set:html={p} />
+          ))}
         </div>
 
         <div class="mt-8 grid grid-cols-2 gap-4">
-          <div class="bg-white p-4 rounded-xl shadow-sm">
-            <div class="w-10 h-10 bg-[#255764] rounded-lg flex items-center justify-center mb-3">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
+          {content.features.map((feature) => (
+            <div class="bg-white p-4 rounded-xl shadow-sm">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={`background-color: ${feature.color}`}>
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={iconMap[feature.icon] || iconMap.check}></path>
+                </svg>
+              </div>
+              <h4 class="font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">{feature.title}</h4>
+              <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">{feature.description}</p>
             </div>
-            <h4 class="font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">Shariah Compliant</h4>
-            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">All sacrifices follow Islamic guidelines</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm">
-            <div class="w-10 h-10 bg-[#255764] rounded-lg flex items-center justify-center mb-3">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </div>
-            <h4 class="font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">Local Distribution</h4>
-            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Fresh meat delivered within 48 hours</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm">
-            <div class="w-10 h-10 bg-[#ef7c01] rounded-lg flex items-center justify-center mb-3">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <h4 class="font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">100% Policy</h4>
-            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Every dollar reaches the beneficiaries</p>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm">
-            <div class="w-10 h-10 bg-[#255764] rounded-lg flex items-center justify-center mb-3">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <h4 class="font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">Confirmation</h4>
-            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">Receive photos and reports post-Eid</p>
-          </div>
+          ))}
         </div>
       </div>
 
       <div class="relative">
         <img
-          src="https://www.staging9.qurbani.com/wp-content/uploads/2025/06/file-16827-bee9b8e831c08b2fe42891f4ae29b65e.jpg"
+          src={content.image}
           alt="Charity distribution"
           class="rounded-xl shadow-2xl"
           loading="lazy"

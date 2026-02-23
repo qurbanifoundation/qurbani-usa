@@ -1,0 +1,598 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../../lib/supabase';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+// Fetch the page data
+let page: any = null;
+let error = '';
+
+if (id && id !== 'new') {
+  const { data, error: fetchError } = await supabaseAdmin
+    .from('pages')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    error = fetchError.message;
+  } else {
+    page = data;
+  }
+}
+
+// Default content structure - uses page title if available
+function getDefaultContent(title: string = 'Page Title') {
+  return {
+    sections: [
+      {
+        id: 'hero',
+        type: 'hero',
+        title: title,
+        subtitle: 'Add your subtitle here',
+        backgroundImage: '',
+        showButton: true,
+        buttonText: 'Learn More',
+        buttonLink: '#'
+      },
+      {
+        id: 'content-1',
+        type: 'content',
+        content: '<p>Start adding your content here...</p>'
+      }
+    ]
+  };
+}
+
+// Parse existing content or create default
+let pageContent;
+if (page?.content) {
+  try {
+    const parsed = typeof page.content === 'string' ? JSON.parse(page.content) : page.content;
+    // Check if content has valid sections
+    if (parsed.sections && parsed.sections.length > 0) {
+      pageContent = parsed;
+    } else {
+      pageContent = getDefaultContent(page.title);
+    }
+  } catch (e) {
+    pageContent = getDefaultContent(page?.title);
+  }
+} else {
+  pageContent = getDefaultContent(page?.title || 'New Page');
+}
+---
+
+<AdminLayout title={page ? `Edit: ${page.title}` : 'New Page'} activeNav="pages">
+  <div class="max-w-5xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4">
+        <a href="/admin/pages" class="p-2 hover:bg-gray-100 rounded-lg transition">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </a>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">{page ? `Edit: ${page.title}` : 'Create New Page'}</h1>
+          <p class="text-gray-500 text-sm">{page?.slug || 'Set page URL below'}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        {page && (
+          <a
+            href={page.slug}
+            target="_blank"
+            class="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+            Preview
+          </a>
+        )}
+        <button
+          id="saveBtn"
+          class="flex items-center gap-2 px-6 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition font-medium"
+        >
+          <span id="saveBtnText">Save Page</span>
+          <svg id="saveSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2"></div>
+
+    <!-- Page Settings -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Page Settings</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
+          <input
+            type="text"
+            id="pageTitle"
+            value={page?.title || ''}
+            placeholder="e.g., About Us"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">URL Slug *</label>
+          <div class="flex">
+            <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-200 rounded-l-lg text-gray-500 text-sm">/</span>
+            <input
+              type="text"
+              id="pageSlug"
+              value={page?.slug?.replace(/^\/+/, '') || ''}
+              placeholder="about-us"
+              class="flex-1 px-4 py-2 border border-gray-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select
+            id="pageStatus"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            <option value="draft" selected={page?.status === 'draft'}>Draft</option>
+            <option value="published" selected={page?.status === 'published'}>Published</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Template</label>
+          <select
+            id="pageTemplate"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            <option value="default" selected={page?.template === 'default'}>Default</option>
+            <option value="home" selected={page?.template === 'home'}>Home</option>
+            <option value="landing" selected={page?.template === 'landing'}>Landing Page</option>
+            <option value="contact" selected={page?.template === 'contact'}>Contact</option>
+            <option value="legal" selected={page?.template === 'legal'}>Legal (Privacy, Terms)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEO Settings -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">SEO Settings</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
+          <input
+            type="text"
+            id="metaTitle"
+            value={page?.meta_title || ''}
+            placeholder="Page title for search engines"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+          />
+          <p class="text-xs text-gray-500 mt-1">Leave empty to use page title</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+          <textarea
+            id="metaDescription"
+            rows="2"
+            placeholder="Brief description for search results"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+          >{page?.meta_description || ''}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-gray-800">Page Content</h2>
+        <button
+          id="addSectionBtn"
+          class="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Add Section
+        </button>
+      </div>
+
+      <div id="sectionsContainer" class="space-y-4">
+        <!-- Sections will be rendered here -->
+      </div>
+    </div>
+
+    <!-- Featured Image -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Featured Image</h2>
+      <div class="flex gap-4">
+        <div class="w-48 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+          <img
+            id="featuredImagePreview"
+            src={page?.featured_image || ''}
+            alt="Featured"
+            class={page?.featured_image ? 'w-full h-full object-cover' : 'hidden'}
+          />
+          <div id="featuredImagePlaceholder" class={page?.featured_image ? 'hidden' : 'text-center text-gray-400'}>
+            <svg class="w-8 h-8 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-xs">No image</span>
+          </div>
+        </div>
+        <div class="flex-1">
+          <input
+            type="text"
+            id="featuredImage"
+            value={page?.featured_image || ''}
+            placeholder="Image URL"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-sm mb-2"
+          />
+          <div class="flex gap-2">
+            <label class="cursor-pointer">
+              <input type="file" id="featuredImageUpload" accept="image/*" class="hidden" />
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#01534d] text-white rounded-lg text-sm hover:bg-[#013d39] transition">
+                Upload
+              </span>
+            </label>
+            <button type="button" id="featuredImageGalleryBtn" class="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition">
+              Gallery
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Section Modal -->
+  <div id="addSectionModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h3 class="text-lg font-bold text-gray-800">Add Section</h3>
+        <button type="button" id="closeAddSectionModal" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <button type="button" class="add-section-type p-4 border border-gray-200 rounded-lg hover:border-[#01534d] hover:bg-[#01534d]/5 transition text-left" data-type="hero">
+          <svg class="w-8 h-8 text-[#01534d] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p class="font-medium text-gray-800">Hero Section</p>
+          <p class="text-xs text-gray-500">Large banner with title</p>
+        </button>
+        <button type="button" class="add-section-type p-4 border border-gray-200 rounded-lg hover:border-[#01534d] hover:bg-[#01534d]/5 transition text-left" data-type="content">
+          <svg class="w-8 h-8 text-[#01534d] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <p class="font-medium text-gray-800">Text Content</p>
+          <p class="text-xs text-gray-500">Rich text editor</p>
+        </button>
+        <button type="button" class="add-section-type p-4 border border-gray-200 rounded-lg hover:border-[#01534d] hover:bg-[#01534d]/5 transition text-left" data-type="image">
+          <svg class="w-8 h-8 text-[#01534d] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p class="font-medium text-gray-800">Image</p>
+          <p class="text-xs text-gray-500">Single image with caption</p>
+        </button>
+        <button type="button" class="add-section-type p-4 border border-gray-200 rounded-lg hover:border-[#01534d] hover:bg-[#01534d]/5 transition text-left" data-type="cta">
+          <svg class="w-8 h-8 text-[#01534d] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+          </svg>
+          <p class="font-medium text-gray-800">Call to Action</p>
+          <p class="text-xs text-gray-500">Button with text</p>
+        </button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ pageId: id, initialContent: pageContent, existingPage: page }}>
+  let sections = initialContent?.sections || [];
+  const isNew = !existingPage;
+
+  // Render sections
+  function renderSections() {
+    const container = document.getElementById('sectionsContainer');
+    if (!container) return;
+
+    if (sections.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+          <p class="text-gray-500 mb-2">No sections yet</p>
+          <button type="button" id="addFirstSection" class="text-[#01534d] font-medium hover:underline">Add your first section</button>
+        </div>
+      `;
+      document.getElementById('addFirstSection')?.addEventListener('click', () => {
+        document.getElementById('addSectionModal')?.classList.remove('hidden');
+      });
+      return;
+    }
+
+    container.innerHTML = sections.map((section, index) => {
+      let content = '';
+
+      if (section.type === 'hero') {
+        content = `
+          <div class="space-y-3">
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="title" value="${section.title || ''}" placeholder="Hero Title" />
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="subtitle" value="${section.subtitle || ''}" placeholder="Subtitle" />
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="backgroundImage" value="${section.backgroundImage || ''}" placeholder="Background Image URL" />
+          </div>
+        `;
+      } else if (section.type === 'content') {
+        content = `
+          <textarea class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg min-h-[200px]" data-field="content" placeholder="Write your content here... (HTML supported)">${section.content || ''}</textarea>
+        `;
+      } else if (section.type === 'image') {
+        content = `
+          <div class="space-y-3">
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="imageUrl" value="${section.imageUrl || ''}" placeholder="Image URL" />
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="caption" value="${section.caption || ''}" placeholder="Caption (optional)" />
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="alt" value="${section.alt || ''}" placeholder="Alt text" />
+          </div>
+        `;
+      } else if (section.type === 'cta') {
+        content = `
+          <div class="space-y-3">
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="title" value="${section.title || ''}" placeholder="CTA Title" />
+            <input type="text" class="section-field w-full px-3 py-2 border border-gray-200 rounded-lg" data-field="description" value="${section.description || ''}" placeholder="Description" />
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" class="section-field px-3 py-2 border border-gray-200 rounded-lg" data-field="buttonText" value="${section.buttonText || ''}" placeholder="Button Text" />
+              <input type="text" class="section-field px-3 py-2 border border-gray-200 rounded-lg" data-field="buttonLink" value="${section.buttonLink || ''}" placeholder="Button Link" />
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="section-item border border-gray-200 rounded-lg p-4" data-index="${index}">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="cursor-move text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                </svg>
+              </span>
+              <span class="text-sm font-medium text-gray-700 capitalize">${section.type} Section</span>
+            </div>
+            <button type="button" class="delete-section text-red-500 hover:text-red-700 p-1" data-index="${index}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+          ${content}
+        </div>
+      `;
+    }).join('');
+
+    // Add event listeners to section fields
+    document.querySelectorAll('.section-field').forEach(field => {
+      field.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+        const sectionItem = target.closest('.section-item') as HTMLElement;
+        const index = parseInt(sectionItem?.dataset.index || '0');
+        const fieldName = target.dataset.field || '';
+        if (sections[index]) {
+          sections[index][fieldName] = target.value;
+        }
+      });
+    });
+
+    // Delete section buttons
+    document.querySelectorAll('.delete-section').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const index = parseInt(target.dataset.index || '0');
+        if (confirm('Delete this section?')) {
+          sections.splice(index, 1);
+          renderSections();
+        }
+      });
+    });
+  }
+
+  // Initialize
+  renderSections();
+
+  // Add section modal
+  const addSectionBtn = document.getElementById('addSectionBtn');
+  const addSectionModal = document.getElementById('addSectionModal');
+  const closeAddSectionModal = document.getElementById('closeAddSectionModal');
+
+  addSectionBtn?.addEventListener('click', () => {
+    addSectionModal?.classList.remove('hidden');
+  });
+
+  closeAddSectionModal?.addEventListener('click', () => {
+    addSectionModal?.classList.add('hidden');
+  });
+
+  addSectionModal?.addEventListener('click', (e) => {
+    if (e.target === addSectionModal) {
+      addSectionModal.classList.add('hidden');
+    }
+  });
+
+  // Add section type buttons
+  document.querySelectorAll('.add-section-type').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = (btn as HTMLElement).dataset.type || 'content';
+      const newSection: any = {
+        id: `section-${Date.now()}`,
+        type
+      };
+
+      if (type === 'hero') {
+        newSection.title = 'Section Title';
+        newSection.subtitle = '';
+        newSection.backgroundImage = '';
+      } else if (type === 'content') {
+        newSection.content = '';
+      } else if (type === 'image') {
+        newSection.imageUrl = '';
+        newSection.caption = '';
+        newSection.alt = '';
+      } else if (type === 'cta') {
+        newSection.title = '';
+        newSection.description = '';
+        newSection.buttonText = 'Learn More';
+        newSection.buttonLink = '#';
+      }
+
+      sections.push(newSection);
+      renderSections();
+      addSectionModal?.classList.add('hidden');
+    });
+  });
+
+  // Save page
+  const saveBtn = document.getElementById('saveBtn');
+  const saveBtnText = document.getElementById('saveBtnText');
+  const saveSpinner = document.getElementById('saveSpinner');
+  const toast = document.getElementById('toast');
+
+  function showToast(message: string, isError = false) {
+    if (!toast) return;
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 ${isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`;
+    toast.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isError ? 'M6 18L18 6M6 6l12 12' : 'M5 13l4 4L19 7'}"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+  }
+
+  saveBtn?.addEventListener('click', async () => {
+    const title = (document.getElementById('pageTitle') as HTMLInputElement)?.value;
+    const slugInput = (document.getElementById('pageSlug') as HTMLInputElement)?.value;
+    const status = (document.getElementById('pageStatus') as HTMLSelectElement)?.value;
+    const template = (document.getElementById('pageTemplate') as HTMLSelectElement)?.value;
+    const metaTitle = (document.getElementById('metaTitle') as HTMLInputElement)?.value;
+    const metaDescription = (document.getElementById('metaDescription') as HTMLTextAreaElement)?.value;
+    const featuredImage = (document.getElementById('featuredImage') as HTMLInputElement)?.value;
+
+    if (!title || !slugInput) {
+      showToast('Please fill in title and slug', true);
+      return;
+    }
+
+    const slug = slugInput.startsWith('/') ? slugInput : `/${slugInput}`;
+
+    saveSpinner?.classList.remove('hidden');
+    if (saveBtnText) saveBtnText.textContent = 'Saving...';
+
+    try {
+      const data: any = {
+        title,
+        slug,
+        status,
+        template,
+        meta_title: metaTitle,
+        meta_description: metaDescription,
+        featured_image: featuredImage,
+        content: JSON.stringify({ sections })
+      };
+
+      if (!isNew && pageId) {
+        data.id = pageId;
+      }
+
+      const response = await fetch('/api/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showToast('Page saved successfully!');
+        if (isNew && result.page?.id) {
+          setTimeout(() => {
+            window.location.href = `/admin/pages/${result.page.id}`;
+          }, 1000);
+        }
+      } else {
+        showToast(result.error || 'Failed to save', true);
+      }
+    } catch (error) {
+      showToast('Failed to save page', true);
+    }
+
+    saveSpinner?.classList.add('hidden');
+    if (saveBtnText) saveBtnText.textContent = 'Save Page';
+  });
+
+  // Featured image preview
+  const featuredImageInput = document.getElementById('featuredImage') as HTMLInputElement;
+  const featuredImagePreview = document.getElementById('featuredImagePreview') as HTMLImageElement;
+  const featuredImagePlaceholder = document.getElementById('featuredImagePlaceholder');
+
+  featuredImageInput?.addEventListener('input', () => {
+    if (featuredImageInput.value) {
+      featuredImagePreview.src = featuredImageInput.value;
+      featuredImagePreview.classList.remove('hidden');
+      featuredImagePlaceholder?.classList.add('hidden');
+    } else {
+      featuredImagePreview.classList.add('hidden');
+      featuredImagePlaceholder?.classList.remove('hidden');
+    }
+  });
+
+  // Featured image upload
+  const featuredImageUpload = document.getElementById('featuredImageUpload') as HTMLInputElement;
+  featuredImageUpload?.addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        featuredImageInput.value = result.url;
+        featuredImagePreview.src = result.url;
+        featuredImagePreview.classList.remove('hidden');
+        featuredImagePlaceholder?.classList.add('hidden');
+      }
+    } catch (error) {
+      showToast('Upload failed', true);
+    }
+  });
+
+  // Auto-generate slug from title
+  const pageTitleInput = document.getElementById('pageTitle') as HTMLInputElement;
+  const pageSlugInput = document.getElementById('pageSlug') as HTMLInputElement;
+
+  if (isNew) {
+    pageTitleInput?.addEventListener('input', () => {
+      const slug = pageTitleInput.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      pageSlugInput.value = slug;
+    });
+  }
+</script>
