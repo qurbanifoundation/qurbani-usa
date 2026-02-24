@@ -96,18 +96,13 @@ const uniqueId = Math.random().toString(36).substring(7);
 
   <!-- Amount Rows -->
   <div class="amount-rows">
-    {donationOptions.map((opt, index) => {
-      const isSelected = index === 2;
-      return (
+    {donationOptions.map((opt) => (
         <button
           type="button"
-          class={`amount-row ${isSelected ? 'selected' : ''}`}
+          class="amount-row"
           data-amount={opt.amount}
           data-label={opt.label || defaultDescription}
-          style={isSelected
-            ? `background-color: ${c.accentColor}; color: ${c.accentTextColor}; border-color: ${c.accentColor};`
-            : `background-color: #ffffff; color: ${c.textColor}; border-color: ${c.borderColor};`
-          }
+          style={`background-color: #ffffff; color: ${c.textColor}; border-color: ${c.borderColor};`}
           data-active-bg={c.accentColor}
           data-active-text={c.accentTextColor}
           data-inactive-bg="#ffffff"
@@ -122,21 +117,17 @@ const uniqueId = Math.random().toString(36).substring(7);
                 <span class="amount-frequency">once</span>
               </span>
             </div>
-            <div class="amount-description" style={isSelected ? `color: ${c.accentTextColor};` : `color: ${c.textMutedColor};`}>
+            <div class="amount-description" style={`color: ${c.textMutedColor};`}>
               {opt.label || defaultDescription}
             </div>
           </div>
-          <div class="amount-arrow" style={isSelected
-            ? `background-color: rgba(0,0,0,0.15); color: ${c.accentTextColor};`
-            : `background-color: ${c.borderColor}; color: ${c.textMutedColor};`
-          }>
+          <div class="amount-arrow" style={`background-color: ${c.borderColor}; color: ${c.textMutedColor};`}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 18l6-6-6-6"/>
             </svg>
           </div>
         </button>
-      );
-    })}
+    ))}
 
     <!-- Custom Amount Row -->
     <div class="custom-amount-row" style={`background-color: #ffffff; border-color: ${c.borderColor};`}>
@@ -637,10 +628,6 @@ const uniqueId = Math.random().toString(36).substring(7);
       }
     });
 
-    // Initialize with third option selected (like in screenshot)
-    if (amountRows.length >= 3) {
-      const thirdRow = amountRows[2];
-      selectAmount(parseInt(thirdRow.dataset.amount), thirdRow.dataset.label);
-    }
+    // No pre-selection - user must choose an amount
   });
 </script>

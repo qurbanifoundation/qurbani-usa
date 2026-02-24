@@ -67,7 +67,7 @@ const boxId = `teal-yellow-box-${Math.random().toString(36).substr(2, 9)}`;
     {donationOptions.slice(0, 6).map((opt, index) => (
       <button
         type="button"
-        class={`amount-btn py-3 px-2 rounded-xl border-2 text-white font-semibold transition text-center hover:scale-[1.02] ${index === 0 ? 'border-[#fdc448] bg-[#fdc448]/20 selected' : 'border-white/30 hover:border-white/50'}`}
+        class="amount-btn py-3 px-2 rounded-xl border-2 text-white font-semibold transition text-center hover:scale-[1.02] border-white/30 hover:border-white/50"
         data-amount={opt.amount}
       >
         <span class="text-lg block">${opt.amount.toLocaleString()}</span>

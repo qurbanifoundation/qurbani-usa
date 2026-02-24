@@ -87,7 +87,7 @@ const progressPercent = goalAmount > 0 ? Math.min((progressAmount / goalAmount) 
     {donationOptions.slice(0, 4).map((opt, index) => (
       <button
         type="button"
-        class={`amount-btn py-3 px-2 rounded-lg border-2 font-semibold transition text-center hover:scale-[1.02] ${index === 1 ? 'border-[#01534d] bg-[#01534d] text-white selected' : 'border-[#01534d] text-[#01534d] hover:bg-[#01534d]/10'}`}
+        class="amount-btn py-3 px-2 rounded-lg border-2 font-semibold transition text-center hover:scale-[1.02] border-[#01534d] text-[#01534d] hover:bg-[#01534d]/10"
         data-amount={opt.amount}
       >
         <span class="text-base block">${opt.amount}</span>

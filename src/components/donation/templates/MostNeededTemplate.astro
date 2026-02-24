@@ -55,17 +55,12 @@ const {
 
     <!-- Amount Buttons -->
     <div class="grid grid-cols-3 gap-2 mb-4">
-      {defaultAmounts.map((amount, index) => (
+      {defaultAmounts.map((amount) => (
         <button
           type="button"
-          class={`db-amount-btn py-3 px-2 rounded font-bold text-sm transition-all duration-200 ${
-            index === defaultAmounts.length - 1 ? 'active' : ''
-          }`}
+          class="db-amount-btn py-3 px-2 rounded font-bold text-sm transition-all duration-200"
           data-amount={amount}
-          style={index === defaultAmounts.length - 1
-            ? 'background-color: white; color: #01534d; border: 2px solid white;'
-            : 'background-color: transparent; color: white; border: 2px solid rgba(255,255,255,0.5);'
-          }
+          style="background-color: transparent; color: white; border: 2px solid rgba(255,255,255,0.5);"
         >
           {currency}{amount}
         </button>

@@ -402,7 +402,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
             type="button"
             class={`amount-btn py-3 px-2 ${isDarkTeal ? 'rounded-lg' : 'rounded-xl'} border-2 font-semibold transition text-center hover:scale-[1.02]`}
             data-amount={opt.amount}
-            style={`color: ${index === 0 ? colors.activeTextColor : colors.textColor}; border-color: ${colors.borderColor}; background-color: ${index === 0 ? colors.activeBgColor : colors.inactiveBtnBg};`}
+            style={`color: ${colors.textColor}; border-color: ${colors.borderColor}; background-color: ${colors.inactiveBtnBg};`}
             data-active-border={colors.borderColor}
             data-active-bg={colors.activeBgColor}
             data-active-text={colors.activeTextColor}
@@ -572,7 +572,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                       type="button"
                       class="mobile-amount-btn py-3 rounded-lg border-2 font-semibold"
                       data-amount={opt.amount}
-                      style={`color: ${index === 0 ? colors.activeTextColor : colors.textColor}; border-color: ${colors.borderColor}; background-color: ${index === 0 ? colors.activeBgColor : colors.inactiveBtnBg}; font-size: ${fontSizes.amountSize};`}
+                      style={`color: ${colors.textColor}; border-color: ${colors.borderColor}; background-color: ${colors.inactiveBtnBg}; font-size: ${fontSizes.amountSize};`}
                       data-active-border={colors.borderColor}
                       data-active-bg={colors.activeBgColor}
                       data-active-text={colors.activeTextColor}
