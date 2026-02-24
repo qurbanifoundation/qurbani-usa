@@ -988,6 +988,13 @@ window.addToCart = function(item) {
 };
 
 window.removeFromCart = function(index) {
+  const item = window.donationCart.items[index];
+
+  // Track remove_from_cart in GA4
+  if (window.trackRemoveFromCart && item) {
+    window.trackRemoveFromCart(item);
+  }
+
   window.donationCart.items.splice(index, 1);
   saveCart();
   updateCartUI();
@@ -1156,6 +1163,12 @@ function openCart() {
   document.getElementById('cart-sidebar').classList.remove('translate-x-full');
   setTimeout(() => document.getElementById('cart-overlay').classList.remove('opacity-0'), 10);
   document.body.style.overflow = 'hidden';
+
+  // Track view_cart in GA4
+  if (window.trackViewCart && window.donationCart.items.length > 0) {
+    const total = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+    window.trackViewCart(window.donationCart.items, total);
+  }
 }
 
 function closeCart() {
@@ -1316,6 +1329,12 @@ function goToPaymentStep() {
   document.getElementById('modal-step-1').classList.add('hidden');
   document.getElementById('modal-step-2').classList.remove('hidden');
   mountCardElement();
+
+  // Track add_payment_info in GA4
+  if (window.trackAddPaymentInfo) {
+    const total = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+    window.trackAddPaymentInfo(window.donationCart.items, total, 'credit_card');
+  }
 
   // Update fee display for step 2
   updateModalTotal();

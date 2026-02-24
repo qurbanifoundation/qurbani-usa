@@ -93,6 +93,75 @@ const faviconType = adminFavicon
           })
         });
       };
+
+      // View item (campaign/appeal page)
+      window.trackViewItem = function(item) {
+        gtag('event', 'view_item', {
+          currency: 'USD',
+          value: item.amount || 0,
+          items: [{
+            item_id: item.id || item.slug,
+            item_name: item.name,
+            item_category: item.campaign || item.category || 'donation',
+            price: item.amount || 0
+          }]
+        });
+      };
+
+      // View cart
+      window.trackViewCart = function(items, total) {
+        gtag('event', 'view_cart', {
+          currency: 'USD',
+          value: total,
+          items: items.map(function(item) {
+            return {
+              item_id: item.id || item.slug,
+              item_name: item.name,
+              item_category: item.campaign || 'donation',
+              price: item.amount,
+              quantity: item.quantity || 1
+            };
+          })
+        });
+      };
+
+      // Remove from cart
+      window.trackRemoveFromCart = function(item) {
+        gtag('event', 'remove_from_cart', {
+          currency: 'USD',
+          value: item.amount * (item.quantity || 1),
+          items: [{
+            item_id: item.id || item.slug,
+            item_name: item.name,
+            item_category: item.campaign || 'donation',
+            price: item.amount,
+            quantity: item.quantity || 1
+          }]
+        });
+      };
+
+      // Add payment info (step 2 of checkout)
+      window.trackAddPaymentInfo = function(items, total, paymentType) {
+        gtag('event', 'add_payment_info', {
+          currency: 'USD',
+          value: total,
+          payment_type: paymentType || 'credit_card',
+          items: items.map(function(item) {
+            return {
+              item_id: item.id || item.slug,
+              item_name: item.name,
+              item_category: item.campaign || 'donation',
+              price: item.amount,
+              quantity: item.quantity || 1
+            };
+          })
+        });
+      };
+
+      // Custom donation events
+      window.trackDonationEvent = function(eventName, params) {
+        gtag('event', eventName, params);
+      };
     </script>
     <link rel="icon" type={faviconType} href={faviconHref} />
     <link rel="alternate icon" href="/favicon.ico" />

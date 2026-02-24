@@ -439,6 +439,19 @@ const benefits = [
   <Footer />
 </Layout>
 
+<script is:inline define:vars={{ campaignId: campaign.id, campaignTitle: campaign.title, campaignSlug: campaign.slug }}>
+  // Track view_item in GA4 on page load
+  if (window.trackViewItem) {
+    window.trackViewItem({
+      id: campaignId,
+      name: campaignTitle,
+      slug: campaignSlug,
+      amount: 45, // Base sponsorship amount
+      campaign: 'orphan-sponsorship'
+    });
+  }
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     // Elements

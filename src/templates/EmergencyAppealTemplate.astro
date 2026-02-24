@@ -458,6 +458,17 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
   let donationType = 'single';
 
   document.addEventListener('DOMContentLoaded', function() {
+    // Track view_item in GA4
+    if (window.trackViewItem) {
+      window.trackViewItem({
+        id: campaignData.slug,
+        name: campaignData.title,
+        slug: campaignData.slug,
+        amount: donationOpts[0]?.amount || 0,
+        campaign: 'emergency-appeal'
+      });
+    }
+
     const typeButtons = document.querySelectorAll('#btn-single, #btn-monthly');
     const amountButtons = document.querySelectorAll('.amount-btn');
     const customInput = document.getElementById('custom-amount');
