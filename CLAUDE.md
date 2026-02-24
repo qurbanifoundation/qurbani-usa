@@ -569,3 +569,338 @@ Tags added: `recurring-donor`, `weekly-donor`, `jummah-donor`
 - Parent testimonials section
 - Mobile sticky CTA
 - Full cart integration with metadata
+
+---
+
+## Stripe Webhook Configuration (Completed Feb 2026)
+
+### Webhook Endpoint
+```
+https://www.qurbani.com/api/webhooks/stripe
+```
+
+### Webhook Name in Stripe Dashboard
+`creative-voyage` (auto-generated name)
+
+### Events Configured (10 total)
+| Event | Purpose |
+|-------|---------|
+| `payment_intent.succeeded` | One-time donation completed |
+| `payment_intent.payment_failed` | Payment declined |
+| `charge.refunded` | Refund processed |
+| `customer.subscription.created` | New recurring subscription |
+| `customer.subscription.updated` | Subscription modified |
+| `customer.subscription.deleted` | Subscription cancelled |
+| `customer.subscription.paused` | Subscription paused |
+| `customer.subscription.resumed` | Subscription resumed |
+| `invoice.payment_succeeded` | Recurring payment processed |
+| `invoice.payment_failed` | Recurring payment failed |
+| `charge.dispute.created` | Chargeback filed |
+| `charge.dispute.closed` | Chargeback resolved |
+
+### Webhook Secret
+Stored in Supabase `site_settings` table → `stripe_webhook_secret` column
+```
+whsec_tNe0QQ9Pb1wBhZ8rTGTuEMJvAtmeoKiA
+```
+
+### Webhook Handler
+**File:** `src/pages/api/webhooks/stripe.ts`
+
+Handles:
+1. Payment success → Update donation status → Sync to GHL → Send receipt email
+2. Payment failed → Update status → Notify admin → Email donor
+3. Refund → Update status → Notify admin → Email donor
+4. Subscription created → Update record → Notify admin → Send confirmation email
+5. Subscription cancelled → Update status → Notify admin → Send cancellation email
+6. Dispute created → Log to database → Alert admin (urgent)
+7. Dispute closed → Update status → Notify admin
+
+---
+
+## Notification System (Completed Feb 2026)
+
+### Architecture
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    NOTIFICATION FLOW                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Stripe Webhook Event                                        │
+│         │                                                    │
+│         ▼                                                    │
+│  ┌──────────────┐    ┌─────────────────┐                    │
+│  │ Admin Alert  │    │ Donor Email     │                    │
+│  │ (Internal)   │    │ (External)      │                    │
+│  └──────┬───────┘    └────────┬────────┘                    │
+│         │                     │                              │
+│         ▼                     ▼                              │
+│    GoHighLevel           Resend API                          │
+│    (Notes on             (Beautiful HTML)                    │
+│    Admin Contact)              │                             │
+│                               ▼                              │
+│                         GHL Conversations                    │
+│                         (Full email logged                   │
+│                          with subject + body)                │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Admin Notifications (via GHL)
+**File:** `src/lib/notifications.ts`
+
+| Event | GHL Action |
+|-------|------------|
+| New Donation | Note on admin-alerts contact |
+| Subscription Started | Note with amount/frequency |
+| Subscription Cancelled | Note with details |
+| Payment Failed | Note with failure reason |
+| Refund Processed | Note with amount |
+| Chargeback Created | URGENT note |
+| Chargeback Resolved | Note with outcome |
+
+### Donor Emails (via Resend → logged to GHL)
+**File:** `src/lib/donor-emails.ts`
+
+| Email Type | When Sent | Template |
+|------------|-----------|----------|
+| Donation Receipt | After successful payment | Beautiful HTML with tax info |
+| Subscription Confirmation | New recurring setup | Welcome + next billing date |
+| Payment Failed | Card declined | Alert + how to fix |
+| Subscription Cancelled | After cancellation | Confirmation + win-back CTA |
+| Refund Confirmation | After refund | Professional notice |
+
+### Email → GHL Conversations Logging
+Every email sent via Resend is also logged to GHL Conversations tab:
+- Creates outbound email message on contact
+- Shows full subject line
+- Shows complete email body
+- Visible in Conversations tab (not just Notes)
+
+### Key Functions
+```typescript
+// Admin notifications
+import { notifyDonationReceived, notifySubscriptionStarted, ... } from '../lib/notifications';
+
+// Donor emails
+import { sendDonationReceipt, sendSubscriptionConfirmation, ... } from '../lib/donor-emails';
+```
+
+---
+
+## Resend Email Configuration
+
+### API Key
+```
+RESEND_API_KEY=re_WSvhtDG2_EdMoyBcDingYdhY77mnsb62d
+```
+
+### Admin Email (receives admin notifications)
+```
+ADMIN_EMAIL=qurbanifoundation@gmail.com
+```
+
+### Sender Address
+```
+Qurbani Foundation <donations@qurbani.com>
+```
+
+### Domain Verification (REQUIRED)
+Go to [resend.com/domains](https://resend.com/domains):
+1. Add domain: `qurbani.com`
+2. Add DNS records to Cloudflare
+3. Verify domain
+
+Until verified, emails sent from `onboarding@resend.dev`
+
+---
+
+## Dispute/Chargeback Handling
+
+### Database Tables
+```sql
+-- Tracks all chargebacks
+donation_disputes (
+  id, stripe_dispute_id, stripe_charge_id, donation_id,
+  amount, currency, reason, status, donor_email, donor_name,
+  won, created_at, closed_at, metadata
+)
+
+-- Admin notifications (viewable in dashboard)
+admin_notifications (
+  id, type, title, message, severity, metadata, read, created_at
+)
+```
+
+### Migration File
+`supabase/migrations/20260224_disputes_notifications.sql`
+
+### Dispute Workflow
+1. Chargeback filed → `charge.dispute.created` webhook
+2. Record in `donation_disputes` table
+3. Update donation status to `disputed`
+4. URGENT admin notification to GHL
+5. Admin responds via Stripe Dashboard
+6. Dispute resolved → `charge.dispute.closed` webhook
+7. Update dispute record (won/lost)
+8. Update donation status (`completed` if won, `chargedback` if lost)
+
+---
+
+## Cloudflare Configuration
+
+### Domain
+Primary: `www.qurbani.com`
+
+### Redirect Rule (non-www → www)
+**Rule Name:** `Redirect from root to WWW`
+**Type:** Single Redirect
+```
+Request URL: https://qurbani.com/*
+Target URL: https://www.qurbani.com/${1}
+Status: 301 (Permanent)
+Preserve query string: Yes
+```
+
+### Cloudflare Pages Project
+- Production URL: `qurbani-usa.pages.dev`
+- Custom domains: `www.qurbani.com`, `qurbani.com`
+
+### Environment Variables (Cloudflare Pages)
+| Variable | Description |
+|----------|-------------|
+| `RESEND_API_KEY` | Resend email API key |
+| `ADMIN_EMAIL` | Admin notification email |
+| All Supabase vars | Already configured |
+| All Stripe vars | Already configured |
+| All GHL vars | Already configured |
+
+---
+
+## Google Analytics & Ads Tracking (Completed Feb 2026)
+
+### GA4 Configuration
+**Measurement ID:** `G-0WC0W1PBKC`
+**Property ID:** `389786456`
+
+### Google Ads Configuration
+**Account ID:** `AW-793369119`
+**Conversion Label:** `2lawCM74xKcBEJ-0p_oC`
+
+### E-commerce Events Tracked
+| Event | When Fired |
+|-------|------------|
+| `view_item` | Campaign page loaded |
+| `add_to_cart` | Donation added to cart |
+| `view_cart` | Cart opened |
+| `remove_from_cart` | Item removed |
+| `begin_checkout` | Checkout modal opened |
+| `add_payment_info` | Moved to payment step |
+| `purchase` | Donation completed |
+
+### Tracking Code Location
+**File:** `src/layouts/Layout.astro` (lines 38-179)
+
+### Global Tracking Functions
+```javascript
+window.trackAddToCart(item)
+window.trackBeginCheckout(items, total)
+window.trackPurchase(transactionId, items, total)
+window.trackViewItem(item)
+window.trackViewCart(items, total)
+window.trackRemoveFromCart(item)
+window.trackAddPaymentInfo(items, total, paymentType)
+window.trackDonationEvent(eventName, params)
+```
+
+### 30 Days of Ramadan Page
+Has its own checkout tracking in `src/pages/30-days-of-ramadan.astro`
+
+---
+
+## Environment Variables Summary
+
+### Required (.env)
+```env
+# Supabase
+PUBLIC_SUPABASE_URL=https://epsjdbnxhmeprjrgcbyw.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+DATABASE_URL=postgresql://postgres:...@db.epsjdbnxhmeprjrgcbyw.supabase.co:5432/postgres
+
+# Stripe
+PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# GoHighLevel
+GHL_API_KEY=pit-...
+GHL_LOCATION_ID=W0zaxipAVHwutqUazGwL
+
+# Google Places (address autocomplete)
+PUBLIC_GOOGLE_PLACES_API_KEY=AIzaSy...
+
+# Resend (donor emails)
+RESEND_API_KEY=re_...
+ADMIN_EMAIL=qurbanifoundation@gmail.com
+
+# Cloudflare (deployments)
+CLOUDFLARE_API_TOKEN=...
+CLOUDFLARE_ACCOUNT_ID=b6195a0024d2e1a0ce36df147349ddd5
+```
+
+### Cloudflare Pages Environment Variables
+Must add these in Cloudflare Pages Dashboard → Settings → Environment Variables:
+- `RESEND_API_KEY`
+- `ADMIN_EMAIL`
+
+---
+
+## Timezone Configuration
+
+### Server Timezone
+All server timestamps use **UTC** (`new Date().toISOString()`)
+
+### Display Timezone
+Emails and notifications display **Eastern Time** (America/New_York):
+```javascript
+new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })
+```
+
+### Admin Dashboard
+Timestamps should be converted to Eastern when displaying to admin
+
+---
+
+## Quick Reference - Key Files
+
+| Purpose | File |
+|---------|------|
+| Stripe Webhook Handler | `src/pages/api/webhooks/stripe.ts` |
+| Admin Notifications | `src/lib/notifications.ts` |
+| Donor Emails | `src/lib/donor-emails.ts` |
+| GHL Integration | `src/lib/ghl.ts`, `src/lib/ghl-advanced.ts` |
+| Payment Creation | `src/pages/api/payments/create-intent.ts` |
+| Donation Cart | `src/components/DonationCart.astro` |
+| Layout (GA4 tracking) | `src/layouts/Layout.astro` |
+| Site Settings | `src/lib/settings.ts` |
+
+---
+
+## Pending Setup Tasks
+
+### 1. Resend Domain Verification
+- [ ] Add `qurbani.com` domain in Resend
+- [ ] Add DNS records to Cloudflare
+- [ ] Verify domain
+
+### 2. Supabase Migration
+Run in SQL Editor:
+```sql
+-- Create dispute and notification tables
+-- See: supabase/migrations/20260224_disputes_notifications.sql
+```
+
+### 3. Cloudflare Environment Variables
+- [ ] Add `RESEND_API_KEY` to Cloudflare Pages
+- [ ] Add `ADMIN_EMAIL` to Cloudflare Pages
