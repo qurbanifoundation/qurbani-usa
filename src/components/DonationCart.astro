@@ -352,7 +352,8 @@ try {
                   <p class="text-xs text-gray-500">To opt-out, email to: <a href="mailto:donorcare@qurbani.com" class="text-[#01534d] hover:underline">donorcare@qurbani.com</a></p>
                 </div>
 
-                <button type="button" id="modal-continue-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-6">
+                <!-- Desktop Continue Button -->
+                <button type="button" id="modal-continue-btn" class="hidden md:block w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-6">
                   Continue to Payment
                   <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
@@ -362,7 +363,7 @@ try {
             </div>
 
             <!-- Right: Donation Basket + Upsell -->
-            <div class="p-6 md:p-8 bg-gray-50 border-l border-gray-200">
+            <div class="p-6 md:p-8 bg-gray-50 md:border-l border-gray-200">
               <!-- Mobile Social Proof -->
               <div class="md:hidden flex items-center justify-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
                 <div class="flex -space-x-2">
@@ -440,6 +441,14 @@ try {
                 </div>
                 <p class="text-xs text-gray-500 mt-1" id="modal-payment-type">One-time donation</p>
               </div>
+
+              <!-- Mobile Continue Button (after Total) -->
+              <button type="button" id="modal-continue-btn-mobile" class="md:hidden w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-4">
+                Continue to Payment
+                <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -816,6 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.getElementById('close-checkout-modal').addEventListener('click', closeCheckoutModal);
   document.getElementById('modal-continue-btn').addEventListener('click', goToPaymentStep);
+  document.getElementById('modal-continue-btn-mobile')?.addEventListener('click', goToPaymentStep);
   document.getElementById('modal-back-btn').addEventListener('click', goToInfoStep);
   document.getElementById('pay-btn').addEventListener('click', handlePayment);
   document.getElementById('close-success-btn').addEventListener('click', function() {
