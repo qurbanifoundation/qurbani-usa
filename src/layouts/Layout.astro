@@ -35,16 +35,21 @@ const faviconType = adminFavicon
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Google Analytics 4 -->
+    <!-- Google Analytics 4 + Google Ads Conversion Tracking -->
     <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-0WC0W1PBKC"></script>
     <script is:inline>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
+
+      // GA4 Config
       gtag('config', 'G-0WC0W1PBKC', {
         send_page_view: true,
         cookie_flags: 'SameSite=None;Secure'
       });
+
+      // Google Ads Config
+      gtag('config', 'AW-793369119');
 
       // E-commerce tracking helper functions
       window.trackAddToCart = function(item) {
@@ -78,6 +83,7 @@ const faviconType = adminFavicon
       };
 
       window.trackPurchase = function(transactionId, items, total) {
+        // GA4 Purchase Event
         gtag('event', 'purchase', {
           transaction_id: transactionId,
           currency: 'USD',
@@ -91,6 +97,14 @@ const faviconType = adminFavicon
               quantity: item.quantity || 1
             };
           })
+        });
+
+        // Google Ads Conversion - Real-time tracking
+        gtag('event', 'conversion', {
+          'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
+          'value': total,
+          'currency': 'USD',
+          'transaction_id': transactionId
         });
       };
 
