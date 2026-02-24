@@ -47,6 +47,7 @@ const notificationConfig: Record<NotificationType, { emoji: string; severity: st
 
 /**
  * Send notification through all channels
+ * Admin notifications go to GHL only (not Resend - that's for donors)
  */
 export async function sendNotification(data: NotificationData): Promise<void> {
   const config = notificationConfig[data.type];
@@ -56,10 +57,7 @@ export async function sendNotification(data: NotificationData): Promise<void> {
     // 1. Save to database (for admin dashboard)
     saveToDatabase(data, config),
 
-    // 2. Send email via Resend
-    sendEmail(data, config),
-
-    // 3. Add note to GHL admin contact
+    // 2. Add note to GHL admin contact (primary notification channel)
     sendToGHL(data, config),
   ]);
 }

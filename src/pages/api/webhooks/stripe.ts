@@ -10,6 +10,13 @@ import {
   notifyDispute,
   notifyDisputeClosed,
 } from '../../../lib/notifications';
+import {
+  sendDonationReceipt,
+  sendSubscriptionConfirmation,
+  sendPaymentFailedEmail,
+  sendSubscriptionCancelledEmail,
+  sendRefundEmail,
+} from '../../../lib/donor-emails';
 import Stripe from 'stripe';
 
 export const prerender = false;
@@ -226,13 +233,25 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       console.error('GHL sync error:', ghlError);
     }
 
-    // Send admin notification
+    // Send admin notification (GHL)
     await notifyDonationReceived({
       amount: parseFloat(donation.amount),
       donorName: donation.donor_name,
       donorEmail: donation.donor_email,
       items: items,
       type: donation.donation_type,
+    });
+
+    // Send donor receipt email (Resend + log to GHL Conversations)
+    await sendDonationReceipt({
+      donorEmail: donation.donor_email,
+      donorName: donation.donor_name,
+      amount: parseFloat(donation.amount),
+      items: items,
+      transactionId: paymentIntent.id,
+      donationType: (donation.donation_type as 'single' | 'monthly' | 'weekly') || 'single',
+      date: new Date(),
+      billingAddress: donation.metadata?.billing_address,
     });
   }
 }
@@ -260,7 +279,7 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     console.error('Error updating donation:', error);
   }
 
-  // Send admin notification
+  // Send admin notification (GHL)
   if (donation) {
     await notifyPaymentFailed({
       amount: parseFloat(donation.amount),
@@ -268,6 +287,16 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
       donorEmail: donation.donor_email || 'Unknown',
       reason: paymentIntent.last_payment_error?.message,
     });
+
+    // Send donor notification email (Resend + log to GHL Conversations)
+    if (donation.donor_email) {
+      await sendPaymentFailedEmail({
+        donorEmail: donation.donor_email,
+        donorName: donation.donor_name || 'Donor',
+        amount: parseFloat(donation.amount),
+        reason: paymentIntent.last_payment_error?.message,
+      });
+    }
   }
 }
 
@@ -294,7 +323,7 @@ async function handleRefund(charge: Stripe.Charge) {
     console.error('Error updating donation:', error);
   }
 
-  // Send admin notification
+  // Send admin notification (GHL)
   const refundAmount = charge.amount_refunded / 100;
   await notifyRefund({
     amount: refundAmount,
@@ -302,6 +331,16 @@ async function handleRefund(charge: Stripe.Charge) {
     donorEmail: donation?.donor_email,
     chargeId: charge.id,
   });
+
+  // Send donor refund confirmation (Resend + log to GHL Conversations)
+  if (donation?.donor_email) {
+    await sendRefundEmail({
+      donorEmail: donation.donor_email,
+      donorName: donation.donor_name || 'Donor',
+      amount: refundAmount,
+      originalTransactionId: charge.id,
+    });
+  }
 }
 
 // ============================================
@@ -348,7 +387,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     console.error('Error updating subscription:', error);
   }
 
-  // Send admin notification for new subscription
+  // Send admin notification (GHL)
   if (subRecord) {
     await notifySubscriptionStarted({
       amount: parseFloat(subRecord.amount),
@@ -356,6 +395,31 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       donorEmail: subRecord.donor_email || 'Unknown',
       interval: subRecord.interval || 'monthly',
     });
+
+    // Send donor confirmation email (Resend + log to GHL Conversations)
+    if (subRecord.donor_email) {
+      // Calculate next billing date
+      const nextBillingDate = subRecord.next_billing_date
+        ? new Date(subRecord.next_billing_date)
+        : new Date(Date.now() + (subRecord.interval === 'weekly' ? 7 : 30) * 24 * 60 * 60 * 1000);
+
+      // Parse items
+      let items: Array<{ name: string; amount: number }> = [];
+      if (subRecord.items) {
+        items = typeof subRecord.items === 'string'
+          ? JSON.parse(subRecord.items)
+          : subRecord.items;
+      }
+
+      await sendSubscriptionConfirmation({
+        donorEmail: subRecord.donor_email,
+        donorName: subRecord.donor_name || 'Donor',
+        amount: parseFloat(subRecord.amount),
+        interval: (subRecord.interval as 'monthly' | 'weekly') || 'monthly',
+        nextBillingDate: nextBillingDate,
+        items: items,
+      });
+    }
   }
 }
 
@@ -420,13 +484,22 @@ async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
     console.error('Error updating subscription:', error);
   }
 
-  // Send admin notification
+  // Send admin notification (GHL)
   if (subRecord) {
     await notifySubscriptionCancelled({
       amount: parseFloat(subRecord.amount),
       donorName: subRecord.donor_name || 'Unknown',
       donorEmail: subRecord.donor_email || 'Unknown',
     });
+
+    // Send donor cancellation confirmation (Resend + log to GHL Conversations)
+    if (subRecord.donor_email) {
+      await sendSubscriptionCancelledEmail({
+        donorEmail: subRecord.donor_email,
+        donorName: subRecord.donor_name || 'Donor',
+        amount: parseFloat(subRecord.amount),
+      });
+    }
   }
 }
 
