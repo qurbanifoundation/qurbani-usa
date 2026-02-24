@@ -1,6 +1,15 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { trackDonation } from '../../../lib/ghl-advanced';
+import {
+  notifyDonationReceived,
+  notifySubscriptionStarted,
+  notifySubscriptionCancelled,
+  notifyPaymentFailed,
+  notifyRefund,
+  notifyDispute,
+  notifyDisputeClosed,
+} from '../../../lib/notifications';
 import Stripe from 'stripe';
 
 export const prerender = false;
@@ -127,6 +136,19 @@ export const POST: APIRoute = async ({ request }) => {
         break;
       }
 
+      // Dispute/Chargeback events
+      case 'charge.dispute.created': {
+        const dispute = event.data.object as Stripe.Dispute;
+        await handleDisputeCreated(dispute);
+        break;
+      }
+
+      case 'charge.dispute.closed': {
+        const dispute = event.data.object as Stripe.Dispute;
+        await handleDisputeClosed(dispute);
+        break;
+      }
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
@@ -203,11 +225,27 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     } catch (ghlError) {
       console.error('GHL sync error:', ghlError);
     }
+
+    // Send admin notification
+    await notifyDonationReceived({
+      amount: parseFloat(donation.amount),
+      donorName: donation.donor_name,
+      donorEmail: donation.donor_email,
+      items: items,
+      type: donation.donation_type,
+    });
   }
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
   console.log('Payment failed:', paymentIntent.id);
+
+  // Get donation details first
+  const { data: donation } = await supabaseAdmin
+    .from('donations')
+    .select('*')
+    .eq('stripe_payment_intent_id', paymentIntent.id)
+    .single();
 
   // Update donation record
   const { error } = await supabaseAdmin
@@ -221,10 +259,27 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
   if (error) {
     console.error('Error updating donation:', error);
   }
+
+  // Send admin notification
+  if (donation) {
+    await notifyPaymentFailed({
+      amount: parseFloat(donation.amount),
+      donorName: donation.donor_name || 'Unknown',
+      donorEmail: donation.donor_email || 'Unknown',
+      reason: paymentIntent.last_payment_error?.message,
+    });
+  }
 }
 
 async function handleRefund(charge: Stripe.Charge) {
   console.log('Charge refunded:', charge.id);
+
+  // Get donation details
+  const { data: donation } = await supabaseAdmin
+    .from('donations')
+    .select('*')
+    .eq('stripe_charge_id', charge.id)
+    .single();
 
   // Update donation record
   const { error } = await supabaseAdmin
@@ -238,6 +293,15 @@ async function handleRefund(charge: Stripe.Charge) {
   if (error) {
     console.error('Error updating donation:', error);
   }
+
+  // Send admin notification
+  const refundAmount = charge.amount_refunded / 100;
+  await notifyRefund({
+    amount: refundAmount,
+    donorName: donation?.donor_name,
+    donorEmail: donation?.donor_email,
+    chargeId: charge.id,
+  });
 }
 
 // ============================================
@@ -262,6 +326,13 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     }
   }
 
+  // Get subscription details
+  const { data: subRecord } = await supabaseAdmin
+    .from('donation_subscriptions')
+    .select('*')
+    .eq('stripe_subscription_id', subscription.id)
+    .single();
+
   // Update subscription record with confirmed status and card info
   const { error } = await supabaseAdmin
     .from('donation_subscriptions')
@@ -275,6 +346,16 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
   if (error) {
     console.error('Error updating subscription:', error);
+  }
+
+  // Send admin notification for new subscription
+  if (subRecord) {
+    await notifySubscriptionStarted({
+      amount: parseFloat(subRecord.amount),
+      donorName: subRecord.donor_name || 'Unknown',
+      donorEmail: subRecord.donor_email || 'Unknown',
+      interval: subRecord.interval || 'monthly',
+    });
   }
 }
 
@@ -320,6 +401,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
   console.log('Subscription cancelled:', subscription.id);
 
+  // Get subscription details before updating
+  const { data: subRecord } = await supabaseAdmin
+    .from('donation_subscriptions')
+    .select('*')
+    .eq('stripe_subscription_id', subscription.id)
+    .single();
+
   const { error } = await supabaseAdmin
     .from('donation_subscriptions')
     .update({
@@ -330,6 +418,15 @@ async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
 
   if (error) {
     console.error('Error updating subscription:', error);
+  }
+
+  // Send admin notification
+  if (subRecord) {
+    await notifySubscriptionCancelled({
+      amount: parseFloat(subRecord.amount),
+      donorName: subRecord.donor_name || 'Unknown',
+      donorEmail: subRecord.donor_email || 'Unknown',
+    });
   }
 }
 
@@ -536,4 +633,112 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   }
 
   console.log('Subscription payment failed, status updated to past_due:', subscriptionId);
+}
+
+// ============================================
+// DISPUTE/CHARGEBACK HANDLERS
+// ============================================
+
+async function handleDisputeCreated(dispute: Stripe.Dispute) {
+  console.log('🚨 DISPUTE CREATED:', dispute.id);
+
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  const amount = dispute.amount / 100; // Convert from cents
+  const reason = dispute.reason;
+  const status = dispute.status;
+
+  // Find the related donation
+  const { data: donation } = await supabaseAdmin
+    .from('donations')
+    .select('*')
+    .eq('stripe_charge_id', chargeId)
+    .single();
+
+  // Record the dispute in the database
+  await supabaseAdmin.from('donation_disputes').insert({
+    stripe_dispute_id: dispute.id,
+    stripe_charge_id: chargeId,
+    donation_id: donation?.id || null,
+    amount: amount,
+    currency: dispute.currency,
+    reason: reason,
+    status: status,
+    donor_email: donation?.donor_email || null,
+    donor_name: donation?.donor_name || null,
+    created_at: new Date().toISOString(),
+    metadata: {
+      evidence_due_by: dispute.evidence_details?.due_by
+        ? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+        : null,
+    },
+  }).then(() => {
+    console.log('Dispute recorded in database');
+  }).catch((err) => {
+    console.error('Error recording dispute:', err);
+  });
+
+  // Update donation status to disputed
+  if (donation) {
+    await supabaseAdmin
+      .from('donations')
+      .update({ status: 'disputed' })
+      .eq('id', donation.id);
+  }
+
+  // Send admin notification (Email + GHL + Database)
+  const evidenceDueBy = dispute.evidence_details?.due_by
+    ? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString('en-US', { timeZone: 'America/New_York' })
+    : undefined;
+
+  await notifyDispute({
+    amount: amount,
+    donorName: donation?.donor_name,
+    donorEmail: donation?.donor_email,
+    reason: reason || 'Unknown',
+    disputeId: dispute.id,
+    evidenceDueBy: evidenceDueBy,
+  });
+
+  console.log('Dispute notification sent to admin');
+}
+
+async function handleDisputeClosed(dispute: Stripe.Dispute) {
+  console.log('Dispute closed:', dispute.id, 'Status:', dispute.status);
+
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  const won = dispute.status === 'won';
+
+  // Update dispute record
+  await supabaseAdmin
+    .from('donation_disputes')
+    .update({
+      status: dispute.status,
+      closed_at: new Date().toISOString(),
+      won: won,
+    })
+    .eq('stripe_dispute_id', dispute.id);
+
+  // Update donation status based on outcome
+  const { data: donation } = await supabaseAdmin
+    .from('donations')
+    .select('id')
+    .eq('stripe_charge_id', chargeId)
+    .single();
+
+  if (donation) {
+    const newStatus = won ? 'completed' : 'chargedback';
+    await supabaseAdmin
+      .from('donations')
+      .update({ status: newStatus })
+      .eq('id', donation.id);
+  }
+
+  // Send admin notification (Email + GHL + Database)
+  await notifyDisputeClosed({
+    amount: dispute.amount / 100,
+    won: won,
+    disputeId: dispute.id,
+  });
+
+  console.log('Dispute closed notification sent');
 }
