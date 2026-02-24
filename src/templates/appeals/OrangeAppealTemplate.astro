@@ -40,13 +40,22 @@ const categories = [
   { slug: 'education', label: 'Education', icon: '📚' },
   { slug: 'healthcare', label: 'Healthcare', icon: '🏥' },
   { slug: 'sadaqah-jariyah', label: 'Sadaqah Jariyah', icon: '🕌' },
-  { slug: 'qurbani', label: 'Qurbani', icon: '🐑' },
+  { slug: 'islamic-giving', label: 'Islamic Giving', icon: '🐑' },
+  { slug: 'aqiqah', label: 'Aqiqah', icon: '🎁' },
 ];
 
 // Filter to only show categories that have campaigns
 const activeCategories = categories.filter(cat =>
   cat.slug === 'all' || campaignCategories.includes(cat.slug)
 );
+
+// Special campaigns with dedicated pages
+const specialPages: Record<string, string> = {
+  'qurbani': '/qurbani',
+};
+
+// Helper function to get campaign URL
+const getCampaignUrl = (slug: string) => specialPages[slug] || `/appeals/${slug}`;
 
 // Impact stats
 const impactStats = [
@@ -184,6 +193,7 @@ const impactStats = [
             const name = campaign.name || campaign.title || 'Untitled';
             const description = campaign.description || '';
             const image = campaign.featured_image || campaign.hero_image_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop';
+            const campaignUrl = getCampaignUrl(campaign.slug);
 
             return (
               <article
@@ -191,7 +201,7 @@ const impactStats = [
                 data-category={campaign.category || 'uncategorized'}
               >
                 <!-- Image Container -->
-                <a href={`/appeals/${campaign.slug}`} class="block relative overflow-hidden">
+                <a href={campaignUrl} class="block relative overflow-hidden">
                   <div class="aspect-[4/3] overflow-hidden">
                     <img
                       src={image}
@@ -231,7 +241,7 @@ const impactStats = [
 
                 <!-- Content -->
                 <div class="p-6">
-                  <a href={`/appeals/${campaign.slug}`}>
+                  <a href={campaignUrl}>
                     <h3 class="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#E1861D] transition line-clamp-2" style="font-family: 'Signika', sans-serif;">
                       {name}
                     </h3>
@@ -245,7 +255,7 @@ const impactStats = [
 
                   <!-- Action Button -->
                   <a
-                    href={`/appeals/${campaign.slug}`}
+                    href={campaignUrl}
                     class="inline-flex items-center gap-2 text-[#E1861D] font-semibold text-sm hover:gap-3 transition-all"
                   >
                     Learn More & Donate

@@ -21,10 +21,12 @@ interface Props {
 const { title, description, ogImage, canonicalUrl, noindex, campaign } = Astro.props;
 const settings = await getSettings();
 
-// Determine favicon type from URL
-const faviconUrl = settings.site_favicon || '/favicon.ico';
-const faviconType = faviconUrl.endsWith('.svg') ? 'image/svg+xml' :
-                    faviconUrl.endsWith('.png') ? 'image/png' : 'image/x-icon';
+// Determine favicon - use admin setting if available, otherwise fallback to local file
+const adminFavicon = settings.site_favicon;
+const faviconHref = adminFavicon || '/favicon.png';
+const faviconType = adminFavicon
+  ? (adminFavicon.endsWith('.svg') ? 'image/svg+xml' : adminFavicon.endsWith('.ico') ? 'image/x-icon' : 'image/png')
+  : 'image/png';
 ---
 
 <!doctype html>
@@ -32,7 +34,8 @@ const faviconType = faviconUrl.endsWith('.svg') ? 'image/svg+xml' :
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type={faviconType} href={faviconUrl} />
+    <link rel="icon" type={faviconType} href={faviconHref} />
+    <link rel="alternate icon" href="/favicon.ico" />
 
     <SEO
       title={title}

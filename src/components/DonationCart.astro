@@ -366,7 +366,7 @@ try {
 
                 <div class="bg-gray-50 rounded-xl p-4 mb-4">
                   <div class="flex gap-4">
-                    <img src="/images/campaigns/prophetic-qurbani.jpg" alt="Prophetic Qurbani" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://images.unsplash.com/photo-1545167496-5a24ed2d68b4?w=200&q=80'" />
+                    <img src="/images/campaigns/prophetic-qurbani.jpg" alt="Prophetic Qurbani" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1545167496-5a24ed2d68b4?w=200&q=80'" />
                     <div>
                       <p class="font-bold text-gray-800 text-sm">I WANT TO GIVE $50 TO PROPHETIC QURBANI</p>
                       <p class="text-xs text-gray-600 mt-2 leading-relaxed">The Prophet (&#65018;) used to give his Qurbani and then give a second Qurbani for those in his Ummah who were unable to do so themselves. This act of generous giving is for those who cannot. Follow in the footsteps of The Prophet (&#65018;) and give today!</p>
@@ -385,7 +385,7 @@ try {
 
                 <div class="bg-gray-50 rounded-xl p-4">
                   <div class="flex gap-4">
-                    <img src="/images/campaigns/feed-family.jpg" alt="Feed a Family" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.src='https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80'" />
+                    <img src="/images/campaigns/feed-family.jpg" alt="Feed a Family" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80'" />
                     <div>
                       <p class="font-bold text-gray-800 text-sm">I WANT TO GIVE $25 TO FEED A FAMILY</p>
                       <p class="text-xs text-gray-600 mt-2 leading-relaxed">Provide 21 nutritious meals for a family in need. Your generosity ensures they have food on the table for an entire week. Be the reason a family doesn't go hungry.</p>
@@ -1031,6 +1031,9 @@ function updateCartUI() {
     badge.textContent = count;
     badge.classList.toggle('hidden', count === 0);
   }
+
+  // Dispatch event so Navbar can update its cart display
+  window.dispatchEvent(new CustomEvent('cartUpdated'));
 }
 
 // Open/Close Cart

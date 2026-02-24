@@ -72,7 +72,7 @@ const benefits = [
 
   <main class="bg-gray-50 min-h-screen">
     <!-- Hero Section -->
-    <section class="relative py-20 md:py-28 lg:py-32 overflow-hidden min-h-[400px] md:min-h-[480px]">
+    <section class="relative pt-24 pb-16 md:pt-28 md:pb-20 overflow-hidden min-h-[450px] md:min-h-[520px]">
       <!-- Background Image -->
       <div class="absolute inset-0">
         <img
@@ -85,7 +85,7 @@ const benefits = [
       </div>
 
       <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-8 pt-8 md:pt-12">
+        <div class="text-center mb-6">
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
             How Many Lives Will <span class="text-[#fdc448]">You Change?</span>
           </h1>
@@ -100,13 +100,23 @@ const benefits = [
         </div>
 
         <!-- Live Activity Ticker -->
-        <div class="flex justify-center mb-8">
-          <div class="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-4">
+        <div class="flex justify-center mb-4">
+          <div class="bg-white/10 backdrop-blur-sm rounded-full px-6 py-2.5 flex items-center gap-4">
             <span class="flex items-center gap-2">
               <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
               <span class="text-white text-sm"><strong id="live-count">23</strong> people sponsoring right now</span>
             </span>
           </div>
+        </div>
+
+        <!-- Sponsor Button with Down Arrow -->
+        <div class="flex justify-center">
+          <a href="#region-section" class="group inline-flex items-center gap-3 bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl">
+            <span class="text-base" style="font-family: 'Signika', sans-serif;">Give an Orphan Hope This Ramadan</span>
+            <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+          </a>
         </div>
       </div>
     </section>
@@ -120,9 +130,9 @@ const benefits = [
           <div class="lg:col-span-2 space-y-8">
 
             <!-- Step 1: Choose Country -->
-            <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div id="region-section" class="bg-white rounded-2xl shadow-sm p-6 transition-all duration-300">
               <div class="flex items-center gap-3 mb-4">
-                <div class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                <div id="step-1-badge" class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300">1</div>
                 <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Choose a Region</h2>
               </div>
 
@@ -130,7 +140,7 @@ const benefits = [
                 {countries.map((country, i) => (
                   <button
                     type="button"
-                    class={`country-btn relative p-4 rounded-xl border-2 transition-all hover:shadow-md ${i === 0 ? 'border-[#d97706] bg-[#d97706]/5 ring-2 ring-[#d97706]/20' : 'border-gray-200 hover:border-gray-300'}`}
+                    class="country-btn relative p-4 rounded-xl border-2 transition-all hover:shadow-md border-gray-200 hover:border-gray-300"
                     data-country={country.id}
                     data-multiplier={country.priceMultiplier}
                   >
@@ -145,10 +155,10 @@ const benefits = [
             </div>
 
             <!-- Step 2: Choose Quantity (Tile Stack) -->
-            <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div id="quantity-section" class="bg-white rounded-2xl shadow-sm p-6 transition-all duration-300">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                  <div id="step-2-badge" class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300">2</div>
                   <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">How Many Children?</h2>
                 </div>
                 <div class="text-sm text-gray-500">
@@ -161,7 +171,7 @@ const benefits = [
                 {quantityTiles.map((tile, i) => (
                   <button
                     type="button"
-                    class={`qty-tile relative p-4 rounded-xl border-2 transition-all hover:shadow-lg hover:-translate-y-1 ${i === 1 ? 'border-[#d97706] bg-[#d97706]/5 ring-2 ring-[#d97706]/20 scale-105' : 'border-gray-200 hover:border-gray-300'}`}
+                    class="qty-tile relative p-4 rounded-xl border-2 transition-all hover:shadow-lg hover:-translate-y-1 border-gray-200 hover:border-gray-300"
                     data-qty={tile.qty}
                     data-monthly={tile.monthly}
                   >
@@ -287,20 +297,13 @@ const benefits = [
                 <div class="p-6">
                   <!-- Selected Summary -->
                   <div class="text-center mb-6">
-                    <div class="text-5xl font-bold text-[#d97706] mb-1" id="summary-qty" style="font-family: 'Signika', sans-serif;">2</div>
-                    <div class="text-gray-600">children will receive care</div>
+                    <div class="text-5xl font-bold text-[#d97706] mb-1" id="summary-qty" style="font-family: 'Signika', sans-serif;">-</div>
+                    <button type="button" class="text-[#d97706] font-medium hover:underline cursor-pointer" id="summary-qty-label">Select a region to start</button>
                   </div>
 
                   <!-- Visual Stack -->
-                  <div class="flex justify-center items-end mb-6 gap-1" id="visual-stack">
-                    <svg class="w-10 h-14 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="4" r="3"/>
-                      <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
-                    </svg>
-                    <svg class="w-10 h-14 text-gray-700 opacity-85" fill="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="4" r="3"/>
-                      <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
-                    </svg>
+                  <div class="flex justify-center items-center mb-6 gap-1 min-h-[56px]" id="visual-stack">
+                    <!-- Shows child icons when quantity is selected -->
                   </div>
 
                   <!-- Frequency Toggle -->
@@ -316,19 +319,19 @@ const benefits = [
                   <!-- Country -->
                   <div class="flex items-center justify-between py-3 border-t border-gray-100">
                     <span class="text-gray-600">Region</span>
-                    <span class="font-medium text-gray-800" id="summary-country">🇵🇰 Pakistan</span>
+                    <button type="button" class="font-medium text-[#d97706] hover:underline cursor-pointer" id="summary-country">Select a region</button>
                   </div>
 
                   <!-- Amount -->
                   <div class="flex items-center justify-between py-3 border-t border-gray-100">
                     <span class="text-gray-600" id="amount-label">Monthly</span>
-                    <span class="text-2xl font-bold text-[#d97706]" id="summary-amount">$90</span>
+                    <span class="text-2xl font-bold text-[#d97706]" id="summary-amount">$0</span>
                   </div>
 
                   <!-- Daily Breakdown -->
                   <div class="flex items-center justify-between py-3 border-t border-gray-100">
                     <span class="text-gray-600">That's only</span>
-                    <span class="text-gray-800" id="summary-daily">$3.00/day</span>
+                    <span class="text-gray-800" id="summary-daily">$0.00/day</span>
                   </div>
 
                   <!-- CTA Button -->
@@ -340,7 +343,7 @@ const benefits = [
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
-                    <span id="btn-text">Sponsor 2 Children</span>
+                    <span id="btn-text">Sponsor an Orphan</span>
                   </button>
 
                   <!-- Trust Badges -->
@@ -420,13 +423,16 @@ const benefits = [
   <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 shadow-lg">
     <button
       id="mobile-sponsor-btn"
-      class="w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold text-lg py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+      class="w-full bg-[#d97706] text-white font-bold text-lg py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform"
       style="font-family: 'Signika', sans-serif;"
     >
       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>
-      <span id="mobile-btn-text">Sponsor 2 Children</span>
+      <span id="mobile-btn-text">Sponsor an Orphan</span>
+      <svg id="mobile-btn-arrow" class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
     </button>
   </div>
 
@@ -459,61 +465,224 @@ const benefits = [
     const btnText = document.getElementById('btn-text');
     const mobileBtnText = document.getElementById('mobile-btn-text');
 
-    // State
-    let selectedCountry = { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', multiplier: 1 };
-    let selectedQty = 2;
+    // State - nothing pre-selected
+    let selectedCountry: { id: string; name: string; flag: string; multiplier: number } | null = null;
+    let selectedQty = 0;
     let basePrice = 45;
     let isMonthly = true;
     let isCustom = false;
+    const summaryQtyLabel = document.getElementById('summary-qty-label');
+
+    // Check if both selections are made
+    const isSelectionComplete = () => {
+      return selectedCountry !== null && selectedQty > 0;
+    };
+
+    // Section elements for scrolling
+    const regionSection = document.getElementById('region-section');
+    const quantitySection = document.getElementById('quantity-section');
+    const step1Badge = document.getElementById('step-1-badge');
+    const step2Badge = document.getElementById('step-2-badge');
+    const mobileArrow = document.getElementById('mobile-btn-arrow');
+
+    // Scroll to element with offset for mobile sticky bar
+    const scrollToSection = (element: HTMLElement | null, highlight = true) => {
+      if (!element) return;
+
+      const offset = 100; // Account for header
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+
+      window.scrollTo({
+        top: elementPosition - offset,
+        behavior: 'smooth'
+      });
+
+      if (highlight) {
+        // Add subtle highlight
+        element.classList.add('ring-2', 'ring-[#d97706]', 'ring-opacity-60');
+        setTimeout(() => {
+          element.classList.remove('ring-2', 'ring-[#d97706]', 'ring-opacity-60');
+        }, 1500);
+      }
+    };
+
+    // Attach click listener to visual stack link
+    const attachVisualStackListener = () => {
+      const link = document.querySelector('.visual-stack-link');
+      if (link) {
+        link.addEventListener('click', () => {
+          if (!selectedCountry) {
+            scrollToSection(regionSection, true);
+          } else if (selectedQty === 0) {
+            scrollToSection(quantitySection, true);
+          }
+        });
+      }
+    };
+
+    // Update button state and appearance
+    const updateButtonState = () => {
+      const complete = isSelectionComplete();
+
+      if (complete) {
+        // Enable desktop button
+        sponsorBtn?.removeAttribute('disabled');
+        sponsorBtn?.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        sponsorBtn?.classList.add('bg-[#d97706]', 'hover:bg-[#b45309]', 'text-white', 'shadow-lg', 'hover:shadow-xl', 'transform', 'hover:-translate-y-0.5');
+
+        // Mobile button shows ready state - hide arrow
+        if (mobileArrow) mobileArrow.classList.add('hidden');
+      } else {
+        // Desktop button stays disabled
+        sponsorBtn?.setAttribute('disabled', 'true');
+        sponsorBtn?.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        sponsorBtn?.classList.remove('bg-[#d97706]', 'hover:bg-[#b45309]', 'text-white', 'shadow-lg', 'hover:shadow-xl', 'transform', 'hover:-translate-y-0.5');
+
+        // Mobile button shows arrow to indicate scrolling action
+        if (mobileArrow) mobileArrow.classList.remove('hidden');
+      }
+
+      // Update step badges to show completion
+      if (selectedCountry && step1Badge) {
+        step1Badge.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+        step1Badge.classList.add('bg-green-500');
+        step1Badge.classList.remove('bg-[#d97706]');
+      }
+      if (selectedQty > 0 && step2Badge) {
+        step2Badge.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+        step2Badge.classList.add('bg-green-500');
+        step2Badge.classList.remove('bg-[#d97706]');
+      }
+    };
 
     // Update UI
     const updateUI = () => {
-      const monthlyTotal = selectedQty * basePrice * selectedCountry.multiplier;
+      // If nothing selected yet, show placeholder state
+      if (!selectedCountry && selectedQty === 0) {
+        if (summaryQty) summaryQty.textContent = '-';
+        if (summaryQtyLabel) {
+          summaryQtyLabel.textContent = 'Select a region to start';
+          summaryQtyLabel.classList.add('text-[#d97706]', 'font-medium', 'hover:underline', 'cursor-pointer');
+          summaryQtyLabel.classList.remove('text-gray-600');
+        }
+        if (summaryCountry) summaryCountry.textContent = 'Select a region';
+        if (summaryAmount) summaryAmount.textContent = '$0';
+        if (summaryDaily) summaryDaily.textContent = '$0.00/day';
+        if (visualStack) {
+          visualStack.innerHTML = `
+            <svg class="w-10 h-14 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="4" r="3"/>
+              <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+            </svg>
+          `;
+        }
+        if (btnText) btnText.textContent = 'Sponsor an Orphan';
+        if (mobileBtnText) mobileBtnText.textContent = 'Sponsor an Orphan';
+        updateButtonState();
+        return;
+      }
+
+      const multiplier = selectedCountry?.multiplier || 1;
+      const monthlyTotal = selectedQty * basePrice * multiplier;
       const yearlyTotal = monthlyTotal * 12;
       const daily = monthlyTotal / 30;
 
       // Summary
-      if (summaryQty) summaryQty.textContent = selectedQty.toString();
-      if (summaryCountry) summaryCountry.textContent = `${selectedCountry.flag} ${selectedCountry.name}`;
-
-      // Update amounts based on frequency selection
-      if (isMonthly) {
-        if (amountLabel) amountLabel.textContent = 'Monthly';
-        if (summaryAmount) summaryAmount.textContent = `$${monthlyTotal.toFixed(0)}`;
-        if (summaryDaily) summaryDaily.textContent = `$${daily.toFixed(2)}/day`;
-      } else {
-        if (amountLabel) amountLabel.textContent = 'Yearly';
-        if (summaryAmount) summaryAmount.textContent = `$${yearlyTotal.toLocaleString()}`;
-        if (summaryDaily) summaryDaily.textContent = `$${(yearlyTotal / 365).toFixed(2)}/day`;
+      if (summaryQty) {
+        if (selectedQty > 0) {
+          summaryQty.textContent = selectedQty.toString();
+          if (summaryQtyLabel) {
+            summaryQtyLabel.textContent = selectedQty === 1 ? 'child will receive care' : 'children will receive care';
+            summaryQtyLabel.classList.remove('text-[#d97706]', 'font-medium', 'hover:underline', 'cursor-pointer');
+            summaryQtyLabel.classList.add('text-gray-600');
+          }
+        } else {
+          summaryQty.textContent = '-';
+          if (summaryQtyLabel) {
+            summaryQtyLabel.classList.add('text-[#d97706]', 'font-medium', 'hover:underline', 'cursor-pointer');
+            summaryQtyLabel.classList.remove('text-gray-600');
+            if (selectedCountry) {
+              summaryQtyLabel.textContent = 'Now select children';
+            } else {
+              summaryQtyLabel.textContent = 'Select a region to start';
+            }
+          }
+        }
       }
 
-      // Button text
-      const childText = selectedQty === 1 ? 'Child' : 'Children';
-      const buttonLabel = `Sponsor ${selectedQty} ${childText}`;
-      if (btnText) btnText.textContent = buttonLabel;
-      if (mobileBtnText) mobileBtnText.textContent = buttonLabel;
+      if (summaryCountry) {
+        if (selectedCountry) {
+          summaryCountry.textContent = `${selectedCountry.flag} ${selectedCountry.name}`;
+          summaryCountry.classList.remove('text-[#d97706]', 'hover:underline', 'cursor-pointer');
+          summaryCountry.classList.add('text-gray-800');
+        } else {
+          summaryCountry.textContent = 'Select a region';
+          summaryCountry.classList.add('text-[#d97706]', 'hover:underline', 'cursor-pointer');
+          summaryCountry.classList.remove('text-gray-800');
+        }
+      }
 
-      // Visual stack
+      // Update amounts based on frequency selection
+      if (selectedQty > 0) {
+        if (isMonthly) {
+          if (amountLabel) amountLabel.textContent = 'Monthly';
+          if (summaryAmount) summaryAmount.textContent = `$${monthlyTotal.toFixed(0)}`;
+          if (summaryDaily) summaryDaily.textContent = `$${daily.toFixed(2)}/day`;
+        } else {
+          if (amountLabel) amountLabel.textContent = 'Yearly';
+          if (summaryAmount) summaryAmount.textContent = `$${yearlyTotal.toLocaleString()}`;
+          if (summaryDaily) summaryDaily.textContent = `$${(yearlyTotal / 365).toFixed(2)}/day`;
+        }
+      } else {
+        if (summaryAmount) summaryAmount.textContent = '$0';
+        if (summaryDaily) summaryDaily.textContent = '$0.00/day';
+      }
+
+      // Button text - action-oriented
+      if (isSelectionComplete()) {
+        const childText = selectedQty === 1 ? 'Child' : 'Children';
+        const buttonLabel = `Sponsor ${selectedQty} ${childText}`;
+        if (btnText) btnText.textContent = buttonLabel;
+        if (mobileBtnText) mobileBtnText.textContent = buttonLabel;
+      } else {
+        // Not complete yet - keep the primary CTA
+        if (btnText) btnText.textContent = 'Sponsor an Orphan';
+        if (mobileBtnText) mobileBtnText.textContent = 'Sponsor an Orphan';
+      }
+
+      // Visual stack - shows child icons when quantity is selected
       if (visualStack) {
-        const count = Math.min(selectedQty, 6);
-        let html = '';
-        for (let i = 0; i < count; i++) {
-          const opacity = 1 - i * 0.12;
-          html += `<svg class="w-10 h-14 text-gray-700" fill="currentColor" viewBox="0 0 24 24" style="opacity: ${opacity};">
-            <circle cx="12" cy="4" r="3"/>
-            <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
-          </svg>`;
+        if (selectedQty > 0) {
+          const count = Math.min(selectedQty, 6);
+          let html = '';
+          for (let i = 0; i < count; i++) {
+            const opacity = 1 - i * 0.12;
+            html += `<svg class="w-10 h-14 text-gray-700" fill="currentColor" viewBox="0 0 24 24" style="opacity: ${opacity};">
+              <circle cx="12" cy="4" r="3"/>
+              <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+            </svg>`;
+          }
+          if (selectedQty > 6) {
+            html += `<span class="ml-2 text-lg font-bold text-gray-700">+${selectedQty - 6}</span>`;
+          }
+          visualStack.innerHTML = html;
+        } else {
+          // Empty state - just show placeholder icons in gray
+          visualStack.innerHTML = `
+            <svg class="w-10 h-14 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="4" r="3"/>
+              <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+            </svg>
+          `;
         }
-        if (selectedQty > 6) {
-          html += `<span class="ml-2 text-lg font-bold text-gray-700">+${selectedQty - 6}</span>`;
-        }
-        visualStack.innerHTML = html;
       }
 
       // Custom total
       if (customTotal && isCustom) {
         customTotal.textContent = `$${monthlyTotal.toFixed(0)}`;
       }
+
+      updateButtonState();
     };
 
     // Country selection
@@ -527,6 +696,7 @@ const benefits = [
         btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
 
         const el = btn as HTMLElement;
+        const wasFirstSelection = selectedCountry === null;
         selectedCountry = {
           id: el.dataset.country || 'pakistan',
           name: el.querySelector('div:last-child')?.textContent || 'Pakistan',
@@ -534,6 +704,11 @@ const benefits = [
           multiplier: parseFloat(el.dataset.multiplier || '1')
         };
         updateUI();
+
+        // Auto-scroll to quantity section if this was the first selection and no qty yet
+        if (wasFirstSelection && selectedQty === 0) {
+          setTimeout(() => scrollToSection(quantitySection, true), 300);
+        }
       });
     });
 
@@ -615,6 +790,11 @@ const benefits = [
 
     // Sponsor button - Add to cart
     const handleSponsor = (e: Event) => {
+      // Check if selection is complete
+      if (!isSelectionComplete() || !selectedCountry) {
+        return;
+      }
+
       const btn = e.currentTarget as HTMLButtonElement;
       const monthlyTotal = selectedQty * basePrice * selectedCountry.multiplier;
       const amount = isMonthly ? monthlyTotal : monthlyTotal * 12;
@@ -644,32 +824,79 @@ const benefits = [
       }
 
       // Show success feedback on button
-      const btnText = btn.querySelector('span');
-      const originalText = btnText?.textContent || '';
-      if (btnText) {
-        btnText.textContent = 'Added to Cart!';
+      const btnTextEl = btn.querySelector('span');
+      const originalText = btnTextEl?.textContent || '';
+      if (btnTextEl) {
+        btnTextEl.textContent = 'Added to Cart!';
       }
       btn.classList.remove('bg-[#d97706]');
       btn.classList.add('bg-[#15803d]');
 
       setTimeout(() => {
-        if (btnText) btnText.textContent = originalText;
+        if (btnTextEl) btnTextEl.textContent = originalText;
         btn.classList.remove('bg-[#15803d]');
         btn.classList.add('bg-[#d97706]');
       }, 2000);
     };
 
-    sponsorBtn?.addEventListener('click', handleSponsor);
-    mobileSponsorBtn?.addEventListener('click', handleSponsor);
+    // Desktop button - smart behavior based on selection state
+    sponsorBtn?.addEventListener('click', (e) => {
+      if (isSelectionComplete()) {
+        // Selection complete - add to cart
+        handleSponsor(e);
+      } else {
+        // Guide user to the section they need to complete
+        if (!selectedCountry) {
+          scrollToSection(regionSection, true);
+        } else if (selectedQty === 0) {
+          scrollToSection(quantitySection, true);
+        }
+      }
+    });
 
-    // Live counter animation
+    // Mobile button - smart behavior based on selection state
+    mobileSponsorBtn?.addEventListener('click', (e) => {
+      if (isSelectionComplete()) {
+        // Selection complete - add to cart
+        handleSponsor(e);
+      } else {
+        // Guide user to the section they need to complete
+        if (!selectedCountry) {
+          // Need to select region first
+          scrollToSection(regionSection, true);
+        } else if (selectedQty === 0) {
+          // Need to select quantity
+          scrollToSection(quantitySection, true);
+        }
+      }
+    });
+
+    // Live counter animation - realistic simulation (1-20 range, updates every minute)
     const liveCount = document.getElementById('live-count');
     if (liveCount) {
+      let currentCount = Math.floor(Math.random() * 10) + 8; // Start between 8-17
+
+      liveCount.textContent = currentCount.toString();
+
       setInterval(() => {
-        const current = parseInt(liveCount.textContent || '23');
-        const change = Math.random() > 0.5 ? 1 : -1;
-        liveCount.textContent = Math.max(15, Math.min(35, current + change)).toString();
-      }, 4000);
+        // Determine change: max +3 up, max -3 down
+        const rand = Math.random();
+        let change = 0;
+
+        if (rand < 0.4) {
+          // 40% chance: go up (1 to 3)
+          change = Math.floor(Math.random() * 3) + 1;
+        } else if (rand < 0.8) {
+          // 40% chance: go down (1 to 3)
+          change = -(Math.floor(Math.random() * 3) + 1);
+        }
+        // 20% chance: no change
+
+        // Apply change with bounds (1-20)
+        currentCount = Math.max(1, Math.min(20, currentCount + change));
+
+        liveCount.textContent = currentCount.toString();
+      }, 60000); // Update every 60 seconds (1 minute)
     }
 
     // ============ RECENT SPONSORS ============
@@ -952,6 +1179,25 @@ const benefits = [
       }
     }, 5 * 60 * 1000);
 
+    // Click handler for summary label
+    summaryQtyLabel?.addEventListener('click', () => {
+      if (!selectedCountry) {
+        scrollToSection(regionSection, true);
+      } else if (selectedQty === 0) {
+        scrollToSection(quantitySection, true);
+      }
+    });
+
+    // Click handler for summary country
+    summaryCountry?.addEventListener('click', () => {
+      if (!selectedCountry) {
+        scrollToSection(regionSection, true);
+      }
+    });
+
+    // Initial visual stack link listener
+    attachVisualStackListener();
+
     // Initialize
     updateUI();
   });
@@ -966,5 +1212,20 @@ const benefits = [
     main {
       padding-bottom: 100px;
     }
+  }
+
+  /* Pulse animation for mobile CTA */
+  @keyframes subtle-pulse {
+    0%, 100% { box-shadow: 0 10px 15px -3px rgba(217, 119, 6, 0.3); }
+    50% { box-shadow: 0 10px 25px -3px rgba(217, 119, 6, 0.5); }
+  }
+
+  #mobile-sponsor-btn:not(.added-to-cart) {
+    animation: subtle-pulse 2s ease-in-out infinite;
+  }
+
+  /* Highlight ring for sections */
+  .ring-4 {
+    transition: all 0.3s ease;
   }
 </style>

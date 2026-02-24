@@ -66,16 +66,7 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
           loading="eager"
         />
         <!-- Gradient Overlay - teal brand color -->
-        <div class="absolute inset-0 bg-gradient-to-r from-[#01534d]/90 via-[#01534d]/70 to-[#01534d]/50"></div>
-
-        <!-- Logo Watermark Overlay -->
-        <div class="absolute inset-0 flex items-center justify-end pr-8 md:pr-16 lg:pr-24 pointer-events-none">
-          <img
-            src="https://www.staging9.qurbani.com/wp-content/uploads/2021/07/QurbaniFoundation-Logo-2.png"
-            alt=""
-            class="w-48 md:w-64 lg:w-80 opacity-15 brightness-0 invert"
-          />
-        </div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#01534d]/90 via-[#01534d]/80 to-[#01534d]/70"></div>
       </div>
 
       <!-- Islamic Geometric Pattern Border -->
@@ -112,7 +103,7 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
       <div class="absolute bottom-0 right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="max-w-2xl">
+        <div class="max-w-3xl mx-auto text-center">
           <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white text-sm font-medium px-4 py-2 rounded-full mb-6 border border-white/20">
             <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
             100% Donation Policy on Zakat
@@ -122,21 +113,21 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
             Your Generosity <br class="hidden md:block" /><span class="text-[#fdc448]">Changes Lives</span>
           </h1>
 
-          <p class="text-xl text-white/90 mb-8 max-w-xl drop-shadow" style="font-family: 'Lato', sans-serif;">
+          <p class="text-xl text-white/90 mb-8 max-w-xl mx-auto drop-shadow" style="font-family: 'Lato', sans-serif;">
             Every dollar you give provides food, clean water, healthcare, and hope to families in need across 50+ countries.
           </p>
 
           <!-- Impact Stats -->
-          <div class="flex flex-wrap gap-6 md:gap-10">
-            <div class="text-left">
+          <div class="flex flex-wrap justify-center gap-6 md:gap-10">
+            <div class="text-center">
               <div class="text-4xl md:text-5xl font-bold text-[#fdc448] drop-shadow" style="font-family: 'Signika', sans-serif;">50+</div>
               <div class="text-sm text-white/80 font-medium">Countries Served</div>
             </div>
-            <div class="text-left">
+            <div class="text-center">
               <div class="text-4xl md:text-5xl font-bold text-[#fdc448] drop-shadow" style="font-family: 'Signika', sans-serif;">1M+</div>
               <div class="text-sm text-white/80 font-medium">Lives Transformed</div>
             </div>
-            <div class="text-left">
+            <div class="text-center">
               <div class="text-4xl md:text-5xl font-bold text-[#fdc448] drop-shadow" style="font-family: 'Signika', sans-serif;">25+</div>
               <div class="text-sm text-white/80 font-medium">Years of Service</div>
             </div>
@@ -326,10 +317,10 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-3">Select Amount</label>
                   <div class="grid grid-cols-3 gap-3 mb-4">
-                    {presetAmounts.map((amount, i) => (
+                    {presetAmounts.map((amount) => (
                       <button
                         type="button"
-                        class={`amount-btn relative p-4 rounded-xl border-2 font-bold text-lg transition-all duration-200 ${i === 2 ? 'border-[#01534d] bg-[#01534d] text-white' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                        class="amount-btn relative p-4 rounded-xl border-2 font-bold text-lg transition-all duration-200 border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                         data-amount={amount}
                         style="font-family: 'Signika', sans-serif;"
                       >
@@ -354,7 +345,7 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
                       style="font-family: 'Signika', sans-serif;"
                     />
                   </div>
-                  <input type="hidden" name="amount" id="selected-amount" value="100" />
+                  <input type="hidden" name="amount" id="selected-amount" value="0" />
                 </div>
 
                 <!-- Impact Preview -->
@@ -366,69 +357,8 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
                       </svg>
                     </div>
                     <div>
-                      <div class="font-semibold text-amber-800" style="font-family: 'Signika', sans-serif;">Your $100 can provide:</div>
-                      <div id="impact-text" class="text-amber-700 text-sm mt-1">Clean water for 5 families for a month, or 200 nutritious meals for children in need.</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Donor Info (collapsed by default) -->
-                <div id="donor-info-section" class="space-y-4">
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 outline-none transition"
-                        placeholder="John"
-                      />
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 outline-none transition"
-                        placeholder="Doe"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 outline-none transition"
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 outline-none transition"
-                      placeholder="(123) 456-7890"
-                    />
-                  </div>
-
-                  <!-- On Behalf Of -->
-                  <div class="pt-2">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" id="on-behalf-toggle" class="w-5 h-5 text-[#01534d] rounded border-gray-300 focus:ring-[#01534d]" />
-                      <span class="text-sm text-gray-700">Donate on behalf of someone</span>
-                    </label>
-                    <div id="on-behalf-field" class="hidden mt-3">
-                      <input
-                        type="text"
-                        name="onBehalfOf"
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 outline-none transition"
-                        placeholder="Enter name (e.g., In memory of Ahmad)"
-                      />
+                      <div id="impact-amount" class="font-semibold text-amber-800" style="font-family: 'Signika', sans-serif;">Select an amount to see your impact:</div>
+                      <div id="impact-text" class="text-amber-700 text-sm mt-1">Your donation provides food, water, healthcare, and hope to families in need.</div>
                     </div>
                   </div>
                 </div>
@@ -443,7 +373,7 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
                   <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                   </svg>
-                  <span id="donate-btn-text">Donate $100 Now</span>
+                  <span id="donate-btn-text">Select Amount to Donate</span>
                 </button>
 
                 <!-- Security Note -->
@@ -654,12 +584,11 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
     const selectedAmountInput = document.getElementById('selected-amount') as HTMLInputElement;
     const donateBtnText = document.getElementById('donate-btn-text');
     const donateBtn = document.getElementById('donate-btn') as HTMLButtonElement;
+    const impactAmount = document.getElementById('impact-amount');
     const impactText = document.getElementById('impact-text');
     const moreCausesBtn = document.getElementById('more-causes-btn');
     const moreCausesPanel = document.getElementById('more-causes-panel');
     const moreCausesArrow = document.getElementById('more-causes-arrow');
-    const onBehalfToggle = document.getElementById('on-behalf-toggle') as HTMLInputElement;
-    const onBehalfField = document.getElementById('on-behalf-field');
     const changeCauseBtn = document.getElementById('change-cause-btn');
 
     let selectedAmount = 0; // No default selection
@@ -677,11 +606,18 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
       return 'Build a water well providing clean water to an entire community for years to come.';
     };
 
-    // Update button text
+    // Update button text and impact preview
     const updateButtonText = () => {
       const freqText = selectedFrequency === 'monthly' ? '/month' : '';
-      donateBtnText!.textContent = `Donate $${selectedAmount}${freqText} Now`;
-      impactText!.textContent = getImpactMessage(selectedAmount);
+      if (selectedAmount > 0) {
+        donateBtnText!.textContent = `Donate $${selectedAmount}${freqText} Now`;
+        impactAmount!.textContent = `Your $${selectedAmount} can provide:`;
+        impactText!.textContent = getImpactMessage(selectedAmount);
+      } else {
+        donateBtnText!.textContent = 'Select Amount to Donate';
+        impactAmount!.textContent = 'Select an amount to see your impact:';
+        impactText!.textContent = 'Your donation provides food, water, healthcare, and hope to families in need.';
+      }
     };
 
     // Cause selection
@@ -775,165 +711,38 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
       }
     });
 
-    // On behalf toggle
-    onBehalfToggle?.addEventListener('change', () => {
-      if (onBehalfToggle.checked) {
-        onBehalfField?.classList.remove('hidden');
-      } else {
-        onBehalfField?.classList.add('hidden');
-      }
-    });
-
-    // Form submission
+    // Form submission - Add to cart and open cart modal
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       if (selectedAmount <= 0) {
-        alert('Please enter a valid donation amount');
+        alert('Please select or enter a donation amount');
         return;
       }
 
-      // Disable button
-      donateBtn.disabled = true;
-      donateBtnText!.textContent = 'Processing...';
+      const causeLabel = selectedCauseLabel?.textContent || 'Where Most Needed';
+      const itemId = `donate-${selectedCause}-${selectedAmount}-${selectedFrequency}`;
 
-      const formData = new FormData(form);
-      const data = {
-        cause: selectedCause,
-        amount: selectedAmount,
-        frequency: selectedFrequency,
-        firstName: formData.get('firstName'),
-        lastName: formData.get('lastName'),
-        email: formData.get('email'),
-        phone: formData.get('phone'),
-        onBehalfOf: formData.get('onBehalfOf'),
-      };
-
-      try {
-        // Create checkout session
-        const response = await fetch('/api/donate/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+      // Add to cart using global cart function
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: itemId,
+          name: causeLabel,
+          label: `$${selectedAmount} ${selectedFrequency === 'monthly' ? 'Monthly' : 'One-Time'} Donation`,
+          amount: selectedAmount,
+          quantity: 1,
+          type: selectedFrequency,
+          image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400',
+          campaign: selectedCause
         });
-
-        const result = await response.json();
-
-        if (result.url) {
-          window.location.href = result.url;
-        } else {
-          throw new Error(result.error || 'Failed to create checkout session');
-        }
-      } catch (error: any) {
-        console.error('Donation error:', error);
-        alert('Something went wrong. Please try again or call 1-800-900-0027 for assistance.');
-        donateBtn.disabled = false;
-        updateButtonText();
+      } else {
+        console.error('Cart not available');
+        alert('Cart is not available. Please refresh the page and try again.');
       }
     });
 
     // Initialize
     updateButtonText();
-
-    // ============================================
-    // CART ABANDONMENT TRACKING
-    // ============================================
-
-    // Save user email to localStorage for future tracking
-    const emailInput = form?.querySelector('input[name="email"]') as HTMLInputElement;
-    emailInput?.addEventListener('blur', () => {
-      if (emailInput.value && emailInput.value.includes('@')) {
-        localStorage.setItem('qurbani_user_email', emailInput.value);
-      }
-    });
-
-    // Track cart state for abandonment
-    let cartAbandonmentTimeout: number;
-    let hasTrackedAbandonment = false;
-
-    const trackAbandonment = async () => {
-      if (hasTrackedAbandonment) return;
-
-      const email = emailInput?.value || localStorage.getItem('qurbani_user_email');
-      if (!email || !email.includes('@')) return;
-
-      const causeLabel = selectedCauseLabel?.textContent || 'Where Most Needed';
-
-      hasTrackedAbandonment = true;
-
-      try {
-        await fetch('/api/ghl/track-cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            cartItems: [{
-              name: causeLabel,
-              amount: selectedAmount,
-              campaignSlug: selectedCause,
-            }],
-            cartTotal: selectedAmount,
-          }),
-        });
-        console.log('Cart abandonment tracked');
-      } catch (err) {
-        console.log('Cart tracking error:', err);
-      }
-    };
-
-    // Reset abandonment timer on user activity
-    const resetAbandonmentTimer = () => {
-      clearTimeout(cartAbandonmentTimeout);
-      hasTrackedAbandonment = false;
-
-      // Track abandonment after 2 minutes of inactivity (if email provided)
-      cartAbandonmentTimeout = window.setTimeout(() => {
-        trackAbandonment();
-      }, 120000);
-    };
-
-    // Listen for activity that indicates cart engagement
-    form?.addEventListener('input', resetAbandonmentTimer);
-    form?.addEventListener('change', resetAbandonmentTimer);
-    causeBtns.forEach(btn => btn.addEventListener('click', resetAbandonmentTimer));
-    amountBtns.forEach(btn => btn.addEventListener('click', resetAbandonmentTimer));
-    freqBtns.forEach(btn => btn.addEventListener('click', resetAbandonmentTimer));
-
-    // Track when user tries to leave with items in cart
-    window.addEventListener('beforeunload', () => {
-      const email = emailInput?.value || localStorage.getItem('qurbani_user_email');
-      if (email && selectedAmount > 0 && !hasTrackedAbandonment) {
-        // Use sendBeacon for reliable tracking on page exit
-        navigator.sendBeacon('/api/ghl/track-cart', JSON.stringify({
-          email,
-          cartItems: [{
-            name: selectedCauseLabel?.textContent || 'Where Most Needed',
-            amount: selectedAmount,
-            campaignSlug: selectedCause,
-          }],
-          cartTotal: selectedAmount,
-        }));
-      }
-    });
-
-    // Track page view for pre-sale lead capture
-    const visitorId = localStorage.getItem('qurbani_visitor_id') ||
-      'v_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-    localStorage.setItem('qurbani_visitor_id', visitorId);
-
-    fetch('/api/ghl/track-view', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: localStorage.getItem('qurbani_user_email'),
-        visitorId,
-        campaignSlug: 'donate-page',
-        campaignName: 'Donate Page',
-      }),
-    }).catch(() => {});
-
-    // Initial timer start
-    resetAbandonmentTimer();
   });
 </script>
 

@@ -9,12 +9,25 @@ const settings = await getSettings();
 const dbCategories = await getMenuCategories();
 
 // Transform to the format expected by the template
-const categories = dbCategories.map(cat => ({
-  id: cat.slug,
-  label: cat.label,
-  color: cat.color,
-  icon: cat.icon
-}));
+// Convert 'qurbani' to 'religious-giving' and filter out 'aqiqah' (it will be merged into religious-giving)
+let categories = dbCategories
+  .filter(cat => cat.slug !== 'aqiqah') // Remove separate aqiqah tab
+  .map(cat => ({
+    id: cat.slug === 'qurbani' ? 'religious-giving' : cat.slug,
+    label: cat.slug === 'qurbani' ? 'Religious Giving' : cat.label,
+    color: cat.color,
+    icon: cat.icon
+  }));
+
+// Ensure Religious Giving category exists
+if (!categories.find(c => c.id === 'religious-giving')) {
+  categories.push({
+    id: 'religious-giving',
+    label: 'Religious Giving',
+    color: '#01534d',
+    icon: 'qurbani'
+  });
+}
 
 // Fetch all active campaigns grouped by category
 let campaignsByCategory: Record<string, any[]> = {};
@@ -28,8 +41,13 @@ try {
 
   if (data) {
     // Group campaigns by category
+    // Merge 'qurbani' and 'aqiqah' campaigns into 'religious-giving'
     data.forEach(campaign => {
-      const cat = campaign.category || 'other';
+      let cat = campaign.category || 'other';
+      // Merge qurbani and aqiqah into religious-giving
+      if (cat === 'qurbani' || cat === 'aqiqah') {
+        cat = 'religious-giving';
+      }
       if (!campaignsByCategory[cat]) {
         campaignsByCategory[cat] = [];
       }
@@ -1168,9 +1186,9 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
       singleBtn?.classList.add('bg-[#e8e6e1]', 'text-[#333]');
     });
 
-    // Update cart display
+    // Update cart display - uses 'donationCart' key (same as DonationCart component)
     function updateCartDisplay() {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const cart = JSON.parse(localStorage.getItem('donationCart') || '[]');
       const total = cart.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
       const count = cart.reduce((sum, item) => sum + item.quantity, 0);
 

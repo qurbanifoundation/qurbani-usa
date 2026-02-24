@@ -14,6 +14,11 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
+// Redirect special campaigns to their dedicated pages
+if (slug === 'qurbani') {
+  return Astro.redirect('/qurbani', 301);
+}
+
 // Fetch campaign by slug or ID
 let campaign: any = null;
 let siteSettings: any = null;

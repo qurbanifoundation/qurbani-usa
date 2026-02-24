@@ -755,14 +755,8 @@ const testimonials = [
     </div>
 
 
-    <div class="container mx-auto px-4 py-16 relative z-10">
+    <div class="container mx-auto px-4 pt-28 pb-16 relative z-10">
       <div class="max-w-4xl mx-auto text-center">
-        <!-- Trust Badge -->
-        <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full mb-8 border border-white/20">
-          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-          <span class="text-white/90 text-sm font-medium">2 Million+ People Fed Globally</span>
-        </div>
-
         <!-- Arabic Text -->
         <p class="text-3xl md:text-4xl text-[#D97718] mb-4 font-arabic" style="font-family: 'Amiri', serif;">
           وَالْبُدْنَ جَعَلْنَاهَا لَكُم مِّن شَعَائِرِ اللَّهِ
@@ -816,6 +810,12 @@ const testimonials = [
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
           </svg>
         </a>
+
+        <!-- Trust Badge - positioned below CTA for conversion -->
+        <div class="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
+          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+          <span class="text-white/90 text-sm font-medium">2 Million+ People Fed Globally</span>
+        </div>
       </div>
     </div>
 
@@ -902,7 +902,7 @@ const testimonials = [
                 src={country.image}
                 alt={country.name}
                 class="w-full h-full object-cover"
-                onerror={`this.src='https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80'`}
+                onerror={`this.onerror=null;this.src='https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80'`}
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 

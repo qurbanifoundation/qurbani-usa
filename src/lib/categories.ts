@@ -32,7 +32,8 @@ const fallbackCategories: Category[] = [
   { id: '5', slug: 'education', label: 'Education', color: '#ca8a04', icon: 'education', description: null, is_active: true, show_in_menu: true, sort_order: 5 },
   { id: '6', slug: 'healthcare', label: 'Healthcare', color: '#0b5d3a', icon: 'healthcare', description: null, is_active: true, show_in_menu: true, sort_order: 6 },
   { id: '7', slug: 'sadaqah-jariyah', label: 'Sadaqah Jariyah', color: '#2563eb', icon: 'sadaqah', description: null, is_active: true, show_in_menu: true, sort_order: 7 },
-  { id: '8', slug: 'qurbani', label: 'Qurbani', color: '#525252', icon: 'qurbani', description: null, is_active: true, show_in_menu: true, sort_order: 8 },
+  { id: '8', slug: 'religious-giving', label: 'Religious Giving', color: '#01534d', icon: 'qurbani', description: null, is_active: true, show_in_menu: true, sort_order: 8 },
+  { id: '9', slug: 'aqiqah', label: 'Aqiqah', color: '#7c3aed', icon: 'aqiqah', description: null, is_active: true, show_in_menu: true, sort_order: 9 },
 ];
 
 /**
@@ -138,6 +139,7 @@ export const categoryIcons: Record<string, string> = {
   healthcare: '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>',
   sadaqah: '<path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5z"></path>',
   qurbani: '<path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>',
+  aqiqah: '<path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clip-rule="evenodd"></path><path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z"></path>',
   heart: '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>',
 };
 
