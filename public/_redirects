@@ -1,0 +1,106 @@
+# Cloudflare Pages Redirects
+# Old SiteGround/WordPress URLs -> New Site
+
+# Common WordPress patterns
+/wp-admin/*          /admin 301
+/wp-login.php        /admin 301
+/wp-content/*        / 301
+
+# Old donation/campaign URLs
+/donation/*          /donate 301
+/donations/*         /donate 301
+/give/*              /donate 301
+/checkout/*          /donate 301
+/cart/*              /donate 301
+
+# Qurbani related
+/qurbani-donation*   /qurbani 301
+/udhiyah*            /qurbani 301
+/sacrifice*          /qurbani 301
+/eid-sacrifice*      /qurbani 301
+/eid-ul-adha*        /qurbani 301
+
+# Zakat related
+/zakat-donation*     /zakat 301
+/pay-zakat*          /zakat 301
+/zakat-calculator*   /zakat-calculator 301
+/calculate-zakat*    /zakat-calculator 301
+/zakat-al-fitr*      /zakat-ul-fitr 301
+/fitrana*            /zakat-ul-fitr 301
+
+# Ramadan related
+/ramadan-donation*   /ramadan 301
+/ramadan-appeal*     /ramadan 301
+/iftar-donation*     /iftar 301
+/feed-fasting*       /iftar 301
+/fidyah*             /fidya 301
+/kaffara*            /kaffarah 301
+
+# Orphan sponsorship
+/orphan*             /appeals/sponsor-an-orphan 301
+/sponsor-orphan*     /appeals/sponsor-an-orphan 301
+/child-sponsorship*  /appeals/sponsor-an-orphan 301
+
+# About pages
+/about-us*           /about 301
+/who-we-are*         /about 301
+/our-story*          /about 301
+/our-team*           /team 301
+/staff*              /team 301
+/our-work*           /impact 301
+/our-impact*         /impact 301
+/annual-report*      /reports 301
+
+# Contact
+/contact-us*         /contact 301
+/get-in-touch*       /contact 301
+
+# Legal
+/privacy*            /privacy-policy 301
+/terms*              /terms-of-service 301
+/cookies*            /cookie-policy 301
+
+# Campaigns/Appeals
+/campaign/*          /appeals/:splat 301
+/campaigns/*         /appeals/:splat 301
+/appeal/*            /appeals/:splat 301
+/project/*           /appeals/:splat 301
+/projects/*          /appeals 301
+
+# Food/Emergency
+/food-pack*          /food-packs 301
+/emergency*          /appeals 301
+/crisis*             /appeals 301
+/disaster*           /appeals 301
+/relief*             /appeals 301
+
+# Media
+/gallery*            /media 301
+/photos*             /media 301
+/videos*             /media 301
+/news*               /media 301
+/blog*               /media 301
+
+# Aqiqah
+/aqeeqah*            /appeals/aqiqah 301
+/aqiqa*              /appeals/aqiqah 301
+
+# Sadaqah (general charity)
+/sadaqah*            /donate 301
+/sadaqa*             /donate 301
+/charity*            /donate 301
+/general-donation*   /donate 301
+
+# Water/Wells
+/water*              /appeals 301
+/well*               /appeals 301
+/clean-water*        /appeals 301
+
+# Education
+/education*          /appeals 301
+/school*             /appeals 301
+
+# Healthcare
+/health*             /appeals 301
+/medical*            /appeals 301
+

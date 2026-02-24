@@ -965,6 +965,11 @@ function saveCart() {
 }
 
 window.addToCart = function(item) {
+  // Track add to cart in GA4
+  if (window.trackAddToCart) {
+    window.trackAddToCart(item);
+  }
+
   const existingIndex = window.donationCart.items.findIndex(i => i.id === item.id && i.type === item.type);
   if (existingIndex >= 0) {
     window.donationCart.items[existingIndex].quantity += item.quantity || 1;
@@ -1169,6 +1174,12 @@ function openCheckoutModal() {
   closeCart();
   document.getElementById('checkout-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // Track begin_checkout in GA4
+  if (window.trackBeginCheckout) {
+    const total = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+    window.trackBeginCheckout(window.donationCart.items, total);
+  }
 
   // Reset to step 1
   document.getElementById('modal-step-1').classList.remove('hidden');
@@ -1403,6 +1414,11 @@ async function handlePayment() {
     if (error) throw new Error(error.message);
 
     if (paymentIntent.status === 'succeeded') {
+      // Track purchase in GA4
+      if (window.trackPurchase) {
+        window.trackPurchase(paymentIntent.id, items, total);
+      }
+
       // Show success
       document.getElementById('modal-step-2').classList.add('hidden');
       document.getElementById('modal-success').classList.remove('hidden');

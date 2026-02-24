@@ -34,6 +34,66 @@ const faviconType = adminFavicon
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Analytics 4 -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-0WC0W1PBKC"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-0WC0W1PBKC', {
+        send_page_view: true,
+        cookie_flags: 'SameSite=None;Secure'
+      });
+
+      // E-commerce tracking helper functions
+      window.trackAddToCart = function(item) {
+        gtag('event', 'add_to_cart', {
+          currency: 'USD',
+          value: item.amount * (item.quantity || 1),
+          items: [{
+            item_id: item.id || item.slug,
+            item_name: item.name,
+            item_category: item.campaign || 'donation',
+            price: item.amount,
+            quantity: item.quantity || 1
+          }]
+        });
+      };
+
+      window.trackBeginCheckout = function(items, total) {
+        gtag('event', 'begin_checkout', {
+          currency: 'USD',
+          value: total,
+          items: items.map(function(item) {
+            return {
+              item_id: item.id || item.slug,
+              item_name: item.name,
+              item_category: item.campaign || 'donation',
+              price: item.amount,
+              quantity: item.quantity || 1
+            };
+          })
+        });
+      };
+
+      window.trackPurchase = function(transactionId, items, total) {
+        gtag('event', 'purchase', {
+          transaction_id: transactionId,
+          currency: 'USD',
+          value: total,
+          items: items.map(function(item) {
+            return {
+              item_id: item.id || item.slug,
+              item_name: item.name,
+              item_category: item.campaign || 'donation',
+              price: item.amount,
+              quantity: item.quantity || 1
+            };
+          })
+        });
+      };
+    </script>
     <link rel="icon" type={faviconType} href={faviconHref} />
     <link rel="alternate icon" href="/favicon.ico" />
 

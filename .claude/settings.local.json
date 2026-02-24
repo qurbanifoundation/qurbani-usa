@@ -23,7 +23,15 @@
       "Bash(npx wrangler:*)",
       "Bash(export:*)",
       "Bash(npx supabase:*)",
-      "Bash(CLOUDFLARE_API_TOKEN=dyfQYdXsjNe9U39mKPocWSwsMFFQ9a_ivj5HiCbw npx wrangler:*)"
+      "Bash(CLOUDFLARE_API_TOKEN=dyfQYdXsjNe9U39mKPocWSwsMFFQ9a_ivj5HiCbw npx wrangler:*)",
+      "Bash(npx tsx:*)",
+      "Bash(wrangler:*)",
+      "Bash(CLOUDFLARE_API_TOKEN=Oy2UptkrL2WAx6pPSUnxK0UWUCoWgz_1g9miMUs npx wrangler:*)",
+      "Bash(CLOUDFLARE_API_TOKEN=\"Oy2UptkrL2WAx6pPSUnxK0UWUCoWgz_1g9miMUs-\" npx wrangler pages deploy dist --project-name=qurbani-usa --branch=main --commit-dirty=true)",
+      "Bash(CLOUDFLARE_API_TOKEN=\"Oy2UptkrL2WAx6pPSUnxK0UWUCoWgz_1g9miMUs-\" npx wrangler pages deploy:*)",
+      "WebFetch(domain:qurbani-usa.pages.dev)",
+      "Bash(xargs:*)",
+      "Bash(md5:*)"
     ]
   }
 }
