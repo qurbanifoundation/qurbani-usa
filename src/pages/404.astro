@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Prerender the 404 page for Cloudflare Pages
+export const prerender = true;
+---
+
+<Layout title="Page Not Found - Qurbani Foundation" noindex={true}>
+  <div class="min-h-screen bg-gradient-to-b from-stone-50 to-stone-100 flex items-center justify-center px-4">
+    <div class="text-center max-w-lg">
+      <!-- Logo -->
+      <div class="mb-8">
+        <a href="/">
+          <img src="/images/qurbani-foundation-logo.png" alt="Qurbani Foundation" class="h-16 mx-auto" onerror="this.onerror=null;this.style.display='none';" />
+        </a>
+      </div>
+
+      <!-- Icon -->
+      <div class="w-20 h-20 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-6">
+        <svg class="w-10 h-10 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+      </div>
+
+      <h1 class="text-3xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Page Not Found</h1>
+
+      <p class="text-gray-600 mb-6">
+        The page you're looking for doesn't exist or has been moved.
+        Redirecting you to our homepage...
+      </p>
+
+      <!-- Quick Links -->
+      <div class="mb-8">
+        <p class="text-sm text-gray-500 mb-3">Or visit one of these pages:</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <a href="/donate" class="px-4 py-2 bg-[#d97706] text-white rounded-lg hover:bg-[#b45309] transition text-sm font-medium">
+            Donate Now
+          </a>
+          <a href="/appeals" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+            Our Appeals
+          </a>
+          <a href="/zakat" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+            Zakat
+          </a>
+          <a href="/qurbani" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+            Qurbani
+          </a>
+          <a href="/contact" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+            Contact Us
+          </a>
+        </div>
+      </div>
+
+      <!-- Home Button -->
+      <a href="/" class="inline-flex items-center gap-2 text-[#d97706] hover:text-[#b45309] font-medium transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Go to Homepage Now
+      </a>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Instant redirect to homepage
+    window.location.replace('/');
+  </script>
+</Layout>
