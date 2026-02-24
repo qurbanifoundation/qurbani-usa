@@ -118,6 +118,29 @@ try {
   }
 </style>
 
+<!-- ==================== CART REMINDER POPUP ==================== -->
+<div id="cart-reminder" class="fixed bottom-6 left-6 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-[99] hidden max-w-xs transform transition-all duration-300 translate-y-4 opacity-0">
+  <button id="close-cart-reminder" class="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 transition" aria-label="Close reminder">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+  <div class="flex items-start gap-3">
+    <div class="flex-shrink-0">
+      <svg class="w-10 h-10 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+      </svg>
+    </div>
+    <div class="flex-1 pr-4">
+      <h4 class="font-bold text-gray-800 text-sm" style="font-family: 'Signika', sans-serif;">Make a difference!</h4>
+      <p class="text-gray-600 text-xs mt-1">Finish your <strong id="reminder-amount" class="text-[#d97706]">$0</strong> gift to create an impact today.</p>
+    </div>
+  </div>
+  <button id="reminder-give-btn" class="mt-3 w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-2 px-4 rounded-lg text-sm transition">
+    Give Now
+  </button>
+</div>
+
 <!-- ==================== SIDECART ==================== -->
 <div id="cart-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden opacity-0 transition-opacity duration-300"></div>
 
@@ -769,6 +792,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('close-cart').addEventListener('click', closeCart);
   document.getElementById('cart-overlay').addEventListener('click', closeCart);
   document.getElementById('proceed-checkout-btn').addEventListener('click', openCheckoutModal);
+
+  // Cart Reminder Popup Event Listeners
+  document.getElementById('close-cart-reminder')?.addEventListener('click', hideCartReminder);
+  document.getElementById('reminder-give-btn')?.addEventListener('click', () => {
+    hideCartReminder();
+    openCart();
+  });
   document.getElementById('close-checkout-modal').addEventListener('click', closeCheckoutModal);
   document.getElementById('modal-continue-btn').addEventListener('click', goToPaymentStep);
   document.getElementById('modal-back-btn').addEventListener('click', goToInfoStep);
@@ -1034,6 +1064,59 @@ function updateCartUI() {
 
   // Dispatch event so Navbar can update its cart display
   window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+  // Update cart reminder popup
+  updateCartReminder();
+}
+
+// Cart Reminder Popup Logic
+let reminderTimeout = null;
+let reminderDismissed = false;
+
+function updateCartReminder() {
+  const reminder = document.getElementById('cart-reminder');
+  const reminderAmount = document.getElementById('reminder-amount');
+  if (!reminder || !reminderAmount) return;
+
+  const items = window.donationCart.items;
+  const total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+
+  // Update the amount display
+  reminderAmount.textContent = '$' + total.toFixed(0);
+
+  // Clear any existing timeout
+  if (reminderTimeout) {
+    clearTimeout(reminderTimeout);
+    reminderTimeout = null;
+  }
+
+  // Show reminder if cart has items, cart is closed, and not dismissed
+  if (items.length > 0 && !window.donationCart.isOpen && !reminderDismissed) {
+    // Show after 5 seconds of inactivity
+    reminderTimeout = setTimeout(() => {
+      reminder.classList.remove('hidden');
+      setTimeout(() => {
+        reminder.classList.remove('translate-y-4', 'opacity-0');
+      }, 10);
+    }, 5000);
+  } else {
+    // Hide the reminder
+    reminder.classList.add('translate-y-4', 'opacity-0');
+    setTimeout(() => {
+      reminder.classList.add('hidden');
+    }, 300);
+  }
+}
+
+function hideCartReminder() {
+  const reminder = document.getElementById('cart-reminder');
+  if (reminder) {
+    reminder.classList.add('translate-y-4', 'opacity-0');
+    setTimeout(() => {
+      reminder.classList.add('hidden');
+    }, 300);
+  }
+  reminderDismissed = true;
 }
 
 // Open/Close Cart

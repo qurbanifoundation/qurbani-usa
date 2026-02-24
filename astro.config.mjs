@@ -10,5 +10,9 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
 
+  devToolbar: {
+    enabled: false
+  },
+
   adapter: cloudflare()
 });
