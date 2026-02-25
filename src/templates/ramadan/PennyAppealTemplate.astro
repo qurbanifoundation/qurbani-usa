@@ -1,0 +1,2180 @@
+---
+/**
+ * 30 Days of Ramadan - PennyAppeal Style Template
+ * Spread your Sadaqah across every night of Ramadan automatically
+ */
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout title="30 Days of Ramadan - Automate Your Daily Giving | Qurbani USA" description="Spread your Sadaqah across all 30 nights of Ramadan. Set it once, and we'll donate on your behalf every night after Maghrib.">
+  <Navbar />
+
+  <style>
+    /* Wizard step visibility */
+    .wizard-step.hidden {
+      display: none !important;
+    }
+
+    /* Timezone dropdown styles */
+    #timezone-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    #timezone-dropdown::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    #timezone-dropdown::-webkit-scrollbar-thumb {
+      background: #024139;
+      border-radius: 3px;
+    }
+    #timezone-dropdown .timezone-option:first-child {
+      border-radius: 0.75rem 0.75rem 0 0;
+    }
+    #timezone-dropdown .timezone-option:last-child {
+      border-radius: 0 0 0.75rem 0.75rem;
+    }
+
+    /* Selection styles for visual tiles */
+    .schedule-option input:checked + .schedule-card {
+      border-color: #024139;
+      background-color: rgba(2, 65, 57, 0.1);
+      box-shadow: 0 0 0 2px rgba(2, 65, 57, 0.2);
+    }
+    .multiplier-option input:checked + .multiplier-pill {
+      border-color: #024139;
+      background-color: rgba(2, 65, 57, 0.1);
+      box-shadow: 0 0 0 2px rgba(2, 65, 57, 0.2);
+    }
+    .multiplier-option input:checked + .multiplier-pill span:first-child {
+      color: #024139;
+    }
+    .night27-option input:checked + .night27-card {
+      border-color: #024139;
+      background-color: rgba(2, 65, 57, 0.1);
+      box-shadow: 0 0 0 2px rgba(2, 65, 57, 0.2);
+    }
+  </style>
+
+  <!-- Hero Section -->
+  <section class="relative pt-32 pb-6 overflow-hidden">
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[#01201c] via-[#022e27] to-[#011a15]"></div>
+    <!-- Stars pattern -->
+    <div class="absolute inset-0 opacity-30" style="background-image: url('data:image/svg+xml,%3Csvg width=\"100\" height=\"100\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.3\"%3E%3Ccircle cx=\"10\" cy=\"10\" r=\"1\"/%3E%3Ccircle cx=\"30\" cy=\"50\" r=\"0.5\"/%3E%3Ccircle cx=\"70\" cy=\"20\" r=\"1\"/%3E%3Ccircle cx=\"90\" cy=\"80\" r=\"0.5\"/%3E%3Ccircle cx=\"50\" cy=\"90\" r=\"1\"/%3E%3Ccircle cx=\"20\" cy=\"70\" r=\"0.5\"/%3E%3Ccircle cx=\"80\" cy=\"40\" r=\"1\"/%3E%3Ccircle cx=\"40\" cy=\"30\" r=\"0.5\"/%3E%3Ccircle cx=\"60\" cy=\"60\" r=\"1\"/%3E%3C/g%3E%3C/svg%3E');"></div>
+    <!-- Crescent moon -->
+    <div class="absolute top-20 right-10 md:right-20 w-24 h-24 md:w-32 md:h-32 opacity-20">
+      <svg viewBox="0 0 100 100" fill="currentColor" class="text-yellow-300">
+        <path d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50c8.5 0 16.5-2.1 23.5-5.9C60.3 85.7 50 70.5 50 53c0-17.5 10.3-32.7 23.5-41.1C66.5 2.1 58.5 0 50 0z"/>
+      </svg>
+    </div>
+
+    <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 text-center" style="font-family: 'Signika', sans-serif;">
+          30 Days of <span class="text-yellow-300">Ramadan</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-white/80 mb-4 leading-relaxed text-center" style="font-family: 'Lato', sans-serif;">
+          Automate your Sadaqah across every blessed night of Ramadan. Set it once, and we'll donate on your behalf every night after Maghrib.
+        </p>
+
+        <div class="flex items-center justify-center gap-4 sm:gap-8 md:gap-16 mt-8 mb-4 px-2">
+          <div class="text-center">
+            <p class="text-3xl sm:text-5xl md:text-6xl font-bold text-yellow-300 drop-shadow-lg" style="font-family: 'Signika', sans-serif;">30</p>
+            <p class="text-yellow-100 text-xs sm:text-base md:text-lg font-semibold mt-1 sm:mt-2">Blessed Nights</p>
+          </div>
+          <div class="w-px h-12 sm:h-20 bg-yellow-300/50"></div>
+          <div class="text-center">
+            <p class="text-3xl sm:text-5xl md:text-6xl font-bold text-yellow-300 drop-shadow-lg" style="font-family: 'Signika', sans-serif;">8</p>
+            <p class="text-yellow-100 text-xs sm:text-base md:text-lg font-semibold mt-1 sm:mt-2">Causes</p>
+          </div>
+          <div class="w-px h-12 sm:h-20 bg-yellow-300/50"></div>
+          <div class="text-center">
+            <p class="text-3xl sm:text-5xl md:text-6xl font-bold text-yellow-300 drop-shadow-lg" style="font-family: 'Signika', sans-serif;">100%</p>
+            <p class="text-yellow-100 text-xs sm:text-base md:text-lg font-semibold mt-1 sm:mt-2">Donation Policy</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      </section>
+
+  <!-- Step Progress Indicator -->
+  <section class="py-6 bg-white sticky top-0 z-40 border-b border-gray-100 shadow-sm">
+    <div class="max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between">
+        <!-- Step 1 -->
+        <button type="button" class="step-indicator flex-1 flex flex-col items-center gap-1 cursor-pointer" data-step="1">
+          <div class="step-circle w-10 h-10 bg-[#024139] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all" id="step-circle-1">1</div>
+          <span class="text-xs font-medium text-[#024139] hidden sm:block">Choose Causes</span>
+        </button>
+
+        <!-- Line -->
+        <div class="flex-1 h-1 bg-gray-200 mx-2 rounded-full max-w-[80px]">
+          <div class="step-progress-1 h-full bg-[#024139] rounded-full transition-all" style="width: 0%"></div>
+        </div>
+
+        <!-- Step 2 -->
+        <button type="button" class="step-indicator flex-1 flex flex-col items-center gap-1 cursor-pointer" data-step="2">
+          <div class="step-circle w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold text-sm transition-all" id="step-circle-2">2</div>
+          <span class="text-xs font-medium text-gray-500 hidden sm:block">Schedule & Boost</span>
+        </button>
+
+        <!-- Line -->
+        <div class="flex-1 h-1 bg-gray-200 mx-2 rounded-full max-w-[80px]">
+          <div class="step-progress-2 h-full bg-[#024139] rounded-full transition-all" style="width: 0%"></div>
+        </div>
+
+        <!-- Step 3 -->
+        <button type="button" class="step-indicator flex-1 flex flex-col items-center gap-1 cursor-pointer" data-step="3">
+          <div class="step-circle w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold text-sm transition-all" id="step-circle-3">3</div>
+          <span class="text-xs font-medium text-gray-500 hidden sm:block">Review & Confirm</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Configuration Section -->
+  <section class="py-8 bg-gray-50 min-h-[60vh]">
+    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- STEP 1: Choose Causes -->
+      <div id="wizard-step-1" class="wizard-step">
+        <div class="text-center mb-6">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">
+            Choose Your <span class="text-[#024139]">Causes</span>
+          </h2>
+          <p class="text-gray-600">Set how much you'd like to donate to each cause per night</p>
+        </div>
+
+      <!-- Settings Info -->
+      <div class="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-6">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Configure Your Settings</h3>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Ramadan Start Date -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Ramadan Start Date</label>
+            <select id="ramadan-start" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none transition text-sm">
+              <option value="2026-02-17">February 17, 2026 (Expected)</option>
+              <option value="2026-02-18">February 18, 2026</option>
+              <option value="2026-02-19">February 19, 2026</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Based on moon sighting</p>
+          </div>
+
+          <!-- Timezone -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Your Timezone</label>
+            <div class="relative">
+              <input
+                type="text"
+                id="timezone-search"
+                placeholder="Search your city or timezone..."
+                class="w-full pl-4 pr-32 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none transition text-sm"
+                autocomplete="off"
+              />
+              <!-- Time display inside input -->
+              <div class="absolute right-10 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-sm text-gray-500 pointer-events-none">
+                <span id="timezone-display" class="font-medium">ET</span>
+                <span>•</span>
+                <span id="current-time">--:--</span>
+              </div>
+              <!-- Clear/Search button -->
+              <button type="button" id="timezone-clear-btn" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition hidden">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <svg id="timezone-search-icon" class="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <div id="timezone-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                <!-- Timezone options will be populated by JavaScript -->
+              </div>
+            </div>
+            <input type="hidden" id="timezone" value="America/New_York" />
+            <p class="text-xs text-gray-500 mt-1">
+              <span id="ramadan-night-status" class="text-[#024139] font-medium">Night 5 of Ramadan</span> • Donations process after Maghrib
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Select Causes -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-[#024139] rounded-full flex items-center justify-center text-white font-bold">1</div>
+          <h3 class="text-2xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Select Causes & Daily Amounts</h3>
+        </div>
+
+        <p class="text-gray-600 mb-4">Set how much you'd like to donate to each cause per night. Leave at $0 to skip a cause.</p>
+
+        <!-- Quick Set All - Moved to top for easy access -->
+        <div class="mb-6 p-4 bg-[#198F6F]/10 rounded-xl border-2 border-[#198F6F]/30">
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm font-bold text-gray-700">Quick Set:</span>
+            <div class="flex flex-wrap gap-2">
+              <button class="quick-set-btn px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#198F6F]/10 transition text-sm font-medium" data-amount="1">$1/each</button>
+              <button class="quick-set-btn px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#198F6F]/10 transition text-sm font-medium" data-amount="5">$5/each</button>
+              <button class="quick-set-btn px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#198F6F]/10 transition text-sm font-medium" data-amount="10">$10/each</button>
+              <button class="quick-set-btn px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#198F6F]/10 transition text-sm font-medium" data-amount="25">$25/each</button>
+              <button class="quick-set-btn px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#024139] hover:bg-[#198F6F]/10 transition text-sm font-medium" data-amount="50">$50/each</button>
+              <button class="quick-set-btn px-4 py-2 bg-red-50 border border-red-200 rounded-lg hover:border-red-400 hover:bg-red-100 transition text-sm font-medium text-red-600" data-amount="0">Clear All</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-3">
+          <!-- Gaza Emergency -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="gaza">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Gaza Emergency</h4>
+                <p class="text-xs text-gray-500 truncate">Food, water, medicine & shelter</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="gaza" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Feed the Fasting -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="iftar">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Feed the Fasting</h4>
+                <p class="text-xs text-gray-500 truncate">Daily iftar meals worldwide</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="iftar" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Zakat Fund -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="zakat">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Zakat Fund</h4>
+                <p class="text-xs text-gray-500">100% Zakat policy <span class="inline-block bg-[#024139]/10 text-[#024139] text-[10px] px-1.5 py-0.5 rounded ml-1">Zakat</span></p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="zakat" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Water Fund -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="water">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Water Fund</h4>
+                <p class="text-xs text-gray-500 truncate">Build wells & water systems</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="water" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Orphan Sponsorship -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="orphan">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Orphan Sponsorship</h4>
+                <p class="text-xs text-gray-500">Food, shelter & education <span class="inline-block bg-[#024139]/10 text-[#024139] text-[10px] px-1.5 py-0.5 rounded ml-1">Zakat</span></p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="orphan" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Medical Aid -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="medical">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Medical Aid</h4>
+                <p class="text-xs text-gray-500">Clinics, medicine & surgeries <span class="inline-block bg-[#024139]/10 text-[#024139] text-[10px] px-1.5 py-0.5 rounded ml-1">Zakat</span></p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="medical" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Sadaqah Jariyah -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="sadaqah">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Sadaqah Jariyah</h4>
+                <p class="text-xs text-gray-500 truncate">Mosques, wells & schools</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="sadaqah" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Where Most Needed -->
+          <div class="cause-card border border-gray-200 rounded-xl p-3 md:p-4 hover:border-[#024139] hover:bg-[#024139]/5 transition cursor-pointer" data-cause="general">
+            <div class="flex items-center gap-2 md:gap-4">
+              <div class="w-9 h-9 md:w-11 md:h-11 bg-[#024139] rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-semibold text-[#024139] text-sm" style="font-family: 'Signika', sans-serif;">Where Most Needed</h4>
+                <p class="text-xs text-gray-500 truncate">We allocate to urgent needs</p>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <span class="text-gray-400 text-sm">$</span>
+                <input type="number" min="0" value="0" class="cause-amount w-14 md:w-16 px-1 md:px-2 py-1.5 border border-gray-200 rounded-lg text-center font-bold text-sm focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none" data-cause="general" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+        <!-- Running Total for Step 1 -->
+        <div class="mt-6 bg-[#024139]/5 rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-600">Daily giving amount:</p>
+          <p class="text-2xl font-bold text-[#024139]" id="step1-daily-total">$0</p>
+        </div>
+
+        <!-- Step 1 Navigation -->
+        <div class="flex justify-end items-center gap-4 mt-6">
+          <p id="step1-error" class="hidden text-red-600 text-sm font-medium">Please select at least $1 for one or more causes to continue.</p>
+          <button type="button" id="step1-next" class="flex items-center gap-2 bg-[#024139] hover:bg-[#012820] text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-[1.02] shadow-lg" style="font-family: 'Signika', sans-serif;">
+            Continue to Schedule
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+      <!-- END STEP 1 -->
+
+      <!-- STEP 2: Schedule & Boost -->
+      <div id="wizard-step-2" class="wizard-step" style="display: none;">
+        <div class="text-center mb-6">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">
+            Schedule & <span class="text-[#024139]">Boost</span>
+          </h2>
+          <p class="text-gray-600">Choose when to give and multiply rewards on special nights</p>
+        </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+
+        <div class="bg-gradient-to-r from-[#01201c] to-[#011a15] rounded-xl p-5 text-white mb-6">
+          <div class="flex items-center gap-3 mb-2">
+            <svg class="w-7 h-7 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+            </svg>
+            <h4 class="text-lg font-bold" style="font-family: 'Signika', sans-serif;">Laylatul Qadr - Better Than 1000 Months</h4>
+          </div>
+          <p class="text-white/80 text-sm">
+            "The Night of Decree is better than a thousand months." (Quran 97:3) Maximize your rewards by increasing your giving on the blessed odd nights.
+          </p>
+        </div>
+
+        <!-- Giving Schedule - Visual Cards -->
+        <div class="mb-8">
+          <label class="block text-sm font-semibold text-gray-700 mb-3">Choose Your Giving Schedule</label>
+          <div class="grid md:grid-cols-3 gap-4">
+            <label class="schedule-option cursor-pointer">
+              <input type="radio" name="schedule" value="all-30" class="sr-only" checked />
+              <div class="schedule-card border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-[#024139] hover:bg-[#024139]/5 relative">
+                <div class="absolute -top-2 -right-2 bg-[#024139] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">RECOMMENDED</div>
+                <div class="w-12 h-12 bg-[#024139]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <p class="font-bold text-gray-800 text-lg" id="schedule-all30-label">All 30 Nights</p>
+                <p class="text-sm text-gray-500 mt-1" id="schedule-all30-sub">Give every night</p>
+                <div class="mt-2">
+                  <span class="inline-block bg-[#024139]/10 text-[#024139] text-[10px] font-bold px-2 py-1 rounded-full" id="schedule-all30-tag">MAXIMUM BLESSINGS</span>
+                </div>
+              </div>
+            </label>
+            <label class="schedule-option cursor-pointer">
+              <input type="radio" name="schedule" value="last-10" class="sr-only" />
+              <div class="schedule-card border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-[#024139] hover:bg-[#024139]/5 relative">
+                <div class="w-12 h-12 bg-[#024139]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6 text-[#024139]" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                </div>
+                <p class="font-bold text-gray-800 text-lg" id="schedule-last10-label">Last 10 Nights</p>
+                <p class="text-sm text-gray-500 mt-1" id="schedule-last10-sub">Laylatul Qadr</p>
+                <div class="mt-2">
+                  <span class="inline-block bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full">SEEK LAYLATUL QADR</span>
+                </div>
+              </div>
+            </label>
+            <label class="schedule-option cursor-pointer">
+              <input type="radio" name="schedule" value="odd-nights" class="sr-only" />
+              <div class="schedule-card border-2 border-gray-200 rounded-xl p-4 text-center transition hover:border-[#024139] hover:bg-[#024139]/5 relative">
+                <div class="w-12 h-12 bg-[#024139]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                  </svg>
+                </div>
+                <p class="font-bold text-gray-800 text-lg" id="schedule-odd-label">Odd Nights Only</p>
+                <p class="text-sm text-gray-500 mt-1" id="schedule-odd-sub">Special nights</p>
+                <div class="mt-2">
+                  <span class="inline-block bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded-full" id="schedule-odd-tag">15 BLESSED NIGHTS</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Odd Nights Multiplier - Pill Buttons -->
+        <div class="mb-8">
+          <label class="block text-sm font-semibold text-gray-700 mb-3">Boost Your Odd Nights (21, 23, 25, 27, 29)</label>
+          <div class="flex flex-wrap gap-3">
+            <label class="multiplier-option cursor-pointer">
+              <input type="radio" name="odd-multiplier" value="1" class="sr-only" />
+              <div class="multiplier-pill px-5 py-3 border-2 border-gray-200 rounded-full text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-700">1x</span>
+                <span class="text-xs text-gray-500 block">No boost</span>
+              </div>
+            </label>
+            <label class="multiplier-option cursor-pointer">
+              <input type="radio" name="odd-multiplier" value="2" class="sr-only" />
+              <div class="multiplier-pill px-5 py-3 border-2 border-gray-200 rounded-full text-center transition hover:border-[#024139] hover:bg-[#024139]/5 relative">
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#198F6F] text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">POPULAR</div>
+                <span class="font-bold text-gray-700">2x</span>
+                <span class="text-xs text-gray-500 block">Double</span>
+              </div>
+            </label>
+            <label class="multiplier-option cursor-pointer">
+              <input type="radio" name="odd-multiplier" value="3" class="sr-only" />
+              <div class="multiplier-pill px-5 py-3 border-2 border-gray-200 rounded-full text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-700">3x</span>
+                <span class="text-xs text-gray-500 block">Triple</span>
+              </div>
+            </label>
+            <label class="multiplier-option cursor-pointer">
+              <input type="radio" name="odd-multiplier" value="5" class="sr-only" />
+              <div class="multiplier-pill px-5 py-3 border-2 border-gray-200 rounded-full text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-700">5x</span>
+                <span class="text-xs text-gray-500 block">5 times</span>
+              </div>
+            </label>
+            <label class="multiplier-option cursor-pointer">
+              <input type="radio" name="odd-multiplier" value="10" class="sr-only" />
+              <div class="multiplier-pill px-5 py-3 border-2 border-gray-200 rounded-full text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-700">10x</span>
+                <span class="text-xs text-gray-500 block">Maximum</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 27th Night Special Boost - Upsell Cards -->
+        <div class="mb-6">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">27th Night Special Boost</label>
+          <p class="text-xs text-gray-500 mb-3">Many scholars believe this is Laylatul Qadr - better than 1000 months!</p>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <label class="night27-option cursor-pointer">
+              <input type="radio" name="night27-multiplier" value="1" class="sr-only" />
+              <div class="night27-card border-2 border-gray-200 rounded-xl p-3 text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-600 text-lg">1x</span>
+                <span class="text-xs text-gray-500 block">Same as odd</span>
+              </div>
+            </label>
+            <label class="night27-option cursor-pointer">
+              <input type="radio" name="night27-multiplier" value="3" class="sr-only" />
+              <div class="night27-card border-2 border-gray-200 rounded-xl p-3 text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-700 text-lg">3x</span>
+                <span class="text-xs text-gray-500 block">Triple</span>
+              </div>
+            </label>
+            <label class="night27-option cursor-pointer">
+              <input type="radio" name="night27-multiplier" value="5" class="sr-only" />
+              <div class="night27-card border-2 border-gray-200 rounded-xl p-3 text-center transition hover:border-[#024139] hover:bg-[#024139]/5 relative">
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style="background-color: #E1861D;">MOST CHOSEN</div>
+                <span class="font-bold text-[#024139] text-lg">5x</span>
+                <span class="text-xs text-gray-500 block">5 times</span>
+              </div>
+            </label>
+            <label class="night27-option cursor-pointer">
+              <input type="radio" name="night27-multiplier" value="10" class="sr-only" />
+              <div class="night27-card border-2 border-gray-200 rounded-xl p-3 text-center transition hover:border-[#024139] hover:bg-[#024139]/5">
+                <span class="font-bold text-gray-700 text-lg">10x</span>
+                <span class="text-xs text-gray-500 block">10 times</span>
+              </div>
+            </label>
+            <label class="night27-option cursor-pointer">
+              <input type="radio" name="night27-multiplier" value="20" class="sr-only" />
+              <div class="night27-card border-2 border-gray-200 rounded-xl p-3 text-center transition hover:border-[#024139] hover:bg-[#024139]/5 relative">
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style="background-color: #991B1B;">MAX IMPACT</div>
+                <span class="font-bold text-gray-700 text-lg">20x</span>
+                <span class="text-xs text-gray-500 block">20 times</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+        <!-- Running Total for Step 2 -->
+        <div class="mt-6 bg-[#024139]/5 rounded-xl p-4 text-center">
+          <p class="text-sm text-gray-600">Estimated Ramadan total:</p>
+          <p class="text-2xl font-bold text-[#024139]" id="step2-total">$0</p>
+          <p class="text-xs text-gray-500 mt-1" id="step2-per-night"></p>
+        </div>
+
+        <!-- Step 2 Navigation -->
+        <div class="flex justify-between items-center mt-6">
+          <button type="button" id="step2-back" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-medium px-4 py-3 rounded-xl transition-all hover:bg-gray-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back
+          </button>
+          <button type="button" id="step2-next" class="flex items-center gap-2 bg-[#024139] hover:bg-[#012820] text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-[1.02] shadow-lg" style="font-family: 'Signika', sans-serif;">
+            Review Your Schedule
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+      <!-- END STEP 2 -->
+
+      <!-- STEP 3: Review & Confirm -->
+      <div id="wizard-step-3" class="wizard-step" style="display: none;">
+        <div class="text-center mb-6">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">
+            Review Your <span class="text-[#024139]">Schedule</span>
+          </h2>
+          <p class="text-gray-600">See your complete Ramadan giving plan</p>
+        </div>
+
+        <!-- 30-Night Schedule Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Your 30-Night Schedule</h4>
+            <button id="toggle-calendar" class="text-[#024139] text-sm font-medium hover:underline flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+              View/Edit Calendar
+            </button>
+          </div>
+
+          <p class="text-gray-600 mb-4 text-sm">Preview your automated giving schedule. Click any night to customize its amount.</p>
+
+          <!-- Legend -->
+          <div class="flex flex-wrap gap-4 mb-4 text-sm">
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 bg-gray-100 rounded"></div>
+              <span class="text-gray-600">Regular Night</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 bg-[#198F6F]/20 rounded"></div>
+              <span class="text-gray-600">Odd Night (Boosted)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 bg-yellow-100 rounded border-2 border-yellow-400"></div>
+              <span class="text-gray-600">27th Night (Laylatul Qadr)</span>
+            </div>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div id="nights-calendar" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
+            <!-- Nights will be populated by JavaScript -->
+          </div>
+
+          <!-- Calendar note -->
+          <div class="mt-4 p-3 bg-blue-50 rounded-xl flex items-start gap-3">
+            <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+            <p class="text-sm text-blue-800">
+              <strong>Donations process after Maghrib</strong> each night in your selected timezone.
+            </p>
+          </div>
+        </div>
+
+      <!-- Summary & Checkout -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <h3 class="text-xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">Your Ramadan Summary</h3>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Breakdown -->
+          <div>
+            <h4 class="font-bold text-gray-700 mb-4">Donation Breakdown</h4>
+            <div id="breakdown-list" class="space-y-2 mb-6">
+              <p class="text-gray-500 text-sm italic">Select causes above to see breakdown</p>
+            </div>
+
+            <div class="border-t pt-4 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Regular nights (20 nights)</span>
+                <span class="font-medium" id="regular-total">$0.00</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Odd nights boost (5 nights)</span>
+                <span class="font-medium text-[#024139]" id="odd-total">+$0.00</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">27th night special</span>
+                <span class="font-medium text-yellow-600" id="night27-total">+$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total & CTA -->
+          <div class="bg-gradient-to-br from-[#024139] to-[#012820] rounded-2xl p-6 text-white">
+            <div class="text-center mb-6">
+              <p class="text-white/70 text-sm mb-1">Total Ramadan Giving</p>
+              <p class="text-5xl font-bold" id="grand-total" style="font-family: 'Signika', sans-serif;">$0.00</p>
+              <p class="text-white/70 text-sm mt-2" id="schedule-summary">30 nights of automated giving</p>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 text-sm text-white/80">
+                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Donations processed after Maghrib daily
+              </div>
+              <div class="flex items-center gap-2 text-sm text-white/80">
+                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                100% Zakat policy on eligible funds
+              </div>
+              <div class="flex items-center gap-2 text-sm text-white/80">
+                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Cancel anytime before Ramadan
+              </div>
+            </div>
+
+            <button
+              id="automate-btn"
+              class="w-full mt-6 bg-[#FF2D2D] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] hover:shadow-lg hover:bg-[#E61919] flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(255,45,45,0.4)]"
+              style="font-family: 'Signika', sans-serif;"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              <span id="automate-btn-text">Automate My Ramadan Giving</span>
+            </button>
+
+            <p class="text-center text-xs text-white/60 mt-4">
+              You'll be charged once at the start of Ramadan
+            </p>
+          </div>
+        </div>
+      </div>
+
+        <!-- Step 3 Navigation -->
+        <div class="flex justify-start mt-6">
+          <button type="button" id="step3-back" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 font-medium px-4 py-3 rounded-xl transition-all hover:bg-gray-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Schedule
+          </button>
+        </div>
+
+      </div>
+      <!-- END STEP 3 -->
+
+    </div>
+  </section>
+
+  <!-- Why Automate Section -->
+  <section class="py-16 bg-white">
+    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Why <span class="text-[#024139]">Automate</span> Your Giving?
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-6">
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#198F6F]/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Never Miss a Night</h3>
+          <p class="text-gray-600 text-sm">We donate on your behalf every single night, so you're always earning rewards.</p>
+        </div>
+
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#198F6F]/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+            </svg>
+          </div>
+          <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Catch Laylatul Qadr</h3>
+          <p class="text-gray-600 text-sm">With boosted giving on odd nights, you're guaranteed to catch the Night of Power.</p>
+        </div>
+
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#198F6F]/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Focus on Ibadah</h3>
+          <p class="text-gray-600 text-sm">Spend Ramadan in prayer and reflection, knowing your charity is handled.</p>
+        </div>
+
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-[#198F6F]/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Maximize Impact</h3>
+          <p class="text-gray-600 text-sm">Consistent daily giving helps us plan and deliver aid more effectively.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hadith Section -->
+  <section class="py-12 bg-gradient-to-br from-[#01201c] to-[#011a15]">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <svg class="w-12 h-12 text-yellow-300 mx-auto mb-6" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+      </svg>
+      <blockquote class="text-2xl md:text-3xl text-white italic mb-4" style="font-family: 'Playfair Display', serif;">
+        "The most beloved deed to Allah is the most regular and constant even if it were little."
+      </blockquote>
+      <p class="text-white/70" style="font-family: 'Lato', sans-serif;">- Prophet Muhammad ﷺ (Sahih Bukhari)</p>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Frequently Asked Questions
+        </h2>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm">
+          <button class="faq-toggle w-full px-6 py-4 text-left flex justify-between items-center">
+            <span class="font-bold text-gray-800">When will my card be charged?</span>
+            <svg class="w-5 h-5 text-gray-500 faq-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="faq-content hidden px-6 pb-4 text-gray-600">
+            Your card will be charged once at the beginning of Ramadan for the full amount. We then distribute your donation across each night on your behalf, processing after Maghrib prayer time in your timezone.
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm">
+          <button class="faq-toggle w-full px-6 py-4 text-left flex justify-between items-center">
+            <span class="font-bold text-gray-800">Can I cancel or modify my automated giving?</span>
+            <svg class="w-5 h-5 text-gray-500 faq-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="faq-content hidden px-6 pb-4 text-gray-600">
+            Yes! You can cancel or modify your giving anytime before Ramadan begins. Once Ramadan starts and your payment is processed, donations will be distributed as scheduled.
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm">
+          <button class="faq-toggle w-full px-6 py-4 text-left flex justify-between items-center">
+            <span class="font-bold text-gray-800">How do you determine Maghrib time?</span>
+            <svg class="w-5 h-5 text-gray-500 faq-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="faq-content hidden px-6 pb-4 text-gray-600">
+            We use Islamic prayer time calculations based on your selected timezone. Donations are processed shortly after Maghrib each night, ensuring your Sadaqah is given at the optimal time.
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm">
+          <button class="faq-toggle w-full px-6 py-4 text-left flex justify-between items-center">
+            <span class="font-bold text-gray-800">Is my Zakat donation 100% distributed?</span>
+            <svg class="w-5 h-5 text-gray-500 faq-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="faq-content hidden px-6 pb-4 text-gray-600">
+            Yes! We maintain a strict 100% Zakat policy. All Zakat funds go directly to eligible recipients. Administrative costs are covered by separate Sadaqah donations.
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm">
+          <button class="faq-toggle w-full px-6 py-4 text-left flex justify-between items-center">
+            <span class="font-bold text-gray-800">Will I receive donation receipts?</span>
+            <svg class="w-5 h-5 text-gray-500 faq-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="faq-content hidden px-6 pb-4 text-gray-600">
+            Absolutely! You'll receive a confirmation email when your payment is processed, and a detailed tax receipt at the end of Ramadan showing all your donations by cause and date.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-br from-[#024139] to-[#012820] relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Don't Miss a Single Blessed Night
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        Set up your automated giving today and enter Ramadan with peace of mind, knowing your charity is taken care of every single night.
+      </p>
+      <a
+        href="#"
+        onclick="document.querySelector('.cause-amount').focus(); return false;"
+        class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#024139] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+        style="font-family: 'Signika', sans-serif;"
+      >
+        Start Configuring Now
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Checkout Modal -->
+  <div id="checkout-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="modal-backdrop"></div>
+    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-[#024139] to-[#012820] p-6 rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-bold text-white" style="font-family: 'Signika', sans-serif;">Complete Your Setup</h3>
+              <p class="text-white/80 text-sm">30 Days of Ramadan Automated Giving</p>
+            </div>
+            <button id="close-modal" class="text-white/80 hover:text-white p-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="checkout-form" class="p-6">
+          <!-- Summary -->
+          <div class="bg-gray-50 rounded-xl p-4 mb-6">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Total Amount</span>
+              <span class="text-2xl font-bold text-[#024139]" id="modal-total">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Your Details -->
+          <h4 class="font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Your Details</h4>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                <input type="text" name="first_name" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none transition" placeholder="First Name" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                <input type="text" name="last_name" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none transition" placeholder="Last Name" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+              <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none transition" placeholder="your@email.com" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input type="tel" name="phone" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#024139] focus:border-[#024139] outline-none transition" placeholder="(555) 555-5555" />
+            </div>
+          </div>
+
+          <!-- Payment Info Note -->
+          <div class="mt-6 p-4 bg-blue-50 rounded-xl flex items-start gap-3">
+            <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+            <p class="text-sm text-blue-800">
+              <strong>Secure Payment:</strong> You'll be redirected to our secure payment page to complete your donation.
+            </p>
+          </div>
+
+          <!-- Hidden fields to store configuration -->
+          <input type="hidden" name="total_amount" id="form-total-amount" />
+          <input type="hidden" name="causes" id="form-causes" />
+          <input type="hidden" name="schedule_type" id="form-schedule-type" />
+          <input type="hidden" name="odd_multiplier" id="form-odd-multiplier" />
+          <input type="hidden" name="night27_multiplier" id="form-night27-multiplier" />
+          <input type="hidden" name="ramadan_start" id="form-ramadan-start" />
+          <input type="hidden" name="timezone" id="form-timezone" />
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full mt-6 bg-[#024139] text-white font-bold py-4 rounded-xl transition-all hover:bg-[#013028] flex items-center justify-center gap-2"
+            style="font-family: 'Signika', sans-serif;"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            Complete Setup & Pay
+          </button>
+
+          <p class="text-center text-xs text-gray-500 mt-4">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ===== WIZARD NAVIGATION =====
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    const wizardSteps = {
+      1: document.getElementById('wizard-step-1'),
+      2: document.getElementById('wizard-step-2'),
+      3: document.getElementById('wizard-step-3'),
+    };
+
+    const stepCircles = {
+      1: document.getElementById('step-circle-1'),
+      2: document.getElementById('step-circle-2'),
+      3: document.getElementById('step-circle-3'),
+    };
+
+    const step1Next = document.getElementById('step1-next');
+    const step2Back = document.getElementById('step2-back');
+    const step2Next = document.getElementById('step2-next');
+    const step3Back = document.getElementById('step3-back');
+    const step1DailyTotal = document.getElementById('step1-daily-total');
+
+    function goToStep(step: number) {
+      if (step < 1 || step > totalSteps) return;
+
+      // Hide all steps
+      Object.values(wizardSteps).forEach(el => {
+        if (el) el.style.display = 'none';
+      });
+
+      // Show target step
+      const targetStep = wizardSteps[step as keyof typeof wizardSteps];
+      if (targetStep) targetStep.style.display = 'block';
+
+      // Update step indicators
+      for (let i = 1; i <= totalSteps; i++) {
+        const circle = stepCircles[i as keyof typeof stepCircles];
+        const label = circle?.parentElement?.querySelector('span');
+
+        if (i < step) {
+          // Completed step - gray with checkmark
+          circle?.classList.remove('bg-[#024139]', 'bg-green-500', 'text-white');
+          circle?.classList.add('bg-gray-300', 'text-gray-600');
+          circle!.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+          label?.classList.remove('text-[#024139]', 'text-green-600');
+          label?.classList.add('text-gray-500');
+        } else if (i === step) {
+          // Current step
+          circle?.classList.remove('bg-gray-200', 'text-gray-500', 'bg-green-500');
+          circle?.classList.add('bg-[#024139]', 'text-white');
+          circle!.textContent = i.toString();
+          label?.classList.remove('text-gray-500', 'text-green-600');
+          label?.classList.add('text-[#024139]');
+        } else {
+          // Future step
+          circle?.classList.remove('bg-[#024139]', 'bg-green-500', 'text-white');
+          circle?.classList.add('bg-gray-200', 'text-gray-500');
+          circle!.textContent = i.toString();
+          label?.classList.remove('text-[#024139]', 'text-green-600');
+          label?.classList.add('text-gray-500');
+        }
+      }
+
+      currentStep = step;
+
+      // Scroll to top of section
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+    }
+
+    // Navigation button handlers
+    const step1Error = document.getElementById('step1-error');
+
+    step1Next?.addEventListener('click', () => {
+      // Validate that at least some amount is selected
+      let totalAmount = 0;
+      causeInputs.forEach(input => {
+        totalAmount += parseFloat(input.value) || 0;
+      });
+
+      if (totalAmount < 1) {
+        // Show error message
+        if (step1Error) step1Error.classList.remove('hidden');
+
+        // Scroll to quick-set buttons and highlight the causes section
+        const quickSetSection = document.querySelector('.quick-set-btn')?.closest('div')?.parentElement;
+        const causesGrid = document.querySelector('.cause-amount')?.closest('.grid');
+
+        if (quickSetSection) {
+          quickSetSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Highlight the causes grid
+        if (causesGrid) {
+          causesGrid.classList.add('ring-2', 'ring-[#024139]', 'ring-offset-4', 'rounded-xl');
+          setTimeout(() => {
+            causesGrid.classList.remove('ring-2', 'ring-[#024139]', 'ring-offset-4', 'rounded-xl');
+          }, 2000);
+        }
+        return;
+      }
+
+      // Hide error if previously shown
+      if (step1Error) step1Error.classList.add('hidden');
+      goToStep(2);
+    });
+    step2Back?.addEventListener('click', () => goToStep(1));
+    step2Next?.addEventListener('click', () => goToStep(3));
+    step3Back?.addEventListener('click', () => goToStep(2));
+
+    // Step indicator clicks
+    document.querySelectorAll('.step-indicator').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const step = parseInt((btn as HTMLElement).dataset.step || '1');
+        // Only allow going back to completed steps or current
+        if (step <= currentStep) {
+          goToStep(step);
+        }
+      });
+    });
+
+    // Update Step 1 daily total
+    function updateStep1Total() {
+      const causeInputs = document.querySelectorAll('.cause-amount') as NodeListOf<HTMLInputElement>;
+      let total = 0;
+      causeInputs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+      });
+      if (step1DailyTotal) {
+        step1DailyTotal.textContent = `$${total.toFixed(0)}/night`;
+      }
+    }
+
+    // ===== END WIZARD NAVIGATION =====
+
+    const causeInputs = document.querySelectorAll('.cause-amount') as NodeListOf<HTMLInputElement>;
+    const scheduleRadios = document.querySelectorAll('input[name="schedule"]') as NodeListOf<HTMLInputElement>;
+    const oddMultiplierRadios = document.querySelectorAll('input[name="odd-multiplier"]') as NodeListOf<HTMLInputElement>;
+    const night27MultiplierRadios = document.querySelectorAll('input[name="night27-multiplier"]') as NodeListOf<HTMLInputElement>;
+    const quickSetBtns = document.querySelectorAll('.quick-set-btn');
+    const automateBtn = document.getElementById('automate-btn') as HTMLButtonElement;
+
+    // Ramadan date constants
+    const ramadanStartSelect = document.getElementById('ramadan-start') as HTMLSelectElement;
+    const oddNightsArray = [21, 23, 25, 27, 29];
+
+    // Timezone elements
+    const timezoneSearch = document.getElementById('timezone-search') as HTMLInputElement;
+    const timezoneDropdown = document.getElementById('timezone-dropdown');
+    const timezoneHidden = document.getElementById('timezone') as HTMLInputElement;
+    const timezoneDisplay = document.getElementById('timezone-display');
+    const currentTimeEl = document.getElementById('current-time');
+    const ramadanNightStatus = document.getElementById('ramadan-night-status');
+    const timezoneClearBtn = document.getElementById('timezone-clear-btn');
+    const timezoneSearchIcon = document.getElementById('timezone-search-icon');
+
+    // Common timezones with friendly names
+    const timezones = [
+      { value: 'America/New_York', label: 'New York (Eastern Time)', short: 'ET' },
+      { value: 'America/Chicago', label: 'Chicago (Central Time)', short: 'CT' },
+      { value: 'America/Denver', label: 'Denver (Mountain Time)', short: 'MT' },
+      { value: 'America/Los_Angeles', label: 'Los Angeles (Pacific Time)', short: 'PT' },
+      { value: 'America/Anchorage', label: 'Anchorage (Alaska Time)', short: 'AKT' },
+      { value: 'Pacific/Honolulu', label: 'Honolulu (Hawaii Time)', short: 'HT' },
+      { value: 'America/Toronto', label: 'Toronto (Eastern Time)', short: 'ET' },
+      { value: 'America/Vancouver', label: 'Vancouver (Pacific Time)', short: 'PT' },
+      { value: 'Europe/London', label: 'London (GMT/BST)', short: 'GMT' },
+      { value: 'Europe/Paris', label: 'Paris (Central European)', short: 'CET' },
+      { value: 'Europe/Berlin', label: 'Berlin (Central European)', short: 'CET' },
+      { value: 'Europe/Istanbul', label: 'Istanbul (Turkey Time)', short: 'TRT' },
+      { value: 'Asia/Dubai', label: 'Dubai (Gulf Standard)', short: 'GST' },
+      { value: 'Asia/Karachi', label: 'Karachi (Pakistan Standard)', short: 'PKT' },
+      { value: 'Asia/Kolkata', label: 'Mumbai/Delhi (India Standard)', short: 'IST' },
+      { value: 'Asia/Dhaka', label: 'Dhaka (Bangladesh Standard)', short: 'BST' },
+      { value: 'Asia/Jakarta', label: 'Jakarta (Western Indonesia)', short: 'WIB' },
+      { value: 'Asia/Singapore', label: 'Singapore (SGT)', short: 'SGT' },
+      { value: 'Asia/Kuala_Lumpur', label: 'Kuala Lumpur (Malaysia)', short: 'MYT' },
+      { value: 'Asia/Hong_Kong', label: 'Hong Kong (HKT)', short: 'HKT' },
+      { value: 'Asia/Shanghai', label: 'Beijing/Shanghai (China)', short: 'CST' },
+      { value: 'Asia/Tokyo', label: 'Tokyo (Japan Standard)', short: 'JST' },
+      { value: 'Asia/Seoul', label: 'Seoul (Korea Standard)', short: 'KST' },
+      { value: 'Australia/Sydney', label: 'Sydney (Australian Eastern)', short: 'AEST' },
+      { value: 'Australia/Melbourne', label: 'Melbourne (Australian Eastern)', short: 'AEST' },
+      { value: 'Australia/Perth', label: 'Perth (Australian Western)', short: 'AWST' },
+      { value: 'Asia/Riyadh', label: 'Riyadh (Arabia Standard)', short: 'AST' },
+      { value: 'Asia/Jerusalem', label: 'Jerusalem (Israel Standard)', short: 'IST' },
+      { value: 'Africa/Cairo', label: 'Cairo (Egypt Standard)', short: 'EET' },
+      { value: 'Africa/Johannesburg', label: 'Johannesburg (South Africa)', short: 'SAST' },
+      { value: 'Africa/Lagos', label: 'Lagos (West Africa)', short: 'WAT' },
+      { value: 'Africa/Nairobi', label: 'Nairobi (East Africa)', short: 'EAT' },
+      { value: 'America/Sao_Paulo', label: 'São Paulo (Brasilia)', short: 'BRT' },
+      { value: 'America/Mexico_City', label: 'Mexico City (Central)', short: 'CST' },
+      { value: 'Asia/Kabul', label: 'Kabul (Afghanistan)', short: 'AFT' },
+      { value: 'Asia/Tehran', label: 'Tehran (Iran Standard)', short: 'IRST' },
+      { value: 'Asia/Baghdad', label: 'Baghdad (Arabia Standard)', short: 'AST' },
+      { value: 'Asia/Amman', label: 'Amman (Eastern European)', short: 'EET' },
+      { value: 'Asia/Beirut', label: 'Beirut (Eastern European)', short: 'EET' },
+      { value: 'Europe/Moscow', label: 'Moscow (Moscow Standard)', short: 'MSK' },
+    ];
+
+    // Get timezone offset string
+    function getTimezoneOffset(tz: string): string {
+      try {
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          timeZoneName: 'shortOffset'
+        });
+        const parts = formatter.formatToParts(now);
+        const offsetPart = parts.find(p => p.type === 'timeZoneName');
+        return offsetPart?.value || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    // Get current time in timezone (short format like "5:38p")
+    function getCurrentTimeInTimezone(tz: string): string {
+      try {
+        const time = new Date().toLocaleTimeString('en-US', {
+          timeZone: tz,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        // Shorten "5:38 PM" to "5:38p"
+        return time.replace(' AM', 'a').replace(' PM', 'p');
+      } catch (e) {
+        return '--:--';
+      }
+    }
+
+    // Get date in specific timezone
+    function getDateInTimezone(tz: string): Date {
+      const now = new Date();
+      const tzString = now.toLocaleString('en-US', { timeZone: tz });
+      return new Date(tzString);
+    }
+
+    // Populate and filter timezone dropdown
+    function populateTimezoneDropdown(filter = '') {
+      if (!timezoneDropdown) return;
+
+      const filtered = filter
+        ? timezones.filter(tz =>
+            tz.label.toLowerCase().includes(filter.toLowerCase()) ||
+            tz.value.toLowerCase().includes(filter.toLowerCase())
+          )
+        : timezones;
+
+      timezoneDropdown.innerHTML = filtered.map(tz => {
+        const offset = getTimezoneOffset(tz.value);
+        return `
+          <button
+            type="button"
+            class="timezone-option w-full px-4 py-2 text-left hover:bg-[#024139]/10 transition flex items-center justify-between"
+            data-value="${tz.value}"
+            data-label="${tz.label}"
+            data-short="${tz.short}"
+          >
+            <span class="text-sm text-gray-800">${tz.label}</span>
+            <span class="text-xs text-gray-500">${offset}</span>
+          </button>
+        `;
+      }).join('');
+
+      // Add click handlers
+      timezoneDropdown.querySelectorAll('.timezone-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const value = (btn as HTMLElement).dataset.value || '';
+          const label = (btn as HTMLElement).dataset.label || '';
+          const short = (btn as HTMLElement).dataset.short || '';
+          selectTimezone(value, label, short);
+        });
+      });
+    }
+
+    // Select a timezone
+    function selectTimezone(value: string, label: string, short: string) {
+      if (timezoneHidden) timezoneHidden.value = value;
+      if (timezoneSearch) timezoneSearch.value = label;
+      if (timezoneDisplay) {
+        const offset = getTimezoneOffset(value);
+        timezoneDisplay.textContent = `${short} ${offset}`;
+      }
+      if (timezoneDropdown) timezoneDropdown.classList.add('hidden');
+
+      // Show clear button, hide search icon
+      if (timezoneClearBtn) timezoneClearBtn.classList.remove('hidden');
+      if (timezoneSearchIcon) timezoneSearchIcon.classList.add('hidden');
+
+      updateTimezoneDisplay();
+      calculateTotals();
+      renderCalendar();
+    }
+
+    // Clear timezone selection
+    function clearTimezoneSearch() {
+      if (timezoneSearch) {
+        timezoneSearch.value = '';
+        timezoneSearch.focus();
+      }
+      if (timezoneClearBtn) timezoneClearBtn.classList.add('hidden');
+      if (timezoneSearchIcon) timezoneSearchIcon.classList.remove('hidden');
+      populateTimezoneDropdown();
+      if (timezoneDropdown) timezoneDropdown.classList.remove('hidden');
+    }
+
+    // Clear button click handler
+    timezoneClearBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearTimezoneSearch();
+    });
+
+    // Update timezone display (time and Ramadan status)
+    function updateTimezoneDisplay() {
+      const tz = timezoneHidden?.value || 'America/New_York';
+
+      // Update current time
+      if (currentTimeEl) {
+        currentTimeEl.textContent = getCurrentTimeInTimezone(tz);
+      }
+
+      // Update Ramadan night status
+      const currentNight = getCurrentRamadanNight();
+      if (ramadanNightStatus) {
+        if (currentNight === 0) {
+          ramadanNightStatus.textContent = 'Ramadan has not started yet';
+        } else if (currentNight > 30) {
+          ramadanNightStatus.textContent = 'Ramadan has ended';
+        } else {
+          const remaining = 31 - currentNight;
+          ramadanNightStatus.textContent = `Night ${currentNight} of Ramadan • ${remaining} nights remaining`;
+        }
+      }
+    }
+
+    // Auto-detect user timezone
+    function detectUserTimezone() {
+      try {
+        const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const match = timezones.find(tz => tz.value === userTz);
+
+        if (match) {
+          selectTimezone(match.value, match.label, match.short);
+        } else {
+          // If not in our list, still use it but with generic label
+          const offset = getTimezoneOffset(userTz);
+          if (timezoneHidden) timezoneHidden.value = userTz;
+          if (timezoneSearch) timezoneSearch.value = userTz.replace(/_/g, ' ');
+          if (timezoneDisplay) timezoneDisplay.textContent = offset;
+          // Show clear button
+          if (timezoneClearBtn) timezoneClearBtn.classList.remove('hidden');
+          if (timezoneSearchIcon) timezoneSearchIcon.classList.add('hidden');
+          updateTimezoneDisplay();
+        }
+      } catch (e) {
+        // Fallback to ET
+        selectTimezone('America/New_York', 'New York (Eastern Time)', 'ET');
+      }
+    }
+
+    // Initialize timezone search
+    timezoneSearch?.addEventListener('focus', () => {
+      populateTimezoneDropdown(timezoneSearch.value);
+      timezoneDropdown?.classList.remove('hidden');
+    });
+
+    timezoneSearch?.addEventListener('input', () => {
+      populateTimezoneDropdown(timezoneSearch.value);
+      timezoneDropdown?.classList.remove('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!timezoneSearch?.contains(e.target as Node) && !timezoneDropdown?.contains(e.target as Node)) {
+        timezoneDropdown?.classList.add('hidden');
+      }
+    });
+
+    // Get Ramadan start date (parse manually to avoid timezone issues)
+    function getRamadanStartDate(): Date {
+      const dateStr = ramadanStartSelect?.value || '2026-02-17';
+      const parts = dateStr.split('-');
+      const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      startDate.setHours(0, 0, 0, 0);
+      return startDate;
+    }
+
+    // Get current Ramadan night based on selected timezone
+    function getCurrentRamadanNight(): number {
+      const tz = timezoneHidden?.value || 'America/New_York';
+      const dateStr = ramadanStartSelect?.value || '2026-02-17';
+      const parts = dateStr.split('-');
+
+      // Get today's date in the selected timezone
+      const todayInTz = getDateInTimezone(tz);
+      todayInTz.setHours(0, 0, 0, 0);
+
+      // Create start date
+      const startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      startDate.setHours(0, 0, 0, 0);
+
+      const diffTime = todayInTz.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) return 0; // Before Ramadan
+      if (diffDays >= 30) return 31; // After Ramadan
+      return diffDays + 1; // Current night (1-30)
+    }
+
+    // Helper functions to get selected radio values
+    function getScheduleValue(): string {
+      const checked = document.querySelector('input[name="schedule"]:checked') as HTMLInputElement;
+      return checked ? checked.value : 'all-30';
+    }
+    function getOddMultiplierValue(): number {
+      const checked = document.querySelector('input[name="odd-multiplier"]:checked') as HTMLInputElement;
+      return checked ? parseInt(checked.value) : 1;
+    }
+    function getNight27MultiplierValue(): number {
+      const checked = document.querySelector('input[name="night27-multiplier"]:checked') as HTMLInputElement;
+      return checked ? parseInt(checked.value) : 1;
+    }
+
+    // Update schedule option labels based on remaining nights
+    function updateScheduleLabels() {
+      const currentNight = getCurrentRamadanNight();
+      const startNight = currentNight <= 0 ? 1 : currentNight;
+
+      // Count remaining nights for each schedule type
+      let all30Remaining = 0;
+      let last10Remaining = 0;
+      let oddRemaining = 0;
+
+      for (let night = startNight; night <= 30; night++) {
+        all30Remaining++;
+        if (night >= 21) last10Remaining++;
+        if (oddNightsArray.includes(night)) oddRemaining++;
+      }
+
+      // Update labels and tags
+      const all30Label = document.getElementById('schedule-all30-label');
+      const all30Sub = document.getElementById('schedule-all30-sub');
+      const all30Tag = document.getElementById('schedule-all30-tag');
+      const last10Label = document.getElementById('schedule-last10-label');
+      const last10Sub = document.getElementById('schedule-last10-sub');
+      const oddLabel = document.getElementById('schedule-odd-label');
+      const oddSub = document.getElementById('schedule-odd-sub');
+      const oddTag = document.getElementById('schedule-odd-tag');
+
+      if (currentNight <= 0) {
+        // Before Ramadan - show full schedule
+        if (all30Label) all30Label.textContent = 'All 30 Nights';
+        if (all30Sub) all30Sub.textContent = 'Give every night';
+        if (all30Tag) all30Tag.textContent = 'MAXIMUM BLESSINGS';
+        if (last10Label) last10Label.textContent = 'Last 10 Nights';
+        if (last10Sub) last10Sub.textContent = 'Laylatul Qadr';
+        if (oddLabel) oddLabel.textContent = 'Odd Nights Only';
+        if (oddSub) oddSub.textContent = 'Special nights';
+        if (oddTag) oddTag.textContent = '15 BLESSED NIGHTS';
+      } else {
+        // During Ramadan - show remaining nights
+        if (all30Label) all30Label.textContent = `${all30Remaining} Nights Remaining`;
+        if (all30Sub) all30Sub.textContent = 'Give every night';
+        if (all30Tag) all30Tag.textContent = 'MAXIMUM BLESSINGS';
+        if (last10Label) last10Label.textContent = last10Remaining > 0 ? `Last ${last10Remaining} Nights` : 'Last 10 Nights';
+        if (last10Sub) last10Sub.textContent = last10Remaining > 0 ? 'Laylatul Qadr' : 'Already passed';
+        if (oddLabel) oddLabel.textContent = `${oddRemaining} Odd Nights`;
+        if (oddSub) oddSub.textContent = 'Special nights';
+        if (oddTag) oddTag.textContent = `${oddRemaining} BLESSED NIGHTS`;
+      }
+    }
+
+    const breakdownList = document.getElementById('breakdown-list');
+    const regularTotalEl = document.getElementById('regular-total');
+    const oddTotalEl = document.getElementById('odd-total');
+    const night27TotalEl = document.getElementById('night27-total');
+    const grandTotalEl = document.getElementById('grand-total');
+    const scheduleSummaryEl = document.getElementById('schedule-summary');
+    const step2TotalEl = document.getElementById('step2-total');
+    const step2PerNightEl = document.getElementById('step2-per-night');
+
+    const causeNames: Record<string, string> = {
+      gaza: 'Gaza Emergency',
+      iftar: 'Feed the Fasting',
+      zakat: 'Zakat Fund',
+      water: 'Water Fund',
+      orphan: 'Orphan Sponsorship',
+      medical: 'Medical Aid',
+      sadaqah: 'Sadaqah Jariyah',
+      general: 'Where Most Needed'
+    };
+
+    // Custom night amounts (null = use calculated, number = custom amount)
+    const customNightAmounts: (number | null)[] = new Array(30).fill(null);
+
+    function calculateTotals() {
+      const schedule = getScheduleValue();
+      const oddMultiplier = getOddMultiplierValue();
+      const night27Multiplier = getNight27MultiplierValue();
+      const currentNight = getCurrentRamadanNight();
+
+      // Calculate remaining nights based on current date and schedule
+      let regularNights = 0;
+      let oddNights = 0;
+      let has27thNight = false;
+
+      // If before Ramadan (currentNight = 0), count all nights; otherwise count remaining
+      const startNight = currentNight <= 0 ? 1 : currentNight;
+
+      for (let night = startNight; night <= 30; night++) {
+        const isOdd = oddNightsArray.includes(night);
+        const is27th = night === 27;
+        const isLast10 = night >= 21;
+
+        // Check if this night is included in the selected schedule
+        let isIncluded = true;
+        if (schedule === 'last-10' && night < 21) isIncluded = false;
+        if (schedule === 'odd-nights' && !isOdd) isIncluded = false;
+
+        if (isIncluded) {
+          if (is27th) {
+            has27thNight = true;
+          } else if (isOdd && isLast10) {
+            oddNights++;
+          } else {
+            regularNights++;
+          }
+        }
+      }
+
+      // Calculate daily total from user inputs
+      let dailyTotal = 0;
+      const breakdown: { cause: string; daily: number }[] = [];
+
+      causeInputs.forEach(input => {
+        const cause = input.dataset.cause || '';
+        const amount = parseFloat(input.value) || 0;
+        if (amount > 0) {
+          dailyTotal += amount;
+          breakdown.push({ cause, daily: amount });
+        }
+      });
+
+      // Update breakdown list
+      if (breakdown.length > 0 && breakdownList) {
+        breakdownList.innerHTML = breakdown.map(item => `
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">${causeNames[item.cause]}</span>
+            <span class="font-medium">$${item.daily.toFixed(2)}/night</span>
+          </div>
+        `).join('');
+      } else if (breakdownList) {
+        breakdownList.innerHTML = '<p class="text-gray-500 text-sm italic">Select causes above to see breakdown</p>';
+      }
+
+      // Calculate totals - iterate through nights to account for custom amounts
+      let grandTotal = 0;
+      let regularTotal = 0;
+      let oddTotal = 0;
+      let night27Total = 0;
+
+      for (let night = startNight; night <= 30; night++) {
+        const isOdd = oddNightsArray.includes(night);
+        const is27th = night === 27;
+        const isLast10 = night >= 21;
+
+        // Check if this night is included in the selected schedule
+        let isIncluded = true;
+        if (schedule === 'last-10' && night < 21) isIncluded = false;
+        if (schedule === 'odd-nights' && !isOdd) isIncluded = false;
+
+        if (!isIncluded) continue;
+
+        // Get amount for this night (custom or calculated)
+        let nightAmount = dailyTotal;
+        if (customNightAmounts[night - 1] !== null) {
+          nightAmount = customNightAmounts[night - 1] as number;
+        } else if (is27th) {
+          nightAmount = dailyTotal * night27Multiplier;
+        } else if (isOdd && isLast10) {
+          nightAmount = dailyTotal * oddMultiplier;
+        }
+
+        grandTotal += nightAmount;
+
+        // Track category totals for display
+        if (is27th) {
+          night27Total += nightAmount;
+        } else if (isOdd && isLast10) {
+          oddTotal += nightAmount;
+        } else {
+          regularTotal += nightAmount;
+        }
+      }
+
+      // Update UI
+      if (regularTotalEl) regularTotalEl.textContent = `$${regularTotal.toFixed(2)}`;
+      if (oddTotalEl) oddTotalEl.textContent = `+$${oddTotal.toFixed(2)}`;
+      if (night27TotalEl) night27TotalEl.textContent = `+$${night27Total.toFixed(2)}`;
+      if (grandTotalEl) grandTotalEl.textContent = `$${grandTotal.toFixed(2)}`;
+      if (step2TotalEl) step2TotalEl.textContent = `$${grandTotal.toFixed(2)}`;
+      if (step2PerNightEl) {
+        const totalNights = regularNights + oddNights + (has27thNight ? 1 : 0);
+        step2PerNightEl.textContent = `$${dailyTotal.toFixed(2)}/night × ${totalNights} nights`;
+      }
+
+      // Update schedule summary
+      if (scheduleSummaryEl) {
+        const totalNights = regularNights + oddNights + (has27thNight ? 1 : 0);
+        scheduleSummaryEl.textContent = `${totalNights} nights of automated giving`;
+      }
+
+      // Update button text based on state
+      const automateBtnText = document.getElementById('automate-btn-text');
+      if (automateBtnText) {
+        if (grandTotal === 0) {
+          automateBtnText.textContent = 'Automate My Ramadan Giving';
+        } else {
+          automateBtnText.textContent = `Automate $${grandTotal.toFixed(0)} Giving`;
+        }
+      }
+
+      return grandTotal;
+    }
+
+    // Note: Event listeners are added after renderCalendar function is defined
+
+    // Quick set buttons
+    quickSetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const amount = parseInt(btn.getAttribute('data-amount') || '0');
+        causeInputs.forEach(input => {
+          input.value = amount.toString();
+        });
+        calculateTotals();
+        updateStep1Total();
+      });
+    });
+
+    // Modal elements
+    const checkoutModal = document.getElementById('checkout-modal');
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const closeModalBtn = document.getElementById('close-modal');
+    const checkoutForm = document.getElementById('checkout-form') as HTMLFormElement;
+    const modalTotal = document.getElementById('modal-total');
+    const submitBtn = document.getElementById('submit-btn');
+
+    function openModal() {
+      const total = calculateTotals();
+      if (total === 0) return;
+
+      // Populate hidden fields
+      const causes: { cause: string; daily: number }[] = [];
+      causeInputs.forEach(input => {
+        const cause = input.dataset.cause || '';
+        const amount = parseFloat(input.value) || 0;
+        if (amount > 0) {
+          causes.push({ cause: causeNames[cause], daily: amount });
+        }
+      });
+
+      (document.getElementById('form-total-amount') as HTMLInputElement).value = total.toString();
+      (document.getElementById('form-causes') as HTMLInputElement).value = JSON.stringify(causes);
+      (document.getElementById('form-schedule-type') as HTMLInputElement).value = getScheduleValue();
+      (document.getElementById('form-odd-multiplier') as HTMLInputElement).value = getOddMultiplierValue().toString();
+      (document.getElementById('form-night27-multiplier') as HTMLInputElement).value = getNight27MultiplierValue().toString();
+      (document.getElementById('form-ramadan-start') as HTMLInputElement).value = ramadanStartSelect?.value || '2026-02-17';
+      (document.getElementById('form-timezone') as HTMLInputElement).value = (document.getElementById('timezone') as HTMLInputElement)?.value || 'America/New_York';
+
+      // Update modal total
+      if (modalTotal) modalTotal.textContent = `$${total.toFixed(2)}`;
+
+      // Track begin_checkout in GA4
+      if (window.trackBeginCheckout) {
+        const items = causes.map(c => ({
+          id: c.cause.toLowerCase().replace(/\s+/g, '-'),
+          name: c.cause,
+          amount: c.daily * 30,
+          quantity: 1,
+          campaign: '30-days-of-ramadan'
+        }));
+        window.trackBeginCheckout(items, total);
+      }
+
+      // Show modal
+      checkoutModal?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      checkoutModal?.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    // Automate button - smart behavior
+    automateBtn?.addEventListener('click', () => {
+      const total = calculateTotals();
+      if (total === 0) {
+        // No amount selected - scroll to cause section and highlight first input
+        const causeSection = document.querySelector('.cause-amount')?.closest('section') || document.querySelector('.cause-amount')?.closest('div');
+        const firstCauseInput = document.querySelector('.cause-amount') as HTMLInputElement;
+
+        if (firstCauseInput) {
+          firstCauseInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            firstCauseInput.focus();
+            firstCauseInput.parentElement?.classList.add('ring-2', 'ring-[#FF2D2D]');
+            setTimeout(() => {
+              firstCauseInput.parentElement?.classList.remove('ring-2', 'ring-[#FF2D2D]');
+            }, 1500);
+          }, 500);
+        }
+      } else {
+        // Has amount - open checkout modal
+        openModal();
+      }
+    });
+
+    // Close modal handlers
+    closeModalBtn?.addEventListener('click', closeModal);
+    modalBackdrop?.addEventListener('click', closeModal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !checkoutModal?.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
+
+    // Form submission
+    checkoutForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(checkoutForm);
+      const firstName = formData.get('first_name') as string;
+      const lastName = formData.get('last_name') as string;
+      const email = formData.get('email') as string;
+      const phone = formData.get('phone') as string;
+
+      // Disable submit button
+      if (submitBtn) {
+        submitBtn.setAttribute('disabled', 'true');
+        submitBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
+      }
+
+      try {
+        const response = await fetch('/api/automated-donations/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            donor_name: `${firstName} ${lastName}`,
+            donor_email: email,
+            donor_phone: phone,
+            total_amount: parseFloat(formData.get('total_amount') as string),
+            ramadan_start_date: formData.get('ramadan_start'),
+            timezone: formData.get('timezone'),
+            schedule_type: formData.get('schedule_type'),
+            odd_multiplier: parseInt(formData.get('odd_multiplier') as string),
+            night27_multiplier: parseInt(formData.get('night27_multiplier') as string),
+            causes: JSON.parse(formData.get('causes') as string),
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Track purchase in GA4
+          if (window.trackPurchase) {
+            const causes = JSON.parse(formData.get('causes') as string);
+            const items = causes.map((c: any) => ({
+              id: c.cause.toLowerCase().replace(/\s+/g, '-'),
+              name: c.cause,
+              amount: c.daily * 30,
+              quantity: 1,
+              campaign: '30-days-of-ramadan'
+            }));
+            const total = parseFloat(formData.get('total_amount') as string);
+            window.trackPurchase(data.donation.id || data.donation.access_token, items, total);
+          }
+
+          // Redirect to success page with token
+          window.location.href = `/donation/ramadan-success?token=${data.donation.access_token}`;
+        } else {
+          throw new Error(data.error || 'Failed to create donation');
+        }
+      } catch (error: any) {
+        alert(error.message || 'An error occurred. Please try again.');
+
+        // Re-enable submit button
+        if (submitBtn) {
+          submitBtn.removeAttribute('disabled');
+          submitBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Complete Setup & Pay';
+        }
+      }
+    });
+
+    // FAQ toggles
+    document.querySelectorAll('.faq-toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const content = toggle.nextElementSibling;
+        const icon = toggle.querySelector('.faq-icon');
+
+        if (content?.classList.contains('hidden')) {
+          content.classList.remove('hidden');
+          icon?.classList.add('rotate-180');
+        } else {
+          content?.classList.add('hidden');
+          icon?.classList.remove('rotate-180');
+        }
+      });
+    });
+
+    // 30-Night Calendar
+    const calendarContainer = document.getElementById('nights-calendar');
+    const nightAmounts: number[] = new Array(30).fill(0);
+    let isCalendarEditMode = false;
+    const toggleCalendarBtn = document.getElementById('toggle-calendar');
+
+    function getDateForNight(nightNum: number): Date {
+      const startDate = getRamadanStartDate();
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + nightNum - 1);
+      return date;
+    }
+
+    function formatDate(date: Date): string {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+    }
+
+    function renderCalendar() {
+      if (!calendarContainer) return;
+
+      const schedule = getScheduleValue();
+      const oddMultiplier = getOddMultiplierValue();
+      const night27Multiplier = getNight27MultiplierValue();
+      const currentNight = getCurrentRamadanNight();
+      const startNight = Math.max(1, currentNight); // Start from current night or night 1 if before Ramadan
+
+      let dailyTotal = 0;
+      causeInputs.forEach(input => {
+        dailyTotal += parseFloat(input.value) || 0;
+      });
+
+      calendarContainer.innerHTML = '';
+
+      // Show info about starting point if mid-Ramadan
+      if (currentNight > 1 && currentNight <= 30) {
+        const infoEl = document.createElement('div');
+        infoEl.className = 'col-span-full bg-blue-50 border border-blue-200 rounded-xl p-3 mb-2 flex items-center gap-2';
+        infoEl.innerHTML = `
+          <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="text-sm text-blue-700">Starting from <strong>Night ${currentNight}</strong> - ${31 - currentNight} nights remaining in Ramadan</p>
+        `;
+        calendarContainer.appendChild(infoEl);
+      }
+
+      // Only show nights from current night onwards
+      for (let night = startNight; night <= 30; night++) {
+        const date = getDateForNight(night);
+        const isOdd = oddNightsArray.includes(night);
+        const is27th = night === 27;
+        const isLast10 = night >= 21;
+        const isToday = night === currentNight;
+
+        // Determine if this night is active based on schedule
+        let isActive = true;
+        if (schedule === 'last-10' && night < 21) isActive = false;
+        if (schedule === 'odd-nights' && !isOdd) isActive = false;
+
+        // Calculate amount for this night (use custom if set, otherwise calculate)
+        let nightAmount = dailyTotal;
+        if (customNightAmounts[night - 1] !== null) {
+          nightAmount = customNightAmounts[night - 1] as number;
+        } else if (is27th) {
+          nightAmount = dailyTotal * night27Multiplier;
+        } else if (isOdd && isLast10) {
+          nightAmount = dailyTotal * oddMultiplier;
+        }
+
+        if (!isActive) nightAmount = 0;
+
+        // Store for reference
+        nightAmounts[night - 1] = nightAmount;
+
+        // Check if this night has a custom amount
+        const hasCustomAmount = customNightAmounts[night - 1] !== null;
+
+        // Determine styling
+        let bgClass = 'bg-gray-50 border-gray-200';
+        let badgeClass = 'bg-gray-200 text-gray-700';
+
+        if (isToday) {
+          // Today's night - highlight
+          bgClass = 'bg-blue-50 border-blue-400 border-2 ring-2 ring-blue-200';
+          badgeClass = 'bg-blue-500 text-white';
+        } else if (!isActive) {
+          bgClass = 'bg-gray-100 border-gray-200 opacity-50';
+        } else if (is27th) {
+          bgClass = 'bg-yellow-50 border-yellow-400 border-2';
+          badgeClass = 'bg-yellow-500 text-white';
+        } else if (isOdd && isLast10) {
+          bgClass = 'bg-[#198F6F]/15 border-[#024139]/30';
+          badgeClass = 'bg-[#024139] text-white';
+        }
+
+        const nightEl = document.createElement('div');
+        nightEl.className = `night-card ${bgClass} border rounded-xl p-3 transition-all ${isActive ? 'hover:shadow-md cursor-pointer' : 'cursor-default'}`;
+        nightEl.dataset.night = night.toString();
+
+        if (isToday && isActive) {
+          // Today's night - highlight as current
+          nightEl.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+              <span class="${badgeClass} text-xs font-bold px-2 py-1 rounded-full">Night ${night}</span>
+              <span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded">TODAY</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-1">${formatDate(date)}</p>
+            <div class="flex items-center gap-1">
+              <span class="text-blue-600 text-sm">$</span>
+              <span class="night-amount text-lg font-bold text-blue-600">${nightAmount.toFixed(2)}</span>
+            </div>
+            ${is27th ? '<p class="text-xs text-yellow-600 mt-1">' + night27Multiplier + 'x Laylatul Qadr</p>' : isOdd && isLast10 ? '<p class="text-xs text-[#024139] mt-1">' + oddMultiplier + 'x boost</p>' : '<p class="text-xs text-blue-500 mt-1">Processing tonight</p>'}
+          `;
+        } else if (isActive) {
+          const editIcon = isCalendarEditMode ? '<svg class="w-4 h-4 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>' : '';
+          const customBadge = hasCustomAmount ? '<span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-1.5 py-0.5 rounded ml-1">CUSTOM</span>' : '';
+          nightEl.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+              <span class="${badgeClass} text-xs font-bold px-2 py-1 rounded-full">Night ${night}</span>
+              ${is27th && !isCalendarEditMode ? '<svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>' : editIcon}
+            </div>
+            <p class="text-xs text-gray-500 mb-1">${formatDate(date)}</p>
+            <div class="flex items-center justify-center gap-1">
+              <span class="text-gray-400 text-sm">$</span>
+              <span class="night-amount text-lg font-bold ${hasCustomAmount ? 'text-purple-600' : is27th ? 'text-yellow-600' : isOdd && isLast10 ? 'text-[#024139]' : 'text-gray-800'}">${nightAmount.toFixed(2)}</span>
+              ${customBadge}
+            </div>
+            ${hasCustomAmount ? '<p class="text-xs text-purple-600 mt-1">Custom amount</p>' : isOdd && isLast10 && !is27th ? '<p class="text-xs text-[#024139] mt-1">' + oddMultiplier + 'x boost</p>' : ''}
+            ${is27th && !hasCustomAmount ? '<p class="text-xs text-yellow-600 mt-1">' + night27Multiplier + 'x Laylatul Qadr</p>' : ''}
+          `;
+        } else {
+          nightEl.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+              <span class="bg-gray-200 text-gray-500 text-xs font-bold px-2 py-1 rounded-full">Night ${night}</span>
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </div>
+            <p class="text-xs text-gray-400 mb-1">${formatDate(date)}</p>
+            <p class="text-xs text-gray-400 italic">Not included</p>
+            <p class="text-[10px] text-[#024139] mt-1">Select "All 30" to include</p>
+          `;
+        }
+
+        calendarContainer.appendChild(nightEl);
+      }
+
+      // Add click handlers for night cards in edit mode
+      if (isCalendarEditMode) {
+        const nightCards = calendarContainer.querySelectorAll('.night-card[data-night]');
+        nightCards.forEach(card => {
+          const nightNum = parseInt((card as HTMLElement).dataset.night || '0');
+          if (nightNum > 0) {
+            card.addEventListener('click', () => showNightEditModal(nightNum));
+          }
+        });
+      }
+    }
+
+    // Toggle calendar edit mode
+    toggleCalendarBtn?.addEventListener('click', () => {
+      isCalendarEditMode = !isCalendarEditMode;
+
+      if (isCalendarEditMode) {
+        toggleCalendarBtn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Done Editing
+        `;
+        toggleCalendarBtn.classList.add('text-green-600');
+        toggleCalendarBtn.classList.remove('text-[#024139]');
+
+        // Add edit mode indicator to calendar
+        calendarContainer?.classList.add('ring-2', 'ring-[#024139]', 'ring-offset-2', 'rounded-xl', 'p-2');
+      } else {
+        toggleCalendarBtn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+          View/Edit Calendar
+        `;
+        toggleCalendarBtn.classList.remove('text-green-600');
+        toggleCalendarBtn.classList.add('text-[#024139]');
+
+        // Remove edit mode indicator
+        calendarContainer?.classList.remove('ring-2', 'ring-[#024139]', 'ring-offset-2', 'rounded-xl', 'p-2');
+      }
+
+      renderCalendar();
+    });
+
+    // Night edit modal
+    function showNightEditModal(nightNum: number) {
+      const currentAmount = customNightAmounts[nightNum - 1] ?? nightAmounts[nightNum - 1];
+      const date = getDateForNight(nightNum);
+
+      // Create modal overlay
+      const modal = document.createElement('div');
+      modal.id = 'night-edit-modal';
+      modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform animate-in fade-in zoom-in duration-200">
+          <div class="text-center mb-4">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-[#024139]/10 rounded-full mb-3">
+              <svg class="w-6 h-6 text-[#024139]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Night ${nightNum}</h3>
+            <p class="text-sm text-gray-500">${formatDate(date)}</p>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Donation Amount</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <input
+                type="number"
+                id="night-amount-input"
+                value="${currentAmount.toFixed(2)}"
+                min="0"
+                step="0.01"
+                class="w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#024139] focus:outline-none text-lg font-bold text-center"
+              />
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button id="night-edit-cancel" class="flex-1 py-3 px-4 border-2 border-gray-200 rounded-xl text-gray-600 font-medium hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button id="night-edit-reset" class="py-3 px-4 border-2 border-amber-200 bg-amber-50 rounded-xl text-amber-700 font-medium hover:bg-amber-100 transition">
+              Reset
+            </button>
+            <button id="night-edit-save" class="flex-1 py-3 px-4 bg-[#024139] rounded-xl text-white font-bold hover:bg-[#012820] transition">
+              Save
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      document.body.style.overflow = 'hidden';
+
+      const input = document.getElementById('night-amount-input') as HTMLInputElement;
+      input?.focus();
+      input?.select();
+
+      // Cancel button
+      document.getElementById('night-edit-cancel')?.addEventListener('click', () => {
+        closeNightEditModal();
+      });
+
+      // Reset button - clear custom amount
+      document.getElementById('night-edit-reset')?.addEventListener('click', () => {
+        customNightAmounts[nightNum - 1] = null;
+        closeNightEditModal();
+        calculateTotals();
+        renderCalendar();
+      });
+
+      // Save button
+      document.getElementById('night-edit-save')?.addEventListener('click', () => {
+        const newAmount = parseFloat(input?.value || '0');
+        customNightAmounts[nightNum - 1] = Math.max(0, newAmount);
+        closeNightEditModal();
+        calculateTotals();
+        renderCalendar();
+      });
+
+      // Close on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeNightEditModal();
+      });
+
+      // Close on Escape
+      const escHandler = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeNightEditModal();
+          document.removeEventListener('keydown', escHandler);
+        }
+      };
+      document.addEventListener('keydown', escHandler);
+    }
+
+    function closeNightEditModal() {
+      const modal = document.getElementById('night-edit-modal');
+      modal?.remove();
+      document.body.style.overflow = '';
+    }
+
+    // Update calendar when settings change
+    ramadanStartSelect?.addEventListener('change', () => {
+      updateTimezoneDisplay();
+      updateScheduleLabels();
+      calculateTotals();
+      renderCalendar();
+    });
+    scheduleRadios.forEach(radio => radio.addEventListener('change', () => {
+      calculateTotals();
+      renderCalendar();
+    }));
+    oddMultiplierRadios.forEach(radio => radio.addEventListener('change', () => {
+      calculateTotals();
+      renderCalendar();
+    }));
+    night27MultiplierRadios.forEach(radio => radio.addEventListener('change', () => {
+      calculateTotals();
+      renderCalendar();
+    }));
+    causeInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        calculateTotals();
+        renderCalendar();
+        updateStep1Total();
+      });
+    });
+
+    // Quick set also updates calendar
+    quickSetBtns.forEach(btn => {
+      const origHandler = btn.onclick;
+      btn.addEventListener('click', () => {
+        setTimeout(renderCalendar, 10);
+      });
+    });
+
+    // Initialize with error handling
+    try {
+      // Initialize schedule labels based on current date
+      updateScheduleLabels();
+
+      // Initialize totals and calendar first
+      calculateTotals();
+      renderCalendar();
+
+      // Then initialize timezone (will re-trigger calculateTotals and renderCalendar)
+      if (timezoneDropdown) populateTimezoneDropdown();
+      if (timezoneSearch) detectUserTimezone();
+
+      // Update time every minute
+      setInterval(updateTimezoneDisplay, 60000);
+    } catch (err) {
+      console.error('Initialization error:', err);
+    }
+  });
+</script>

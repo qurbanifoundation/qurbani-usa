@@ -69,7 +69,8 @@ async function sendEmailAndLogToGHL(params: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Qurbani Foundation <donations@qurbani.com>',
+          from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
+          reply_to: 'donorcare@qurbani.com',
           to: to,
           subject: subject,
           html: html,
@@ -125,7 +126,7 @@ async function sendEmailAndLogToGHL(params: {
               subject: subject,
               html: html,
               message: plainText,
-              emailFrom: 'donations@qurbani.com',
+              emailFrom: 'donations@receipts.qurbani.com',
               emailTo: to,
               direction: 'outbound',
               status: 'sent',

@@ -1,0 +1,658 @@
+---
+/**
+ * Ramadan 30 Days - Success Page
+ * Shows timeline of blessings after successful donation
+ */
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+const donationId = Astro.url.searchParams.get('donation_id');
+---
+
+<Layout title="Thank You! Your Ramadan Giving is Confirmed | Qurbani Foundation" description="Your automated Ramadan giving has been set up. See your timeline of blessings.">
+  <Navbar />
+
+  <style>
+    .success-page {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #1a3a4a 0%, #16434B 50%, #FBEDE6 50%);
+    }
+
+    .success-hero {
+      text-align: center;
+      padding: 100px 20px 60px;
+      color: white;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: #5c8a6e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      animation: scaleIn 0.5s ease-out;
+    }
+
+    @keyframes scaleIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .success-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+    }
+
+    .success-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .success-subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .content-section {
+      background: #FBEDE6;
+      padding: 40px 20px 80px;
+    }
+
+    .timeline-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 32px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 800px) {
+      .timeline-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Timeline */
+    .timeline-container {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0ebe6;
+    }
+
+    .timeline-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 24px;
+      color: #333;
+    }
+
+    .timeline-list {
+      position: relative;
+      padding-left: 36px;
+    }
+
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 24px;
+      bottom: 24px;
+      width: 2px;
+      background: linear-gradient(180deg, #5c8a6e 0%, #e0e0e0 100%);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid #f8f5f2;
+    }
+
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -26px;
+      top: 24px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border: 3px solid #e0e0e0;
+      border-radius: 50%;
+      z-index: 1;
+    }
+
+    .timeline-item.jummah .timeline-dot {
+      background: #fff8e6;
+      border-color: #f0c14b;
+    }
+
+    .timeline-item.jummah .timeline-dot::after {
+      content: '🌙';
+      position: absolute;
+      font-size: 10px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .timeline-item.odd-night .timeline-dot {
+      background: #e8f5e9;
+      border-color: #5c8a6e;
+    }
+
+    .timeline-item.amplified .timeline-dot {
+      border-color: #cc0066;
+      background: #fff0f5;
+    }
+
+    .timeline-info {
+      flex: 1;
+    }
+
+    .timeline-night {
+      font-size: 15px;
+      font-weight: 700;
+      color: #16434B;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timeline-item.jummah .timeline-night {
+      color: #cc6600;
+    }
+
+    .timeline-item.amplified .timeline-night {
+      color: #cc0066;
+    }
+
+    .jummah-tag {
+      font-size: 10px;
+      font-weight: 600;
+      background: #fff8e6;
+      color: #cc6600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+
+    .amplified-tag {
+      font-size: 10px;
+      font-weight: 600;
+      background: #fff0f5;
+      color: #cc0066;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .timeline-date {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .timeline-cause {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .cause-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5c8a6e;
+    }
+
+    .timeline-amount {
+      font-family: 'Signika', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #16434B;
+      text-align: right;
+    }
+
+    .timeline-item.amplified .timeline-amount {
+      color: #cc0066;
+    }
+
+    /* Summary Sidebar */
+    .summary-sidebar {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      height: fit-content;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .summary-header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0ebe6;
+      margin-bottom: 20px;
+    }
+
+    .summary-label {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .summary-total {
+      font-family: 'Signika', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #16434B;
+    }
+
+    .summary-breakdown {
+      font-size: 13px;
+      color: #5c8a6e;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f8f5f2;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-row-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .summary-row-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .receipt-notice {
+      background: #f0f7f4;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .receipt-notice p {
+      font-size: 13px;
+      color: #5c8a6e;
+      margin: 0;
+    }
+
+    .share-section {
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    .share-title {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .share-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .share-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .share-btn:hover {
+      background: #16434B;
+      color: white;
+    }
+
+    .back-home-btn {
+      display: block;
+      width: 100%;
+      background: #16434B;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      margin-top: 20px;
+      transition: all 0.2s;
+    }
+
+    .back-home-btn:hover {
+      background: #1a5059;
+    }
+
+    /* Loading state */
+    .loading-timeline {
+      text-align: center;
+      padding: 40px 20px;
+      color: #888;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f0f0f0;
+      border-top-color: #16434B;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <div class="success-page">
+    <div class="success-hero">
+      <div class="success-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+      <h1 class="success-title">JazakAllah Khair!</h1>
+      <p class="success-subtitle">Your Ramadan giving is confirmed. May Allah accept your generosity and multiply your rewards.</p>
+    </div>
+
+    <div class="content-section">
+      <div class="timeline-layout">
+        <!-- Timeline -->
+        <div class="timeline-container">
+          <div class="timeline-header">
+            <h2 class="timeline-title">A Timeline of Your Blessings</h2>
+          </div>
+          <div class="timeline-list" id="timeline-list">
+            <div class="loading-timeline">
+              <div class="loading-spinner"></div>
+              <p>Loading your giving schedule...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Sidebar -->
+        <div class="summary-sidebar">
+          <div class="summary-header">
+            <div class="summary-label">Your total impact</div>
+            <div class="summary-total" id="summary-total">$0</div>
+            <div class="summary-breakdown" id="summary-breakdown">Loading...</div>
+          </div>
+
+          <div class="summary-row">
+            <span class="summary-row-label">Schedule</span>
+            <span class="summary-row-value" id="summary-schedule">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-row-label">Causes</span>
+            <span class="summary-row-value" id="summary-causes">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-row-label">Starting</span>
+            <span class="summary-row-value" id="summary-start">—</span>
+          </div>
+
+          <div class="receipt-notice">
+            <p>📧 A receipt has been sent to your email</p>
+          </div>
+
+          <div class="share-section">
+            <div class="share-title">Share your impact</div>
+            <div class="share-buttons">
+              <a href="#" class="share-btn" id="share-twitter" title="Share on Twitter">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a href="#" class="share-btn" id="share-facebook" title="Share on Facebook">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </a>
+              <a href="#" class="share-btn" id="share-whatsapp" title="Share on WhatsApp">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <a href="/" class="back-home-btn">Return to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Get donation data from session storage
+      const cartDataStr = sessionStorage.getItem('ramadan30DaysSuccess');
+
+      if (!cartDataStr) {
+        // No data, show generic success
+        document.getElementById('timeline-list').innerHTML = `
+          <p style="text-align: center; color: #666; padding: 20px;">
+            Your donation has been processed successfully.<br>
+            Check your email for details.
+          </p>
+        `;
+        return;
+      }
+
+      const data = JSON.parse(cartDataStr);
+
+      // Update summary
+      document.getElementById('summary-total').textContent = `$${data.total}`;
+      document.getElementById('summary-breakdown').textContent = `$${data.amountPerNight}/night × ${data.nightsCount} nights`;
+
+      const scheduleLabels = {
+        'all': `All ${data.nightsCount} Nights`,
+        'last10': 'Last 10 Nights',
+        'last5odd': 'Last 5 Odd Nights'
+      };
+      document.getElementById('summary-schedule').textContent = scheduleLabels[data.schedule] || data.schedule;
+
+      // Causes
+      const causeLabels = {
+        'food': 'Feed the Hungry',
+        'orphans': 'Orphan Care',
+        'water': 'Clean Water',
+        'education': 'Education',
+        'healthcare': 'Healthcare',
+        'emergency': 'Emergency Relief',
+        'zakat': 'Zakat Eligible'
+      };
+      let causesText = 'Where Most Needed';
+      if (data.causeMode !== 'where-needed' && data.selectedCauses?.length > 0) {
+        causesText = data.selectedCauses.map(c => causeLabels[c] || c).join(', ');
+      }
+      document.getElementById('summary-causes').textContent = causesText;
+
+      // Starting date
+      const today = new Date();
+      const ramadanStart = new Date(data.ramadanStart);
+      const startDate = today < ramadanStart ? ramadanStart : today;
+      document.getElementById('summary-start').textContent = startDate.toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+
+      // Generate timeline
+      generateTimeline(data);
+
+      // Setup share buttons
+      const shareText = `I've set up automated giving for ${data.nightsCount} nights of Ramadan with @QurbaniUSA! 🌙`;
+      const shareUrl = window.location.origin + '/ramadan';
+
+      document.getElementById('share-twitter').href =
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+
+      document.getElementById('share-facebook').href =
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+
+      document.getElementById('share-whatsapp').href =
+        `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+
+      // Clear session storage
+      sessionStorage.removeItem('ramadan30DaysSuccess');
+    });
+
+    function generateTimeline(data) {
+      const timelineList = document.getElementById('timeline-list');
+      const startDate = new Date(data.ramadanStart);
+      const today = new Date();
+
+      // Determine which night to start from
+      let startNight = 1;
+      if (today >= startDate) {
+        const daysElapsed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+        startNight = daysElapsed + 1;
+      }
+
+      // Amplify state
+      const amplify = data.amplify || {};
+
+      // Generate nights based on schedule
+      let nights = [];
+      const totalNights = 30;
+
+      if (data.schedule === 'all') {
+        for (let i = startNight; i <= totalNights; i++) {
+          nights.push(i);
+        }
+      } else if (data.schedule === 'last10') {
+        for (let i = 21; i <= 30; i++) {
+          if (i >= startNight) nights.push(i);
+        }
+      } else if (data.schedule === 'last5odd') {
+        [21, 23, 25, 27, 29].forEach(n => {
+          if (n >= startNight) nights.push(n);
+        });
+      }
+
+      // Build timeline HTML
+      let html = '';
+      nights.forEach(nightNum => {
+        const nightDate = new Date(startDate);
+        nightDate.setDate(nightDate.getDate() + nightNum - 1);
+
+        const isJummah = nightDate.getDay() === 5; // Friday
+        const isOddNight = [21, 23, 25, 27, 29].includes(nightNum);
+        const isNight27 = nightNum === 27;
+
+        // Calculate amount for this night
+        let amount = data.amountPerNight;
+        let isAmplified = false;
+        let amplifyReason = '';
+
+        if (amplify.jummah && isJummah) {
+          amount *= amplify.jummahMultiplier || 2;
+          isAmplified = true;
+          amplifyReason = `${amplify.jummahMultiplier || 2}x Jummah`;
+        }
+        if (amplify.oddNights && isOddNight) {
+          if (!isAmplified) {
+            amount = data.amountPerNight * (amplify.oddMultiplier || 2);
+            isAmplified = true;
+            amplifyReason = `${amplify.oddMultiplier || 2}x Odd Night`;
+          }
+        }
+        if (amplify.night27 && isNight27) {
+          amount = data.amountPerNight * (amplify.night27Multiplier || 2);
+          isAmplified = true;
+          amplifyReason = `${amplify.night27Multiplier || 2}x Night 27`;
+        }
+
+        const formattedDate = nightDate.toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric'
+        });
+
+        let itemClass = 'timeline-item';
+        if (isJummah) itemClass += ' jummah';
+        if (isOddNight) itemClass += ' odd-night';
+        if (isAmplified) itemClass += ' amplified';
+
+        const cause = data.causeMode === 'where-needed' ? 'Where Most Needed' :
+          (data.selectedCauses?.length > 0 ? data.selectedCauses.map(c => {
+            const labels = {
+              'food': 'Feed the Hungry',
+              'orphans': 'Orphan Care',
+              'water': 'Clean Water',
+              'education': 'Education',
+              'healthcare': 'Healthcare',
+              'emergency': 'Emergency Relief',
+              'zakat': 'Zakat Eligible'
+            };
+            return labels[c] || c;
+          }).join(', ') : 'Where Most Needed');
+
+        html += `
+          <div class="${itemClass}">
+            <div class="timeline-dot"></div>
+            <div class="timeline-info">
+              <div class="timeline-night">
+                NIGHT ${nightNum}
+                ${isJummah ? '<span class="jummah-tag">JUMMAH</span>' : ''}
+                ${isAmplified ? `<span class="amplified-tag">${amplifyReason}</span>` : ''}
+              </div>
+              <div class="timeline-date">${formattedDate}</div>
+              <div class="timeline-cause">
+                <span class="cause-dot"></span>
+                ${cause}
+              </div>
+            </div>
+            <div class="timeline-amount">$${amount}</div>
+          </div>
+        `;
+      });
+
+      timelineList.innerHTML = html;
+    }
+  </script>
+</Layout>

@@ -10,6 +10,21 @@ Production-ready Islamic charity donation platform built with Astro 5.0 SSR and 
 - **Fonts**: Signika (headings), Lato (body), Oswald (nav), Playfair Display (accents)
 - **Auth**: Supabase service role for admin operations
 
+## IMPORTANT: Existing Infrastructure (DO NOT ASK - ALREADY CONFIGURED)
+The following are ALREADY SET UP and working. Do not ask the user about these:
+
+- **Google Places API**: `PUBLIC_GOOGLE_PLACES_API_KEY` env variable - used in DonationCart.astro
+- **Stripe Payments**: Configured in Supabase `site_settings` table (stripe_secret_key, stripe_publishable_key)
+- **Supabase Database**: All tables exist, credentials in environment variables
+- **Cloudflare**: Deployment configured and working
+- **GHL (GoHighLevel)**: Integration configured for CRM sync
+- **Email/SMTP**: Configured for receipts and notifications
+
+When implementing new features:
+1. Check existing components (DonationCart.astro, Navbar.astro) for patterns
+2. Use the same environment variables and API endpoints
+3. Don't create new API keys or configurations - reuse existing ones
+
 ## Key Architecture Patterns
 
 ### SSR Routes
@@ -702,16 +717,13 @@ ADMIN_EMAIL=qurbanifoundation@gmail.com
 
 ### Sender Address
 ```
-Qurbani Foundation <donations@qurbani.com>
+Qurbani Foundation <donations@receipts.qurbani.com>
 ```
 
-### Domain Verification (REQUIRED)
-Go to [resend.com/domains](https://resend.com/domains):
-1. Add domain: `qurbani.com`
-2. Add DNS records to Cloudflare
-3. Verify domain
-
-Until verified, emails sent from `onboarding@resend.dev`
+### Domain Setup (COMPLETED)
+- Subdomain: `receipts.qurbani.com`
+- Verified in Resend ✅
+- DNS records configured in Cloudflare ✅
 
 ---
 
@@ -904,3 +916,359 @@ Run in SQL Editor:
 ### 3. Cloudflare Environment Variables
 - [ ] Add `RESEND_API_KEY` to Cloudflare Pages
 - [ ] Add `ADMIN_EMAIL` to Cloudflare Pages
+
+---
+
+## Ramadan Amanah Template (Feb 2026)
+
+### Overview
+Multi-step wizard Ramadan donation page with mobile-first design, 4-step micro-commitment flow.
+
+### Files
+| File | Purpose |
+|------|---------|
+| `src/templates/ramadan/AmanahTemplate.astro` | Main template component |
+| `src/pages/ramadan-amanah.astro` | Page route |
+| `public/images/ramadan/bg-full.png` | Full-page background image |
+
+### URL
+`/ramadan-amanah`
+
+### Design Reference Point (Checkpoint Feb 24, 2026)
+
+#### Background Configuration
+```css
+body {
+  background-image: url('/images/ramadan/bg-full.png');
+  background-size: 100% auto;
+  background-position: center -300px;  /* Adjusted so light clouds appear at Step 1 */
+  background-repeat: no-repeat;
+  background-color: #e8e4e0;
+  background-attachment: scroll;
+}
+```
+
+#### Color Scheme
+| Element | Color |
+|---------|-------|
+| Hero title/subtitle text | `#F7DEC3` |
+| Stats box text | `#F7DEC3` |
+| CTA button background | `#16434B` |
+| CTA button border | `#002329` |
+| Stats box background | `rgba(150, 140, 160, 0.15)` (transparent) |
+
+#### Typography
+| Element | Font | Style |
+|---------|------|-------|
+| Hero title | Playfair Display | Normal (non-italic), 48px, 400 weight |
+| Stats values | Signika | 26px, 600 weight |
+| Step headings | Signika | 28px, 700 weight |
+
+#### Stats Box (Transparent Glass Effect)
+```css
+.hero-stats {
+  display: inline-flex;
+  background: rgba(150, 140, 160, 0.15);
+  border-radius: 8px;
+  padding: 14px 0;
+  margin-bottom: 32px;
+  border: none;  /* No border */
+  /* No backdrop-filter blur - allows background to show through */
+}
+```
+
+#### CTA Button
+```css
+.hero-cta {
+  display: inline-block;
+  background: #16434B;
+  color: white;
+  padding: 16px 40px;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  border: 2px solid #002329;
+  box-shadow: 0 4px 12px rgba(13, 46, 51, 0.5);
+}
+```
+
+### 4-Step Flow
+1. **Hero + Date Selection**: Confirm Ramadan start date
+2. **Choose Schedule**: All nights / Last 10 / Last 5 odd
+3. **Choose Amount**: $5/$10/$25/$50 per night
+4. **Review & Confirm**: Summary + checkout
+
+### Background Image Notes
+- Single full-page image (`bg-full.png`)
+- Dark sky/mosque at top, light clouds at bottom
+- Position: `-300px` shifts image up so light clouds appear at Step 1 section
+- If user wants to adjust: increase negative value to move background up, decrease to move down
+
+---
+
+## Mega Menu Template System (Feb 2026)
+
+### Overview
+Fully dynamic mega menu system with database-driven widgets and a template system for quick setup.
+
+### Architecture
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MEGA MENU SYSTEM                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Database Tables                                             │
+│  ┌──────────────┐    ┌─────────────────┐                    │
+│  │ mega_menus   │───▶│ menu_widgets    │                    │
+│  │ (menu defs)  │    │ (left/center/   │                    │
+│  └──────────────┘    │  right columns) │                    │
+│                      └─────────────────┘                    │
+│         │                    │                              │
+│         ▼                    ▼                              │
+│  ┌──────────────┐    ┌─────────────────┐                    │
+│  │ Navbar.astro │───▶│ DynamicMegaMenu │                    │
+│  │ (renders     │    │ (widget         │                    │
+│  │  menus)      │    │  renderer)      │                    │
+│  └──────────────┘    └─────────────────┘                    │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Database Tables
+
+#### `mega_menus` - Menu Definitions
+```sql
+mega_menus (
+  id VARCHAR PRIMARY KEY,      -- 'our-work', 'zakat', 'appeals', 'about'
+  name VARCHAR,                -- Display name
+  sort_order INT,              -- Order in navbar (1, 2, 3, 4)
+  is_active BOOLEAN,           -- Show/hide menu
+  color VARCHAR,               -- Accent color (hex)
+  icon VARCHAR,                -- Icon identifier
+  created_at, updated_at
+)
+```
+
+#### `menu_widgets` - Widget Configurations
+```sql
+menu_widgets (
+  id UUID PRIMARY KEY,
+  menu_id VARCHAR REFERENCES mega_menus(id),
+  position VARCHAR,            -- 'left', 'center', 'right'
+  widget_type VARCHAR,         -- See widget types below
+  title VARCHAR,               -- Optional widget title
+  config JSONB,                -- Widget-specific configuration
+  sort_order INT,
+  is_active BOOLEAN,
+  created_at, updated_at
+)
+```
+
+### Widget Types
+
+| Type | Description | Config Options |
+|------|-------------|----------------|
+| `link-list` | List of navigation links with icons | `links[]`, `hoverColor` |
+| `category-tabs` | Category buttons (Our Work style) | `categories[]`, `viewAllLink` |
+| `campaign-grid` | Grid of campaign cards | `limit`, `viewAllText`, `viewAllHref` |
+| `promo-card` | Featured promotion with image | `href`, `badge`, `heading`, `price`, `buttonText`, colors |
+| `promo-box` | Dark card with price tiers | `bgColor`, `heading`, `priceTiers[]`, `button` |
+| `info-box` | Stats grid with button | `stats[]`, `button`, or `heading`, `description` |
+| `quick-form` | Quick donation amount buttons | `amounts[]`, `buttonText`, `buttonLink` |
+| `newsletter` | Email signup with social links | `heading`, `placeholder`, `socialLinks[]` |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/components/Navbar.astro` | Main navbar with mega menu triggers |
+| `src/components/DynamicMegaMenu.astro` | Renders widgets based on database config |
+| `src/components/MegaMenuWidget.astro` | Individual widget renderer |
+| `src/lib/menus.ts` | Menu data fetching with caching |
+| `src/pages/api/mega-menus.ts` | CRUD API for menus (supports ID changes) |
+| `src/pages/api/menu-widgets.ts` | CRUD API for widgets |
+| `src/pages/api/seed-menu-widgets.ts` | Template seeding API |
+| `src/pages/admin/menus.astro` | Admin: Menu list with drag-drop reorder |
+| `src/pages/admin/menu-builder.astro` | Admin: Widget configuration UI |
+
+### Template System
+
+#### Available Templates
+| Template ID | Description | Color |
+|-------------|-------------|-------|
+| `our-work` | Category Tabs + Campaign Grid + Promo Card | `#D97718` (orange) |
+| `zakat` | Link List + Info Box + Quick Form | `#0096D6` (blue) |
+| `about` | Link List + Stats Grid + Newsletter | `#D97718` (orange) |
+| `ramadan` | Link List + Promo Box + Feature Card | `#024139` (dark teal) |
+| `appeals` | Alias for ramadan template | `#024139` |
+
+#### Applying a Template
+
+**Via Admin UI:**
+1. Go to `/admin/menu-builder`
+2. Select a menu tab
+3. Click "Apply Template" dropdown
+4. Choose a template
+
+**Via API:**
+```bash
+# Apply template to a menu
+POST /api/seed-menu-widgets?menu=your-menu-id&template=ramadan
+
+# Seed all default menus
+POST /api/seed-menu-widgets?menu=all
+```
+
+### Creating a New Template
+
+1. **Define widgets** in `src/pages/api/seed-menu-widgets.ts`:
+```typescript
+const automateWidgets = [
+  {
+    menu_id: 'automate',
+    position: 'left',
+    widget_type: 'link-list',
+    title: null,
+    config: {
+      links: [
+        { label: '30 Days of Ramadan', href: '/30-days-of-ramadan', icon: 'star', color: '#024139' },
+        { label: 'Jummah Giving', href: '/jummah', icon: 'moon', color: '#7c3aed' },
+        // ... more links
+      ]
+    },
+    sort_order: 0,
+    is_active: true
+  },
+  {
+    menu_id: 'automate',
+    position: 'center',
+    widget_type: 'promo-box',
+    title: 'Automate Your Impact',
+    config: {
+      bgColor: '#7c3aed',
+      heading: 'Set It & Forget It',
+      description: 'Schedule your giving and never miss a chance to earn rewards.',
+      priceTiers: [
+        { price: '$1', label: 'Per day', href: '/30-days-of-ramadan' },
+        { price: '$5', label: 'Per Jummah', href: '/jummah' },
+      ],
+      button: { label: 'Start Automating', href: '/automate', color: '#7c3aed' }
+    },
+    sort_order: 0,
+    is_active: true
+  },
+  {
+    menu_id: 'automate',
+    position: 'right',
+    widget_type: 'promo-card',
+    // ... config
+  }
+];
+```
+
+2. **Register the template**:
+```typescript
+// In templateColors
+const templateColors: Record<string, string> = {
+  'our-work': '#D97718',
+  'zakat': '#0096D6',
+  'about': '#D97718',
+  'ramadan': '#024139',
+  'appeals': '#024139',
+  'automate': '#7c3aed',  // Add new template color
+};
+
+// In templates
+const templates: Record<string, typeof aboutWidgets> = {
+  'our-work': ourWorkWidgets,
+  'zakat': zakatWidgets,
+  'about': aboutWidgets,
+  'ramadan': ramadanWidgets,
+  'appeals': ramadanWidgets,
+  'automate': automateWidgets,  // Add new template
+};
+```
+
+3. **Add to legacy seeding** (optional):
+```typescript
+if (menuParam === 'automate' || menuParam === 'all') {
+  await applyTemplate('automate', 'automate');
+}
+```
+
+### Changing Menu IDs
+
+The API supports changing menu IDs (e.g., 'ramadan' → 'appeals'):
+
+```bash
+PUT /api/mega-menus
+Content-Type: application/json
+
+{
+  "id": "old-menu-id",
+  "newId": "new-menu-id"
+}
+```
+
+This automatically updates:
+- The menu record
+- All widgets linked to that menu (`menu_widgets.menu_id`)
+- All categories assigned to that menu (`categories.menu`)
+
+### Admin UI Features
+
+#### Menu Overview (`/admin/menus`)
+- Drag & drop reorder menus
+- Click color picker to change accent color
+- Click name to edit inline
+- Click pencil icon next to ID to change menu ID
+- Toggle active/inactive status
+- Delete menus (with confirmation)
+
+#### Menu Builder (`/admin/menu-builder`)
+- Tab-based interface for each menu
+- 3-column layout (left/center/right)
+- Add/edit/delete widgets
+- Apply templates via dropdown
+- Preview mega menu appearance
+
+### Hardcoded Menu IDs
+
+The 4 main menus have hardcoded fallback HTML in `Navbar.astro`:
+- `our-work` - Category tabs with campaign grid
+- `zakat` - Zakat resources and calculator
+- `appeals` - Ramadan-style giving options (formerly 'ramadan')
+- `about` - Organization info and newsletter
+
+Extra menus created in the database are rendered dynamically.
+
+### Caching
+
+Menu data uses in-memory caching in `src/lib/menus.ts`:
+- Cache TTL: 1 year (effectively permanent)
+- Cleared manually via `clearNavbarCache()`
+- APIs call `clearNavbarCache()` after mutations
+
+To force refresh:
+```typescript
+import { clearNavbarCache } from '../lib/menus';
+clearNavbarCache();
+```
+
+### Mobile Menu
+
+The mobile menu (hamburger) shows an accordion-style layout:
+- Light cream background (`#f8f6f2`) matching desktop mega menus
+- Expandable sections for each menu
+- Featured campaigns with images in Our Work section
+- Quick donate section with preset amounts ($25, $50, $100, $250)
+- Smooth animations for accordion open/close
+
+### Icon Reference
+
+Available icons for widgets (defined in `src/lib/categories.ts`):
+```
+heart, emergency, water, orphan, education, food, healthcare,
+sadaqah, qurbani, user, document, image, email, money, calculator,
+question, book, gold, shopping-bag, moon, star, x-circle
+```

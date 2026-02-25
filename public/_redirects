@@ -23,7 +23,6 @@
 # Zakat related
 /zakat-donation*     /zakat 301
 /pay-zakat*          /zakat 301
-/zakat-calculator*   /zakat-calculator 301
 /calculate-zakat*    /zakat-calculator 301
 /zakat-al-fitr*      /zakat-ul-fitr 301
 /fitrana*            /zakat-ul-fitr 301
@@ -31,6 +30,8 @@
 # Ramadan related
 /ramadan-donation*   /ramadan 301
 /ramadan-appeal*     /ramadan 301
+/ramadan-amanah*     /ramadan-giving 301
+/30-days-of-ramadan* /ramadan-giving 301
 /iftar-donation*     /iftar 301
 /feed-fasting*       /iftar 301
 /fidyah*             /fidya 301

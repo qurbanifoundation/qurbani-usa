@@ -1,0 +1,1465 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch all menus
+let menus: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('mega_menus')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order');
+  menus = data || [];
+} catch (e) {
+  console.error('Error fetching menus:', e);
+}
+
+// Fetch all widgets grouped by menu
+let widgetsByMenu: Record<string, any[]> = {};
+try {
+  const { data } = await supabaseAdmin
+    .from('menu_widgets')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order');
+
+  if (data) {
+    data.forEach(w => {
+      if (!widgetsByMenu[w.menu_id]) {
+        widgetsByMenu[w.menu_id] = [];
+      }
+      widgetsByMenu[w.menu_id].push(w);
+    });
+  }
+} catch (e) {
+  console.error('Error fetching widgets:', e);
+}
+
+// Fetch categories for dropdowns
+let categories: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('categories')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order');
+  categories = data || [];
+} catch (e) {
+  console.error('Error fetching categories:', e);
+}
+
+// Fetch campaigns for dropdowns
+let campaigns: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('id, slug, name, category, featured_image')
+    .eq('is_active', true)
+    .order('name');
+  campaigns = data || [];
+} catch (e) {
+  console.error('Error fetching campaigns:', e);
+}
+
+// Widget type definitions
+const widgetTypes = [
+  { id: 'link-list', name: 'Link List', icon: 'list', description: 'List of navigation links with icons' },
+  { id: 'category-tabs', name: 'Category Tabs', icon: 'tabs', description: 'Category buttons (like Our Work menu)' },
+  { id: 'campaign-grid', name: 'Campaign Grid', icon: 'grid', description: 'Grid of campaign cards' },
+  { id: 'promo-card', name: 'Promo Card', icon: 'star', description: 'Featured promotion with image' },
+  { id: 'promo-box', name: 'Promo Box', icon: 'box', description: 'Dark card with price tiers (like Ramadan)' },
+  { id: 'feature-card', name: 'Feature Card', icon: 'feature', description: 'Badge + number + features (like 30 Days)' },
+  { id: 'info-box', name: 'Info Box', icon: 'info', description: 'Stats grid with button (like About menu)' },
+  { id: 'quick-form', name: 'Quick Donate Form', icon: 'form', description: 'Quick donation amount buttons' },
+  { id: 'program-cards', name: 'Program Cards', icon: 'cards', description: 'Small cards for programs/services' },
+  { id: 'contact-card', name: 'Contact Card', icon: 'contact', description: 'Contact info with phone/email' },
+  { id: 'newsletter', name: 'Newsletter', icon: 'mail', description: 'Email signup with social links' },
+];
+
+// Serialize data for JavaScript
+const categoriesJson = JSON.stringify(categories);
+const campaignsJson = JSON.stringify(campaigns);
+---
+
+<AdminLayout title="Menu Builder" activeNav="menu-builder">
+  <div class="max-w-7xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Mega Menu Builder</h1>
+        <p class="text-gray-600 mt-1">Configure what appears in each mega menu's left, center, and right columns.</p>
+      </div>
+      <a href="/admin/menus" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm">
+        ← Back to Menu Overview
+      </a>
+    </div>
+
+    <!-- Menu Tabs -->
+    <div class="flex gap-2 mb-6 border-b border-gray-200">
+      {menus.map((menu, idx) => (
+        <button
+          class={`menu-tab px-4 py-3 font-medium text-sm border-b-2 transition ${idx === 0 ? 'border-[#01534d] text-[#01534d]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          data-menu={menu.id}
+        >
+          {menu.name}
+        </button>
+      ))}
+    </div>
+
+    <!-- Menu Builder Area -->
+    {menus.map((menu, idx) => (
+      <div
+        class={`menu-panel ${idx === 0 ? '' : 'hidden'}`}
+        data-menu={menu.id}
+      >
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <!-- Preview Header -->
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style={`background-color: ${menu.color}`}>
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">{menu.name} Mega Menu</h3>
+                <p class="text-xs text-gray-500">Configure the three columns below</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <button
+                  class="quick-populate-btn px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition flex items-center gap-1.5"
+                  data-menu={menu.id}
+                  title="Apply a template to this menu"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  Apply Template
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                  </svg>
+                </button>
+                <div class="template-dropdown hidden absolute right-0 top-full mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                  <p class="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">Choose a Template</p>
+                  <button class="template-option w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3" data-template="our-work">
+                    <div class="w-8 h-8 rounded bg-[#D97718] flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"></path></svg>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900 text-sm">Our Work Style</p>
+                      <p class="text-xs text-gray-500">Category Tabs + Campaign Grid + Promo Card</p>
+                    </div>
+                  </button>
+                  <button class="template-option w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3" data-template="zakat">
+                    <div class="w-8 h-8 rounded bg-[#0096D6] flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4z"></path></svg>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900 text-sm">Zakat Style</p>
+                      <p class="text-xs text-gray-500">Links + Info Box + Quick Donate Form</p>
+                    </div>
+                  </button>
+                  <button class="template-option w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3" data-template="about">
+                    <div class="w-8 h-8 rounded bg-[#D97718] flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900 text-sm">About Style</p>
+                      <p class="text-xs text-gray-500">Links + Stats Grid + Newsletter</p>
+                    </div>
+                  </button>
+                  <button class="template-option w-full px-3 py-2 text-left hover:bg-gray-50 flex items-start gap-3" data-template="ramadan">
+                    <div class="w-8 h-8 rounded bg-[#024139] flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900 text-sm">Ramadan Style</p>
+                      <p class="text-xs text-gray-500">Links + Promo Box + Feature Card</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+              <a
+                href={`/?preview-menu=${menu.id}`}
+                target="_blank"
+                class="text-sm text-[#01534d] hover:underline flex items-center gap-1"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                Preview
+              </a>
+            </div>
+          </div>
+
+          <!-- Three Column Layout -->
+          <div class="grid grid-cols-3 divide-x divide-gray-200">
+            {['left', 'center', 'right'].map(position => {
+              const widgets = widgetsByMenu[menu.id]?.filter(w => w.position === position) || [];
+              return (
+                <div class="p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-gray-700 uppercase text-xs tracking-wide">
+                      {position === 'left' ? 'Left Column' : position === 'center' ? 'Center' : 'Right Column'}
+                    </h4>
+                    <button
+                      class="add-widget-btn text-xs text-[#01534d] hover:underline flex items-center gap-1"
+                      data-menu={menu.id}
+                      data-position={position}
+                    >
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                      </svg>
+                      Add Widget
+                    </button>
+                  </div>
+
+                  <div class="widget-drop-zone min-h-[300px] bg-gray-50 rounded-lg p-2 space-y-2" data-menu={menu.id} data-position={position}>
+                    {widgets.map(widget => (
+                      <div
+                        class="widget-card bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:border-[#01534d]/30 transition"
+                        data-widget-id={widget.id}
+                        data-widget-type={widget.widget_type}
+                      >
+                        <div class="flex items-start justify-between">
+                          <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-[#01534d]/10 rounded flex items-center justify-center flex-shrink-0">
+                              <svg class="w-4 h-4 text-[#01534d]" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                              </svg>
+                            </div>
+                            <div>
+                              <p class="font-medium text-gray-900 text-sm">{widget.title || widget.widget_type}</p>
+                              <p class="text-xs text-gray-500">{widgetTypes.find(t => t.id === widget.widget_type)?.name || widget.widget_type}</p>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <button
+                              class="edit-widget-btn p-1.5 text-gray-400 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded transition"
+                              data-widget={JSON.stringify(widget)}
+                              title="Edit Widget"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                              </svg>
+                            </button>
+                            <button
+                              class="delete-widget-btn p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                              data-widget-id={widget.id}
+                              title="Delete Widget"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {widgets.length === 0 && (
+                      <div class="text-center py-8 text-gray-400 text-sm">
+                        <p>No widgets</p>
+                        <p class="text-xs mt-1">Click "Add Widget" above</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    ))}
+
+    <!-- Widget Types Reference -->
+    <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="font-bold text-gray-900 mb-4">Available Widget Types</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {widgetTypes.map(type => (
+          <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p class="font-medium text-gray-900 text-sm">{type.name}</p>
+            <p class="text-xs text-gray-500 mt-1">{type.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Widget Modal -->
+  <div id="widget-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-black/50" id="modal-backdrop"></div>
+      <div class="relative bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between z-10">
+          <h3 id="modal-title" class="text-xl font-bold text-gray-900">Edit Widget</h3>
+          <button id="close-modal-btn" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="widget-form" class="p-6 space-y-4">
+          <input type="hidden" id="widget-id" />
+          <input type="hidden" id="widget-menu-id" />
+          <input type="hidden" id="widget-position" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Widget Type</label>
+            <select id="widget-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent">
+              {widgetTypes.map(type => (
+                <option value={type.id}>{type.name} - {type.description}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
+            <input type="text" id="widget-title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent" placeholder="e.g., Quick Links" />
+          </div>
+
+          <!-- Dynamic Config Fields -->
+          <div id="config-fields" class="space-y-4 border-t pt-4">
+            <!-- Category Tabs Config -->
+            <div id="config-category-tabs" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Select categories and drag to reorder. The order here determines display order in the menu.</p>
+
+              <!-- Available Categories -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Available Categories (click to add)</label>
+                <div id="available-categories" class="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[40px] bg-gray-50">
+                  {categories.map(cat => (
+                    <button
+                      type="button"
+                      class="available-cat-btn flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-300 rounded text-sm hover:border-[#01534d] hover:bg-[#01534d]/5 transition"
+                      data-slug={cat.slug}
+                      data-label={cat.label}
+                      data-color={cat.color}
+                      data-icon={cat.icon}
+                    >
+                      <span class="w-3 h-3 rounded" style={`background-color: ${cat.color}`}></span>
+                      <span>{cat.label}</span>
+                      <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Selected Categories (Drag to Reorder) -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Selected Categories (drag to reorder)</label>
+                <div id="selected-categories" class="space-y-1 p-2 border-2 border-dashed border-gray-300 rounded-lg min-h-[60px]">
+                  <p id="no-categories-msg" class="text-sm text-gray-400 text-center py-2">Click categories above to add them</p>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">View All Link Text</label>
+                <input type="text" id="view-all-text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="View All Appeals" value="View All Appeals" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">View All Link URL</label>
+                <input type="text" id="view-all-href" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="/appeals" value="/appeals" />
+              </div>
+            </div>
+
+            <!-- Campaign Grid Config -->
+            <div id="config-campaign-grid" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                <strong>Tip:</strong> When used with Category Tabs, select "Dynamic (from Category Tabs)" to make the grid update when users click different categories. Otherwise, select a specific category to show only those campaigns.
+              </p>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Select Category</label>
+                <select id="campaign-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                  <option value="">Dynamic (from Category Tabs)</option>
+                  {categories.map(cat => (
+                    <option value={cat.slug}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Max Campaigns to Show</label>
+                <input type="number" id="campaign-limit" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="8" min="1" max="20" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Empty Message</label>
+                <input type="text" id="campaign-empty-msg" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="No campaigns in this category yet." />
+              </div>
+            </div>
+
+            <!-- Link List Config -->
+            <div id="config-link-list" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Add navigation links with optional icons.</p>
+              <div id="links-container" class="space-y-2">
+                <!-- Links will be added here dynamically -->
+              </div>
+              <button type="button" id="add-link-btn" class="text-sm text-[#01534d] hover:underline flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add Link
+              </button>
+            </div>
+
+            <!-- Quick Form Config -->
+            <div id="config-quick-form" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Quick donation form with preset amounts.</p>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle (e.g., "Give Zakat")</label>
+                <input type="text" id="form-subtitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Give Now" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Preset Amounts (comma separated)</label>
+                <input type="text" id="form-amounts" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="100, 250, 500" value="100, 250, 500" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                <input type="text" id="form-button-text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Donate Now" value="Donate Now" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Button Link</label>
+                <input type="text" id="form-button-href" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="/donate" value="/donate" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Footnote (optional)</label>
+                <input type="text" id="form-footnote" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="100% policy - all funds reach those in need" />
+              </div>
+            </div>
+
+            <!-- Promo Card Config -->
+            <div id="config-promo-card" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Rich featured card with gradient background, pricing, and CTA button.</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <input type="text" id="promo-image" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="https://..." />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Link URL</label>
+                  <input type="text" id="promo-href" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="/appeals/..." />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                <input type="text" id="promo-heading" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Sponsor an Orphan" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input type="text" id="promo-description" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Change a child's life with monthly support..." />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Badge Text</label>
+                  <input type="text" id="promo-badge" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="FEATURED" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Badge Color</label>
+                  <input type="color" id="promo-badge-color" class="w-full h-10 border border-gray-300 rounded-lg" value="#D97718" />
+                </div>
+              </div>
+              <div class="border-t pt-3 mt-2">
+                <p class="text-xs text-gray-500 mb-2">Pricing (optional)</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Label</label>
+                    <input type="text" id="promo-price-label" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Starting from" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Price</label>
+                    <input type="text" id="promo-price" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="$50" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Suffix</label>
+                    <input type="text" id="promo-price-suffix" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="/month" />
+                  </div>
+                </div>
+              </div>
+              <div class="border-t pt-3 mt-2">
+                <p class="text-xs text-gray-500 mb-2">Button</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Button Text</label>
+                    <input type="text" id="promo-button-text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="Sponsor Now" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Button Color</label>
+                    <input type="color" id="promo-button-color" class="w-full h-8 border border-gray-300 rounded" value="#D97718" />
+                  </div>
+                </div>
+              </div>
+              <div class="border-t pt-3 mt-2">
+                <p class="text-xs text-gray-500 mb-2">Card Background</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Gradient Start</label>
+                    <input type="color" id="promo-bg-color" class="w-full h-8 border border-gray-300 rounded" value="#01534d" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Gradient End</label>
+                    <input type="color" id="promo-bg-color-end" class="w-full h-8 border border-gray-300 rounded" value="#013d38" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info Box Config - Stats grid style -->
+            <div id="config-info-box" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Stats grid with large numbers and labels (like the About menu "Our Impact" section).</p>
+
+              <div class="border-t pt-3">
+                <p class="text-xs text-gray-500 mb-2 font-medium">Stats (up to 4)</p>
+                <div id="stats-container" class="space-y-2">
+                  <!-- Stats will be added here dynamically -->
+                </div>
+                <button type="button" id="add-stat-btn" class="mt-2 text-sm text-[#01534d] hover:underline flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  Add Stat
+                </button>
+              </div>
+
+              <div class="border-t pt-3">
+                <p class="text-xs text-gray-500 mb-2 font-medium">Button</p>
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Button Text</label>
+                    <input type="text" id="info-button-text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Learn More About Us" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Button Link</label>
+                    <input type="text" id="info-button-href" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="/about" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Button Color</label>
+                    <input type="color" id="info-button-color" class="w-full h-10 border border-gray-300 rounded-lg" value="#D97718" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Card Config -->
+            <div id="config-contact-card" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Contact information card.</p>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="text" id="contact-phone" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="1-800-900-0027" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="text" id="contact-email" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="info@example.com" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea id="contact-address" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="123 Street, City, State ZIP"></textarea>
+              </div>
+            </div>
+
+            <!-- Newsletter Config -->
+            <div id="config-newsletter" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Email newsletter signup with social media links.</p>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle (italic)</label>
+                <input type="text" id="newsletter-subtitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Stay Connected" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                <input type="text" id="newsletter-heading" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Newsletter" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <input type="text" id="newsletter-description" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Get updates on our projects..." />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                  <input type="text" id="newsletter-button-text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Subscribe" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Button Color</label>
+                  <input type="color" id="newsletter-button-color" class="w-full h-10 border border-gray-300 rounded-lg" value="#D97718" />
+                </div>
+              </div>
+              <div class="border-t pt-3">
+                <p class="text-xs text-gray-500 mb-2 font-medium">Social Media Links</p>
+                <div class="grid grid-cols-5 gap-2">
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Facebook</label>
+                    <input type="text" id="social-facebook" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" placeholder="URL" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Twitter</label>
+                    <input type="text" id="social-twitter" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" placeholder="URL" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">Instagram</label>
+                    <input type="text" id="social-instagram" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" placeholder="URL" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">YouTube</label>
+                    <input type="text" id="social-youtube" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" placeholder="URL" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 mb-1">LinkedIn</label>
+                    <input type="text" id="social-linkedin" class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" placeholder="URL" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Promo Box Config -->
+            <div id="config-promo-box" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Dark promotional card with heading, description, and price tiers (like Ramadan center section).</p>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                <input type="text" id="promobox-heading" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="The Blessed Month" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="promobox-description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Multiply your rewards..."></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                <input type="color" id="promobox-bg-color" class="w-full h-10 border border-gray-300 rounded-lg" value="#024139" />
+              </div>
+              <div class="border-t pt-3">
+                <p class="text-xs text-gray-500 mb-2 font-medium">Price Tiers (up to 3)</p>
+                <div id="price-tiers-container" class="space-y-2">
+                  <!-- Price tiers will be added here -->
+                </div>
+                <button type="button" id="add-price-tier-btn" class="mt-2 text-sm text-[#01534d] hover:underline flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  Add Price Tier
+                </button>
+              </div>
+              <div class="border-t pt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Button Text</label>
+                  <input type="text" id="promobox-button-text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Explore Ramadan Giving" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Button Link</label>
+                  <input type="text" id="promobox-button-href" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="/ramadan" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature Card Config -->
+            <div id="config-feature-card" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Feature card with badge, large number/icon, features list, and CTA (like 30 Days of Ramadan).</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Badge Text</label>
+                  <input type="text" id="feature-badge" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="AUTOMATE" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Badge Color</label>
+                  <input type="color" id="feature-badge-color" class="w-full h-10 border border-gray-300 rounded-lg" value="#D97718" />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                  <select id="feature-icon" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">None</option>
+                    <option value="moon">Moon</option>
+                    <option value="heart">Heart</option>
+                    <option value="star">Star</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Large Number</label>
+                  <input type="text" id="feature-large-number" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="30" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Number Label</label>
+                  <input type="text" id="feature-number-label" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Days of Giving" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                <input type="text" id="feature-heading" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="30 Days of Ramadan" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="feature-description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Automate your daily giving..."></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Features (comma separated)</label>
+                <input type="text" id="feature-features" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Auto-scheduled, Daily rewards" />
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Button Text</label>
+                  <input type="text" id="feature-button-text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Start Giving" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Button Link</label>
+                  <input type="text" id="feature-button-href" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="/30-days" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Button Color</label>
+                  <input type="color" id="feature-button-color" class="w-full h-10 border border-gray-300 rounded-lg" value="#D97718" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Program Cards Config -->
+            <div id="config-program-cards" class="config-section hidden space-y-4">
+              <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">Grid of small program/service cards.</p>
+              <div id="programs-container" class="space-y-3">
+                <!-- Programs will be added here dynamically -->
+              </div>
+              <button type="button" id="add-program-btn" class="text-sm text-[#01534d] hover:underline flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add Program
+              </button>
+            </div>
+
+            <!-- Advanced/JSON Config (fallback) -->
+            <div id="config-advanced" class="space-y-2">
+              <button type="button" id="toggle-advanced-btn" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                Show Advanced (JSON)
+              </button>
+              <div id="advanced-json" class="hidden">
+                <textarea
+                  id="widget-config"
+                  rows="8"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent font-mono text-sm"
+                  placeholder="{}"
+                ></textarea>
+                <p class="text-xs text-gray-500 mt-1">Advanced: Edit raw JSON configuration</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <button type="button" id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+              Save Widget
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
+</AdminLayout>
+
+<script is:inline>
+  const modal = document.getElementById('widget-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const form = document.getElementById('widget-form');
+  const toast = document.getElementById('toast');
+  const widgetTypeSelect = document.getElementById('widget-type');
+
+  function showToast(message, type = 'success') {
+    const icon = type === 'success'
+      ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+    toast.innerHTML = icon + '<span>' + message + '</span>';
+    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+
+    setTimeout(() => { toast.className = 'hidden'; }, 3000);
+  }
+
+  // Show/hide config sections based on widget type
+  function showConfigSection(type) {
+    document.querySelectorAll('.config-section').forEach(s => s.classList.add('hidden'));
+    const section = document.getElementById('config-' + type);
+    if (section) section.classList.remove('hidden');
+  }
+
+  // Build config object from form fields based on widget type
+  function buildConfigFromForm() {
+    const type = widgetTypeSelect.value;
+    let config = {};
+
+    switch (type) {
+      case 'category-tabs':
+        const selectedCategories = [];
+        document.querySelectorAll('#selected-categories .selected-cat-item').forEach(item => {
+          selectedCategories.push({
+            slug: item.dataset.slug,
+            label: item.dataset.label,
+            color: item.dataset.color,
+            icon: item.dataset.icon
+          });
+        });
+        config.categories = selectedCategories;
+        config.viewAllLink = {
+          label: document.getElementById('view-all-text').value || 'View All Appeals',
+          href: document.getElementById('view-all-href').value || '/appeals'
+        };
+        break;
+
+      case 'campaign-grid':
+        config.category = document.getElementById('campaign-category').value || null;
+        config.limit = parseInt(document.getElementById('campaign-limit').value) || 8;
+        config.emptyMessage = document.getElementById('campaign-empty-msg').value || '';
+        break;
+
+      case 'link-list':
+        const links = [];
+        document.querySelectorAll('#links-container .link-item').forEach(item => {
+          links.push({
+            label: item.querySelector('.link-label').value,
+            href: item.querySelector('.link-href').value,
+            icon: item.querySelector('.link-icon').value || 'heart',
+            color: item.querySelector('.link-color').value || '#01534d'
+          });
+        });
+        config.links = links;
+        break;
+
+      case 'quick-form':
+        config.subtitle = document.getElementById('form-subtitle').value || '';
+        const amounts = document.getElementById('form-amounts').value.split(',').map(a => parseInt(a.trim())).filter(a => !isNaN(a));
+        config.amounts = amounts.length > 0 ? amounts : [100, 250, 500];
+        config.button = {
+          label: document.getElementById('form-button-text').value || 'Donate Now',
+          href: document.getElementById('form-button-href').value || '/donate'
+        };
+        config.footnote = document.getElementById('form-footnote').value || '';
+        break;
+
+      case 'promo-card':
+        config.image = document.getElementById('promo-image').value || '';
+        config.heading = document.getElementById('promo-heading').value || '';
+        config.description = document.getElementById('promo-description').value || '';
+        config.badge = document.getElementById('promo-badge').value || '';
+        config.badgeColor = document.getElementById('promo-badge-color').value || '#D97718';
+        config.href = document.getElementById('promo-href').value || '#';
+        // Pricing
+        config.priceLabel = document.getElementById('promo-price-label').value || '';
+        config.price = document.getElementById('promo-price').value || '';
+        config.priceSuffix = document.getElementById('promo-price-suffix').value || '';
+        // Button
+        config.buttonText = document.getElementById('promo-button-text').value || '';
+        config.buttonColor = document.getElementById('promo-button-color').value || '#D97718';
+        // Background
+        config.bgColor = document.getElementById('promo-bg-color').value || '#01534d';
+        config.bgColorEnd = document.getElementById('promo-bg-color-end').value || '#013d38';
+        break;
+
+      case 'info-box':
+        // Collect stats
+        const stats = [];
+        document.querySelectorAll('#stats-container .stat-item').forEach(item => {
+          stats.push({
+            value: item.querySelector('.stat-value').value,
+            label: item.querySelector('.stat-label').value,
+            color: item.querySelector('.stat-color').value || '#01534d',
+            href: item.querySelector('.stat-href')?.value || '#'
+          });
+        });
+        config.stats = stats;
+        config.button = {
+          label: document.getElementById('info-button-text').value || 'Learn More',
+          href: document.getElementById('info-button-href').value || '#',
+          color: document.getElementById('info-button-color').value || '#D97718'
+        };
+        break;
+
+      case 'contact-card':
+        config.phone = document.getElementById('contact-phone').value || '';
+        config.email = document.getElementById('contact-email').value || '';
+        config.address = document.getElementById('contact-address').value || '';
+        break;
+
+      case 'newsletter':
+        config.subtitle = document.getElementById('newsletter-subtitle').value || '';
+        config.heading = document.getElementById('newsletter-heading').value || '';
+        config.description = document.getElementById('newsletter-description').value || '';
+        config.buttonText = document.getElementById('newsletter-button-text').value || 'Subscribe';
+        config.buttonColor = document.getElementById('newsletter-button-color').value || '#D97718';
+        // Social links
+        const socialLinks = [];
+        ['facebook', 'twitter', 'instagram', 'youtube', 'linkedin'].forEach(platform => {
+          const href = document.getElementById(`social-${platform}`).value;
+          if (href) socialLinks.push({ platform, href });
+        });
+        config.socialLinks = socialLinks;
+        break;
+
+      case 'promo-box':
+        config.heading = document.getElementById('promobox-heading').value || '';
+        config.description = document.getElementById('promobox-description').value || '';
+        config.bgColor = document.getElementById('promobox-bg-color').value || '#024139';
+        // Price tiers
+        const priceTiers = [];
+        document.querySelectorAll('#price-tiers-container .price-tier-item').forEach(item => {
+          priceTiers.push({
+            price: item.querySelector('.tier-price').value,
+            label: item.querySelector('.tier-label').value,
+            href: item.querySelector('.tier-href')?.value || '#'
+          });
+        });
+        config.priceTiers = priceTiers;
+        config.button = {
+          label: document.getElementById('promobox-button-text').value || 'Explore',
+          href: document.getElementById('promobox-button-href').value || '#'
+        };
+        break;
+
+      case 'feature-card':
+        config.badge = document.getElementById('feature-badge').value || '';
+        config.badgeColor = document.getElementById('feature-badge-color').value || '#D97718';
+        config.icon = document.getElementById('feature-icon').value || '';
+        config.largeNumber = document.getElementById('feature-large-number').value || '';
+        config.numberLabel = document.getElementById('feature-number-label').value || '';
+        config.heading = document.getElementById('feature-heading').value || '';
+        config.description = document.getElementById('feature-description').value || '';
+        config.features = document.getElementById('feature-features').value.split(',').map(f => f.trim()).filter(f => f);
+        config.button = {
+          label: document.getElementById('feature-button-text').value || 'Start',
+          href: document.getElementById('feature-button-href').value || '#',
+          color: document.getElementById('feature-button-color').value || '#D97718'
+        };
+        break;
+
+      case 'program-cards':
+        const programs = [];
+        document.querySelectorAll('#programs-container .program-item').forEach(item => {
+          programs.push({
+            title: item.querySelector('.program-title').value,
+            href: item.querySelector('.program-href').value,
+            image: item.querySelector('.program-image').value,
+            price: item.querySelector('.program-price').value
+          });
+        });
+        config.programs = programs;
+        break;
+    }
+
+    // Update JSON textarea
+    document.getElementById('widget-config').value = JSON.stringify(config, null, 2);
+    return config;
+  }
+
+  // Populate form fields from config
+  function populateFormFromConfig(config, type) {
+    switch (type) {
+      case 'category-tabs':
+        // Clear and populate selected categories
+        clearSelectedCategories();
+        (config.categories || []).forEach(cat => {
+          addSelectedCategory(cat.slug, cat.label, cat.color, cat.icon);
+        });
+        if (config.viewAllLink) {
+          document.getElementById('view-all-text').value = config.viewAllLink.label || '';
+          document.getElementById('view-all-href').value = config.viewAllLink.href || '';
+        }
+        break;
+
+      case 'campaign-grid':
+        document.getElementById('campaign-category').value = config.category || '';
+        document.getElementById('campaign-limit').value = config.limit || 8;
+        document.getElementById('campaign-empty-msg').value = config.emptyMessage || '';
+        break;
+
+      case 'link-list':
+        const linksContainer = document.getElementById('links-container');
+        linksContainer.innerHTML = '';
+        (config.links || []).forEach(link => addLinkRow(link));
+        break;
+
+      case 'quick-form':
+        document.getElementById('form-subtitle').value = config.subtitle || '';
+        document.getElementById('form-amounts').value = (config.amounts || [100, 250, 500]).join(', ');
+        document.getElementById('form-button-text').value = config.button?.label || 'Donate Now';
+        document.getElementById('form-button-href').value = config.button?.href || '/donate';
+        document.getElementById('form-footnote').value = config.footnote || '';
+        break;
+
+      case 'promo-card':
+        document.getElementById('promo-image').value = config.image || '';
+        document.getElementById('promo-heading').value = config.heading || '';
+        document.getElementById('promo-description').value = config.description || '';
+        document.getElementById('promo-badge').value = config.badge || '';
+        document.getElementById('promo-badge-color').value = config.badgeColor || '#D97718';
+        document.getElementById('promo-href').value = config.href || '';
+        // Pricing
+        document.getElementById('promo-price-label').value = config.priceLabel || '';
+        document.getElementById('promo-price').value = config.price || '';
+        document.getElementById('promo-price-suffix').value = config.priceSuffix || '';
+        // Button
+        document.getElementById('promo-button-text').value = config.buttonText || '';
+        document.getElementById('promo-button-color').value = config.buttonColor || '#D97718';
+        // Background
+        document.getElementById('promo-bg-color').value = config.bgColor || '#01534d';
+        document.getElementById('promo-bg-color-end').value = config.bgColorEnd || '#013d38';
+        break;
+
+      case 'info-box':
+        // Populate stats
+        const statsContainer = document.getElementById('stats-container');
+        statsContainer.innerHTML = '';
+        (config.stats || []).forEach(stat => addStatRow(stat));
+        document.getElementById('info-button-text').value = config.button?.label || '';
+        document.getElementById('info-button-href').value = config.button?.href || '';
+        document.getElementById('info-button-color').value = config.button?.color || '#D97718';
+        break;
+
+      case 'contact-card':
+        document.getElementById('contact-phone').value = config.phone || '';
+        document.getElementById('contact-email').value = config.email || '';
+        document.getElementById('contact-address').value = config.address || '';
+        break;
+
+      case 'newsletter':
+        document.getElementById('newsletter-subtitle').value = config.subtitle || '';
+        document.getElementById('newsletter-heading').value = config.heading || '';
+        document.getElementById('newsletter-description').value = config.description || '';
+        document.getElementById('newsletter-button-text').value = config.buttonText || 'Subscribe';
+        document.getElementById('newsletter-button-color').value = config.buttonColor || '#D97718';
+        // Social links
+        ['facebook', 'twitter', 'instagram', 'youtube', 'linkedin'].forEach(platform => {
+          const link = (config.socialLinks || []).find(s => s.platform === platform);
+          document.getElementById(`social-${platform}`).value = link?.href || '';
+        });
+        break;
+
+      case 'promo-box':
+        document.getElementById('promobox-heading').value = config.heading || '';
+        document.getElementById('promobox-description').value = config.description || '';
+        document.getElementById('promobox-bg-color').value = config.bgColor || '#024139';
+        // Price tiers
+        const tiersContainer = document.getElementById('price-tiers-container');
+        tiersContainer.innerHTML = '';
+        (config.priceTiers || []).forEach(tier => addPriceTierRow(tier));
+        document.getElementById('promobox-button-text').value = config.button?.label || '';
+        document.getElementById('promobox-button-href').value = config.button?.href || '';
+        break;
+
+      case 'feature-card':
+        document.getElementById('feature-badge').value = config.badge || '';
+        document.getElementById('feature-badge-color').value = config.badgeColor || '#D97718';
+        document.getElementById('feature-icon').value = config.icon || '';
+        document.getElementById('feature-large-number').value = config.largeNumber || '';
+        document.getElementById('feature-number-label').value = config.numberLabel || '';
+        document.getElementById('feature-heading').value = config.heading || '';
+        document.getElementById('feature-description').value = config.description || '';
+        document.getElementById('feature-features').value = (config.features || []).join(', ');
+        document.getElementById('feature-button-text').value = config.button?.label || '';
+        document.getElementById('feature-button-href').value = config.button?.href || '';
+        document.getElementById('feature-button-color').value = config.button?.color || '#D97718';
+        break;
+
+      case 'program-cards':
+        const programsContainer = document.getElementById('programs-container');
+        programsContainer.innerHTML = '';
+        (config.programs || []).forEach(prog => addProgramRow(prog));
+        break;
+    }
+  }
+
+  // Add link row for link-list widget
+  function addLinkRow(link = {}) {
+    const container = document.getElementById('links-container');
+    const div = document.createElement('div');
+    div.className = 'link-item flex gap-2 items-start bg-gray-50 p-2 rounded';
+    div.innerHTML = `
+      <input type="text" class="link-label flex-1 px-2 py-1 border rounded text-sm" placeholder="Label" value="${link.label || ''}" />
+      <input type="text" class="link-href flex-1 px-2 py-1 border rounded text-sm" placeholder="/page-url" value="${link.href || ''}" />
+      <input type="text" class="link-icon w-20 px-2 py-1 border rounded text-sm" placeholder="icon" value="${link.icon || 'heart'}" />
+      <input type="color" class="link-color w-10 h-8 border rounded cursor-pointer" value="${link.color || '#01534d'}" />
+      <button type="button" class="remove-link-btn p-1 text-red-500 hover:bg-red-50 rounded" title="Remove">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    `;
+    div.querySelector('.remove-link-btn').addEventListener('click', () => div.remove());
+    container.appendChild(div);
+  }
+
+  // Add stat row for info-box widget
+  function addStatRow(stat = {}) {
+    const container = document.getElementById('stats-container');
+    if (container.querySelectorAll('.stat-item').length >= 4) {
+      alert('Maximum 4 stats allowed');
+      return;
+    }
+    const div = document.createElement('div');
+    div.className = 'stat-item flex gap-2 items-center bg-gray-50 p-2 rounded';
+    div.innerHTML = `
+      <input type="text" class="stat-value w-20 px-2 py-1 border rounded text-sm font-bold" placeholder="25+" value="${stat.value || ''}" />
+      <input type="text" class="stat-label flex-1 px-2 py-1 border rounded text-sm" placeholder="Years of Service" value="${stat.label || ''}" />
+      <input type="color" class="stat-color w-10 h-8 border rounded cursor-pointer" value="${stat.color || '#01534d'}" title="Number color" />
+      <input type="text" class="stat-href w-24 px-2 py-1 border rounded text-sm" placeholder="/link" value="${stat.href || '#'}" />
+      <button type="button" class="remove-stat-btn p-1 text-red-500 hover:bg-red-50 rounded" title="Remove">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    `;
+    div.querySelector('.remove-stat-btn').addEventListener('click', () => div.remove());
+    container.appendChild(div);
+  }
+
+  // Add price tier row for promo-box widget
+  function addPriceTierRow(tier = {}) {
+    const container = document.getElementById('price-tiers-container');
+    if (container.querySelectorAll('.price-tier-item').length >= 3) {
+      alert('Maximum 3 price tiers allowed');
+      return;
+    }
+    const div = document.createElement('div');
+    div.className = 'price-tier-item flex gap-2 items-center bg-gray-50 p-2 rounded';
+    div.innerHTML = `
+      <input type="text" class="tier-price w-20 px-2 py-1 border rounded text-sm font-bold" placeholder="$10" value="${tier.price || ''}" />
+      <input type="text" class="tier-label flex-1 px-2 py-1 border rounded text-sm" placeholder="Fidya/day" value="${tier.label || ''}" />
+      <input type="text" class="tier-href w-24 px-2 py-1 border rounded text-sm" placeholder="/link" value="${tier.href || '#'}" />
+      <button type="button" class="remove-tier-btn p-1 text-red-500 hover:bg-red-50 rounded" title="Remove">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    `;
+    div.querySelector('.remove-tier-btn').addEventListener('click', () => div.remove());
+    container.appendChild(div);
+  }
+
+  // Add program row for program-cards widget
+  function addProgramRow(prog = {}) {
+    const container = document.getElementById('programs-container');
+    const div = document.createElement('div');
+    div.className = 'program-item bg-gray-50 p-2 rounded space-y-1';
+    div.innerHTML = `
+      <div class="flex gap-2">
+        <input type="text" class="program-title flex-1 px-2 py-1 border rounded text-sm" placeholder="Program Title" value="${prog.title || ''}" />
+        <button type="button" class="remove-program-btn p-1 text-red-500 hover:bg-red-50 rounded" title="Remove">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <input type="text" class="program-href w-full px-2 py-1 border rounded text-sm" placeholder="/page-url" value="${prog.href || ''}" />
+      <input type="text" class="program-image w-full px-2 py-1 border rounded text-sm" placeholder="Image URL" value="${prog.image || ''}" />
+      <input type="text" class="program-price w-full px-2 py-1 border rounded text-sm" placeholder="Price (e.g., $50/month)" value="${prog.price || ''}" />
+    `;
+    div.querySelector('.remove-program-btn').addEventListener('click', () => div.remove());
+    container.appendChild(div);
+  }
+
+  // === CATEGORY TABS HELPERS ===
+  const selectedCategoriesContainer = document.getElementById('selected-categories');
+  const availableCategoriesContainer = document.getElementById('available-categories');
+  const noCategoriesMsg = document.getElementById('no-categories-msg');
+
+  function updateNoCategoriesMsg() {
+    const hasCategories = selectedCategoriesContainer?.querySelectorAll('.selected-cat-item').length > 0;
+    if (noCategoriesMsg) {
+      noCategoriesMsg.style.display = hasCategories ? 'none' : 'block';
+    }
+  }
+
+  function addSelectedCategory(slug, label, color, icon) {
+    if (!selectedCategoriesContainer) return;
+    // Check if already selected
+    if (selectedCategoriesContainer.querySelector(`[data-slug="${slug}"]`)) return;
+
+    const div = document.createElement('div');
+    div.className = 'selected-cat-item flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded cursor-move hover:shadow-sm';
+    div.draggable = true;
+    div.dataset.slug = slug;
+    div.dataset.label = label;
+    div.dataset.color = color;
+    div.dataset.icon = icon;
+    div.innerHTML = `
+      <svg class="w-4 h-4 text-gray-400 drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+      <span class="w-4 h-4 rounded flex-shrink-0" style="background-color: ${color}"></span>
+      <span class="flex-1 text-sm font-medium">${label}</span>
+      <button type="button" class="remove-cat-btn p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded" title="Remove">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    `;
+
+    // Remove button handler
+    div.querySelector('.remove-cat-btn').addEventListener('click', () => {
+      div.remove();
+      // Show the available button again
+      const availBtn = availableCategoriesContainer?.querySelector(`[data-slug="${slug}"]`);
+      if (availBtn) availBtn.style.display = 'flex';
+      updateNoCategoriesMsg();
+    });
+
+    // Drag handlers for reordering
+    div.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'move';
+      div.classList.add('opacity-50');
+      window.draggedCatItem = div;
+    });
+    div.addEventListener('dragend', () => {
+      div.classList.remove('opacity-50');
+      window.draggedCatItem = null;
+      selectedCategoriesContainer.querySelectorAll('.selected-cat-item').forEach(el => el.classList.remove('border-t-2', 'border-[#01534d]'));
+    });
+    div.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (window.draggedCatItem && window.draggedCatItem !== div) {
+        div.classList.add('border-t-2', 'border-[#01534d]');
+      }
+    });
+    div.addEventListener('dragleave', () => {
+      div.classList.remove('border-t-2', 'border-[#01534d]');
+    });
+    div.addEventListener('drop', (e) => {
+      e.preventDefault();
+      div.classList.remove('border-t-2', 'border-[#01534d]');
+      if (window.draggedCatItem && window.draggedCatItem !== div) {
+        selectedCategoriesContainer.insertBefore(window.draggedCatItem, div);
+      }
+    });
+
+    selectedCategoriesContainer.appendChild(div);
+
+    // Hide from available
+    const availBtn = availableCategoriesContainer?.querySelector(`[data-slug="${slug}"]`);
+    if (availBtn) availBtn.style.display = 'none';
+
+    updateNoCategoriesMsg();
+  }
+
+  function clearSelectedCategories() {
+    if (!selectedCategoriesContainer) return;
+    selectedCategoriesContainer.querySelectorAll('.selected-cat-item').forEach(item => item.remove());
+    // Show all available buttons
+    availableCategoriesContainer?.querySelectorAll('.available-cat-btn').forEach(btn => btn.style.display = 'flex');
+    updateNoCategoriesMsg();
+  }
+
+  // Available category click handlers
+  document.querySelectorAll('.available-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addSelectedCategory(btn.dataset.slug, btn.dataset.label, btn.dataset.color, btn.dataset.icon);
+    });
+  });
+
+  // Widget type change handler
+  widgetTypeSelect.addEventListener('change', () => {
+    showConfigSection(widgetTypeSelect.value);
+    // Reset form fields
+    clearSelectedCategories();
+    document.getElementById('links-container').innerHTML = '';
+    document.getElementById('programs-container').innerHTML = '';
+  });
+
+  // Toggle advanced JSON
+  document.getElementById('toggle-advanced-btn').addEventListener('click', () => {
+    const jsonSection = document.getElementById('advanced-json');
+    jsonSection.classList.toggle('hidden');
+    // Sync config to JSON when showing
+    if (!jsonSection.classList.contains('hidden')) {
+      buildConfigFromForm();
+    }
+  });
+
+  // Add link button
+  document.getElementById('add-link-btn').addEventListener('click', () => addLinkRow());
+
+  // Add stat button
+  document.getElementById('add-stat-btn').addEventListener('click', () => addStatRow());
+
+  // Add price tier button
+  document.getElementById('add-price-tier-btn').addEventListener('click', () => addPriceTierRow());
+
+  // Add program button
+  document.getElementById('add-program-btn').addEventListener('click', () => addProgramRow());
+
+  // Tab switching
+  document.querySelectorAll('.menu-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const menuId = tab.dataset.menu;
+      document.querySelectorAll('.menu-tab').forEach(t => {
+        t.classList.remove('border-[#01534d]', 'text-[#01534d]');
+        t.classList.add('border-transparent', 'text-gray-500');
+      });
+      tab.classList.remove('border-transparent', 'text-gray-500');
+      tab.classList.add('border-[#01534d]', 'text-[#01534d]');
+      document.querySelectorAll('.menu-panel').forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.menu !== menuId);
+      });
+    });
+  });
+
+  // Open modal for adding widget
+  document.querySelectorAll('.add-widget-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modalTitle.textContent = 'Add Widget';
+      document.getElementById('widget-id').value = '';
+      document.getElementById('widget-menu-id').value = btn.dataset.menu;
+      document.getElementById('widget-position').value = btn.dataset.position;
+      document.getElementById('widget-type').value = 'link-list';
+      document.getElementById('widget-title').value = '';
+      document.getElementById('widget-config').value = '{}';
+      document.getElementById('links-container').innerHTML = '';
+      document.getElementById('programs-container').innerHTML = '';
+      clearSelectedCategories();
+      document.getElementById('advanced-json').classList.add('hidden');
+      showConfigSection('link-list');
+      modal.classList.remove('hidden');
+    });
+  });
+
+  // Open modal for editing widget
+  document.querySelectorAll('.edit-widget-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const widget = JSON.parse(btn.dataset.widget);
+      modalTitle.textContent = 'Edit Widget';
+      document.getElementById('widget-id').value = widget.id;
+      document.getElementById('widget-menu-id').value = widget.menu_id;
+      document.getElementById('widget-position').value = widget.position;
+      document.getElementById('widget-type').value = widget.widget_type;
+      document.getElementById('widget-title').value = widget.title || '';
+      document.getElementById('widget-config').value = JSON.stringify(widget.config || {}, null, 2);
+      document.getElementById('advanced-json').classList.add('hidden');
+      showConfigSection(widget.widget_type);
+      populateFormFromConfig(widget.config || {}, widget.widget_type);
+      modal.classList.remove('hidden');
+    });
+  });
+
+  // Close modal
+  document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
+  document.getElementById('cancel-btn').addEventListener('click', () => modal.classList.add('hidden'));
+  document.getElementById('modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
+
+  // Save widget
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('widget-id').value;
+    const config = buildConfigFromForm();
+
+    const data = {
+      menu_id: document.getElementById('widget-menu-id').value,
+      position: document.getElementById('widget-position').value,
+      widget_type: document.getElementById('widget-type').value,
+      title: document.getElementById('widget-title').value || null,
+      config: config,
+    };
+
+    if (id) data.id = id;
+
+    try {
+      const res = await fetch('/api/menu-widgets', {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+
+      showToast(id ? 'Widget updated' : 'Widget added');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+
+  // Delete widget
+  document.querySelectorAll('.delete-widget-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Delete this widget?')) return;
+
+      try {
+        const res = await fetch(`/api/menu-widgets?id=${btn.dataset.widgetId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete');
+        showToast('Widget deleted');
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Template dropdown toggle
+  document.querySelectorAll('.quick-populate-btn').forEach(btn => {
+    const dropdown = btn.parentElement.querySelector('.template-dropdown');
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Close all other dropdowns
+      document.querySelectorAll('.template-dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.add('hidden');
+      });
+      dropdown.classList.toggle('hidden');
+    });
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.template-dropdown').forEach(d => d.classList.add('hidden'));
+  });
+
+  // Template selection
+  document.querySelectorAll('.template-option').forEach(option => {
+    option.addEventListener('click', async (e) => {
+      e.stopPropagation();
+
+      const template = option.dataset.template;
+      const dropdown = option.closest('.template-dropdown');
+      const btn = dropdown.previousElementSibling;
+      const menuId = btn.dataset.menu;
+
+      const templateNames = {
+        'our-work': 'Our Work Style (Category Tabs + Campaigns + Promo)',
+        'zakat': 'Zakat Style (Links + Info Box + Quick Form)',
+        'about': 'About Style (Links + Stats Grid + Newsletter)',
+        'ramadan': 'Ramadan Style (Links + Promo Box + Feature Card)'
+      };
+
+      const confirmed = confirm(
+        `Apply "${templateNames[template]}" to this menu?\n\n` +
+        `This will:\n` +
+        `• Remove all existing widgets for this menu\n` +
+        `• Add the template widgets with default settings\n` +
+        `• You can then edit the content as needed\n\n` +
+        `Continue?`
+      );
+
+      if (!confirmed) {
+        dropdown.classList.add('hidden');
+        return;
+      }
+
+      dropdown.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Applying...
+      `;
+
+      try {
+        const res = await fetch(`/api/seed-menu-widgets?menu=${menuId}&template=${template}`, { method: 'POST' });
+        const result = await res.json();
+
+        if (!res.ok) throw new Error(result.error || 'Failed to apply template');
+
+        showToast(`✓ "${templateNames[template]}" applied to menu!`);
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        showToast(error.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Apply Template
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        `;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,92 @@
+---
+/**
+ * Root-level Campaign Page
+ * Handles URLs like /aqiqah, /zakat-fund, etc. (without category prefix)
+ * Looks up campaigns by url_path
+ */
+import GreenWithYellowTemplate from '../templates/GreenWithYellowTemplate.astro';
+import EmergencyAppealTemplate from '../templates/EmergencyAppealTemplate.astro';
+import OrphanSponsorshipTemplate from '../templates/OrphanSponsorshipTemplate.astro';
+import TileStackSponsorshipTemplate from '../templates/TileStackSponsorshipTemplate.astro';
+import AqiqahTemplate from '../templates/AqiqahTemplate.astro';
+import { supabaseAdmin } from '../lib/supabase';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Skip if no slug provided
+if (!slug) {
+  return Astro.redirect('/404', 404);
+}
+
+// Build the expected url_path (root level, no category)
+const urlPath = `/${slug}`;
+
+// Fetch campaign by url_path
+let campaign: any = null;
+let siteSettings: any = null;
+
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('url_path', urlPath)
+    .eq('is_active', true)
+    .single();
+  campaign = data;
+} catch (e) {
+  // If not found by url_path, try by slug only
+  try {
+    const { data } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single();
+
+    // Only use this if the campaign doesn't have a category-based url_path
+    if (data && (!data.url_path || data.url_path === `/${slug}`)) {
+      campaign = data;
+    }
+  } catch (e2) {
+    console.error('Campaign not found:', urlPath);
+  }
+}
+
+// If no campaign found, return 404
+if (!campaign) {
+  return Astro.redirect('/404', 404);
+}
+
+// Fetch site settings for default templates
+try {
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_campaign_page_template, default_donation_box_template, orphan_sponsorship_template')
+    .limit(1);
+
+  if (!error && data && data.length > 0) {
+    siteSettings = data[0];
+  }
+} catch (e) {
+  console.error('Error fetching site settings:', e);
+}
+
+// Determine which template to use
+const templateKey = campaign.page_template || siteSettings?.default_campaign_page_template || 'green-with-yellow';
+const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
+
+// Map template keys to components
+const templateMap: Record<string, any> = {
+  'green-with-yellow': GreenWithYellowTemplate,
+  'emergency-appeal': EmergencyAppealTemplate,
+  'orphan-sponsorship': OrphanSponsorshipTemplate,
+  'tile-stack-sponsorship': TileStackSponsorshipTemplate,
+  'aqiqah': AqiqahTemplate,
+};
+
+const TemplateComponent = templateMap[templateKey] || GreenWithYellowTemplate;
+---
+
+<TemplateComponent campaign={campaign} donationBoxTemplate={donationBoxTemplate} />

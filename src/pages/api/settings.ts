@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../lib/supabase';
+import { clearSettingsCache } from '../../lib/settings';
 
 // Required for Cloudflare adapter
 export const prerender = false;
@@ -88,6 +89,9 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Clear settings cache so changes appear immediately
+    clearSettingsCache();
 
     return new Response(JSON.stringify({ success: true, settings: data }), {
       status: 200,

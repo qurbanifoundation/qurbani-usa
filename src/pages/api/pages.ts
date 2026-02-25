@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../lib/supabase';
+import { clearNavbarCache } from '../../lib/menus';
 
 export const prerender = false;
 
@@ -97,6 +98,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    // Clear navbar cache
+    clearNavbarCache();
+
     return new Response(JSON.stringify({ success: true, page: result.data }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -125,6 +129,9 @@ export const DELETE: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Clear navbar cache
+    clearNavbarCache();
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

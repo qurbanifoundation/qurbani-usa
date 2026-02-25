@@ -24,6 +24,9 @@ export const PUT: APIRoute = async ({ request }) => {
     if (data.homepage_template !== undefined) {
       updateData.homepage_template = data.homepage_template;
     }
+    if (data.ramadan_page_template !== undefined) {
+      updateData.ramadan_page_template = data.ramadan_page_template;
+    }
 
     // Get existing row first
     const { data: existing, error: fetchError } = await supabaseAdmin
@@ -62,6 +65,7 @@ export const PUT: APIRoute = async ({ request }) => {
           default_appeals_page_template: data.default_appeals_page_template || 'green',
           orphan_sponsorship_template: data.orphan_sponsorship_template || 'orphan-sponsorship',
           homepage_template: data.homepage_template || 'pennybill',
+          ramadan_page_template: data.ramadan_page_template || 'pennyappeal',
         });
 
       if (error) {
@@ -88,7 +92,7 @@ export const GET: APIRoute = async () => {
   try {
     const { data, error } = await supabaseAdmin
       .from('site_settings')
-      .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template')
+      .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template')
       .limit(1)
       .single();
 
@@ -100,6 +104,7 @@ export const GET: APIRoute = async () => {
         default_appeals_page_template: 'green',
         orphan_sponsorship_template: 'orphan-sponsorship',
         homepage_template: 'pennybill',
+        ramadan_page_template: 'pennyappeal',
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -112,6 +117,7 @@ export const GET: APIRoute = async () => {
       default_appeals_page_template: data.default_appeals_page_template || 'green',
       orphan_sponsorship_template: data.orphan_sponsorship_template || 'orphan-sponsorship',
       homepage_template: data.homepage_template || 'pennybill',
+      ramadan_page_template: data.ramadan_page_template || 'pennyappeal',
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -124,6 +130,7 @@ export const GET: APIRoute = async () => {
       default_appeals_page_template: 'green',
       orphan_sponsorship_template: 'orphan-sponsorship',
       homepage_template: 'pennybill',
+      ramadan_page_template: 'pennyappeal',
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../lib/supabase';
 import { clearCategoriesCache } from '../../lib/categories';
+import { clearNavbarCache } from '../../lib/menus';
 
 export const prerender = false;
 
@@ -50,6 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Clear cache after create
     clearCategoriesCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify(data), {
       status: 201,
@@ -89,6 +91,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
     // Clear cache after update
     clearCategoriesCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify(data), {
       status: 200,
@@ -123,6 +126,7 @@ export const DELETE: APIRoute = async ({ url }) => {
 
     // Clear cache after delete
     clearCategoriesCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

@@ -1,0 +1,3579 @@
+---
+/**
+ * Amanah-Style Ramadan Template
+ * Multi-step wizard with exact design matching QF designer mockup
+ */
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+// Google Places API key
+const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
+---
+
+<Layout title="30 Days of Ramadan - Don't Miss a Single Blessed Night | Qurbani Foundation" description="Automate your Sadaqah across all 30 nights of Ramadan. Set it once, and we'll donate on your behalf every night.">
+  <Navbar />
+
+  <!-- Google Places Autocomplete Dropdown Fix -->
+  <style is:global>
+    .pac-container {
+      z-index: 10000 !important;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      margin-top: 4px;
+    }
+    .pac-item {
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .pac-item:hover {
+      background-color: #f3f4f6;
+    }
+    .pac-item-query {
+      font-size: 14px;
+      color: #111827;
+    }
+  </style>
+
+  <style is:global>
+    /* Base body background - light color for steps area */
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #FBEDE6;
+    }
+  </style>
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Full page wrapper */
+    .ramadan-page {
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+    }
+
+    /* Hide all steps except active */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    /* ===== HERO SECTION ===== */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      min-width: 100vw;
+      aspect-ratio: 1920 / 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 120px 20px 40px;
+      text-align: center;
+      background-image: url('/images/ramadan/hero.svg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    @media (max-width: 768px) {
+      .hero-section {
+        aspect-ratio: auto;
+        min-height: auto;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        padding: 60px 20px 30px;
+        background-size: cover;
+        background-position: center;
+        justify-content: center;
+      }
+    }
+
+    .hero-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 48px;
+      font-weight: 400;
+      font-style: normal;
+      color: #F7DEC3;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+      line-height: 1.15;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: #F7DEC3;
+      margin-bottom: 32px;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.4);
+      line-height: 1.5;
+    }
+
+    /* Stats Box - Transparent glass effect */
+    .hero-stats {
+      display: inline-flex;
+      background: rgba(150, 140, 160, 0.15);
+      border-radius: 8px;
+      padding: 14px 0;
+      margin-bottom: 32px;
+      border: none;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 0 32px;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .stat-item:last-child {
+      border-right: none;
+    }
+
+    .stat-value {
+      font-family: 'Signika', sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: #F7DEC3;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #F7DEC3;
+      margin-top: 2px;
+    }
+
+    /* Hero CTA Button */
+    .hero-cta {
+      display: inline-block;
+      background: #16434B;
+      color: white;
+      padding: 16px 40px;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 2px solid #002329;
+      box-shadow: 0 4px 12px rgba(13, 46, 51, 0.5);
+      transition: all 0.2s ease;
+      margin-bottom: 16px;
+    }
+
+    .hero-cta:hover {
+      background: #1a5059;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 46, 51, 0.6);
+    }
+
+    .how-it-works-link {
+      color: white;
+      font-size: 15px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.9;
+      transition: opacity 0.2s;
+    }
+
+    .how-it-works-link:hover {
+      opacity: 1;
+    }
+
+    /* ===== STEP CONTENT ===== */
+    .step-content {
+      background: url('/images/ramadan/ramadan-bg1.png') no-repeat center top;
+      background-size: cover;
+      min-height: 400px;
+      padding: 30px 20px 60px;
+    }
+
+    .content-wrapper {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Step Labels */
+    .step-label {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 16px;
+      font-style: normal;
+      color: #333333;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .step-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: #111827;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .step-subtitle {
+      font-size: 16px;
+      color: #333333;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* Step Header Row - Back button and Step label on same line */
+    .step-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .step-header-row .step-label {
+      margin-bottom: 0;
+    }
+
+    .step-header-row .back-btn {
+      margin-bottom: 0;
+    }
+
+    .step-header-spacer {
+      width: 60px; /* Same width as back button to center the step label */
+    }
+
+    /* Back Button */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #6b7280;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: color 0.2s;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .back-btn:hover {
+      color: #1e3a4f;
+    }
+
+    /* ===== DATE SELECTION (Step 1) ===== */
+    .date-selection-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .date-option {
+      background: #FEFBFC;
+      border: 1px solid #e0d8d0;
+      border-radius: 8px;
+      padding: 16px 20px;
+      min-width: 130px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .date-option:hover {
+      border-color: #5c8a6e;
+    }
+
+    .date-option.selected {
+      border-color: #5c8a6e;
+      background: #FEFBFC;
+    }
+
+    .date-option input[type="radio"] {
+      display: none;
+    }
+
+    .date-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .date-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid #c5bdb5;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      background: white;
+    }
+
+    .date-option.selected .date-checkbox {
+      background: #5c8a6e;
+      border-color: #5c8a6e;
+    }
+
+    .date-checkbox svg {
+      color: white;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .date-option.selected .date-checkbox svg {
+      opacity: 1;
+    }
+
+    .date-text {
+      font-weight: 500;
+      color: #333333;
+      font-size: 14px;
+    }
+
+
+    .customize-link {
+      text-align: center;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .customize-link a {
+      color: #5c8a6e;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .customize-link a:hover {
+      color: #16434B;
+    }
+
+    .custom-input-wrapper {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .custom-input-label {
+      display: block;
+      font-size: 14px;
+      color: #333333;
+      margin-bottom: 8px;
+    }
+
+    .custom-input {
+      padding: 10px 16px;
+      border: 1px solid #e0d8d0;
+      border-radius: 8px;
+      font-size: 16px;
+      text-align: center;
+      width: 200px;
+    }
+
+    .custom-input:focus {
+      outline: none;
+      border-color: #5c8a6e;
+    }
+
+    .custom-amount-input-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .currency-symbol {
+      font-size: 18px;
+      color: #333333;
+      font-weight: 600;
+    }
+
+    /* ===== SCHEDULE SELECTION (Step 2) ===== */
+    .schedule-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 500px;
+      margin: 0 auto 32px;
+    }
+
+    .schedule-option {
+      background: rgba(254, 251, 252, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .schedule-option:hover {
+      border-color: #1e3a4f;
+    }
+
+    .schedule-option.selected {
+      border-color: #1e3a4f;
+      background: rgba(254, 251, 252, 0.95);
+    }
+
+    .schedule-option input[type="radio"] {
+      display: none;
+    }
+
+    .schedule-checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #d1d5db;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .schedule-option.selected .schedule-checkbox {
+      background: #1e3a4f;
+      border-color: #1e3a4f;
+    }
+
+    .schedule-checkbox::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .schedule-option.selected .schedule-checkbox::after {
+      opacity: 1;
+    }
+
+    .schedule-info {
+      flex: 1;
+    }
+
+    .schedule-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .badge-recommended { background: #d1fae5; color: #065f46; }
+    .badge-popular { background: #fef3c7; color: #92400e; }
+    .badge-sunnah { background: #ede9fe; color: #6b21a8; }
+
+    .schedule-title {
+      font-family: 'Signika', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+
+    .schedule-desc {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .schedule-nights {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .nights-number {
+      font-family: 'Signika', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e3a4f;
+      line-height: 1;
+    }
+
+    .nights-label {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* ===== AMOUNT SELECTION (Step 3) ===== */
+    .step-card {
+      background: rgba(254, 251, 252, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid #d5cec8;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 550px;
+      margin: 0 auto 32px;
+    }
+
+    .step-card-title {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .step-card-title .step-num {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 16px;
+      color: #333333;
+    }
+
+    .step-card-title .step-heading {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: #111827;
+    }
+
+    .step-card .step-subtitle {
+      margin-bottom: 24px;
+    }
+
+    /* Cause Selection */
+    .cause-label {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 18px;
+      color: #333333;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* Level 1: Default "Where Most Needed" */
+    .default-cause-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #FEFBFC;
+      border: 2px solid #e0d8d0;
+      border-radius: 12px;
+      padding: 16px 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 16px;
+    }
+
+    .default-cause-option:hover {
+      border-color: #5c8a6e;
+    }
+
+    .default-cause-option.selected {
+      background: #FEFBFC;
+      border-color: #5c8a6e;
+    }
+
+    .default-cause-check {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #d0d0d0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .default-cause-option.selected .default-cause-check {
+      background: #5c8a6e;
+      border-color: #5c8a6e;
+    }
+
+    .default-cause-check svg {
+      color: white;
+      opacity: 0;
+    }
+
+    .default-cause-option.selected .default-cause-check svg {
+      opacity: 1;
+    }
+
+    .default-cause-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333333;
+    }
+
+    .default-cause-badge {
+      background: #5c8a6e;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .expand-causes-link {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .expand-causes-link a {
+      color: #5c8a6e;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .expand-causes-link a:hover {
+      color: #16434B;
+    }
+
+    /* Level 2: Multi-Select Causes */
+    .specific-causes-wrapper {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e8e0d8;
+    }
+
+    .cause-multi-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .cause-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #FEFBFC;
+      border: 1px solid #e0d8d0;
+      border-radius: 20px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cause-chip:hover {
+      border-color: #5c8a6e;
+    }
+
+    .cause-chip.selected {
+      background: #5c8a6e;
+      border-color: #5c8a6e;
+    }
+
+    .cause-chip.selected .chip-text {
+      color: white;
+    }
+
+    .cause-chip input {
+      display: none;
+    }
+
+    .chip-text {
+      font-size: 14px;
+      color: #333333;
+      font-weight: 500;
+    }
+
+    .split-info {
+      text-align: center;
+      background: #FEFBFC;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-size: 14px;
+      color: #5c8a6e;
+      font-weight: 500;
+    }
+
+    .customize-amounts-link {
+      text-align: center;
+      margin: 12px 0;
+    }
+
+    .customize-amounts-link a {
+      color: #888;
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .customize-amounts-link a:hover {
+      color: #5c8a6e;
+    }
+
+    /* Level 3: Custom Amounts */
+    .custom-amounts-wrapper {
+      margin-top: 16px;
+    }
+
+    .custom-cause-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0ebe6;
+    }
+
+    .custom-cause-row:last-child {
+      border-bottom: none;
+    }
+
+    .custom-cause-name {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .custom-cause-input {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .custom-cause-input span {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .custom-cause-input input {
+      width: 70px;
+      padding: 6px 10px;
+      border: 1px solid #e0d8d0;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .custom-cause-input input:focus {
+      outline: none;
+      border-color: #5c8a6e;
+    }
+
+    .custom-total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      margin-top: 8px;
+      border-top: 2px solid #e0d8d0;
+      font-weight: 600;
+    }
+
+    .custom-total-row span:last-child {
+      color: #5c8a6e;
+      font-size: 16px;
+    }
+
+    .amount-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: nowrap;
+    }
+
+    .amount-btn {
+      background: #FEFBFC;
+      border: 1px solid #e0d8d2;
+      border-radius: 6px;
+      padding: 6px 28px;
+      min-width: 115px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      white-space: nowrap;
+    }
+
+    .amount-btn:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .amount-btn.selected {
+      border-color: #16434B;
+      background: #FEFBFC;
+    }
+
+    .amount-btn .amount-value {
+      font-family: 'Signika', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: #16434B;
+      display: inline;
+    }
+
+    .amount-btn .amount-label {
+      font-size: 13px;
+      color: #6b7d82;
+      display: inline;
+    }
+
+    /* Impact Box */
+    .impact-box {
+      background: #FEFBFC;
+      border: 1px solid #d5cec8;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin: 24px 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .impact-total {
+      font-family: 'Signika', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #1e3a4f;
+    }
+
+    .impact-breakdown {
+      font-size: 14px;
+      color: #333333;
+      margin-top: 4px;
+    }
+
+    /* ===== MAIN CTA BUTTON ===== */
+    .main-cta {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 24px auto 16px;
+      background: #16434B;
+      color: white;
+      padding: 16px 40px;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: 2px solid #002329;
+      box-shadow: 0 4px 12px rgba(13, 46, 51, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    .main-cta:hover {
+      background: #1a5059;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 46, 51, 0.6);
+    }
+
+    .trust-text {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .trust-text a {
+      color: #6b7280;
+      text-decoration: none;
+    }
+
+    .trust-text a:hover {
+      color: #1e3a4f;
+    }
+
+    /* ===== REVIEW SECTION (Step 4) ===== */
+
+    /* Impact Summary Card */
+    .impact-summary-card {
+      background: #FEFBFC;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      margin: 0 auto 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .impact-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0ebe6;
+    }
+
+    .impact-label {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .impact-amounts {
+      text-align: right;
+    }
+
+    .impact-total-amount {
+      display: block;
+      font-family: 'Signika', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #16434B;
+    }
+
+    .impact-per-night {
+      font-size: 14px;
+      color: #5c8a6e;
+    }
+
+    /* Amplify Section */
+    .amplify-section {
+      margin-bottom: 20px;
+    }
+
+    .amplify-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .amplify-icon {
+      font-size: 18px;
+    }
+
+    .amplify-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 16px;
+      color: #5c8a6e;
+      font-weight: 500;
+    }
+
+    .amplify-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .amplify-option {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #FEFBFC;
+      border: 1px solid #e8e0d8;
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    @media (max-width: 500px) {
+      .amplify-option {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .amplify-option .amplify-checkbox {
+        position: absolute;
+        right: 16px;
+        top: 14px;
+      }
+
+      .amplify-option {
+        position: relative;
+        padding-right: 50px;
+      }
+
+      .multiplier-pills {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 8px;
+      }
+    }
+
+    .amplify-option:hover {
+      border-color: #5c8a6e;
+      background: #FEFBFC;
+    }
+
+    .amplify-option.active {
+      border-color: #5c8a6e;
+      background: #FEFBFC;
+    }
+
+    .amplify-checkbox {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .amplify-checkbox input {
+      opacity: 0;
+      width: 22px;
+      height: 22px;
+      position: absolute;
+      cursor: pointer;
+    }
+
+    .amplify-checkbox .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #d0d0d0;
+      border-radius: 6px;
+      background: white;
+      transition: all 0.2s ease;
+    }
+
+    .amplify-checkbox input:checked ~ .checkmark {
+      background: #5c8a6e;
+      border-color: #5c8a6e;
+    }
+
+    .amplify-checkbox .checkmark:after {
+      content: '';
+      position: absolute;
+      display: none;
+      left: 7px;
+      top: 3px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .amplify-checkbox input:checked ~ .checkmark:after {
+      display: block;
+    }
+
+    .amplify-info {
+      flex: 1;
+    }
+
+    .amplify-name {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 2px;
+    }
+
+    .amplify-desc {
+      display: block;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .multiplier-pills {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .amplify-option.active .multiplier-pills {
+      max-height: 50px;
+      opacity: 1;
+    }
+
+    .multiplier-pills .pill {
+      padding: 6px 12px;
+      border: 1px solid #e0d8d0;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .multiplier-pills .pill:hover {
+      border-color: #5c8a6e;
+      color: #5c8a6e;
+    }
+
+    .multiplier-pills .pill.selected {
+      background: #5c8a6e;
+      border-color: #5c8a6e;
+      color: white;
+    }
+
+    .pill-tag {
+      display: block;
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      opacity: 0.9;
+      margin-top: 2px;
+    }
+
+    .multiplier-pills .pill:has(.pill-tag) {
+      padding: 4px 10px;
+      line-height: 1.2;
+    }
+
+    /* Featured option */
+    .amplify-option.featured {
+      border: 2px solid #5c8a6e;
+      background: #FEFBFC;
+      position: relative;
+    }
+
+    .option-badge {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #5c8a6e;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Dedicate Section */
+    .dedicate-section {
+      border-top: 1px solid #f0ebe6;
+      padding-top: 20px;
+    }
+
+    .dedicate-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dedicate-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dedicate-icon {
+      font-size: 20px;
+    }
+
+    .dedicate-title {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .dedicate-desc {
+      display: block;
+      font-size: 12px;
+      color: #888;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #d0d0d0;
+      border-radius: 26px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #5c8a6e;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
+
+    .dedicate-input-wrapper {
+      margin-top: 12px;
+    }
+
+    .dedicate-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e0d8d0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .dedicate-input:focus {
+      outline: none;
+      border-color: #5c8a6e;
+    }
+
+    /* Final Summary Card */
+    .final-summary-card {
+      background: #FEFBFC;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto 24px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+
+    .summary-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .summary-value {
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .total-row {
+      border-top: 1px solid #e0d8d0;
+      margin-top: 8px;
+      padding-top: 16px;
+    }
+
+    .total-value {
+      font-family: 'Signika', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #16434B;
+    }
+
+    /* Social Proof Card */
+    .social-card {
+      background: rgba(254, 251, 252, 0.9);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      margin: 0 auto 24px;
+    }
+
+    .social-proof-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .social-proof-icon {
+      color: #1e3a4f;
+      flex-shrink: 0;
+    }
+
+    .social-proof-text {
+      font-size: 15px;
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .trust-badges-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .trust-badge svg {
+      color: #1e3a4f;
+      flex-shrink: 0;
+    }
+
+    /* Quote Section */
+    .quote-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 32px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .quote-icon {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .quote-text {
+      font-style: italic;
+      font-size: 18px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    /* ===== PAYMENT & BILLING (Step 5) ===== */
+    .billing-form {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .payment-summary-card {
+      background: #FEFBFC;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .payment-summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .payment-summary-row.total {
+      border-top: 1px solid #e0e0e0;
+      margin-top: 8px;
+      padding-top: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      color: #16434B;
+    }
+
+    .form-section {
+      background: #FEFBFC;
+      border: 1px solid #e8e0d8;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0ebe6;
+    }
+
+    .section-header svg {
+      color: #5c8a6e;
+    }
+
+    .stripe-element-container {
+      min-height: 44px;
+    }
+
+    .stripe-placeholder {
+      padding: 12px;
+      background: #FEFBFC;
+      border-radius: 8px;
+    }
+
+    .stripe-placeholder-row {
+      height: 20px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .stripe-placeholder-row.short {
+      width: 60%;
+      margin-bottom: 0;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .payment-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* Cover Transaction Fees */
+    .cover-fees-box {
+      background: #FEFBFC;
+      border: 1px solid #e8e0d8;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .cover-fees-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .cover-fees-label input[type="checkbox"] {
+      display: none;
+    }
+
+    .cover-fees-checkmark {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border: 2px solid #d0d0d0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      margin-top: 2px;
+    }
+
+    .cover-fees-label input:checked + .cover-fees-checkmark {
+      background: #5c8a6e;
+      border-color: #5c8a6e;
+    }
+
+    .cover-fees-label input:checked + .cover-fees-checkmark::after {
+      content: '';
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .cover-fees-text {
+      flex: 1;
+    }
+
+    .cover-fees-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .fee-badge {
+      background: #d1fae5;
+      color: #065f46;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .cover-fees-desc {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .payment-btn {
+      position: relative;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .trust-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .trust-item svg {
+      color: #5c8a6e;
+    }
+
+    .form-row {
+      margin-bottom: 16px;
+    }
+
+    .form-row-half {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #e0d8d0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+      background: white;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #5c8a6e;
+    }
+
+    .form-input::placeholder {
+      color: #999;
+    }
+
+    .address-autocomplete {
+      position: relative;
+    }
+
+    .address-autocomplete .form-input {
+      padding-right: 40px;
+    }
+
+    .address-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+    }
+
+    /* ===== TIMELINE (Step 6) ===== */
+    .timeline-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 800px) {
+      .timeline-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      }
+    }
+
+    .timeline-container {
+      position: relative;
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .timeline-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 24px;
+      color: #333;
+    }
+
+    .timeline-list {
+      position: relative;
+      padding-left: 30px;
+    }
+
+    .timeline-list::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: #e0e0e0;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding: 16px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -22px;
+      top: 20px;
+      width: 18px;
+      height: 18px;
+      background: #f5f5f5;
+      border: 2px solid #e0e0e0;
+      border-radius: 50%;
+    }
+
+    .timeline-item.jummah .timeline-dot {
+      background: #fff8e6;
+      border-color: #f0c14b;
+    }
+
+    .timeline-item.odd-night .timeline-dot {
+      background: #e8f5e9;
+      border-color: #5c8a6e;
+    }
+
+    .timeline-item.night-27 .timeline-dot {
+      background: #fff3e0;
+      border-color: #ff9800;
+    }
+
+    .timeline-info {
+      flex: 1;
+    }
+
+    .timeline-night {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0066cc;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timeline-item.jummah .timeline-night {
+      color: #cc0066;
+    }
+
+    .jummah-badge {
+      font-size: 12px;
+      color: #cc0066;
+    }
+
+    .timeline-date {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .timeline-cause {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .cause-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5c8a6e;
+    }
+
+    .timeline-amount {
+      font-family: 'Signika', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #16434B;
+    }
+
+    .timeline-amount.amplified {
+      color: #cc0066;
+    }
+
+    /* Timeline Sidebar */
+    .timeline-sidebar {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .sidebar-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0ebe6;
+    }
+
+    .sidebar-total-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .sidebar-total-amount {
+      text-align: right;
+    }
+
+    .sidebar-total-value {
+      font-family: 'Signika', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #16434B;
+    }
+
+    .sidebar-total-breakdown {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .sidebar-section {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0ebe6;
+    }
+
+    .sidebar-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .sidebar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .sidebar-label {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .sidebar-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .proceed-btn {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      margin-top: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .proceed-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(196, 69, 105, 0.4);
+    }
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .hero-section {
+        min-height: auto;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        padding: 50px 16px 30px;
+        justify-content: center;
+      }
+
+      .hero-title {
+        font-size: 28px;
+      }
+
+      .hero-subtitle {
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+
+      .hero-stats {
+        flex-direction: row;
+        padding: 12px 20px;
+        gap: 8px;
+      }
+
+      .stat-item {
+        border-right: 1px solid rgba(255,255,255,0.2);
+        border-bottom: none;
+        padding: 0 12px;
+      }
+
+      .stat-item:last-child {
+        border-right: none;
+      }
+
+      .stat-number {
+        font-size: 20px;
+      }
+
+      .stat-label {
+        font-size: 10px;
+      }
+
+      .main-cta {
+        padding: 14px 28px;
+        font-size: 15px;
+      }
+
+      .how-it-works {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+
+      .date-selection-row {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .date-option {
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .schedule-options {
+        padding: 0 16px;
+      }
+
+      .amount-row {
+        flex-wrap: wrap;
+      }
+
+      .amount-btn {
+        flex: 1 1 45%;
+        min-width: 80px;
+      }
+
+      .step-card {
+        padding: 24px 16px;
+        margin: 0 16px 32px;
+      }
+
+      .step-content {
+        padding: 40px 16px;
+      }
+
+      .quote-section {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .review-card,
+      .social-card {
+        margin: 0 16px 24px;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 380px) {
+      .hero-section {
+        padding: 40px 12px 20px;
+      }
+
+      .hero-title {
+        font-size: 24px;
+      }
+
+      .hero-subtitle {
+        font-size: 13px;
+      }
+
+      .hero-stats {
+        padding: 10px 16px;
+      }
+
+      .stat-number {
+        font-size: 18px;
+      }
+
+      .stat-label {
+        font-size: 9px;
+      }
+
+      .main-cta {
+        padding: 12px 24px;
+        font-size: 14px;
+      }
+    }
+  </style>
+
+  <div class="ramadan-page">
+    <!-- Hero Section - Always visible -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">Don't Miss a<br>Single Blessed Night</h1>
+        <p class="hero-subtitle">Automate your giving across the 30 nights of Ramadan<br>and secure the reward of Laylatul Qadr.</p>
+
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-value">30</div>
+            <div class="stat-label">Blessed Nights</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">8</div>
+            <div class="stat-label">Causes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">Donation Policy</div>
+          </div>
+        </div>
+
+        <button class="hero-cta" onclick="document.querySelector('.step-content').scrollIntoView({ behavior: 'smooth' })">
+          Start My 30 Nights Giving
+        </button>
+
+        <div>
+          <a href="#how-it-works" class="how-it-works-link">
+            How It Works
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  <!-- STEP 1: Date Selection -->
+  <div class="step active" id="step-1">
+    <section class="step-content">
+      <div class="content-wrapper">
+        <h2 class="step-title">Confirm Your Ramadan Start Date</h2>
+        <p class="step-subtitle">Select when Ramadan began in your location so we can schedule your nightly giving correctly.</p>
+
+        <div class="date-selection-row" style="margin-top: 32px; margin-bottom: 32px;">
+          <label class="date-option selected" data-date="2026-02-18">
+            <input type="radio" name="ramadan-start" value="2026-02-18" checked>
+            <div class="date-header">
+              <div class="date-checkbox">
+                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <span class="date-text">February 18th</span>
+            </div>
+          </label>
+
+          <label class="date-option" data-date="2026-02-19">
+            <input type="radio" name="ramadan-start" value="2026-02-19">
+            <div class="date-header">
+              <div class="date-checkbox">
+                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <span class="date-text">February 19th</span>
+            </div>
+          </label>
+
+          <label class="date-option" data-date="2026-02-20">
+            <input type="radio" name="ramadan-start" value="2026-02-20">
+            <div class="date-header">
+              <div class="date-checkbox">
+                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <span class="date-text">February 20th</span>
+            </div>
+          </label>
+        </div>
+
+        <button class="main-cta" onclick="window.goToStep(2)">
+          Continue to Nightly Giving
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- STEP 2: Choose Schedule -->
+  <div class="step" id="step-2">
+    <section class="step-content">
+      <div class="content-wrapper">
+        <div class="step-header-row">
+          <button class="back-btn" onclick="window.goToStep(1)">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back
+          </button>
+          <div class="step-header-spacer"></div>
+        </div>
+        <h2 class="step-title">Choose Your Nights of Giving</h2>
+        <p class="step-subtitle">Some nights carry the blessings of a lifetime</p>
+
+        <div class="schedule-options">
+          <label class="schedule-option selected" data-schedule="all">
+            <input type="radio" name="schedule" value="all" checked>
+            <div class="schedule-checkbox"></div>
+            <div class="schedule-info">
+              <span class="schedule-badge badge-recommended">Recommended</span>
+              <div class="schedule-title">All Remaining Nights</div>
+              <div class="schedule-desc">Don't miss a single blessed night</div>
+            </div>
+            <div class="schedule-nights">
+              <div class="nights-number" id="all-nights-count">30</div>
+              <div class="nights-label">Nights</div>
+            </div>
+          </label>
+
+          <label class="schedule-option" data-schedule="last10">
+            <input type="radio" name="schedule" value="last10">
+            <div class="schedule-checkbox"></div>
+            <div class="schedule-info">
+              <span class="schedule-badge badge-popular">Popular</span>
+              <div class="schedule-title">Last 10 Nights</div>
+              <div class="schedule-desc">Catch Laylatul Qadr with certainty</div>
+            </div>
+            <div class="schedule-nights">
+              <div class="nights-number">10</div>
+              <div class="nights-label">Nights</div>
+            </div>
+          </label>
+
+          <label class="schedule-option" data-schedule="last5odd">
+            <input type="radio" name="schedule" value="last5odd">
+            <div class="schedule-checkbox"></div>
+            <div class="schedule-info">
+              <span class="schedule-badge badge-sunnah">Sunnah</span>
+              <div class="schedule-title">Last 5 Odd Nights</div>
+              <div class="schedule-desc">The most sacred nights of Ramadan</div>
+            </div>
+            <div class="schedule-nights">
+              <div class="nights-number">5</div>
+              <div class="nights-label">Nights</div>
+            </div>
+          </label>
+        </div>
+
+        <button class="main-cta" onclick="window.goToStep(3)">
+          Continue
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- STEP 3: Choose Amount -->
+  <div class="step" id="step-3">
+    <section class="step-content">
+      <div class="content-wrapper">
+        <div class="step-header-row">
+          <button class="back-btn" onclick="window.goToStep(2)">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back
+          </button>
+          <div class="step-header-spacer"></div>
+        </div>
+        <h2 class="step-title">Choose Your Nightly Impact</h2>
+        <p class="step-subtitle">Set an amount to give each night of Ramadan.</p>
+
+        <div class="step-card">
+          <!-- Level 1: Default Option -->
+          <p class="cause-label">Where should your donation go?</p>
+
+          <div class="default-cause-option selected" id="where-needed-btn" onclick="selectWhereMostNeeded()">
+            <span class="default-cause-check">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </span>
+            <span class="default-cause-text">Where Most Needed</span>
+            <span class="default-cause-badge">Recommended</span>
+          </div>
+
+          <div class="expand-causes-link">
+            <a href="javascript:void(0)" onclick="toggleCauseSelection()">
+              Or choose specific causes
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="expand-arrow">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Level 2: Multi-Select Causes (Hidden by default) -->
+          <div class="specific-causes-wrapper" id="specific-causes" style="display: none;">
+            <div class="cause-multi-select">
+              <label class="cause-chip" data-cause="food">
+                <input type="checkbox" name="causes" value="food">
+                <span class="chip-text">Feed the Hungry</span>
+              </label>
+              <label class="cause-chip" data-cause="orphans">
+                <input type="checkbox" name="causes" value="orphans">
+                <span class="chip-text">Orphan Care</span>
+              </label>
+              <label class="cause-chip" data-cause="water">
+                <input type="checkbox" name="causes" value="water">
+                <span class="chip-text">Clean Water</span>
+              </label>
+              <label class="cause-chip" data-cause="education">
+                <input type="checkbox" name="causes" value="education">
+                <span class="chip-text">Education</span>
+              </label>
+              <label class="cause-chip" data-cause="healthcare">
+                <input type="checkbox" name="causes" value="healthcare">
+                <span class="chip-text">Healthcare</span>
+              </label>
+              <label class="cause-chip" data-cause="emergency">
+                <input type="checkbox" name="causes" value="emergency">
+                <span class="chip-text">Emergency Relief</span>
+              </label>
+              <label class="cause-chip" data-cause="zakat">
+                <input type="checkbox" name="causes" value="zakat">
+                <span class="chip-text">Zakat Eligible</span>
+              </label>
+            </div>
+
+            <div class="split-info" id="split-info" style="display: none;">
+              <span id="split-text">$10/night ÷ 2 causes = $5.00 each</span>
+            </div>
+
+            <!-- Level 3: Custom Amounts (Hidden by default) -->
+            <div class="customize-amounts-link" id="customize-amounts-link" style="display: none;">
+              <a href="javascript:void(0)" onclick="toggleCustomAmounts()">
+                Customize amounts per cause
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </a>
+            </div>
+
+            <div class="custom-amounts-wrapper" id="custom-amounts" style="display: none;">
+              <!-- Will be populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card" style="margin-top: 16px;">
+
+          <div class="amount-row">
+            <button class="amount-btn" data-amount="5">
+              <span class="amount-value">$5</span>
+              <span class="amount-label">/night</span>
+            </button>
+            <button class="amount-btn selected" data-amount="10">
+              <span class="amount-value">$10</span>
+              <span class="amount-label">/night</span>
+            </button>
+            <button class="amount-btn" data-amount="25">
+              <span class="amount-value">$25</span>
+              <span class="amount-label">/night</span>
+            </button>
+            <button class="amount-btn" data-amount="50">
+              <span class="amount-value">$50</span>
+              <span class="amount-label">/night</span>
+            </button>
+          </div>
+
+          <div class="customize-link">
+            <a href="javascript:void(0)" onclick="toggleCustomAmount()">
+              Or, customize
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+
+          <div class="custom-input-wrapper" id="custom-amount-wrapper" style="display: none;">
+            <label class="custom-input-label">Enter custom amount per night:</label>
+            <div class="custom-amount-input-row">
+              <span class="currency-symbol">$</span>
+              <input type="number" id="custom-amount-input" class="custom-input" min="1" placeholder="Enter amount" onchange="setCustomAmount(this.value)">
+            </div>
+          </div>
+
+          <div class="impact-box">
+            <div class="impact-total" id="impact-total">$300</div>
+            <div class="impact-breakdown" id="impact-breakdown">$10/night × 30 nights</div>
+          </div>
+
+          <button class="main-cta" onclick="window.goToStep(4)">
+            Secure My Ramadan Giving
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- STEP 4: Review & Confirm -->
+  <div class="step" id="step-4">
+    <section class="step-content">
+      <div class="content-wrapper">
+        <div class="step-header-row">
+          <button class="back-btn" onclick="window.goToStep(3)">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back
+          </button>
+          <div class="step-header-spacer"></div>
+        </div>
+        <div class="step-card">
+          <div class="step-card-title">
+            <span class="step-heading">Your Ramadan Giving Plan</span>
+          </div>
+
+          <!-- Impact Summary Section -->
+          <div class="impact-summary-section">
+          <div class="impact-summary-header">
+            <span class="impact-label">Total Impact</span>
+            <div class="impact-amounts">
+              <span class="impact-total-amount" id="review-total-top">$300</span>
+              <span class="impact-per-night" id="review-per-night">$10/night</span>
+            </div>
+          </div>
+
+          <!-- Amplify Section -->
+          <div class="amplify-section">
+            <div class="amplify-header">
+              <span class="amplify-icon">✨</span>
+              <span class="amplify-title">Amplify your blessings</span>
+            </div>
+
+            <div class="amplify-options">
+              <label class="amplify-option" data-amplify="jummah">
+                <div class="amplify-checkbox" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="amplify-jummah" onchange="updateAmplify()">
+                  <span class="checkmark"></span>
+                </div>
+                <div class="amplify-info" onclick="toggleAmplifyCheckbox('amplify-jummah')">
+                  <span class="amplify-name">Give more on Jummah</span>
+                  <span class="amplify-desc">Every Friday, multiply your giving</span>
+                </div>
+                <div class="multiplier-pills" data-for="jummah" onclick="event.stopPropagation()">
+                  <button type="button" class="pill selected" data-value="2" onclick="selectMultiplier('jummah', 2, this)">2x</button>
+                  <button type="button" class="pill" data-value="3" onclick="selectMultiplier('jummah', 3, this)">3x</button>
+                  <button type="button" class="pill" data-value="5" onclick="selectMultiplier('jummah', 5, this)">5x</button>
+                </div>
+              </label>
+
+              <label class="amplify-option featured" data-amplify="odd">
+                <span class="option-badge">Most Chosen</span>
+                <div class="amplify-checkbox" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="amplify-odd" onchange="updateAmplify()">
+                  <span class="checkmark"></span>
+                </div>
+                <div class="amplify-info" onclick="toggleAmplifyCheckbox('amplify-odd')">
+                  <span class="amplify-name">Give more on odd nights</span>
+                  <span class="amplify-desc">Nights 21, 23, 25, 27, 29</span>
+                </div>
+                <div class="multiplier-pills" data-for="odd" onclick="event.stopPropagation()">
+                  <button type="button" class="pill selected" data-value="2" onclick="selectMultiplier('odd', 2, this)">2x</button>
+                  <button type="button" class="pill" data-value="3" onclick="selectMultiplier('odd', 3, this)">3x</button>
+                  <button type="button" class="pill" data-value="5" onclick="selectMultiplier('odd', 5, this)">5x</button>
+                </div>
+              </label>
+
+              <label class="amplify-option" data-amplify="night27">
+                <div class="amplify-checkbox" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="amplify-27" onchange="updateAmplify()">
+                  <span class="checkmark"></span>
+                </div>
+                <div class="amplify-info" onclick="toggleAmplifyCheckbox('amplify-27')">
+                  <span class="amplify-name">Give more on the 27th</span>
+                  <span class="amplify-desc">Most likely Laylatul Qadr</span>
+                </div>
+                <div class="multiplier-pills" data-for="night27" onclick="event.stopPropagation()">
+                  <button type="button" class="pill selected" data-value="2" onclick="selectMultiplier('night27', 2, this)">2x</button>
+                  <button type="button" class="pill" data-value="3" onclick="selectMultiplier('night27', 3, this)">3x</button>
+                  <button type="button" class="pill" data-value="5" onclick="selectMultiplier('night27', 5, this)">5x</button>
+                  <button type="button" class="pill" data-value="10" onclick="selectMultiplier('night27', 10, this)">10x</button>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Dedicate Section -->
+          <div class="dedicate-section">
+            <div class="dedicate-row">
+              <div class="dedicate-info">
+                <span class="dedicate-icon">❤️</span>
+                <div>
+                  <span class="dedicate-title">Dedicate this donation</span>
+                  <span class="dedicate-desc">On behalf of loved ones</span>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="dedicate-toggle" onchange="toggleDedication()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="dedicate-input-wrapper" id="dedicate-input-wrapper" style="display: none;">
+              <input type="text" id="dedicate-name" class="dedicate-input" placeholder="Enter your loved one's name">
+            </div>
+          </div>
+
+          <!-- Summary Section -->
+          <div class="summary-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e0d8d0;">
+            <div class="summary-row">
+              <span class="summary-label">Schedule</span>
+              <span class="summary-value" id="review-schedule">All 30 Nights</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Causes</span>
+              <span class="summary-value" id="review-causes">Where Most Needed</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Starting</span>
+              <span class="summary-value" id="review-start">February 17, 2026</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Base Amount</span>
+              <span class="summary-value" id="review-base-amount">$300</span>
+            </div>
+            <div class="summary-row" id="amplify-jummah-row" style="display: none;">
+              <span class="summary-label">Jummah Boost</span>
+              <span class="summary-value" id="review-jummah-amount">+$0</span>
+            </div>
+            <div class="summary-row" id="amplify-odd-row" style="display: none;">
+              <span class="summary-label">Odd Nights Boost</span>
+              <span class="summary-value" id="review-odd-amount">+$0</span>
+            </div>
+            <div class="summary-row" id="amplify-27-row" style="display: none;">
+              <span class="summary-label">27th Night Boost</span>
+              <span class="summary-value" id="review-27-amount">+$0</span>
+            </div>
+            <div class="summary-row total-row">
+              <span class="summary-label">Your total impact</span>
+              <span class="summary-value total-value" id="review-total">$300</span>
+            </div>
+          </div>
+
+          <button class="main-cta" onclick="window.goToStep(5)" style="margin-top: 24px;">
+            Continue to Your Details
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- STEP 5: Enter Your Details -->
+  <div class="step" id="step-5">
+    <section class="step-content">
+      <div class="content-wrapper">
+        <div class="step-header-row">
+          <button class="back-btn" onclick="window.goToStep(4)">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back
+          </button>
+          <div class="step-header-spacer"></div>
+        </div>
+        <div class="step-card">
+          <div class="step-card-title">
+            <span class="step-heading">Enter Your Details</span>
+          </div>
+          <p class="step-subtitle" style="text-align: center;">We'll send your receipt and updates here</p>
+
+          <div class="billing-form">
+          <div class="form-row-half">
+            <div class="form-row">
+              <label class="form-label" for="first-name">First Name *</label>
+              <input type="text" id="first-name" class="form-input" placeholder="First name" required>
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="last-name">Last Name *</label>
+              <input type="text" id="last-name" class="form-input" placeholder="Last name" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label" for="email">Email Address *</label>
+            <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label" for="phone">Phone Number</label>
+            <input type="tel" id="phone" class="form-input" placeholder="(555) 123-4567">
+          </div>
+
+          <div class="form-row">
+            <label class="form-label" for="address">Address</label>
+            <div class="address-autocomplete">
+              <input type="text" id="address" class="form-input" placeholder="Start typing your address..." autocomplete="off">
+              <svg class="address-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="form-row-half">
+            <div class="form-row">
+              <label class="form-label" for="city">City</label>
+              <input type="text" id="city" class="form-input" placeholder="City">
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="state">State</label>
+              <input type="text" id="state" class="form-input" placeholder="State">
+            </div>
+          </div>
+
+          <div class="form-row-half">
+            <div class="form-row">
+              <label class="form-label" for="zip">Zip Code</label>
+              <input type="text" id="zip" class="form-input" placeholder="12345">
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="country">Country</label>
+              <input type="text" id="country" class="form-input" placeholder="United States" value="United States">
+            </div>
+          </div>
+
+          <!-- Validation Error -->
+          <div id="details-error" class="payment-error" style="display: none;"></div>
+
+          <button class="main-cta" onclick="window.validateAndContinue()">
+            Continue to Payment
+          </button>
+
+          <p class="trust-text" style="margin-top: 16px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <span>Your information is secure and encrypted</span>
+          </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- STEP 6: Payment -->
+  <div class="step" id="step-6">
+    <section class="step-content">
+      <div class="content-wrapper">
+        <div class="step-header-row">
+          <button class="back-btn" onclick="window.goToStep(5)">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back
+          </button>
+          <div class="step-header-spacer"></div>
+        </div>
+        <h2 class="step-title">Complete Payment</h2>
+        <p class="step-subtitle">Secure payment powered by Stripe</p>
+
+        <div class="billing-form">
+          <!-- Order Summary -->
+          <div class="payment-summary-card">
+            <div class="payment-summary-row">
+              <span>Ramadan Giving</span>
+              <span id="payment-nights-summary">30 nights × $10</span>
+            </div>
+            <div class="payment-summary-row" id="payment-amplify-row" style="display: none;">
+              <span>Amplify Boost</span>
+              <span id="payment-amplify-amount">+$0</span>
+            </div>
+            <div class="payment-summary-row" id="payment-fees-row" style="display: none;">
+              <span>Transaction Fee (3%)</span>
+              <span id="payment-fees-amount">+$0</span>
+            </div>
+            <div class="payment-summary-row total">
+              <span>Total</span>
+              <span id="payment-total-summary">$300</span>
+            </div>
+          </div>
+
+          <!-- Cover Transaction Fees -->
+          <div class="cover-fees-box">
+            <label class="cover-fees-label">
+              <input type="checkbox" id="cover-fees-checkbox" onchange="updateCoverFees()">
+              <span class="cover-fees-checkmark"></span>
+              <div class="cover-fees-text">
+                <span class="cover-fees-title">Cover Transaction Fees <span class="fee-badge">+3%</span></span>
+                <span class="cover-fees-desc">Add <span id="fee-amount-display">$0.00</span> so 100% of your donation reaches those in need.</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Stripe Payment Element -->
+          <div class="form-section">
+            <div class="section-header">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+              </svg>
+              <span>Payment Method</span>
+            </div>
+            <div id="stripe-payment-element" class="stripe-element-container">
+              <!-- Stripe Elements will mount here -->
+              <div class="stripe-placeholder">
+                <div class="stripe-placeholder-row"></div>
+                <div class="stripe-placeholder-row short"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div id="payment-error" class="payment-error" style="display: none;"></div>
+
+          <!-- Submit Button -->
+          <button class="main-cta payment-btn" id="submit-payment" onclick="window.processPayment()">
+            <span id="btn-text">Complete My Ramadan Giving</span>
+            <span id="btn-spinner" class="spinner" style="display: none;"></span>
+          </button>
+
+          <div class="trust-row">
+            <div class="trust-item">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              <span>Secure & Encrypted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  </div><!-- end ramadan-page -->
+
+  <Footer />
+
+  <script is:inline define:vars={{ googlePlacesApiKey }}>
+    // State
+    let currentStep = 1;
+    let state = {
+      ramadanStart: '2026-02-18',
+      schedule: 'all',
+      nightsCount: 30,
+      amountPerNight: 10,
+      causeMode: 'where-needed', // 'where-needed', 'multi-equal', 'multi-custom'
+      selectedCauses: [],
+      causeAmounts: {} // { food: 5, orphans: 5, ... }
+    };
+
+    const causeLabels = {
+      'food': 'Feed the Hungry',
+      'orphans': 'Orphan Care',
+      'water': 'Clean Water',
+      'education': 'Education',
+      'healthcare': 'Healthcare',
+      'emergency': 'Emergency Relief',
+      'zakat': 'Zakat Eligible'
+    };
+
+    // Calculate remaining nights
+    function calculateRemainingNights() {
+      const today = new Date();
+      const ramadanStart = new Date(state.ramadanStart);
+      const ramadanEnd = new Date(ramadanStart);
+      ramadanEnd.setDate(ramadanEnd.getDate() + 29);
+
+      if (today < ramadanStart) return 30;
+      if (today > ramadanEnd) return 0;
+      const elapsed = Math.floor((today - ramadanStart) / (1000 * 60 * 60 * 24));
+      return 30 - elapsed;
+    }
+
+    // Update nights count
+    function updateNightsCount() {
+      const remaining = calculateRemainingNights();
+      switch(state.schedule) {
+        case 'all': state.nightsCount = remaining; break;
+        case 'last10': state.nightsCount = Math.min(10, remaining); break;
+        case 'last5odd': state.nightsCount = Math.min(5, remaining); break;
+      }
+      const el = document.getElementById('all-nights-count');
+      if (el) el.textContent = remaining;
+      updateImpactDisplay();
+    }
+
+    // Calculate total
+    function calculateTotal() {
+      return state.amountPerNight * state.nightsCount;
+    }
+
+    // Update impact display
+    function updateImpactDisplay() {
+      const total = calculateTotal();
+      const totalEl = document.getElementById('impact-total');
+      const breakdownEl = document.getElementById('impact-breakdown');
+      if (totalEl) totalEl.textContent = `$${total}`;
+      if (breakdownEl) breakdownEl.textContent = `$${state.amountPerNight}/night × ${state.nightsCount} nights`;
+    }
+
+    // Amplify state
+    let amplifyState = {
+      jummah: false,
+      jummahMultiplier: 2,
+      oddNights: false,
+      oddMultiplier: 2,
+      night27: false,
+      night27Multiplier: 2,
+      dedicateTo: ''
+    };
+
+    // Calculate total with amplify options
+    function calculateTotalWithAmplify() {
+      let baseTotal = state.amountPerNight * state.nightsCount;
+      let extraAmount = 0;
+
+      // Jummah (Fridays) - roughly 4 Fridays in Ramadan
+      if (amplifyState.jummah) {
+        const jummahNights = 4;
+        extraAmount += state.amountPerNight * (amplifyState.jummahMultiplier - 1) * jummahNights;
+      }
+
+      // Odd nights (21, 23, 25, 27, 29) - 5 nights
+      if (amplifyState.oddNights) {
+        const oddNightsCount = 5;
+        extraAmount += state.amountPerNight * (amplifyState.oddMultiplier - 1) * oddNightsCount;
+      }
+
+      // Night 27 only
+      if (amplifyState.night27) {
+        extraAmount += state.amountPerNight * (amplifyState.night27Multiplier - 1) * 1;
+      }
+
+      return baseTotal + extraAmount;
+    }
+
+    // Toggle amplify checkbox
+    window.toggleAmplifyCheckbox = function(checkboxId) {
+      const checkbox = document.getElementById(checkboxId);
+      checkbox.checked = !checkbox.checked;
+      updateAmplify();
+    };
+
+    // Select multiplier pill
+    window.selectMultiplier = function(type, value, btn) {
+      // Update pill selection
+      const pillContainer = btn.parentElement;
+      pillContainer.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+      btn.classList.add('selected');
+
+      // Update state
+      if (type === 'jummah') amplifyState.jummahMultiplier = value;
+      if (type === 'odd') amplifyState.oddMultiplier = value;
+      if (type === 'night27') amplifyState.night27Multiplier = value;
+
+      // Auto-check the checkbox when selecting a multiplier
+      const option = btn.closest('.amplify-option');
+      const checkbox = option.querySelector('input[type="checkbox"]');
+      if (!checkbox.checked) {
+        checkbox.checked = true;
+        updateAmplify();
+      } else {
+        // Just update totals
+        const newTotal = calculateTotalWithAmplify();
+        document.getElementById('review-total-top').textContent = `$${newTotal}`;
+        document.getElementById('review-total').textContent = `$${newTotal}`;
+      }
+    };
+
+    // Update amplify options
+    window.updateAmplify = function() {
+      amplifyState.jummah = document.getElementById('amplify-jummah').checked;
+      amplifyState.oddNights = document.getElementById('amplify-odd').checked;
+      amplifyState.night27 = document.getElementById('amplify-27').checked;
+
+      // Update active states
+      document.querySelectorAll('.amplify-option').forEach(opt => {
+        const checkbox = opt.querySelector('input[type="checkbox"]');
+        opt.classList.toggle('active', checkbox.checked);
+      });
+
+      // Calculate individual amounts
+      const baseTotal = state.amountPerNight * state.nightsCount;
+      let jummahExtra = 0, oddExtra = 0, night27Extra = 0;
+
+      if (amplifyState.jummah) {
+        jummahExtra = state.amountPerNight * (amplifyState.jummahMultiplier - 1) * 4;
+      }
+      if (amplifyState.oddNights) {
+        oddExtra = state.amountPerNight * (amplifyState.oddMultiplier - 1) * 5;
+      }
+      if (amplifyState.night27) {
+        night27Extra = state.amountPerNight * (amplifyState.night27Multiplier - 1) * 1;
+      }
+
+      const newTotal = baseTotal + jummahExtra + oddExtra + night27Extra;
+
+      // Update summary display
+      document.getElementById('review-base-amount').textContent = `$${baseTotal}`;
+
+      // Jummah row
+      const jummahRow = document.getElementById('amplify-jummah-row');
+      const jummahLabel = jummahRow?.querySelector('.summary-label');
+      const jummahAmount = document.getElementById('review-jummah-amount');
+      if (jummahRow && jummahAmount) {
+        jummahRow.style.display = amplifyState.jummah ? 'flex' : 'none';
+        if (jummahLabel) jummahLabel.textContent = `Jummah Boost (${amplifyState.jummahMultiplier}x)`;
+        jummahAmount.textContent = `+$${jummahExtra}`;
+      }
+
+      // Odd nights row
+      const oddRow = document.getElementById('amplify-odd-row');
+      const oddLabel = oddRow?.querySelector('.summary-label');
+      const oddAmount = document.getElementById('review-odd-amount');
+      if (oddRow && oddAmount) {
+        oddRow.style.display = amplifyState.oddNights ? 'flex' : 'none';
+        if (oddLabel) oddLabel.textContent = `Odd Nights Boost (${amplifyState.oddMultiplier}x)`;
+        oddAmount.textContent = `+$${oddExtra}`;
+      }
+
+      // Night 27 row
+      const night27Row = document.getElementById('amplify-27-row');
+      const night27Label = night27Row?.querySelector('.summary-label');
+      const night27Amount = document.getElementById('review-27-amount');
+      if (night27Row && night27Amount) {
+        night27Row.style.display = amplifyState.night27 ? 'flex' : 'none';
+        if (night27Label) night27Label.textContent = `27th Night Boost (${amplifyState.night27Multiplier}x)`;
+        night27Amount.textContent = `+$${night27Extra}`;
+      }
+
+      // Update totals
+      document.getElementById('review-total-top').textContent = `$${newTotal}`;
+      document.getElementById('review-total').textContent = `$${newTotal}`;
+    };
+
+    // Toggle dedication
+    window.toggleDedication = function() {
+      const wrapper = document.getElementById('dedicate-input-wrapper');
+      const isChecked = document.getElementById('dedicate-toggle').checked;
+      wrapper.style.display = isChecked ? 'block' : 'none';
+      if (!isChecked) {
+        document.getElementById('dedicate-name').value = '';
+        amplifyState.dedicateTo = '';
+      }
+    };
+
+    // Update review section
+    function updateReview() {
+      const scheduleLabels = {
+        'all': `All ${state.nightsCount} Nights`,
+        'last10': 'Last 10 Nights',
+        'last5odd': 'Last 5 Odd Nights'
+      };
+
+      // Determine starting date for donations
+      const today = new Date();
+      const ramadanStart = new Date(state.ramadanStart);
+      // If signing up before Ramadan, show Ramadan start date
+      // If signing up during Ramadan, show today's date
+      const startingDate = today < ramadanStart ? ramadanStart : today;
+      const formattedDate = startingDate.toLocaleDateString('en-US', {
+        month: 'long', day: 'numeric', year: 'numeric'
+      });
+
+      // Causes display
+      let causesText = 'Where Most Needed';
+      if (state.causeMode !== 'where-needed' && state.selectedCauses.length > 0) {
+        causesText = state.selectedCauses.map(c => causeLabels[c]).join(', ');
+      }
+
+      const scheduleEl = document.getElementById('review-schedule');
+      const causesEl = document.getElementById('review-causes');
+      const startEl = document.getElementById('review-start');
+      const totalEl = document.getElementById('review-total');
+      const totalTopEl = document.getElementById('review-total-top');
+      const perNightEl = document.getElementById('review-per-night');
+      const baseAmountEl = document.getElementById('review-base-amount');
+
+      const baseTotal = state.amountPerNight * state.nightsCount;
+      const total = calculateTotalWithAmplify();
+
+      if (scheduleEl) scheduleEl.textContent = scheduleLabels[state.schedule];
+      if (causesEl) causesEl.textContent = causesText;
+      if (startEl) startEl.textContent = formattedDate;
+      if (baseAmountEl) baseAmountEl.textContent = `$${baseTotal}`;
+      if (totalEl) totalEl.textContent = `$${total}`;
+      if (totalTopEl) totalTopEl.textContent = `$${total}`;
+      if (perNightEl) perNightEl.textContent = `$${state.amountPerNight}/night`;
+
+      // Update amplify summary rows
+      updateAmplify();
+    }
+
+    // Navigate to step
+    window.goToStep = function(step) {
+      currentStep = step;
+      document.querySelectorAll('.step').forEach((el, i) => {
+        el.classList.toggle('active', i + 1 === step);
+      });
+      if (step === 4) updateReview();
+      if (step === 5) {
+        // Initialize Google Places for address autocomplete
+        setTimeout(() => initGooglePlaces(), 100);
+      }
+      if (step === 6) {
+        updatePaymentSummary();
+        initializeStripe();
+      }
+      // Scroll to the step content area (just below the hero)
+      const stepContent = document.querySelector('.step.active .step-content');
+      if (stepContent) {
+        stepContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+
+    // Validate details and continue to payment
+    window.validateAndContinue = function() {
+      const firstName = document.getElementById('first-name')?.value?.trim();
+      const lastName = document.getElementById('last-name')?.value?.trim();
+      const email = document.getElementById('email')?.value?.trim();
+
+      const errorEl = document.getElementById('details-error');
+
+      // Validate required fields
+      if (!firstName) {
+        errorEl.textContent = 'Please enter your first name.';
+        errorEl.style.display = 'block';
+        document.getElementById('first-name').focus();
+        return;
+      }
+
+      if (!lastName) {
+        errorEl.textContent = 'Please enter your last name.';
+        errorEl.style.display = 'block';
+        document.getElementById('last-name').focus();
+        return;
+      }
+
+      if (!email) {
+        errorEl.textContent = 'Please enter your email address.';
+        errorEl.style.display = 'block';
+        document.getElementById('email').focus();
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errorEl.textContent = 'Please enter a valid email address.';
+        errorEl.style.display = 'block';
+        document.getElementById('email').focus();
+        return;
+      }
+
+      // Hide error and continue
+      errorEl.style.display = 'none';
+      window.goToStep(6);
+    };
+
+    // Select "Where Most Needed" (default)
+    window.selectWhereMostNeeded = function() {
+      state.causeMode = 'where-needed';
+      state.selectedCauses = [];
+      state.causeAmounts = {};
+
+      document.getElementById('where-needed-btn').classList.add('selected');
+      document.querySelectorAll('.cause-chip').forEach(c => c.classList.remove('selected'));
+      document.getElementById('specific-causes').style.display = 'none';
+      document.getElementById('split-info').style.display = 'none';
+      document.getElementById('customize-amounts-link').style.display = 'none';
+      document.getElementById('custom-amounts').style.display = 'none';
+
+      updateImpactDisplay();
+    };
+
+    // Toggle cause selection panel
+    window.toggleCauseSelection = function() {
+      const wrapper = document.getElementById('specific-causes');
+      const arrow = document.getElementById('expand-arrow');
+
+      if (wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+        document.getElementById('where-needed-btn').classList.remove('selected');
+        state.causeMode = 'multi-equal';
+      } else {
+        wrapper.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+        selectWhereMostNeeded();
+      }
+    };
+
+    // Update split info display
+    function updateSplitInfo() {
+      const count = state.selectedCauses.length;
+      const splitInfo = document.getElementById('split-info');
+      const customizeLink = document.getElementById('customize-amounts-link');
+
+      if (count > 0) {
+        const perCause = (state.amountPerNight / count).toFixed(2);
+        document.getElementById('split-text').textContent =
+          `$${state.amountPerNight}/night ÷ ${count} cause${count > 1 ? 's' : ''} = $${perCause} each`;
+        splitInfo.style.display = 'block';
+        customizeLink.style.display = 'block';
+      } else {
+        splitInfo.style.display = 'none';
+        customizeLink.style.display = 'none';
+      }
+    }
+
+    // Toggle custom amounts panel
+    window.toggleCustomAmounts = function() {
+      const wrapper = document.getElementById('custom-amounts');
+
+      if (wrapper.style.display === 'none') {
+        state.causeMode = 'multi-custom';
+        buildCustomAmountsUI();
+        wrapper.style.display = 'block';
+        document.getElementById('split-info').style.display = 'none';
+      } else {
+        state.causeMode = 'multi-equal';
+        wrapper.style.display = 'none';
+        updateSplitInfo();
+      }
+    };
+
+    // Build custom amounts UI
+    function buildCustomAmountsUI() {
+      const wrapper = document.getElementById('custom-amounts');
+      const perCause = (state.amountPerNight / state.selectedCauses.length).toFixed(0);
+
+      let html = '';
+      state.selectedCauses.forEach(cause => {
+        const currentAmount = state.causeAmounts[cause] || perCause;
+        state.causeAmounts[cause] = parseFloat(currentAmount);
+        html += `
+          <div class="custom-cause-row">
+            <span class="custom-cause-name">${causeLabels[cause]}</span>
+            <div class="custom-cause-input">
+              <span>$</span>
+              <input type="number" value="${currentAmount}" min="1"
+                     onchange="updateCauseAmount('${cause}', this.value)"
+                     oninput="updateCauseAmount('${cause}', this.value)">
+              <span>/night</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="custom-total-row">
+          <span>Total per night:</span>
+          <span id="custom-total">$${calculateCustomTotal()}/night</span>
+        </div>
+      `;
+
+      wrapper.innerHTML = html;
+    }
+
+    // Update individual cause amount
+    window.updateCauseAmount = function(cause, value) {
+      state.causeAmounts[cause] = parseFloat(value) || 0;
+      state.amountPerNight = calculateCustomTotal();
+      document.getElementById('custom-total').textContent = `$${state.amountPerNight}/night`;
+      updateImpactDisplay();
+    };
+
+    // Calculate custom total
+    function calculateCustomTotal() {
+      return Object.values(state.causeAmounts).reduce((sum, amt) => sum + (parseFloat(amt) || 0), 0);
+    }
+
+    // Toggle custom date input
+    window.toggleCustomDate = function() {
+      const wrapper = document.getElementById('custom-date-wrapper');
+      wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Set custom date
+    window.setCustomDate = function(value) {
+      if (value) {
+        state.ramadanStart = value;
+        // Deselect all date options
+        document.querySelectorAll('.date-option').forEach(o => o.classList.remove('selected'));
+        updateNightsCount();
+      }
+    };
+
+    // Toggle custom amount input
+    window.toggleCustomAmount = function() {
+      const wrapper = document.getElementById('custom-amount-wrapper');
+      wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Set custom amount
+    window.setCustomAmount = function(value) {
+      const amount = parseInt(value);
+      if (amount && amount > 0) {
+        state.amountPerNight = amount;
+        // Deselect all amount buttons
+        document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+        updateImpactDisplay();
+      }
+    };
+
+    // Stripe variables
+    let stripe = null;
+    let elements = null;
+    let paymentElement = null;
+    let clientSecret = null;
+    let donationId = null;
+
+    // Update payment summary on Step 5
+    // Cover fees state
+    let coverFeesEnabled = false;
+
+    function updatePaymentSummary() {
+      const baseTotal = state.amountPerNight * state.nightsCount;
+      const amplifyTotal = calculateTotalWithAmplify();
+      const amplifyAmount = amplifyTotal - baseTotal;
+
+      const nightsSummary = document.getElementById('payment-nights-summary');
+      const amplifyRow = document.getElementById('payment-amplify-row');
+      const amplifyAmountEl = document.getElementById('payment-amplify-amount');
+      const feesRow = document.getElementById('payment-fees-row');
+      const feesAmountEl = document.getElementById('payment-fees-amount');
+      const totalSummary = document.getElementById('payment-total-summary');
+      const feeDisplay = document.getElementById('fee-amount-display');
+
+      if (nightsSummary) {
+        nightsSummary.textContent = `${state.nightsCount} nights × $${state.amountPerNight}`;
+      }
+
+      // Show amplify row if there's any amplification
+      if (amplifyRow && amplifyAmountEl) {
+        if (amplifyAmount > 0) {
+          amplifyRow.style.display = 'flex';
+          amplifyAmountEl.textContent = `+$${amplifyAmount}`;
+        } else {
+          amplifyRow.style.display = 'none';
+        }
+      }
+
+      // Calculate fees (3%)
+      const feeAmount = Math.round(amplifyTotal * 0.03 * 100) / 100;
+      if (feeDisplay) {
+        feeDisplay.textContent = `$${feeAmount.toFixed(2)}`;
+      }
+
+      // Show/hide fees row based on checkbox
+      if (feesRow && feesAmountEl) {
+        if (coverFeesEnabled) {
+          feesRow.style.display = 'flex';
+          feesAmountEl.textContent = `+$${feeAmount.toFixed(2)}`;
+        } else {
+          feesRow.style.display = 'none';
+        }
+      }
+
+      // Calculate final total
+      const finalTotal = coverFeesEnabled ? amplifyTotal + feeAmount : amplifyTotal;
+      if (totalSummary) {
+        totalSummary.textContent = `$${finalTotal.toFixed(2)}`;
+      }
+    }
+
+    // Update cover fees
+    window.updateCoverFees = function() {
+      coverFeesEnabled = document.getElementById('cover-fees-checkbox').checked;
+      updatePaymentSummary();
+    };
+
+    // Initialize Stripe
+    async function initializeStripe() {
+      // Don't re-initialize if already done
+      if (stripe && elements) return;
+
+      try {
+        // Fetch Stripe publishable key from settings
+        const settingsRes = await fetch('/api/settings/payments');
+        const settings = await settingsRes.json();
+
+        if (!settings.stripe_enabled || !settings.stripe_publishable_key) {
+          showPaymentError('Payment system is not configured. Please contact support.');
+          return;
+        }
+
+        // Load Stripe
+        if (!window.Stripe) {
+          await loadStripeScript();
+        }
+
+        stripe = window.Stripe(settings.stripe_publishable_key);
+
+        // Get customer info
+        const customer = {
+          email: document.getElementById('email')?.value || '',
+          firstName: document.getElementById('first-name')?.value || '',
+          lastName: document.getElementById('last-name')?.value || '',
+          phone: document.getElementById('phone')?.value || '',
+        };
+
+        const billingAddress = {
+          line1: document.getElementById('address')?.value || '',
+          city: document.getElementById('city')?.value || '',
+          state: document.getElementById('state')?.value || '',
+          postal_code: document.getElementById('zip')?.value || '',
+          country: 'US',
+        };
+
+        // Create payment intent
+        const baseTotal = calculateTotalWithAmplify();
+        const feeAmount = coverFeesEnabled ? Math.round(baseTotal * 0.03 * 100) / 100 : 0;
+        const total = baseTotal + feeAmount;
+
+        const response = await fetch('/api/payments/create-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: total,
+            currency: 'usd',
+            type: 'single',
+            items: [{
+              name: `Ramadan 30 Days - ${state.nightsCount} Nights`,
+              amount: baseTotal,
+              campaign: 'ramadan-30-days',
+            }],
+            coverFees: coverFeesEnabled,
+            feeAmount: feeAmount,
+            customer,
+            billingAddress,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          showPaymentError(data.error);
+          return;
+        }
+
+        clientSecret = data.clientSecret;
+        donationId = data.donationId;
+
+        // Create Stripe Elements
+        elements = stripe.elements({
+          clientSecret,
+          appearance: {
+            theme: 'stripe',
+            variables: {
+              colorPrimary: '#16434B',
+              colorBackground: '#ffffff',
+              colorText: '#333333',
+              colorDanger: '#dc2626',
+              fontFamily: 'Signika, system-ui, sans-serif',
+              borderRadius: '8px',
+            },
+          },
+        });
+
+        // Create and mount Payment Element
+        paymentElement = elements.create('payment', {
+          layout: 'tabs',
+        });
+
+        const container = document.getElementById('stripe-payment-element');
+        container.innerHTML = ''; // Clear placeholder
+        paymentElement.mount(container);
+
+      } catch (error) {
+        console.error('Stripe initialization error:', error);
+        showPaymentError('Failed to initialize payment. Please refresh and try again.');
+      }
+    }
+
+    // Load Stripe.js dynamically
+    function loadStripeScript() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://js.stripe.com/v3/';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // Show payment error
+    function showPaymentError(message) {
+      const errorEl = document.getElementById('payment-error');
+      if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    // Hide payment error
+    function hidePaymentError() {
+      const errorEl = document.getElementById('payment-error');
+      if (errorEl) {
+        errorEl.style.display = 'none';
+      }
+    }
+
+    // Process payment
+    window.processPayment = async function() {
+      if (!stripe || !elements) {
+        showPaymentError('Payment system not ready. Please wait a moment and try again.');
+        return;
+      }
+
+      // Get form values
+      const firstName = document.getElementById('first-name')?.value?.trim();
+      const lastName = document.getElementById('last-name')?.value?.trim();
+      const email = document.getElementById('email')?.value?.trim();
+
+      // Validate required fields
+      if (!firstName || !lastName || !email) {
+        showPaymentError('Please fill in your name and email address.');
+        return;
+      }
+
+      // Show loading state
+      const submitBtn = document.getElementById('submit-payment');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      submitBtn.disabled = true;
+      btnText.style.display = 'none';
+      btnSpinner.style.display = 'inline-block';
+      hidePaymentError();
+
+      try {
+        // Confirm payment
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/ramadan/success?donation_id=${donationId}`,
+            payment_method_data: {
+              billing_details: {
+                name: `${firstName} ${lastName}`,
+                email: email,
+                phone: document.getElementById('phone')?.value || '',
+                address: {
+                  line1: document.getElementById('address')?.value || '',
+                  city: document.getElementById('city')?.value || '',
+                  state: document.getElementById('state')?.value || '',
+                  postal_code: document.getElementById('zip')?.value || '',
+                  country: 'US',
+                },
+              },
+            },
+          },
+          redirect: 'if_required',
+        });
+
+        if (error) {
+          showPaymentError(error.message);
+          submitBtn.disabled = false;
+          btnText.style.display = 'inline';
+          btnSpinner.style.display = 'none';
+          return;
+        }
+
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          // Save cart data for success page
+          const baseDonation = calculateTotalWithAmplify();
+          const feeCovered = coverFeesEnabled ? Math.round(baseDonation * 0.03 * 100) / 100 : 0;
+          const cartData = {
+            type: 'ramadan-30-days',
+            schedule: state.schedule,
+            nightsCount: state.nightsCount,
+            amountPerNight: state.amountPerNight,
+            total: baseDonation + feeCovered,
+            baseDonation: baseDonation,
+            coverFees: coverFeesEnabled,
+            feeAmount: feeCovered,
+            ramadanStart: state.ramadanStart,
+            causeMode: state.causeMode,
+            selectedCauses: state.selectedCauses,
+            amplify: amplifyState,
+            donorName: `${firstName} ${lastName}`,
+            donorEmail: email,
+          };
+          sessionStorage.setItem('ramadan30DaysSuccess', JSON.stringify(cartData));
+
+          // Redirect to success page
+          window.location.href = `/ramadan/success?donation_id=${donationId}`;
+        }
+
+      } catch (error) {
+        console.error('Payment error:', error);
+        showPaymentError('Payment failed. Please try again.');
+        submitBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+      }
+    };
+
+    // Legacy proceedToCheckout (now redirects to payment step)
+    window.proceedToCheckout = function() {
+      window.processPayment();
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Date selection
+      document.querySelectorAll('.date-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+          if (e.target.classList.contains('date-amount-input')) return;
+          const radio = option.querySelector('input[type="radio"]');
+          if (radio) {
+            radio.checked = true;
+            state.ramadanStart = radio.value;
+            document.querySelectorAll('.date-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            updateNightsCount();
+          }
+        });
+      });
+
+      // Schedule selection
+      document.querySelectorAll('.schedule-option').forEach(option => {
+        option.addEventListener('click', () => {
+          const radio = option.querySelector('input[type="radio"]');
+          if (radio) {
+            radio.checked = true;
+            state.schedule = radio.value;
+            document.querySelectorAll('.schedule-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            updateNightsCount();
+          }
+        });
+      });
+
+      // Amount buttons
+      document.querySelectorAll('.amount-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.amountPerNight = parseInt(btn.dataset.amount);
+          document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+
+          // Update split info if causes are selected
+          if (state.causeMode === 'multi-equal' && state.selectedCauses.length > 0) {
+            updateSplitInfo();
+          } else if (state.causeMode === 'multi-custom') {
+            // Redistribute amounts equally when base amount changes
+            const perCause = (state.amountPerNight / state.selectedCauses.length).toFixed(0);
+            state.selectedCauses.forEach(cause => {
+              state.causeAmounts[cause] = parseFloat(perCause);
+            });
+            buildCustomAmountsUI();
+          }
+
+          updateImpactDisplay();
+        });
+      });
+
+      // Multi-select cause chips
+      document.querySelectorAll('.cause-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const checkbox = chip.querySelector('input[type="checkbox"]');
+          const cause = chip.dataset.cause;
+
+          checkbox.checked = !checkbox.checked;
+          chip.classList.toggle('selected', checkbox.checked);
+
+          if (checkbox.checked) {
+            if (!state.selectedCauses.includes(cause)) {
+              state.selectedCauses.push(cause);
+            }
+          } else {
+            state.selectedCauses = state.selectedCauses.filter(c => c !== cause);
+            delete state.causeAmounts[cause];
+          }
+
+          // If in custom mode, rebuild UI
+          if (state.causeMode === 'multi-custom') {
+            buildCustomAmountsUI();
+          } else {
+            updateSplitInfo();
+          }
+
+          updateImpactDisplay();
+        });
+      });
+
+      // Initialize
+      updateNightsCount();
+    });
+
+    // Google Places Autocomplete
+    let placesLoaded = false;
+    let placesAutocomplete = null;
+
+    function loadGooglePlaces() {
+      if (placesLoaded) return;
+
+      if (!googlePlacesApiKey) {
+        console.log('Google Places: API key not configured');
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesApiKey}&libraries=places&callback=initRamadanPlacesAutocomplete`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = function() {
+        console.error('Failed to load Google Places API');
+      };
+      document.head.appendChild(script);
+      placesLoaded = true;
+    }
+
+    // Global callback for Google Places
+    window.initRamadanPlacesAutocomplete = function() {
+      if (placesAutocomplete) return;
+
+      const addressInput = document.getElementById('address');
+      if (!addressInput) {
+        console.log('Address input not found');
+        return;
+      }
+
+      if (!window.google?.maps?.places) {
+        console.log('Google Places API not available');
+        return;
+      }
+
+      try {
+        placesAutocomplete = new google.maps.places.Autocomplete(addressInput, {
+          types: ['address'],
+          componentRestrictions: { country: ['us', 'ca'] },
+          fields: ['address_components', 'formatted_address'],
+        });
+
+        placesAutocomplete.addListener('place_changed', function() {
+          const place = placesAutocomplete.getPlace();
+          if (!place.address_components) return;
+
+          let streetNumber = '';
+          let route = '';
+          let city = '';
+          let state = '';
+          let zip = '';
+          let country = 'United States';
+
+          for (const component of place.address_components) {
+            const type = component.types[0];
+            if (type === 'street_number') streetNumber = component.long_name;
+            if (type === 'route') route = component.long_name;
+            if (type === 'locality') city = component.long_name;
+            if (type === 'administrative_area_level_1') state = component.short_name;
+            if (type === 'postal_code') zip = component.long_name;
+            if (type === 'country') country = component.long_name;
+          }
+
+          // Fill in the form fields
+          document.getElementById('address').value = `${streetNumber} ${route}`.trim();
+          document.getElementById('city').value = city;
+          document.getElementById('state').value = state;
+          document.getElementById('zip').value = zip;
+          document.getElementById('country').value = country;
+        });
+
+        console.log('Google Places autocomplete initialized');
+      } catch (e) {
+        console.log('Google Places error:', e.message);
+      }
+    };
+
+    function initGooglePlaces() {
+      // If already loaded, just initialize
+      if (window.google && window.google.maps && window.google.maps.places) {
+        window.initRamadanPlacesAutocomplete();
+      } else {
+        loadGooglePlaces();
+      }
+    }
+  </script>
+</Layout>

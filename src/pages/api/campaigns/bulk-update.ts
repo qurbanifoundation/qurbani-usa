@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearNavbarCache } from '../../../lib/menus';
 
 export const prerender = false;
 
@@ -71,6 +72,9 @@ export const POST: APIRoute = async ({ request }) => {
       throw error;
     }
 
+    // Clear navbar cache
+    clearNavbarCache();
+
     return new Response(JSON.stringify({
       success: true,
       message: `Updated ${data?.length || 0} campaigns`,
@@ -119,6 +123,9 @@ export const DELETE: APIRoute = async ({ request }) => {
     if (error) {
       throw error;
     }
+
+    // Clear navbar cache
+    clearNavbarCache();
 
     return new Response(JSON.stringify({
       success: true,

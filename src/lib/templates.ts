@@ -143,6 +143,29 @@ export async function getAppealsPageTemplates(): Promise<TemplateOption[]> {
 }
 
 /**
+ * Fetch Ramadan page template options from database
+ */
+export async function getRamadanPageTemplates(): Promise<TemplateOption[]> {
+  const { data, error } = await supabaseAdmin
+    .from('template_options')
+    .select('*')
+    .eq('template_type', 'ramadan_page')
+    .eq('is_active', true)
+    .order('sort_order');
+
+  if (error || !data || data.length === 0) {
+    console.error('Error fetching Ramadan page templates:', error);
+    // Return fallback options if database fails
+    return [
+      { id: 1, template_type: 'ramadan_page' as any, template_key: 'pennyappeal', template_label: 'PennyAppeal Style', description: 'Original 30 Days of Ramadan wizard with green theme, daily giving automation, multipliers, and Night 27 options', is_active: true, sort_order: 1 },
+      { id: 2, template_type: 'ramadan_page' as any, template_key: 'amanah', template_label: 'Amanah Style', description: 'Modern mobile-first 6-step wizard with cloud background, amplify options, and streamlined checkout', is_active: true, sort_order: 2 },
+    ];
+  }
+
+  return data || [];
+}
+
+/**
  * Fetch homepage template options from database
  */
 export async function getHomepageTemplates(): Promise<TemplateOption[]> {

@@ -70,7 +70,7 @@ try {
     border-color: #d97706 !important;
   }
 
-  /* Custom checkbox - white background with orange check */
+  /* Custom checkbox - grey style for Keep in Touch */
   .custom-checkbox {
     position: relative;
     display: inline-block;
@@ -99,9 +99,41 @@ try {
   }
   .custom-checkbox input:checked + .checkmark {
     background-color: white;
-    border-color: #d97706;
+    border-color: #9ca3af;
   }
   .custom-checkbox .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #9ca3af;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+  }
+  .custom-checkbox input:checked + .checkmark:after {
+    display: block;
+  }
+
+  /* Orange checkbox style for Please Support Us Further */
+  .custom-checkbox-orange .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+  }
+  .custom-checkbox-orange input:checked + .checkmark {
+    background-color: white;
+    border-color: #d97706;
+  }
+  .custom-checkbox-orange .checkmark:after {
     content: "";
     position: absolute;
     display: none;
@@ -113,7 +145,7 @@ try {
     border-width: 0 2.5px 2.5px 0;
     transform: rotate(45deg);
   }
-  .custom-checkbox input:checked + .checkmark:after {
+  .custom-checkbox-orange input:checked + .checkmark:after {
     display: block;
   }
 </style>
@@ -255,23 +287,14 @@ try {
           <!-- Progress Indicator -->
           <div class="bg-gray-100 px-6 py-4 border-b border-gray-200">
             <div class="max-w-4xl mx-auto flex items-center justify-between">
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-[#d97706] text-white flex items-center justify-center font-bold text-sm">1</div>
                 <span class="font-semibold text-gray-800">Your Information</span>
-              </div>
-              <div class="hidden md:flex items-center gap-2 text-gray-400">
-                <div class="w-12 h-0.5 bg-gray-300"></div>
-                <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center font-bold text-sm">2</div>
-                <span class="text-gray-500">Payment</span>
-              </div>
-              <!-- Social Proof -->
-              <div class="hidden md:flex items-center gap-2 text-sm text-gray-600">
-                <div class="flex -space-x-2">
-                  <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">A</div>
-                  <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">M</div>
-                  <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">S</div>
+                <div class="hidden md:flex items-center gap-2 text-gray-400 ml-2">
+                  <div class="w-6 h-0.5 bg-gray-300"></div>
+                  <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center font-bold text-sm">2</div>
+                  <span class="text-gray-500">Payment</span>
                 </div>
-                <span><strong>847</strong> people donated this month</span>
               </div>
             </div>
           </div>
@@ -305,7 +328,7 @@ try {
 
                 <!-- Privacy & Communication Preferences -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
-                  <h4 class="text-lg font-bold text-gray-800 mb-4">Your Choice Can Make a Difference</h4>
+                  <h4 class="text-lg font-bold text-gray-800 mb-4">Keep in Touch</h4>
 
                   <!-- Communication Preferences -->
                   <div class="mb-4">
@@ -352,28 +375,11 @@ try {
                   <p class="text-xs text-gray-500">To opt-out, email to: <a href="mailto:donorcare@qurbani.com" class="text-[#01534d] hover:underline">donorcare@qurbani.com</a></p>
                 </div>
 
-                <!-- Desktop Continue Button -->
-                <button type="button" id="modal-continue-btn" class="hidden md:block w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-6">
-                  Continue to Payment
-                  <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                  </svg>
-                </button>
               </form>
             </div>
 
             <!-- Right: Donation Basket + Upsell -->
             <div class="p-6 md:p-8 bg-gray-50 md:border-l border-gray-200">
-              <!-- Mobile Social Proof -->
-              <div class="md:hidden flex items-center justify-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
-                <div class="flex -space-x-2">
-                  <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">A</div>
-                  <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">M</div>
-                  <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">S</div>
-                </div>
-                <span><strong>847</strong> people donated this month</span>
-              </div>
-
               <!-- Donation Basket Box -->
               <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
                 <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Donation Basket</h3>
@@ -396,7 +402,7 @@ try {
 
                 <!-- Upsell Item 1: Prophetic Qurbani -->
                 <label class="flex items-center gap-3 cursor-pointer mb-4">
-                  <div class="custom-checkbox">
+                  <div class="custom-checkbox custom-checkbox-orange">
                     <input type="checkbox" id="upsell-checkbox-1" />
                     <span class="checkmark"></span>
                   </div>
@@ -415,7 +421,7 @@ try {
 
                 <!-- Upsell Item 2: Feed a Family -->
                 <label class="flex items-center gap-3 cursor-pointer mb-4">
-                  <div class="custom-checkbox">
+                  <div class="custom-checkbox custom-checkbox-orange">
                     <input type="checkbox" id="upsell-checkbox-2" />
                     <span class="checkmark"></span>
                   </div>
@@ -433,22 +439,15 @@ try {
                 </div>
               </div>
 
-              <!-- Updated Total -->
-              <div class="mt-4 bg-white rounded-xl border border-gray-200 p-4">
-                <div class="flex justify-between items-center">
-                  <span class="font-medium text-gray-700">Total</span>
-                  <span class="text-2xl font-bold text-[#d97706]" id="modal-total">$0.00</span>
-                </div>
-                <p class="text-xs text-gray-500 mt-1" id="modal-payment-type">One-time donation</p>
+              <!-- Continue to Payment Button - Separate from boxes above -->
+              <div class="mt-8 pt-6 border-t border-gray-200">
+                <button type="button" id="modal-continue-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg shadow-lg">
+                  Continue to Payment
+                  <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                  </svg>
+                </button>
               </div>
-
-              <!-- Mobile Continue Button (after Total) -->
-              <button type="button" id="modal-continue-btn-mobile" class="md:hidden w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg mt-4">
-                Continue to Payment
-                <svg class="w-5 h-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-              </button>
             </div>
           </div>
         </div>
@@ -459,12 +458,12 @@ try {
           <div class="bg-gray-100 px-6 py-4 border-b border-gray-200">
             <div class="max-w-2xl mx-auto flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
+                <div class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
-                <span class="text-gray-500">Your Information</span>
+                <span class="text-gray-400">Your Information</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-12 h-0.5 bg-[#d97706]"></div>
@@ -472,7 +471,7 @@ try {
                 <span class="font-semibold text-gray-800">Payment</span>
               </div>
               <!-- Trust Badge in Header -->
-              <div class="hidden md:flex items-center gap-2 text-sm text-green-600">
+              <div class="hidden md:flex items-center gap-2 text-sm text-gray-500">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
@@ -1093,8 +1092,8 @@ function updateCartUI() {
 
   // Update cart count badge (if exists)
   const badge = document.getElementById('cart-count');
+  const count = items.reduce((sum, item) => sum + item.quantity, 0);
   if (badge) {
-    const count = items.reduce((sum, item) => sum + item.quantity, 0);
     badge.textContent = count;
     badge.classList.toggle('hidden', count === 0);
   }
@@ -1127,14 +1126,18 @@ function updateCartReminder() {
     reminderTimeout = null;
   }
 
-  // Show reminder if cart has items, cart is closed, and not dismissed
-  if (items.length > 0 && !window.donationCart.isOpen && !reminderDismissed) {
+  // Show reminder if cart has items, cart is closed, not dismissed, and on desktop (lg: breakpoint = 1024px)
+  const isDesktop = window.innerWidth >= 1024;
+  if (items.length > 0 && !window.donationCart.isOpen && !reminderDismissed && isDesktop) {
     // Show after 5 seconds of inactivity
     reminderTimeout = setTimeout(() => {
-      reminder.classList.remove('hidden');
-      setTimeout(() => {
-        reminder.classList.remove('translate-y-4', 'opacity-0');
-      }, 10);
+      // Double-check we're still on desktop when timeout fires
+      if (window.innerWidth >= 1024) {
+        reminder.classList.remove('hidden');
+        setTimeout(() => {
+          reminder.classList.remove('translate-y-4', 'opacity-0');
+        }, 10);
+      }
     }, 5000);
   } else {
     // Hide the reminder
@@ -1294,8 +1297,9 @@ function updateModalTotal() {
   window.donationCart.feeAmount = feeAmount;
   window.donationCart.baseTotal = baseTotal;
 
-  document.getElementById('modal-subtotal').textContent = '$' + window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0).toFixed(2);
-  document.getElementById('modal-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('modal-subtotal').textContent = '$' + total.toFixed(2);
+  const modalTotal = document.getElementById('modal-total');
+  if (modalTotal) modalTotal.textContent = '$' + total.toFixed(2);
   document.getElementById('payment-total').textContent = '$' + total.toFixed(2);
 
   // Update step 2 total display
@@ -1313,7 +1317,8 @@ function updateModalTotal() {
   } else if (coverFees) {
     paymentTypeLabel = 'One-time + fees covered';
   }
-  document.getElementById('modal-payment-type').textContent = paymentTypeLabel;
+  const paymentTypeEl = document.getElementById('modal-payment-type');
+  if (paymentTypeEl) paymentTypeEl.textContent = paymentTypeLabel;
 }
 
 function goToPaymentStep() {

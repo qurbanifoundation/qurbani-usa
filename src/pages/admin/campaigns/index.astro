@@ -419,7 +419,19 @@ if (totalPages <= maxVisiblePages) {
                     </div>
                     <div class="min-w-0">
                       <p class="font-semibold text-gray-900 truncate max-w-[200px]" title={name}>{name}</p>
-                      <p class="text-xs text-gray-500 truncate max-w-[200px]">/appeals/{campaign.slug}</p>
+                      <button
+                        type="button"
+                        class="inline-url-edit-btn text-xs text-gray-500 truncate max-w-[200px] cursor-pointer hover:bg-yellow-50 hover:text-gray-700 px-1 -mx-1 rounded transition text-left flex items-center gap-1"
+                        data-id={campaign.id}
+                        data-slug={campaign.slug}
+                        data-url={campaign.url_path || `/appeals/${campaign.slug}`}
+                        title="Click to edit URL"
+                      >
+                        <span>{campaign.url_path || `/appeals/${campaign.slug}`}</span>
+                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </td>
@@ -478,7 +490,7 @@ if (totalPages <= maxVisiblePages) {
                       </svg>
                     </a>
                     <a
-                      href={`/appeals/${campaign.slug}`}
+                      href={campaign.url_path || `/appeals/${campaign.slug}`}
                       target="_blank"
                       class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
                       title="View Live"
@@ -553,6 +565,59 @@ if (totalPages <= maxVisiblePages) {
     )}
   </div>
   )}
+
+  <!-- Inline URL Edit Popup -->
+  <div id="url-edit-popup" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-semibold text-gray-900">Edit Campaign URL</h4>
+        <button type="button" id="close-url-popup" class="p-1 text-gray-400 hover:text-gray-600 rounded">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <input type="hidden" id="url-edit-id" />
+
+      <div class="space-y-4">
+        <!-- Category Selection -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category Prefix (Optional)</label>
+          <select id="url-category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent">
+            <option value="appeals">appeals (default)</option>
+            <option value="">No category prefix</option>
+            {categories.filter(c => c.value !== 'all').map(cat => (
+              <option value={cat.value}>{cat.value}</option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Slug -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+          <input type="text" id="url-slug-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent" placeholder="campaign-slug" />
+          <p class="text-xs text-gray-500 mt-1">Letters, numbers, and hyphens only</p>
+        </div>
+
+        <!-- Preview -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <p class="text-xs font-medium text-gray-500 mb-1">URL Preview:</p>
+          <p id="url-preview" class="text-sm font-mono text-[#01534d]">/appeals/</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-2">
+          <button type="button" id="cancel-url-edit" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+            Cancel
+          </button>
+          <button type="button" id="save-url-edit" class="flex-1 px-4 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition">
+            Save URL
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </AdminLayout>
 
 <script is:inline>
@@ -960,6 +1025,154 @@ if (totalPages <= maxVisiblePages) {
       if (donationChanged) updates.donation_box_template = donationTemplateEl.value || null;
 
       bulkUpdate(updates);
+    });
+
+    // =============================================
+    // INLINE URL EDITING
+    // =============================================
+    const urlEditPopup = document.getElementById('url-edit-popup');
+    const urlEditId = document.getElementById('url-edit-id');
+    const urlCategorySelect = document.getElementById('url-category-select');
+    const urlSlugInput = document.getElementById('url-slug-input');
+    const urlPreview = document.getElementById('url-preview');
+    const closeUrlPopup = document.getElementById('close-url-popup');
+    const cancelUrlEdit = document.getElementById('cancel-url-edit');
+    const saveUrlEdit = document.getElementById('save-url-edit');
+
+    let currentUrlBtn = null;
+
+    // Update URL preview
+    function updateUrlPreview() {
+      const category = urlCategorySelect.value;
+      const slug = urlSlugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+      const url = category ? `/${category}/${slug}` : `/${slug}`;
+      if (urlPreview) urlPreview.textContent = url || '/';
+    }
+
+    urlCategorySelect?.addEventListener('change', updateUrlPreview);
+    urlSlugInput?.addEventListener('input', () => {
+      // Auto-sanitize as user types
+      const val = urlSlugInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+      if (val !== urlSlugInput.value) {
+        urlSlugInput.value = val;
+      }
+      updateUrlPreview();
+    });
+
+    // Open URL edit popup
+    const inlineUrlBtns = document.querySelectorAll('.inline-url-edit-btn');
+    inlineUrlBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const id = btn.dataset.id;
+        const currentUrl = btn.dataset.url || '';
+        const currentSlug = btn.dataset.slug || '';
+
+        if (!id) return;
+
+        currentUrlBtn = btn;
+        urlEditId.value = id;
+
+        // Parse current URL to get category and slug
+        const urlParts = currentUrl.replace(/^\//, '').split('/');
+        let category = 'appeals';
+        let slug = currentSlug;
+
+        if (urlParts.length === 2) {
+          category = urlParts[0];
+          slug = urlParts[1];
+        } else if (urlParts.length === 1) {
+          category = '';
+          slug = urlParts[0];
+        }
+
+        // Set form values
+        urlCategorySelect.value = category;
+        urlSlugInput.value = slug;
+        updateUrlPreview();
+
+        // Show popup
+        urlEditPopup?.classList.remove('hidden');
+        urlEditPopup?.classList.add('flex');
+        urlSlugInput.focus();
+      });
+    });
+
+    // Close URL popup
+    function closeUrlEditPopup() {
+      urlEditPopup?.classList.add('hidden');
+      urlEditPopup?.classList.remove('flex');
+      currentUrlBtn = null;
+    }
+
+    closeUrlPopup?.addEventListener('click', closeUrlEditPopup);
+    cancelUrlEdit?.addEventListener('click', closeUrlEditPopup);
+    urlEditPopup?.addEventListener('click', (e) => {
+      if (e.target === urlEditPopup) closeUrlEditPopup();
+    });
+
+    // Save URL
+    saveUrlEdit?.addEventListener('click', async () => {
+      const id = urlEditId.value;
+      const category = urlCategorySelect.value;
+      const slug = urlSlugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+
+      if (!slug) {
+        showToast('Please enter a slug', 'error');
+        return;
+      }
+
+      const newUrl = category ? `/${category}/${slug}` : `/${slug}`;
+
+      try {
+        const res = await fetch('/api/campaigns', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, slug, url_path: newUrl })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update');
+        }
+
+        // Update the button text and data
+        if (currentUrlBtn) {
+          const spanEl = currentUrlBtn.querySelector('span');
+          if (spanEl) spanEl.textContent = newUrl;
+          currentUrlBtn.dataset.url = newUrl;
+          currentUrlBtn.dataset.slug = slug;
+
+          // Also update the View Live link in the same row
+          const row = currentUrlBtn.closest('tr');
+          if (row) {
+            const viewLiveLink = row.querySelector('a[title="View Live"]');
+            if (viewLiveLink) {
+              viewLiveLink.href = newUrl;
+            }
+          }
+        }
+
+        showToast('URL updated successfully');
+        closeUrlEditPopup();
+
+        // Clear cache
+        await fetch('/api/cache/clear', { method: 'POST' }).catch(() => {});
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Handle Enter key in slug input
+    urlSlugInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveUrlEdit?.click();
+      } else if (e.key === 'Escape') {
+        closeUrlEditPopup();
+      }
     });
   });
 </script>

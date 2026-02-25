@@ -31,7 +31,12 @@
       "Bash(CLOUDFLARE_API_TOKEN=\"Oy2UptkrL2WAx6pPSUnxK0UWUCoWgz_1g9miMUs-\" npx wrangler pages deploy:*)",
       "WebFetch(domain:qurbani-usa.pages.dev)",
       "Bash(xargs:*)",
-      "Bash(md5:*)"
+      "Bash(md5:*)",
+      "WebFetch(domain:matwproject.org)",
+      "Bash(pip3 install:*)",
+      "Bash(pip install:*)",
+      "Bash(jq:*)",
+      "Bash(npx -y pg-cli:*)"
     ]
   }
 }

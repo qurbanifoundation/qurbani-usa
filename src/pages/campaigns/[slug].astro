@@ -60,14 +60,17 @@ if (!campaign) {
 const campaignProps = {
   id: campaign.id,
   title: campaign.name || campaign.title,
+  name: campaign.name,
   subtitle: campaign.description,
   slug: campaign.slug,
   featured_image: campaign.featured_image || campaign.hero_image_url || campaign.image_url,
   description: campaign.long_description || campaign.description,
+  long_description: campaign.long_description,
   meta_title: campaign.meta_title,
   meta_description: campaign.meta_description,
   content_sections: campaign.content_sections || [],
   donation_options: campaign.donation_options || [],
+  donation_presets: campaign.donation_presets || [],
   gallery_images: campaign.gallery_images || [],
   goal_amount: campaign.goal_amount,
   raised_amount: campaign.raised_amount,
@@ -75,14 +78,16 @@ const campaignProps = {
   category: campaign.category,
   is_zakat_eligible: campaign.is_zakat_eligible,
   impact_stats: campaign.impact_stats || [],
+  template_config: campaign.template_config || {},
 };
 
-// Determine which templates to use (campaign override > site default > fallback)
+// Determine which templates to use
 const pageTemplate = campaign.page_template || siteSettings?.default_campaign_page_template || 'green-with-yellow';
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
 
 ---
 
+{/* Template selection based on page_template field */}
 {pageTemplate === 'emergency-appeal' ? (
   <EmergencyAppealTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : (

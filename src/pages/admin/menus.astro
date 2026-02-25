@@ -1,0 +1,621 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch mega menus from database
+let menus: any[] = [];
+try {
+  const { data, error } = await supabaseAdmin
+    .from('mega_menus')
+    .select('*')
+    .order('sort_order');
+
+  if (!error && data) {
+    menus = data;
+  }
+} catch (e) {
+  console.error('Error fetching menus:', e);
+}
+
+// Fetch categories to show count per menu
+let categoriesByMenu: Record<string, number> = {};
+try {
+  const { data } = await supabaseAdmin
+    .from('categories')
+    .select('menu');
+
+  if (data) {
+    data.forEach(cat => {
+      const menu = cat.menu || 'our-work';
+      categoriesByMenu[menu] = (categoriesByMenu[menu] || 0) + 1;
+    });
+  }
+} catch (e) {
+  console.error('Error fetching categories:', e);
+}
+---
+
+<AdminLayout title="Header Menus" activeNav="menus">
+  <div class="max-w-4xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Header Menus</h1>
+        <p class="text-gray-600 mt-1">Manage the mega menus that appear in your site header.</p>
+      </div>
+      <button
+        id="add-menu-btn"
+        class="px-4 py-2.5 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition flex items-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add Menu
+      </button>
+    </div>
+
+    <!-- Menus List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div class="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div class="w-10"></div>
+          <div class="w-12">Color</div>
+          <div class="flex-1">Menu Name & ID</div>
+          <div class="w-24 text-center">Status</div>
+          <div class="w-32 text-right">Actions</div>
+        </div>
+      </div>
+
+      <div id="menus-list" class="divide-y divide-gray-100">
+        {menus.map((menu, index) => (
+          <div
+            class="menu-item flex items-center px-6 py-4 hover:bg-gray-50 transition cursor-move"
+            data-id={menu.id}
+            data-sort={menu.sort_order}
+            draggable="true"
+          >
+            <div class="w-10 flex items-center justify-center text-gray-400 drag-handle">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
+              </svg>
+            </div>
+            <div class="w-12">
+              <input
+                type="color"
+                value={menu.color}
+                class="color-input w-8 h-8 rounded cursor-pointer border-0"
+                data-id={menu.id}
+              />
+            </div>
+            <div class="flex-1">
+              <input
+                type="text"
+                value={menu.name}
+                class="name-input w-full max-w-xs px-2 py-1 text-sm font-semibold text-gray-900 border border-transparent rounded hover:border-gray-300 focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 focus:outline-none bg-transparent"
+                data-id={menu.id}
+                data-original={menu.name}
+              />
+              <p class="text-xs text-gray-500 ml-2 flex items-center gap-1">
+                ID: <span class="font-mono">{menu.id}</span>
+                <button
+                  type="button"
+                  class="edit-id-btn text-gray-400 hover:text-[#01534d] p-0.5 rounded transition"
+                  data-id={menu.id}
+                  data-name={menu.name}
+                  title="Change ID"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                  </svg>
+                </button>
+                • {categoriesByMenu[menu.id] || 0} categories
+              </p>
+            </div>
+            <div class="w-24 text-center">
+              <button
+                class="toggle-active-btn px-3 py-1 rounded-full text-xs font-medium transition"
+                data-id={menu.id}
+                data-active={menu.is_active}
+                style={menu.is_active ? 'background: #dcfce7; color: #166534;' : 'background: #f3f4f6; color: #6b7280;'}
+              >
+                {menu.is_active ? 'Active' : 'Inactive'}
+              </button>
+            </div>
+            <div class="w-32 flex items-center justify-end gap-2">
+              <a
+                href={`/admin/menu-builder?menu=${menu.id}`}
+                class="p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
+                title="Edit Widgets"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                </svg>
+              </a>
+              <button
+                class="delete-btn p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                data-id={menu.id}
+                data-name={menu.name}
+                title="Delete Menu"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {menus.length === 0 && (
+        <div class="px-6 py-12 text-center">
+          <p class="text-gray-500">No menus found. Add your first menu above.</p>
+        </div>
+      )}
+    </div>
+
+    <!-- Help Text -->
+    <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <h4 class="font-semibold text-blue-900 mb-2">How to use:</h4>
+      <ul class="text-sm text-blue-800 space-y-1">
+        <li>• <strong>Drag & Drop:</strong> Drag menus up/down to reorder them in the header</li>
+        <li>• <strong>Color:</strong> Click to change the menu's accent color</li>
+        <li>• <strong>Name:</strong> Click on the name to edit it (press Enter to save)</li>
+        <li>• <strong>Widgets:</strong> Click the grid icon to configure what appears in the mega menu</li>
+        <li>• <strong>Delete:</strong> Remove a menu (will ask for confirmation)</li>
+      </ul>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="mt-4 flex gap-4">
+      <a href="/admin/menu-builder" class="text-[#01534d] hover:underline text-sm flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+        </svg>
+        Menu Builder (Edit Widgets)
+      </a>
+      <a href="/admin/categories" class="text-[#01534d] hover:underline text-sm flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+        </svg>
+        Manage Categories
+      </a>
+    </div>
+  </div>
+
+  <!-- Add/Edit Menu Modal -->
+  <div id="menu-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-black/50" id="modal-backdrop"></div>
+      <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 id="modal-title" class="text-xl font-bold text-gray-900 mb-4">Add Menu</h3>
+
+        <form id="menu-form" class="space-y-4">
+          <input type="hidden" id="menu-id-input" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Menu ID (URL-friendly)</label>
+            <input
+              type="text"
+              id="menu-id-field"
+              required
+              pattern="[a-z0-9-]+"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent font-mono text-sm"
+              placeholder="e.g., services"
+            />
+            <p class="text-xs text-gray-500 mt-1">Lowercase letters, numbers, and hyphens only. Cannot be changed later.</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+            <input
+              type="text"
+              id="menu-name-field"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+              placeholder="e.g., Our Services"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+              <div class="flex items-center gap-2">
+                <input type="color" id="menu-color-field" value="#01534d" class="w-10 h-10 rounded cursor-pointer border-0" />
+                <input type="text" id="menu-color-text" value="#01534d" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
+              <input type="number" id="menu-sort-field" min="1" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]" />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <button type="button" id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+              Save Menu
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change ID Modal -->
+  <div id="change-id-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-black/50" id="change-id-backdrop"></div>
+      <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Change Menu ID</h3>
+        <p class="text-sm text-gray-600 mb-4">Change the internal identifier for "<span id="change-id-menu-name" class="font-medium"></span>"</p>
+
+        <form id="change-id-form" class="space-y-4">
+          <input type="hidden" id="change-id-old" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Current ID</label>
+            <p id="change-id-current" class="px-3 py-2 bg-gray-100 rounded-lg font-mono text-sm text-gray-600"></p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">New ID</label>
+            <input
+              type="text"
+              id="change-id-new"
+              required
+              pattern="[a-z0-9-]+"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent font-mono text-sm"
+              placeholder="e.g., appeals"
+            />
+            <p class="text-xs text-gray-500 mt-1">Lowercase letters, numbers, and hyphens only.</p>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <button type="button" id="change-id-cancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
+              Change ID
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
+
+  <style>
+    .menu-item.drag-over {
+      border-top: 2px solid #01534d;
+      background-color: #f0fdf4;
+    }
+    .menu-item {
+      transition: background-color 0.15s;
+    }
+    .drag-handle:hover {
+      color: #01534d;
+    }
+  </style>
+</AdminLayout>
+
+<script is:inline>
+  const modal = document.getElementById('menu-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const form = document.getElementById('menu-form');
+  const toast = document.getElementById('toast');
+
+  function showToast(message, type = 'success') {
+    const icon = type === 'success'
+      ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+    toast.innerHTML = icon + '<span>' + message + '</span>';
+    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+
+    setTimeout(() => {
+      toast.className = 'hidden';
+    }, 3000);
+  }
+
+  // Color sync
+  document.getElementById('menu-color-field').addEventListener('input', (e) => {
+    document.getElementById('menu-color-text').value = e.target.value;
+  });
+  document.getElementById('menu-color-text').addEventListener('input', (e) => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+      document.getElementById('menu-color-field').value = e.target.value;
+    }
+  });
+
+  // Auto-generate ID from name
+  document.getElementById('menu-name-field').addEventListener('input', (e) => {
+    const idField = document.getElementById('menu-id-field');
+    const existingId = document.getElementById('menu-id-input').value;
+    // Only auto-generate if adding new
+    if (!existingId && !idField.dataset.manual) {
+      idField.value = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+  });
+
+  document.getElementById('menu-id-field').addEventListener('input', () => {
+    document.getElementById('menu-id-field').dataset.manual = 'true';
+  });
+
+  // Open modal for add
+  document.getElementById('add-menu-btn').addEventListener('click', () => {
+    modalTitle.textContent = 'Add New Menu';
+    document.getElementById('menu-id-input').value = '';
+    document.getElementById('menu-id-field').value = '';
+    document.getElementById('menu-id-field').disabled = false;
+    document.getElementById('menu-id-field').dataset.manual = '';
+    document.getElementById('menu-name-field').value = '';
+    document.getElementById('menu-color-field').value = '#01534d';
+    document.getElementById('menu-color-text').value = '#01534d';
+    document.getElementById('menu-sort-field').value = '5';
+    modal.classList.remove('hidden');
+  });
+
+  // Close modal
+  document.getElementById('cancel-btn').addEventListener('click', () => modal.classList.add('hidden'));
+  document.getElementById('modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
+
+  // Save new menu
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+      id: document.getElementById('menu-id-field').value,
+      name: document.getElementById('menu-name-field').value,
+      color: document.getElementById('menu-color-field').value,
+      sort_order: parseInt(document.getElementById('menu-sort-field').value),
+      is_active: true,
+    };
+
+    try {
+      const res = await fetch('/api/mega-menus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+
+      showToast('Menu created! Now add widgets in Menu Builder.');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+
+  // Inline name editing
+  document.querySelectorAll('.name-input').forEach(input => {
+    input.addEventListener('blur', async () => {
+      const id = input.dataset.id;
+      const newName = input.value.trim();
+      const original = input.dataset.original;
+
+      if (newName === original || !newName) {
+        input.value = original;
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/mega-menus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, name: newName })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        input.dataset.original = newName;
+        showToast('Menu name updated');
+      } catch (error) {
+        input.value = original;
+        showToast(error.message, 'error');
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+      if (e.key === 'Escape') {
+        input.value = input.dataset.original;
+        input.blur();
+      }
+    });
+  });
+
+  // Drag and drop reordering
+  const menusList = document.getElementById('menus-list');
+  let draggedItem = null;
+
+  document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    item.addEventListener('dragend', () => {
+      item.style.opacity = '1';
+      draggedItem = null;
+      document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('drag-over'));
+    });
+
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (draggedItem && draggedItem !== item) {
+        item.classList.add('drag-over');
+      }
+    });
+
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+
+    item.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+
+      if (!draggedItem || draggedItem === item) return;
+
+      // Get all items and their new order
+      const items = Array.from(menusList.querySelectorAll('.menu-item'));
+      const draggedIndex = items.indexOf(draggedItem);
+      const dropIndex = items.indexOf(item);
+
+      // Reorder in DOM
+      if (draggedIndex < dropIndex) {
+        item.parentNode.insertBefore(draggedItem, item.nextSibling);
+      } else {
+        item.parentNode.insertBefore(draggedItem, item);
+      }
+
+      // Save new order to database
+      const newItems = Array.from(menusList.querySelectorAll('.menu-item'));
+      const updates = newItems.map((el, index) => ({
+        id: el.dataset.id,
+        sort_order: index + 1
+      }));
+
+      try {
+        for (const update of updates) {
+          const res = await fetch('/api/mega-menus', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(update)
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to update order');
+          }
+        }
+        showToast('Order saved');
+        setTimeout(() => window.location.reload(), 500);
+      } catch (error) {
+        showToast('Failed to save order: ' + error.message, 'error');
+        setTimeout(() => window.location.reload(), 1000);
+      }
+    });
+  });
+
+  // Color change
+  document.querySelectorAll('.color-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const id = input.dataset.id;
+      const newColor = input.value;
+
+      try {
+        const res = await fetch('/api/mega-menus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, color: newColor })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        showToast('Color updated');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Toggle active status
+  document.querySelectorAll('.toggle-active-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const currentState = btn.dataset.active === 'true';
+
+      try {
+        const res = await fetch('/api/mega-menus', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, is_active: !currentState })
+        });
+        if (!res.ok) throw new Error('Failed to update');
+        window.location.reload();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Delete menu
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+
+      if (!confirm(`Delete "${name}" menu? This will also delete all widgets in this menu. This cannot be undone.`)) return;
+
+      try {
+        const res = await fetch(`/api/mega-menus?id=${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete');
+        showToast('Menu deleted');
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+  });
+
+  // Change ID modal
+  const changeIdModal = document.getElementById('change-id-modal');
+  const changeIdForm = document.getElementById('change-id-form');
+
+  // Open change ID modal
+  document.querySelectorAll('.edit-id-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+
+      document.getElementById('change-id-old').value = id;
+      document.getElementById('change-id-current').textContent = id;
+      document.getElementById('change-id-new').value = id;
+      document.getElementById('change-id-menu-name').textContent = name;
+      changeIdModal.classList.remove('hidden');
+    });
+  });
+
+  // Close change ID modal
+  document.getElementById('change-id-cancel').addEventListener('click', () => changeIdModal.classList.add('hidden'));
+  document.getElementById('change-id-backdrop').addEventListener('click', () => changeIdModal.classList.add('hidden'));
+
+  // Submit ID change
+  changeIdForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const oldId = document.getElementById('change-id-old').value;
+    const newId = document.getElementById('change-id-new').value.toLowerCase().trim();
+
+    if (oldId === newId) {
+      changeIdModal.classList.add('hidden');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/mega-menus', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: oldId, newId: newId })
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to change ID');
+
+      showToast(`Menu ID changed from "${oldId}" to "${newId}"`);
+      changeIdModal.classList.add('hidden');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  });
+</script>

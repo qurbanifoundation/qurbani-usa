@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearNavbarCache } from '../../../lib/menus';
 
 export const prerender = false;
 
@@ -66,6 +67,11 @@ export const POST: APIRoute = async ({ request }) => {
 
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
+
+    // Clear navbar cache so campaign changes appear in menus
+    if (successCount > 0) {
+      clearNavbarCache();
+    }
 
     return new Response(JSON.stringify({
       success: true,

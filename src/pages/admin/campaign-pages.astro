@@ -1,0 +1,764 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch campaign pages with category info
+let pages: any[] = [];
+let categories: any[] = [];
+let fetchError = '';
+
+try {
+  const { data, error } = await supabaseAdmin
+    .from('campaign_pages')
+    .select('*, categories(id, slug, label, color)')
+    .order('display_order', { ascending: true });
+
+  if (error) throw error;
+  pages = data || [];
+} catch (e: any) {
+  fetchError = e.message || 'Failed to fetch campaign pages';
+}
+
+// Fetch all categories for the dropdown
+try {
+  const { data } = await supabaseAdmin
+    .from('categories')
+    .select('id, slug, label, color')
+    .order('label', { ascending: true });
+  categories = data || [];
+} catch (e) {
+  console.error('Error fetching categories:', e);
+}
+
+// Group pages by category
+const groupedPages: Record<string, any[]> = {};
+const uncategorized: any[] = [];
+
+pages.forEach(page => {
+  if (page.categories) {
+    const catLabel = page.categories.label;
+    if (!groupedPages[catLabel]) {
+      groupedPages[catLabel] = [];
+    }
+    groupedPages[catLabel].push(page);
+  } else {
+    uncategorized.push(page);
+  }
+});
+---
+
+<AdminLayout title="Campaign Pages" activeNav="campaign-pages">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Campaign Pages</h1>
+      <p class="text-sm text-gray-500 mt-1">Manage standalone donation and campaign pages</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Pages</p>
+      <p class="text-2xl font-bold text-gray-900 mt-1">{pages.length}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Active</p>
+      <p class="text-2xl font-bold text-green-600 mt-1">{pages.filter(p => p.is_active).length}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ramadan</p>
+      <p class="text-2xl font-bold text-[#16a34a] mt-1">{pages.filter(p => p.categories?.slug === 'ramadan').length}</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Zakat</p>
+      <p class="text-2xl font-bold text-[#0096D6] mt-1">{pages.filter(p => p.categories?.slug === 'zakat').length}</p>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar (hidden by default) -->
+  <div id="bulk-actions-bar" class="hidden bg-[#01534d] rounded-xl p-4 mb-4 shadow-lg">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+      <div class="flex items-center gap-3 text-white">
+        <span id="selected-count" class="text-lg font-semibold">0</span>
+        <span class="text-white/80">pages selected</span>
+        <button id="clear-selection" class="ml-2 text-white/60 hover:text-white transition text-sm underline">
+          Clear selection
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 lg:ml-auto">
+        <!-- Bulk Update Category -->
+        <div class="flex items-center gap-3">
+          <select id="bulk-category" class="px-3 py-2 border-0 rounded-lg text-sm bg-white/20 text-white focus:ring-2 focus:ring-white/50 [&>option]:text-gray-900" title="Move selected pages to a different category">
+            <option value="" disabled selected>Select Category...</option>
+            <option value="none">No Category</option>
+            {categories.map(c => (
+              <option value={c.id}>{c.label}</option>
+            ))}
+          </select>
+
+          <button id="apply-bulk-category" class="px-4 py-2 bg-white text-[#01534d] rounded-lg text-sm font-semibold hover:bg-gray-100 transition" title="Apply category to selected pages">
+            Apply Category
+          </button>
+        </div>
+
+        <!-- Bulk Image -->
+        <div class="flex items-center gap-2 border-l border-white/20 pl-4">
+          <input
+            type="text"
+            id="bulk-image"
+            placeholder="Image URL..."
+            class="px-3 py-2 rounded-lg text-sm bg-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/50 w-48"
+          />
+          <button id="apply-bulk-image" class="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition" title="Apply image to selected pages">
+            Apply Image
+          </button>
+        </div>
+
+        <!-- Status Actions -->
+        <div class="flex items-center gap-2 border-l border-white/20 pl-4">
+          <span class="text-white/60 text-xs mr-1">Status:</span>
+          <button id="bulk-activate" class="px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition" title="Activate selected pages">
+            Activate
+          </button>
+          <button id="bulk-deactivate" class="px-3 py-2 bg-gray-500 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition" title="Deactivate selected pages">
+            Deactivate
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
+
+  {fetchError && (
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+      {fetchError}
+    </div>
+  )}
+
+  <!-- Campaign Pages Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="w-12 px-4 py-4">
+              <input
+                type="checkbox"
+                id="select-all"
+                class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]"
+              />
+            </th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Page</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Category</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Order</th>
+            <th class="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {pages.map((page: any) => (
+            <tr class="hover:bg-gray-50 transition page-row" data-id={page.id}>
+              <td class="px-4 py-4">
+                <input
+                  type="checkbox"
+                  class="page-checkbox w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]"
+                  data-id={page.id}
+                />
+              </td>
+              <td class="px-4 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {page.featured_image ? (
+                      <img src={page.featured_image} alt="" class="w-full h-full object-cover" />
+                    ) : (
+                      <div class="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="font-semibold text-gray-900 truncate max-w-[200px]" title={page.name}>{page.name}</p>
+                    <button
+                      type="button"
+                      class="inline-url-edit-btn text-xs text-gray-500 truncate max-w-[200px] cursor-pointer hover:bg-yellow-50 hover:text-gray-700 px-1 -mx-1 rounded transition text-left"
+                      data-id={page.id}
+                      data-url={page.url_path}
+                      title="Click to edit URL"
+                    >{page.url_path}</button>
+                    <p class="text-xs text-gray-400 truncate max-w-[200px] mt-0.5">
+                      <code class="bg-gray-100 px-1 py-0.5 rounded font-mono">{page.file_path || 'N/A'}</code>
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-4">
+                {page.categories ? (
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={`background-color: ${page.categories.color}20; color: ${page.categories.color}`}
+                  >
+                    {page.categories.label}
+                  </span>
+                ) : (
+                  <span class="text-gray-400 text-sm">-</span>
+                )}
+              </td>
+              <td class="px-4 py-4">
+                <span class={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                  page.is_active
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {page.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </td>
+              <td class="px-4 py-4">
+                <span class="text-sm text-gray-600">{page.display_order || 0}</span>
+              </td>
+              <td class="px-4 py-4">
+                <div class="flex items-center justify-end gap-1">
+                  <button
+                    class="edit-page-btn p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
+                    data-page={JSON.stringify(page)}
+                    title="Edit"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                  <a
+                    href={page.url_path}
+                    target="_blank"
+                    class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    title="View Live"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Inline URL Edit Popup -->
+  <div id="url-edit-popup" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-semibold text-gray-900">Edit URL Path</h4>
+        <button type="button" id="close-url-popup" class="p-1 text-gray-400 hover:text-gray-600 rounded">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <input type="hidden" id="url-edit-id" />
+
+      <div class="space-y-4">
+        <!-- Category Selection -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category Prefix (Optional)</label>
+          <select id="url-category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent">
+            <option value="">No category prefix (e.g., /slug)</option>
+            {categories.map(cat => (
+              <option value={cat.slug}>{cat.slug} (e.g., /{cat.slug}/slug)</option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Slug -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+          <input type="text" id="url-slug-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent" placeholder="page-slug" />
+          <p class="text-xs text-gray-500 mt-1">Letters, numbers, and hyphens only</p>
+        </div>
+
+        <!-- Preview -->
+        <div class="bg-gray-50 rounded-lg p-3">
+          <p class="text-xs font-medium text-gray-500 mb-1">URL Preview:</p>
+          <p id="url-preview" class="text-sm font-mono text-[#01534d]">/</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-2">
+          <button type="button" id="cancel-url-edit" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+            Cancel
+          </button>
+          <button type="button" id="save-url-edit" class="flex-1 px-4 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition">
+            Save URL
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">Edit Campaign Page</h3>
+        <button id="close-modal" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <form id="edit-form" class="p-6 space-y-4">
+        <input type="hidden" id="page-id" name="id" />
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <input type="text" id="page-name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">URL Path</label>
+          <input type="text" id="page-url" name="url_path" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50" readonly />
+          <p class="text-xs text-gray-500 mt-1">URL path is set by the page file and cannot be changed here</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select id="page-category" name="category_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]">
+            <option value="">No Category</option>
+            {categories.map(cat => (
+              <option value={cat.id}>{cat.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea id="page-description" name="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Featured Image (Menu Thumbnail)</label>
+          <div class="flex gap-3">
+            <div id="image-preview" class="w-20 h-14 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0 flex items-center justify-center">
+              <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <input type="text" id="page-image" name="featured_image" placeholder="https://..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]" />
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Image URL shown in mega menu and homepage. Recommended: 400x300px</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+          <input type="number" id="page-order" name="display_order" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]" />
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="page-active" name="is_active" class="w-4 h-4 text-[#01534d] border-gray-300 rounded focus:ring-[#01534d]" />
+          <label for="page-active" class="text-sm font-medium text-gray-700">Active</label>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button type="button" id="cancel-edit" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+            Cancel
+          </button>
+          <button type="submit" class="flex-1 px-4 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition">
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('edit-modal');
+    const closeBtn = document.getElementById('close-modal');
+    const cancelBtn = document.getElementById('cancel-edit');
+    const form = document.getElementById('edit-form') as HTMLFormElement;
+    const editBtns = document.querySelectorAll('.edit-page-btn');
+    const imageInput = document.getElementById('page-image') as HTMLInputElement;
+    const imagePreview = document.getElementById('image-preview');
+
+    // Selection state
+    const selectedPages = new Set<string>();
+
+    // Toast notification
+    function showToast(message: string, type: 'success' | 'error' = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      const icon = type === 'success'
+        ? '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+        : '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+      toast.innerHTML = icon + '<span>' + message + '</span>';
+      toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${
+        type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+      }`;
+
+      setTimeout(() => {
+        toast.className = 'hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3';
+      }, 4000);
+    }
+
+    // Update bulk actions bar
+    function updateBulkActionsBar() {
+      const bar = document.getElementById('bulk-actions-bar');
+      const countEl = document.getElementById('selected-count');
+      if (!bar || !countEl) return;
+
+      if (selectedPages.size > 0) {
+        bar.classList.remove('hidden');
+        countEl.textContent = String(selectedPages.size);
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    // Handle page checkbox changes
+    const pageCheckboxes = document.querySelectorAll('.page-checkbox');
+    pageCheckboxes.forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement;
+        const id = target.dataset.id;
+        if (!id) return;
+
+        if (target.checked) {
+          selectedPages.add(id);
+        } else {
+          selectedPages.delete(id);
+        }
+        updateBulkActionsBar();
+        updateSelectAllCheckbox();
+      });
+    });
+
+    // Handle select all checkbox
+    const selectAllCheckbox = document.getElementById('select-all') as HTMLInputElement;
+    selectAllCheckbox?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      pageCheckboxes.forEach(cb => {
+        const pageCheckbox = cb as HTMLInputElement;
+        pageCheckbox.checked = target.checked;
+        const id = pageCheckbox.dataset.id;
+        if (!id) return;
+
+        if (target.checked) {
+          selectedPages.add(id);
+        } else {
+          selectedPages.delete(id);
+        }
+      });
+      updateBulkActionsBar();
+    });
+
+    // Update select all checkbox state
+    function updateSelectAllCheckbox() {
+      if (!selectAllCheckbox) return;
+      const total = pageCheckboxes.length;
+      const checked = selectedPages.size;
+      selectAllCheckbox.checked = total > 0 && checked === total;
+      selectAllCheckbox.indeterminate = checked > 0 && checked < total;
+    }
+
+    // Clear selection
+    document.getElementById('clear-selection')?.addEventListener('click', () => {
+      selectedPages.clear();
+      pageCheckboxes.forEach(cb => (cb as HTMLInputElement).checked = false);
+      if (selectAllCheckbox) selectAllCheckbox.checked = false;
+      updateBulkActionsBar();
+    });
+
+    // Bulk update function
+    async function bulkUpdate(updates: Record<string, any>) {
+      if (selectedPages.size === 0) {
+        showToast('No pages selected', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/campaign-pages/bulk-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: Array.from(selectedPages),
+            updates
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update');
+
+        showToast(data.message || `Updated ${selectedPages.size} pages`);
+        await fetch('/api/cache/clear', { method: 'POST' }).catch(() => {});
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error: any) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    // Apply bulk category
+    document.getElementById('apply-bulk-category')?.addEventListener('click', () => {
+      const categorySelect = document.getElementById('bulk-category') as HTMLSelectElement;
+      const value = categorySelect.value;
+
+      if (!value) {
+        showToast('Please select a category', 'error');
+        return;
+      }
+
+      bulkUpdate({ category_id: value === 'none' ? null : value });
+    });
+
+    // Apply bulk image
+    document.getElementById('apply-bulk-image')?.addEventListener('click', () => {
+      const imageInput = document.getElementById('bulk-image') as HTMLInputElement;
+      const value = imageInput.value.trim();
+
+      if (!value) {
+        showToast('Please enter an image URL', 'error');
+        return;
+      }
+
+      bulkUpdate({ featured_image: value });
+    });
+
+    // Bulk activate
+    document.getElementById('bulk-activate')?.addEventListener('click', () => {
+      bulkUpdate({ is_active: true });
+    });
+
+    // Bulk deactivate
+    document.getElementById('bulk-deactivate')?.addEventListener('click', () => {
+      bulkUpdate({ is_active: false });
+    });
+
+    // Inline URL Edit Popup
+    const urlEditPopup = document.getElementById('url-edit-popup');
+    const urlEditId = document.getElementById('url-edit-id') as HTMLInputElement;
+    const urlCategorySelect = document.getElementById('url-category-select') as HTMLSelectElement;
+    const urlSlugInput = document.getElementById('url-slug-input') as HTMLInputElement;
+    const urlPreview = document.getElementById('url-preview');
+    const closeUrlPopup = document.getElementById('close-url-popup');
+    const cancelUrlEdit = document.getElementById('cancel-url-edit');
+    const saveUrlEdit = document.getElementById('save-url-edit');
+
+    let currentUrlBtn: HTMLElement | null = null;
+
+    // Update URL preview
+    function updateUrlPreview() {
+      const category = urlCategorySelect.value;
+      const slug = urlSlugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+      const url = category ? `/${category}/${slug}` : `/${slug}`;
+      if (urlPreview) urlPreview.textContent = url || '/';
+    }
+
+    urlCategorySelect?.addEventListener('change', updateUrlPreview);
+    urlSlugInput?.addEventListener('input', () => {
+      // Auto-sanitize as user types
+      const val = urlSlugInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+      if (val !== urlSlugInput.value) {
+        urlSlugInput.value = val;
+      }
+      updateUrlPreview();
+    });
+
+    // Open URL edit popup
+    const inlineUrlBtns = document.querySelectorAll('.inline-url-edit-btn');
+    inlineUrlBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const id = target.dataset.id;
+        const currentUrl = target.dataset.url || '';
+
+        if (!id) return;
+
+        currentUrlBtn = target;
+        urlEditId.value = id;
+
+        // Parse current URL to get category and slug
+        const urlParts = currentUrl.replace(/^\//, '').split('/');
+        let category = '';
+        let slug = '';
+
+        if (urlParts.length === 2) {
+          // Has category: /category/slug
+          category = urlParts[0];
+          slug = urlParts[1];
+        } else if (urlParts.length === 1) {
+          // No category: /slug
+          slug = urlParts[0];
+        }
+
+        // Set form values
+        urlCategorySelect.value = category;
+        urlSlugInput.value = slug;
+        updateUrlPreview();
+
+        // Show popup
+        urlEditPopup?.classList.remove('hidden');
+        urlEditPopup?.classList.add('flex');
+        urlSlugInput.focus();
+      });
+    });
+
+    // Close URL popup
+    function closeUrlEditPopup() {
+      urlEditPopup?.classList.add('hidden');
+      urlEditPopup?.classList.remove('flex');
+      currentUrlBtn = null;
+    }
+
+    closeUrlPopup?.addEventListener('click', closeUrlEditPopup);
+    cancelUrlEdit?.addEventListener('click', closeUrlEditPopup);
+    urlEditPopup?.addEventListener('click', (e) => {
+      if (e.target === urlEditPopup) closeUrlEditPopup();
+    });
+
+    // Save URL
+    saveUrlEdit?.addEventListener('click', async () => {
+      const id = urlEditId.value;
+      const category = urlCategorySelect.value;
+      const slug = urlSlugInput.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+
+      if (!slug) {
+        showToast('Please enter a slug', 'error');
+        return;
+      }
+
+      const newUrl = category ? `/${category}/${slug}` : `/${slug}`;
+
+      try {
+        const res = await fetch('/api/campaign-pages', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, url_path: newUrl })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update');
+        }
+
+        // Update the button text and data
+        if (currentUrlBtn) {
+          currentUrlBtn.textContent = newUrl;
+          currentUrlBtn.dataset.url = newUrl;
+        }
+
+        showToast('URL updated successfully');
+        closeUrlEditPopup();
+        await fetch('/api/cache/clear', { method: 'POST' }).catch(() => {});
+      } catch (err: any) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Handle Enter key in slug input
+    urlSlugInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveUrlEdit?.click();
+      } else if (e.key === 'Escape') {
+        closeUrlEditPopup();
+      }
+    });
+
+    // Update image preview
+    function updateImagePreview(url: string) {
+      if (imagePreview) {
+        if (url) {
+          imagePreview.innerHTML = `<img src="${url}" alt="Preview" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<svg class=\\'w-6 h-6 text-red-400\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'2\\' d=\\'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\\'></path></svg>'" />`;
+        } else {
+          imagePreview.innerHTML = `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
+        }
+      }
+    }
+
+    // Update preview on input change
+    imageInput?.addEventListener('input', () => {
+      updateImagePreview(imageInput.value);
+    });
+
+    // Open modal
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const page = JSON.parse(btn.getAttribute('data-page') || '{}');
+
+        (document.getElementById('page-id') as HTMLInputElement).value = page.id;
+        (document.getElementById('page-name') as HTMLInputElement).value = page.name;
+        (document.getElementById('page-url') as HTMLInputElement).value = page.url_path;
+        (document.getElementById('page-category') as HTMLSelectElement).value = page.category_id || '';
+        (document.getElementById('page-description') as HTMLTextAreaElement).value = page.description || '';
+        (document.getElementById('page-image') as HTMLInputElement).value = page.featured_image || '';
+        (document.getElementById('page-order') as HTMLInputElement).value = page.display_order || 0;
+        (document.getElementById('page-active') as HTMLInputElement).checked = page.is_active;
+
+        // Update image preview
+        updateImagePreview(page.featured_image || '');
+
+        modal?.classList.remove('hidden');
+        modal?.classList.add('flex');
+      });
+    });
+
+    // Close modal
+    const closeModal = () => {
+      modal?.classList.add('hidden');
+      modal?.classList.remove('flex');
+    };
+
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Submit form
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const data: any = {
+        id: formData.get('id'),
+        name: formData.get('name'),
+        category_id: formData.get('category_id') || null,
+        description: formData.get('description'),
+        featured_image: formData.get('featured_image') || null,
+        display_order: parseInt(formData.get('display_order') as string) || 0,
+        is_active: (document.getElementById('page-active') as HTMLInputElement).checked,
+      };
+
+      try {
+        const res = await fetch('/api/campaign-pages', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update');
+        }
+
+        // Clear navbar cache
+        await fetch('/api/cache/clear', { method: 'POST' }).catch(() => {});
+
+        window.location.reload();
+      } catch (err: any) {
+        alert('Error: ' + err.message);
+      }
+    });
+  });
+</script>

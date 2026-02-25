@@ -9,14 +9,15 @@ const url = new URL(Astro.request.url);
 const searchQuery = url.searchParams.get('search') || '';
 const statusFilter = url.searchParams.get('status') || 'all';
 
-// Fetch pages from Supabase
+// Fetch pages from Supabase with category info
 let dbPages: any[] = [];
+let categories: any[] = [];
 let fetchError = '';
 
 try {
   let query = supabaseAdmin
     .from('pages')
-    .select('*')
+    .select('*, categories(id, slug, label, color)')
     .order('title', { ascending: true });
 
   if (searchQuery) {
@@ -40,27 +41,61 @@ try {
   fetchError = e.message || 'Failed to fetch pages';
 }
 
-// Static pages that exist as .astro files (hardcoded list)
+// Fetch all categories for the dropdown
+try {
+  const { data } = await supabaseAdmin
+    .from('categories')
+    .select('id, slug, label, color')
+    .order('label', { ascending: true });
+  categories = data || [];
+} catch (e) {
+  console.error('Error fetching categories:', e);
+}
+
+// Static informational pages (campaign/donation pages are in Campaign Pages tab)
 const staticPages = [
+  // Core Pages
   { slug: '/', title: 'Homepage', template: 'home', type: 'static', file: 'index.astro' },
   { slug: '/about', title: 'About Us', template: 'default', type: 'static', file: 'about.astro' },
   { slug: '/contact', title: 'Contact', template: 'contact', type: 'static', file: 'contact.astro' },
-  { slug: '/donate', title: 'Donate', template: 'donate', type: 'static', file: 'donate.astro' },
-  { slug: '/food-packs', title: 'Food Packs', template: 'campaign', type: 'static', file: 'food-packs.astro' },
-  { slug: '/iftar', title: 'Iftar', template: 'campaign', type: 'static', file: 'iftar.astro' },
+  { slug: '/team', title: 'Our Team', template: 'default', type: 'static', file: 'team.astro' },
   { slug: '/impact', title: 'Impact', template: 'default', type: 'static', file: 'impact.astro' },
   { slug: '/media', title: 'Media', template: 'default', type: 'static', file: 'media.astro' },
   { slug: '/reports', title: 'Reports', template: 'default', type: 'static', file: 'reports.astro' },
-  { slug: '/team', title: 'Our Team', template: 'default', type: 'static', file: 'team.astro' },
-  { slug: '/zakat-calculator', title: 'Zakat Calculator', template: 'zakat', type: 'static', file: 'zakat-calculator.astro' },
-  { slug: '/what-is-zakat', title: 'What is Zakat?', template: 'zakat', type: 'static', file: 'what-is-zakat.astro' },
-  { slug: '/zakat-eligibility', title: 'Zakat Eligibility', template: 'zakat', type: 'static', file: 'zakat-eligibility.astro' },
-  { slug: '/zakat-faq', title: 'Zakat FAQ', template: 'zakat', type: 'static', file: 'zakat-faq.astro' },
-  { slug: '/zakat-on-gold', title: 'Zakat on Gold', template: 'zakat', type: 'static', file: 'zakat-on-gold.astro' },
-  { slug: '/zakat-ul-fitr', title: 'Zakat ul-Fitr', template: 'zakat', type: 'static', file: 'zakat-ul-fitr.astro' },
-  { slug: '/fidya', title: 'Fidya', template: 'ramadan', type: 'static', file: 'fidya.astro' },
-  { slug: '/kaffarah', title: 'Kaffarah', template: 'ramadan', type: 'static', file: 'kaffarah.astro' },
-  { slug: '/30-days-of-ramadan', title: '30 Days of Ramadan', template: 'ramadan', type: 'static', file: '30-days-of-ramadan.astro' },
+  { slug: '/404', title: '404 Not Found', template: 'error', type: 'static', file: '404.astro' },
+
+  // Zakat Info Pages
+  { slug: '/what-is-zakat', title: 'What is Zakat?', template: 'info', type: 'static', file: 'what-is-zakat.astro' },
+  { slug: '/zakat-eligibility', title: 'Zakat Eligibility', template: 'info', type: 'static', file: 'zakat-eligibility.astro' },
+  { slug: '/zakat-faq', title: 'Zakat FAQ', template: 'info', type: 'static', file: 'zakat-faq.astro' },
+  { slug: '/zakat-on-gold', title: 'Zakat on Gold', template: 'info', type: 'static', file: 'zakat-on-gold.astro' },
+
+  // Legal Pages
+  { slug: '/privacy-policy', title: 'Privacy Policy', template: 'legal', type: 'static', file: 'privacy-policy.astro' },
+  { slug: '/terms-of-service', title: 'Terms of Service', template: 'legal', type: 'static', file: 'terms-of-service.astro' },
+  { slug: '/cookie-policy', title: 'Cookie Policy', template: 'legal', type: 'static', file: 'cookie-policy.astro' },
+  { slug: '/disclaimer', title: 'Disclaimer', template: 'legal', type: 'static', file: 'disclaimer.astro' },
+
+  // Ramadan Hub
+  { slug: '/ramadan', title: 'Ramadan Hub', template: 'ramadan', type: 'static', file: 'ramadan/index.astro' },
+  { slug: '/ramadan/success', title: 'Ramadan Success', template: 'ramadan', type: 'static', file: 'ramadan/success.astro' },
+
+  // Appeals
+  { slug: '/appeals', title: 'Appeals', template: 'appeals', type: 'static', file: 'appeals/index.astro' },
+
+  // Campaigns Listing
+  { slug: '/campaigns', title: 'All Campaigns', template: 'campaigns', type: 'static', file: 'campaigns/index.astro' },
+
+  // Donation Flow
+  { slug: '/donation/success', title: 'Donation Success', template: 'donation', type: 'static', file: 'donation/success.astro' },
+  { slug: '/donation/cancel', title: 'Donation Cancelled', template: 'donation', type: 'static', file: 'donation/cancel.astro' },
+  { slug: '/donation/ramadan-success', title: 'Ramadan Donation Success', template: 'donation', type: 'static', file: 'donation/ramadan-success.astro' },
+
+  // Account Pages
+  { slug: '/account/login', title: 'Login', template: 'account', type: 'static', file: 'account/login.astro' },
+  { slug: '/account/signup', title: 'Sign Up', template: 'account', type: 'static', file: 'account/signup.astro' },
+  { slug: '/account/logout', title: 'Logout', template: 'account', type: 'static', file: 'account/logout.astro' },
+  { slug: '/account/reset', title: 'Reset Password', template: 'account', type: 'static', file: 'account/reset.astro' },
 ];
 
 // Get slugs that exist in database
@@ -101,26 +136,24 @@ const publishedCount = displayPages.filter(p => p.status === 'published').length
 const draftCount = displayPages.filter(p => p.status === 'draft').length;
 const staticCount = displayPages.filter(p => p.type === 'static').length;
 const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
+const infoCount = displayPages.filter(p => p.template === 'info').length;
+const legalCount = displayPages.filter(p => p.template === 'legal').length;
 ---
 
 <AdminLayout title="Pages" activeNav="pages">
   <!-- Stats Bar -->
-  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white rounded-xl border border-gray-200 p-4">
-      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total</p>
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Pages</p>
       <p class="text-2xl font-bold text-gray-900 mt-1">{totalCount}</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4">
-      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Published</p>
-      <p class="text-2xl font-bold text-green-600 mt-1">{publishedCount}</p>
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Informational</p>
+      <p class="text-2xl font-bold text-blue-600 mt-1">{infoCount}</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4">
-      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Draft</p>
-      <p class="text-2xl font-bold text-amber-600 mt-1">{draftCount}</p>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-4">
-      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Static Files</p>
-      <p class="text-2xl font-bold text-blue-600 mt-1">{staticCount}</p>
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Legal</p>
+      <p class="text-2xl font-bold text-gray-600 mt-1">{legalCount}</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4">
       <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Database</p>
@@ -180,6 +213,60 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
     </div>
   </div>
 
+  <!-- Bulk Actions Bar (hidden by default) -->
+  <div id="bulk-actions-bar" class="hidden bg-[#01534d] rounded-xl p-4 mb-4 shadow-lg">
+    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+      <div class="flex items-center gap-3 text-white">
+        <span id="selected-count" class="text-lg font-semibold">0</span>
+        <span class="text-white/80">pages selected</span>
+        <button id="clear-selection" class="ml-2 text-white/60 hover:text-white transition text-sm underline">
+          Clear selection
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 lg:ml-auto">
+        <!-- Bulk Update Category -->
+        <div class="flex items-center gap-3">
+          <select id="bulk-category" class="px-3 py-2 border-0 rounded-lg text-sm bg-white/20 text-white focus:ring-2 focus:ring-white/50 [&>option]:text-gray-900" title="Move selected pages to a different category">
+            <option value="" disabled selected>Select Category...</option>
+            <option value="none">No Category</option>
+            {categories.map(c => (
+              <option value={c.id}>{c.label}</option>
+            ))}
+          </select>
+
+          <button id="apply-bulk-category" class="px-4 py-2 bg-white text-[#01534d] rounded-lg text-sm font-semibold hover:bg-gray-100 transition" title="Apply category to selected pages">
+            Apply Category
+          </button>
+        </div>
+
+        <!-- Bulk Image -->
+        <div class="flex items-center gap-2 border-l border-white/20 pl-4">
+          <input
+            type="text"
+            id="bulk-image"
+            placeholder="Image URL..."
+            class="px-3 py-2 rounded-lg text-sm bg-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/50 w-48"
+          />
+          <button id="apply-bulk-image" class="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition" title="Apply image to selected pages">
+            Apply Image
+          </button>
+        </div>
+
+        <!-- Status Actions -->
+        <div class="flex items-center gap-2 border-l border-white/20 pl-4">
+          <span class="text-white/60 text-xs mr-1">Status:</span>
+          <button id="bulk-publish" class="px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition" title="Publish selected pages">
+            Publish
+          </button>
+          <button id="bulk-draft" class="px-3 py-2 bg-gray-500 text-white rounded-lg text-sm font-medium hover:bg-gray-600 transition" title="Set selected pages to draft">
+            Draft
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
 
@@ -225,35 +312,81 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
       <table class="w-full">
         <thead class="bg-gray-50 border-b border-gray-200">
           <tr>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Page</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Type</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Template</th>
-            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
+            <th class="w-12 px-4 py-4">
+              <input
+                type="checkbox"
+                id="select-all"
+                class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]"
+                title="Select all database pages"
+              />
+            </th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Page</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Category</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">File</th>
+            <th class="text-left px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
+            <th class="text-right px-4 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           {displayPages.map((page) => (
-            <tr class="hover:bg-gray-50 transition" data-page-id={page.id}>
-              <td class="px-6 py-4">
-                <div>
-                  <p class="font-semibold text-gray-900">{page.title}</p>
-                  <p class="text-sm text-gray-500">{page.slug}</p>
+            <tr class="hover:bg-gray-50 transition page-row" data-page-id={page.id} data-type={page.type}>
+              <td class="px-4 py-4">
+                {page.type === 'dynamic' ? (
+                  <input
+                    type="checkbox"
+                    class="page-checkbox w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]"
+                    data-id={page.id}
+                  />
+                ) : (
+                  <span class="w-4 h-4 inline-block"></span>
+                )}
+              </td>
+              <td class="px-4 py-4">
+                <div class="flex items-center gap-3">
+                  {/* Featured Image Thumbnail */}
+                  <div class="w-12 h-9 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-200">
+                    {page.featured_image ? (
+                      <img src={page.featured_image} alt={page.title} class="w-full h-full object-cover" />
+                    ) : (
+                      <div class="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">{page.title}</p>
+                    {page.type === 'dynamic' ? (
+                      <p
+                        class="text-sm text-gray-500 editable-slug cursor-pointer hover:bg-yellow-50 hover:text-gray-700 px-1 -mx-1 rounded transition inline-block"
+                        data-id={page.id}
+                        title="Double-click to edit slug"
+                      >{page.slug}</p>
+                    ) : (
+                      <p class="text-sm text-gray-500">{page.slug}</p>
+                    )}
+                  </div>
                 </div>
               </td>
-              <td class="px-6 py-4">
-                <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                  page.type === 'static'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-purple-100 text-purple-800'
-                }`}>
-                  {page.type === 'static' ? 'Static File' : 'Database'}
-                </span>
+              <td class="px-4 py-4">
+                {page.categories ? (
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={`background-color: ${page.categories.color}20; color: ${page.categories.color}`}
+                  >
+                    {page.categories.label}
+                  </span>
+                ) : (
+                  <span class="text-gray-400 text-sm">-</span>
+                )}
               </td>
-              <td class="px-6 py-4">
-                <span class="text-sm text-gray-700 capitalize">{page.template || 'default'}</span>
+              <td class="px-4 py-4">
+                <code class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-mono">
+                  {page.file || 'database'}
+                </code>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-4 py-4">
                 <span class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                   page.status === 'published'
                     ? 'bg-green-100 text-green-800'
@@ -262,7 +395,7 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
                   {page.status === 'published' ? 'Published' : 'Draft'}
                 </span>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-4 py-4">
                 <div class="flex items-center justify-end gap-1">
                   {page.type === 'dynamic' ? (
                     <a
@@ -330,10 +463,10 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
       </svg>
       <div>
-        <p class="text-blue-800 font-medium">About Page Types</p>
+        <p class="text-blue-800 font-medium">About This Section</p>
         <p class="text-blue-700 text-sm mt-1">
-          <strong>Static Files</strong> are .astro files in the codebase - they can only be edited in code.<br>
-          <strong>Database Pages</strong> are stored in Supabase and can be edited from the admin panel.
+          This section shows <strong>informational and legal pages</strong> (About, Contact, FAQ, Privacy Policy, etc.).<br>
+          For donation pages (Fidya, Zakat, Qurbani, etc.), go to <a href="/admin/campaign-pages" class="underline font-medium">Campaign Pages</a>.
         </p>
       </div>
     </div>
@@ -341,6 +474,8 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
 </AdminLayout>
 
 <script is:inline>
+  const selectedPages = new Set();
+
   function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     const icon = type === 'success'
@@ -355,6 +490,45 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
     setTimeout(() => {
       toast.className = 'hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3';
     }, 4000);
+  }
+
+  function updateBulkActionsBar() {
+    const bar = document.getElementById('bulk-actions-bar');
+    const countEl = document.getElementById('selected-count');
+    if (!bar || !countEl) return;
+
+    if (selectedPages.size > 0) {
+      bar.classList.remove('hidden');
+      countEl.textContent = selectedPages.size;
+    } else {
+      bar.classList.add('hidden');
+    }
+  }
+
+  async function bulkUpdate(updates) {
+    if (selectedPages.size === 0) {
+      showToast('No pages selected', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/pages/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedPages),
+          updates
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+
+      showToast(data.message || `Updated ${selectedPages.size} pages`);
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
   }
 
   function applyFilters() {
@@ -407,6 +581,81 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
     document.getElementById('status-filter')?.addEventListener('change', applyFilters);
     document.getElementById('clear-filters')?.addEventListener('click', clearAllFilters);
 
+    // Select all checkbox (only selects database pages)
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.page-checkbox');
+
+    selectAll?.addEventListener('change', (e) => {
+      checkboxes.forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) {
+          selectedPages.add(cb.dataset.id);
+        } else {
+          selectedPages.delete(cb.dataset.id);
+        }
+      });
+      updateBulkActionsBar();
+    });
+
+    // Individual checkboxes
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          selectedPages.add(cb.dataset.id);
+        } else {
+          selectedPages.delete(cb.dataset.id);
+        }
+        selectAll.checked = selectedPages.size === checkboxes.length;
+        selectAll.indeterminate = selectedPages.size > 0 && selectedPages.size < checkboxes.length;
+        updateBulkActionsBar();
+      });
+    });
+
+    // Clear selection
+    document.getElementById('clear-selection')?.addEventListener('click', () => {
+      selectedPages.clear();
+      checkboxes.forEach(cb => cb.checked = false);
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+      updateBulkActionsBar();
+    });
+
+    // Apply bulk category
+    document.getElementById('apply-bulk-category')?.addEventListener('click', () => {
+      const categorySelect = document.getElementById('bulk-category');
+      const value = categorySelect.value;
+
+      if (!value) {
+        showToast('Please select a category', 'error');
+        return;
+      }
+
+      bulkUpdate({ category_id: value === 'none' ? null : value });
+    });
+
+    // Apply bulk image
+    document.getElementById('apply-bulk-image')?.addEventListener('click', () => {
+      const imageInput = document.getElementById('bulk-image');
+      const value = imageInput.value.trim();
+
+      if (!value) {
+        showToast('Please enter an image URL', 'error');
+        return;
+      }
+
+      bulkUpdate({ featured_image: value });
+    });
+
+    // Bulk publish
+    document.getElementById('bulk-publish')?.addEventListener('click', () => {
+      bulkUpdate({ status: 'published' });
+    });
+
+    // Bulk draft
+    document.getElementById('bulk-draft')?.addEventListener('click', () => {
+      bulkUpdate({ status: 'draft' });
+    });
+
     // Initialize content button
     const initBtn = document.getElementById('initContentBtn');
     initBtn?.addEventListener('click', async () => {
@@ -432,6 +681,74 @@ const dynamicCount = displayPages.filter(p => p.type === 'dynamic').length;
 
       initBtn.disabled = false;
       initBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Initialize';
+    });
+
+    // Inline slug editing (double-click)
+    const editableSlugs = document.querySelectorAll('.editable-slug');
+    editableSlugs.forEach(el => {
+      el.addEventListener('dblclick', (e) => {
+        const target = e.target;
+        const id = target.dataset.id;
+        const currentValue = target.textContent || '';
+
+        if (!id) return;
+
+        // Create input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentValue;
+        input.className = 'text-sm px-2 py-1 border border-[#01534d] rounded focus:outline-none focus:ring-2 focus:ring-[#01534d] w-40';
+
+        // Replace p with input
+        target.style.display = 'none';
+        target.parentNode.insertBefore(input, target.nextSibling);
+        input.focus();
+        input.select();
+
+        // Handle save
+        const saveEdit = async () => {
+          const newValue = input.value.trim();
+          input.remove();
+          target.style.display = '';
+
+          if (newValue === currentValue || !newValue) return;
+
+          // Ensure it starts with /
+          const finalValue = newValue.startsWith('/') ? newValue : '/' + newValue;
+
+          try {
+            const res = await fetch('/api/pages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id, slug: finalValue })
+            });
+
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || 'Failed to update');
+            }
+
+            target.textContent = finalValue;
+            showToast('Slug updated successfully');
+          } catch (err) {
+            showToast(err.message, 'error');
+            target.textContent = currentValue;
+          }
+        };
+
+        // Save on Enter, cancel on Escape
+        input.addEventListener('keydown', (ke) => {
+          if (ke.key === 'Enter') {
+            saveEdit();
+          } else if (ke.key === 'Escape') {
+            input.remove();
+            target.style.display = '';
+          }
+        });
+
+        // Save on blur
+        input.addEventListener('blur', saveEdit);
+      });
     });
   });
 </script>

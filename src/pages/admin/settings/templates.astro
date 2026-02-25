@@ -3,7 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
 import TemplateColorEditor from '../../../components/admin/TemplateColorEditor.astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates } from '../../../lib/templates';
+import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates, getRamadanPageTemplates } from '../../../lib/templates';
 
 export const prerender = false;
 
@@ -13,13 +13,14 @@ const donationBoxTemplates = await getDonationBoxTemplates();
 const appealsPageTemplates = await getAppealsPageTemplates();
 const orphanSponsorshipTemplates = await getOrphanSponsorshipTemplates();
 const homepageTemplates = await getHomepageTemplates();
+const ramadanPageTemplates = await getRamadanPageTemplates();
 
 // Fetch current settings
 let settings: any = null;
 try {
   const { data, error } = await supabaseAdmin
     .from('site_settings')
-    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template')
+    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template')
     .limit(1);
 
   if (data && data.length > 0) {
@@ -34,6 +35,7 @@ const currentCampaignPageTemplate = settings?.default_campaign_page_template || 
 const currentAppealsPageTemplate = settings?.default_appeals_page_template || 'green';
 const currentOrphanSponsorshipTemplate = settings?.orphan_sponsorship_template || 'orphan-sponsorship';
 const currentHomepageTemplate = settings?.homepage_template || 'pennybill';
+const currentRamadanPageTemplate = settings?.ramadan_page_template || 'pennyappeal';
 
 // Default colors for each template
 const defaultColors: Record<string, any> = {
@@ -239,6 +241,20 @@ const listStyleColors = getColors('list-style');
             ))}
           </select>
           <p class="text-xs text-gray-400 mt-1">Template used for the homepage (index page)</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ramadan Page Template</label>
+          <select
+            name="ramadan_page_template"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {ramadanPageTemplates.map((template) => (
+              <option value={template.template_key} selected={currentRamadanPageTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Template used for 30 Days of Ramadan and similar pages</p>
         </div>
         <div class="md:col-span-2 flex items-center gap-4">
           <button type="submit" class="px-6 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
@@ -1867,6 +1883,7 @@ const listStyleColors = getColors('list-style');
       default_appeals_page_template: formData.get('default_appeals_page_template'),
       orphan_sponsorship_template: formData.get('orphan_sponsorship_template'),
       homepage_template: formData.get('homepage_template'),
+      ramadan_page_template: formData.get('ramadan_page_template'),
     };
 
     try {

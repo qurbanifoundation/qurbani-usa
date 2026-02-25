@@ -49,9 +49,9 @@ const availableIcons = Object.keys(categoryIcons);
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
         <div class="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          <div class="w-12">Order</div>
+          <div class="w-12"></div>
           <div class="w-16">Icon</div>
-          <div class="flex-1">Category</div>
+          <div class="flex-1">Label & Slug (click to edit)</div>
           <div class="w-24 text-center">Menu</div>
           <div class="w-24 text-center">Active</div>
           <div class="w-32 text-right">Actions</div>
@@ -61,18 +61,15 @@ const availableIcons = Object.keys(categoryIcons);
       <div id="categories-list" class="divide-y divide-gray-100">
         {categories.map((category, index) => (
           <div
-            class="category-item flex items-center px-6 py-4 hover:bg-gray-50 transition"
+            class="category-item flex items-center px-6 py-4 hover:bg-gray-50 transition cursor-move"
             data-id={category.id}
             data-sort={category.sort_order}
+            draggable="true"
           >
-            <div class="w-12">
-              <input
-                type="number"
-                value={category.sort_order}
-                min="1"
-                class="sort-input w-10 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
-                data-id={category.id}
-              />
+            <div class="w-12 flex items-center justify-center text-gray-400 drag-handle">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+              </svg>
             </div>
             <div class="w-16">
               <div
@@ -82,9 +79,24 @@ const availableIcons = Object.keys(categoryIcons);
                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={categoryIcons[category.icon] || categoryIcons.heart} />
               </div>
             </div>
-            <div class="flex-1">
-              <p class="font-semibold text-gray-900">{category.label}</p>
-              <p class="text-sm text-gray-500">{category.slug}</p>
+            <div class="flex-1 space-y-1">
+              <input
+                type="text"
+                value={category.label}
+                class="label-input w-full px-2 py-1 text-sm font-semibold text-gray-900 border border-transparent rounded hover:border-gray-300 focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 focus:outline-none bg-transparent"
+                data-id={category.id}
+                data-original={category.label}
+                placeholder="Category Label"
+              />
+              <input
+                type="text"
+                value={category.slug}
+                class="slug-input w-full px-2 py-1 text-xs text-gray-500 border border-transparent rounded hover:border-gray-300 focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 focus:outline-none bg-transparent font-mono"
+                data-id={category.id}
+                data-original={category.slug}
+                placeholder="category-slug"
+                pattern="[a-z0-9-]+"
+              />
             </div>
             <div class="w-24 text-center">
               <button
@@ -110,10 +122,10 @@ const availableIcons = Object.keys(categoryIcons);
               <button
                 class="edit-btn p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
                 data-category={JSON.stringify(category)}
-                title="Edit"
+                title="Edit Color & Icon"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
                 </svg>
               </button>
               <button
@@ -142,10 +154,11 @@ const availableIcons = Object.keys(categoryIcons);
     <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
       <h4 class="font-semibold text-blue-900 mb-2">How it works:</h4>
       <ul class="text-sm text-blue-800 space-y-1">
-        <li>• <strong>Order:</strong> Lower numbers appear first in the mega menu</li>
+        <li>• <strong>Drag to reorder:</strong> Grab the handle on the left to drag categories into your preferred order</li>
+        <li>• <strong>Label & Slug:</strong> Click directly on the text to edit inline (press Enter to save, Esc to cancel)</li>
         <li>• <strong>Menu:</strong> Toggle whether category shows in the mega menu</li>
         <li>• <strong>Active:</strong> Inactive categories are completely hidden</li>
-        <li>• <strong>Slug:</strong> Must match the category value used in campaigns</li>
+        <li>• <strong>Color & Icon:</strong> Click the paint palette icon to change appearance</li>
       </ul>
     </div>
   </div>
@@ -228,6 +241,19 @@ const availableIcons = Object.keys(categoryIcons);
   <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"></div>
 </AdminLayout>
 
+<style>
+  .category-item.drag-over {
+    border-top: 3px solid #01534d;
+    background-color: #f0fdf4;
+  }
+  .drag-handle {
+    cursor: grab;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+</style>
+
 <script is:inline>
   const modal = document.getElementById('category-modal');
   const modalTitle = document.getElementById('modal-title');
@@ -235,16 +261,25 @@ const availableIcons = Object.keys(categoryIcons);
   const toast = document.getElementById('toast');
 
   function showToast(message, type = 'success') {
-    const icon = type === 'success'
-      ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
-      : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    const icons = {
+      success: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+      error: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+      info: '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>'
+    };
+    const colors = {
+      success: 'bg-green-600 text-white',
+      error: 'bg-red-600 text-white',
+      info: 'bg-blue-600 text-white'
+    };
 
-    toast.innerHTML = icon + '<span>' + message + '</span>';
-    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+    toast.innerHTML = (icons[type] || icons.success) + '<span>' + message + '</span>';
+    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 ${colors[type] || colors.success}`;
 
-    setTimeout(() => {
-      toast.className = 'hidden';
-    }, 3000);
+    if (type !== 'info') {
+      setTimeout(() => {
+        toast.className = 'hidden';
+      }, 3000);
+    }
   }
 
   function openModal(category = null) {
@@ -382,23 +417,172 @@ const availableIcons = Object.keys(categoryIcons);
     });
   });
 
-  // Sort order change
-  document.querySelectorAll('.sort-input').forEach(input => {
-    input.addEventListener('change', async () => {
+  // Drag and drop reordering
+  const categoriesList = document.getElementById('categories-list');
+  let draggedItem = null;
+
+  document.querySelectorAll('.category-item').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    item.addEventListener('dragend', () => {
+      item.style.opacity = '1';
+      draggedItem = null;
+      document.querySelectorAll('.category-item').forEach(el => {
+        el.classList.remove('drag-over');
+      });
+    });
+
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    item.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      if (item !== draggedItem) {
+        item.classList.add('drag-over');
+      }
+    });
+
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+
+    item.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+
+      if (item !== draggedItem && draggedItem) {
+        const allItems = Array.from(categoriesList.querySelectorAll('.category-item'));
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(item);
+
+        if (draggedIndex < targetIndex) {
+          item.after(draggedItem);
+        } else {
+          item.before(draggedItem);
+        }
+
+        // Save new order to database
+        const newItems = Array.from(categoriesList.querySelectorAll('.category-item'));
+        const updates = newItems.map((el, index) => ({
+          id: el.dataset.id,
+          sort_order: index + 1
+        }));
+
+        // Show saving indicator
+        showToast('Saving order...', 'info');
+
+        try {
+          // Save all updates
+          for (const update of updates) {
+            const res = await fetch('/api/categories', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(update)
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              throw new Error(err.error || 'Failed to update order');
+            }
+          }
+          showToast('Order saved! Refreshing...');
+          setTimeout(() => window.location.reload(), 800);
+        } catch (error) {
+          console.error('Failed to save order:', error);
+          showToast('Failed: ' + error.message, 'error');
+          setTimeout(() => window.location.reload(), 2000);
+        }
+      }
+    });
+  });
+
+  // Label inline change
+  document.querySelectorAll('.label-input').forEach(input => {
+    input.addEventListener('blur', async () => {
       const id = input.dataset.id;
-      const newOrder = parseInt(input.value);
+      const newLabel = input.value.trim();
+      const original = input.dataset.original;
+
+      if (newLabel === original || !newLabel) {
+        input.value = original;
+        return;
+      }
 
       try {
         const res = await fetch('/api/categories', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, sort_order: newOrder })
+          body: JSON.stringify({ id, label: newLabel })
         });
-        if (!res.ok) throw new Error('Failed to update');
-        showToast('Order updated');
-        setTimeout(() => window.location.reload(), 500);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update');
+        }
+        input.dataset.original = newLabel;
+        showToast('Label updated');
       } catch (error) {
+        input.value = original;
         showToast(error.message, 'error');
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+      if (e.key === 'Escape') {
+        input.value = input.dataset.original;
+        input.blur();
+      }
+    });
+  });
+
+  // Slug inline change
+  document.querySelectorAll('.slug-input').forEach(input => {
+    input.addEventListener('blur', async () => {
+      const id = input.dataset.id;
+      let newSlug = input.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      const original = input.dataset.original;
+
+      if (newSlug === original || !newSlug) {
+        input.value = original;
+        return;
+      }
+
+      input.value = newSlug;
+
+      try {
+        const res = await fetch('/api/categories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, slug: newSlug })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to update');
+        }
+        input.dataset.original = newSlug;
+        showToast('Slug updated');
+      } catch (error) {
+        input.value = original;
+        showToast(error.message, 'error');
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+      if (e.key === 'Escape') {
+        input.value = input.dataset.original;
+        input.blur();
       }
     });
   });

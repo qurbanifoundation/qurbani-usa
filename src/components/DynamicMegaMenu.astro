@@ -1,0 +1,213 @@
+---
+/**
+ * DynamicMegaMenu - Renders a mega menu from widget configuration
+ * Used when admin has configured widgets for a menu
+ * Supports interactive Category Tabs + Campaign Grid combination
+ */
+
+import MegaMenuWidget from './MegaMenuWidget.astro';
+import type { MenuWidget } from '../lib/menus';
+
+interface Props {
+  menuId: string;
+  menuColor: string;
+  widgets: {
+    left: MenuWidget[];
+    center: MenuWidget[];
+    right: MenuWidget[];
+  };
+  campaignsByCategory?: Record<string, Array<{ slug: string; name: string; image: string }>>;
+}
+
+const { menuId, menuColor, widgets, campaignsByCategory = {} } = Astro.props;
+
+// Check if we have interactive category-tabs + campaign-grid combo
+const hasCategoryTabs = [...widgets.left, ...widgets.center, ...widgets.right]
+  .some(w => w.widget_type === 'category-tabs');
+const hasCampaignGrid = [...widgets.left, ...widgets.center, ...widgets.right]
+  .some(w => w.widget_type === 'campaign-grid');
+const isInteractive = hasCategoryTabs && hasCampaignGrid;
+
+// Get the category tabs config to know which categories are in the menu
+const categoryTabsWidget = [...widgets.left, ...widgets.center, ...widgets.right]
+  .find(w => w.widget_type === 'category-tabs');
+const menuCategories = categoryTabsWidget?.config?.categories || [];
+
+// Get the first category slug for initial display
+const firstCategorySlug = menuCategories[0]?.slug || Object.keys(campaignsByCategory)[0] || '';
+
+// Enrich campaign-grid widgets with actual campaign data
+function enrichWidgets(widgetList: MenuWidget[]): MenuWidget[] {
+  return widgetList.map(widget => {
+    if (widget.widget_type === 'campaign-grid') {
+      // If interactive mode (with category tabs), use first category or all
+      // If specific category selected, use that
+      const categorySlug = widget.config?.category || (isInteractive ? firstCategorySlug : '');
+
+      let campaigns: any[] = [];
+      if (categorySlug) {
+        campaigns = campaignsByCategory[categorySlug] || [];
+      } else {
+        // All categories - flatten all campaigns
+        Object.values(campaignsByCategory).forEach(cats => {
+          campaigns.push(...cats);
+        });
+      }
+
+      return {
+        ...widget,
+        config: {
+          ...widget.config,
+          campaigns: campaigns.slice(0, widget.config?.limit || 8),
+          // Mark as interactive for JS handling
+          interactive: isInteractive,
+          menuId: menuId
+        }
+      };
+    }
+    return widget;
+  });
+}
+
+// Process all widget columns
+const enrichedWidgets = {
+  left: enrichWidgets(widgets.left),
+  center: enrichWidgets(widgets.center),
+  right: enrichWidgets(widgets.right)
+};
+
+const hasLeft = enrichedWidgets.left.length > 0;
+const hasCenter = enrichedWidgets.center.length > 0;
+const hasRight = enrichedWidgets.right.length > 0;
+
+// Serialize campaigns for JavaScript (only if interactive)
+const campaignsJson = isInteractive ? JSON.stringify(campaignsByCategory) : '{}';
+
+// Get campaign limit from campaign-grid widget config
+const campaignGridWidget = [...widgets.left, ...widgets.center, ...widgets.right]
+  .find(w => w.widget_type === 'campaign-grid');
+const campaignLimit = campaignGridWidget?.config?.limit || 8;
+---
+
+<div class="dynamic-mega-menu bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden" data-menu-id={menuId}>
+  <!-- Top border with menu color -->
+  <div class="h-1" style={`background-color: ${menuColor}`}></div>
+
+  <div class="flex">
+    {/* Left Column */}
+    {hasLeft && (
+      <div class="w-[280px] bg-[#f8f6f2] py-3 flex-shrink-0">
+        {enrichedWidgets.left.map((widget) => (
+          <MegaMenuWidget widget={widget} menuColor={menuColor} menuId={menuId} />
+        ))}
+      </div>
+    )}
+
+    {/* Center Column */}
+    {hasCenter && (
+      <div class={`flex-1 bg-[#f8f6f2] p-6 ${hasLeft ? 'border-l' : ''} ${hasRight ? 'border-r' : ''} border-gray-200/60`}>
+        {enrichedWidgets.center.map((widget) => (
+          <MegaMenuWidget widget={widget} menuColor={menuColor} menuId={menuId} />
+        ))}
+      </div>
+    )}
+
+    {/* Right Column */}
+    {hasRight && (
+      <div class="w-[280px] p-4 flex-shrink-0 bg-[#f8f6f2]">
+        {enrichedWidgets.right.map((widget) => (
+          <MegaMenuWidget widget={widget} menuColor={menuColor} menuId={menuId} />
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
+{/* Interactive JavaScript for Category Tabs + Campaign Grid */}
+{isInteractive && (
+  <script define:vars={{ menuId, campaignsJson, campaignLimit }}>
+    document.addEventListener('DOMContentLoaded', () => {
+      const campaignsByCategory = JSON.parse(campaignsJson);
+      const menuContainer = document.querySelector(`[data-menu-id="${menuId}"]`);
+      if (!menuContainer) return;
+
+      // Find category buttons and campaign grid within this menu
+      const categoryBtns = menuContainer.querySelectorAll('.mega-category-btn');
+      const campaignGrid = menuContainer.querySelector('.dynamic-campaigns-grid');
+      const categoryTitle = menuContainer.querySelector('.campaign-category-title');
+      const viewAllBtn = menuContainer.querySelector('.view-all-btn');
+      const viewAllText = menuContainer.querySelector('.view-all-text');
+
+      if (!categoryBtns.length || !campaignGrid) return;
+
+      function getCampaignImageHtml(campaign) {
+        if (campaign.image) {
+          return `<img src="${campaign.image}" alt="${campaign.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />`;
+        }
+        // Return heart icon when no image
+        return `<svg class="w-8 h-8 text-gray-400 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+        </svg>`;
+      }
+
+      function renderCampaigns(categorySlug, categoryLabel) {
+        const campaigns = campaignsByCategory[categorySlug] || [];
+
+        // Update title if exists
+        if (categoryTitle) {
+          categoryTitle.textContent = categoryLabel;
+        }
+
+        // Update View All button
+        if (viewAllBtn) {
+          viewAllBtn.href = `/appeals?category=${categorySlug}`;
+        }
+        if (viewAllText) {
+          viewAllText.textContent = `All Projects & Appeals in ${categoryLabel}`;
+        }
+
+        // Render campaigns
+        if (campaigns.length === 0) {
+          campaignGrid.innerHTML = `
+            <div class="col-span-2 text-center py-8 text-gray-500">
+              <p>No campaigns in this category yet.</p>
+            </div>
+          `;
+        } else {
+          campaignGrid.innerHTML = campaigns.slice(0, campaignLimit).map(campaign => `
+            <a href="${campaign.slug}" class="group flex items-center gap-3 p-3 rounded-lg bg-white hover:shadow-md transition-all border border-gray-200 hover:border-gray-300">
+              <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                ${getCampaignImageHtml(campaign)}
+              </div>
+              <span class="text-sm font-medium text-[#333] line-clamp-2">${campaign.name}</span>
+            </a>
+          `).join('');
+        }
+      }
+
+      // Handle category button clicks
+      categoryBtns.forEach((btn, index) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          // Update active state
+          categoryBtns.forEach(b => b.classList.remove('bg-[#fbefdd]'));
+          btn.classList.add('bg-[#fbefdd]');
+
+          // Get category info and render campaigns
+          const categorySlug = btn.dataset.category;
+          const categoryLabel = btn.dataset.label;
+          renderCampaigns(categorySlug, categoryLabel);
+        });
+
+        // Trigger first category on load
+        if (index === 0) {
+          const categorySlug = btn.dataset.category;
+          const categoryLabel = btn.dataset.label;
+          // Small delay to ensure DOM is ready
+          setTimeout(() => renderCampaigns(categorySlug, categoryLabel), 50);
+        }
+      });
+    });
+  </script>
+)}
