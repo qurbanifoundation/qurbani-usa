@@ -21,6 +21,27 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    // Server-side amount verification: items total must match submitted amount
+    if (items && Array.isArray(items) && items.length > 0) {
+      const itemsTotal = items.reduce((sum: number, item: any) => {
+        const itemAmount = parseFloat(item.amount) || 0;
+        const qty = parseInt(item.quantity) || 1;
+        return sum + (itemAmount * qty);
+      }, 0);
+
+      // Expected total = items total + optional fee
+      const expectedAmount = coverFees ? itemsTotal + (parseFloat(feeAmount) || 0) : itemsTotal;
+
+      // Allow small floating point tolerance (1 cent)
+      if (Math.abs(amount - expectedAmount) > 0.01) {
+        console.error(`Amount mismatch: client sent ${amount}, items total ${expectedAmount} (items: ${itemsTotal}, fees: ${feeAmount})`);
+        return new Response(JSON.stringify({ error: 'Amount does not match items total' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Get Stripe secret key from settings
     const { data: settings } = await supabaseAdmin
       .from('site_settings')

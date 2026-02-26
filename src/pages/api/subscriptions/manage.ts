@@ -6,9 +6,13 @@ import crypto from 'crypto';
 export const prerender = false;
 
 // Generate a secure token for subscription management
+// Uses SUPABASE_SERVICE_ROLE_KEY as HMAC secret (always available, always secret)
 export function generateManagementToken(subscriptionId: string, email: string): string {
-  const secret = process.env.SUBSCRIPTION_SECRET || 'qurbani-subscription-secret-2026';
-  const data = `${subscriptionId}:${email}`;
+  const secret = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
+  }
+  const data = `sub-manage:${subscriptionId}:${email}`;
   return crypto.createHmac('sha256', secret).update(data).digest('hex').substring(0, 32);
 }
 
@@ -55,10 +59,11 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     if (email) {
-      // Get all active subscriptions for email
+      // Email-only lookup: return subscription info WITHOUT management tokens
+      // Tokens are only generated server-side when sending management emails to the donor
       const { data: subscriptions, error } = await supabaseAdmin
         .from('donation_subscriptions')
-        .select('*')
+        .select('id, status, amount, interval, campaign_name, created_at, current_period_end')
         .eq('donor_email', email)
         .in('status', ['active', 'paused', 'past_due'])
         .order('created_at', { ascending: false });
@@ -67,13 +72,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         throw error;
       }
 
-      // Add management tokens to each subscription
-      const subscriptionsWithTokens = subscriptions?.map(sub => ({
-        ...sub,
-        management_token: generateManagementToken(sub.id, sub.donor_email),
-      })) || [];
-
-      return new Response(JSON.stringify({ subscriptions: subscriptionsWithTokens }), {
+      return new Response(JSON.stringify({ subscriptions: subscriptions || [] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });

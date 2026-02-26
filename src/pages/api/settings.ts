@@ -5,7 +5,13 @@ import { clearSettingsCache } from '../../lib/settings';
 // Required for Cloudflare adapter
 export const prerender = false;
 
-// GET - Read settings from Supabase
+// Fields that should NEVER be returned in API responses
+const SENSITIVE_FIELDS = [
+  'stripe_secret_key',
+  'stripe_webhook_secret',
+];
+
+// GET - Read settings from Supabase (strips sensitive fields)
 export const GET: APIRoute = async () => {
   try {
     const { data, error } = await supabaseAdmin
@@ -20,6 +26,15 @@ export const GET: APIRoute = async () => {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // Strip sensitive fields before returning
+    if (data) {
+      for (const field of SENSITIVE_FIELDS) {
+        if (field in data) {
+          (data as Record<string, unknown>)[field] = data[field as keyof typeof data] ? '***configured***' : null;
+        }
+      }
     }
 
     return new Response(JSON.stringify(data), {

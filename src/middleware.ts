@@ -1,35 +1,80 @@
 import { defineMiddleware } from 'astro:middleware';
+import { generateSessionToken, PUBLIC_API_ROUTES, PUBLIC_GET_ONLY_ROUTES, SELF_AUTHED_ROUTES } from './lib/auth';
 
-// Hardcoded password for now - this is secure since it's server-side only
-// In production, use Cloudflare Access or Supabase Auth instead
-const ADMIN_PASSWORD = 'Qurbani2026';
+// Admin password from env var — NEVER hardcoded
+const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || '';
+
+function isPublicApiRoute(pathname: string): boolean {
+  return PUBLIC_API_ROUTES.some(route => pathname.startsWith(route));
+}
+
+function isPublicGetRoute(pathname: string, method: string): boolean {
+  if (method !== 'GET') return false;
+  return PUBLIC_GET_ONLY_ROUTES.some(route => pathname.startsWith(route));
+}
+
+function isSelfAuthedRoute(pathname: string): boolean {
+  return SELF_AUTHED_ROUTES.some(route => pathname.startsWith(route));
+}
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
-  // Only protect /admin routes
-  if (!pathname.startsWith('/admin')) {
+  // Don't protect non-admin, non-API routes
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/')) {
     return next();
   }
 
-  // Check for existing session cookie
+  // Public API routes — no auth needed
+  if (pathname.startsWith('/api/') && isPublicApiRoute(pathname)) {
+    return next();
+  }
+
+  // Public GET routes — GET is public, all other methods need admin auth
+  const method = context.request.method.toUpperCase();
+  if (pathname.startsWith('/api/') && isPublicGetRoute(pathname, method)) {
+    return next();
+  }
+
+  // Self-authenticated routes — they handle their own auth
+  if (pathname.startsWith('/api/') && isSelfAuthedRoute(pathname)) {
+    return next();
+  }
+
+  // Everything else needs admin session
+  if (!ADMIN_PASSWORD) {
+    console.error('ADMIN_PASSWORD env var is not set! Admin access is disabled.');
+    return new Response(JSON.stringify({ error: 'Admin access not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Check for valid session cookie
   const sessionCookie = context.cookies.get('admin_session');
+  const expectedToken = generateSessionToken(ADMIN_PASSWORD);
+
+  if (sessionCookie?.value === expectedToken) {
+    return next();
+  }
+
+  // Fallback: parse cookie header directly (some Astro adapters have cookie parsing issues)
   const cookieHeader = context.request.headers.get('cookie') || '';
-
-  // Check the cookie
-  if (sessionCookie?.value === ADMIN_PASSWORD) {
+  if (cookieHeader.includes(`admin_session=${expectedToken}`)) {
     return next();
   }
 
-  // Fallback: parse cookie header directly
-  if (cookieHeader.includes(`admin_session=${ADMIN_PASSWORD}`)) {
-    return next();
+  // For API routes, return 401 JSON
+  if (pathname.startsWith('/api/')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  // Check for error in query string
+  // For admin pages, show login form
   const hasError = context.url.searchParams.get('error') === '1';
 
-  // Return login form (POST goes to /api/admin-login)
   const html = `
 <!DOCTYPE html>
 <html lang="en">

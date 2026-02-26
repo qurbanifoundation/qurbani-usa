@@ -38,26 +38,28 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const now = new Date().toISOString();
+    const batchId = crypto.randomUUID();
 
     // ============================================
     // PHASE 1: FULFILL donations that are due
     // ============================================
 
-    // Fetch donations due for fulfillment
-    // Excludes recurring donations (monthly/weekly) — they follow the Active Subscriber lifecycle
+    // ATOMIC CLAIM: Update status to 'processing' first, then work on claimed records
+    // This prevents overlapping cron runs from double-processing the same donations
     const { data: readyToFulfill, error: fetchError } = await supabaseAdmin
       .from('donations')
-      .select('*')
+      .update({ fulfillment_status: 'processing' })
       .eq('fulfillment_status', 'pending')
       .eq('status', 'completed')
       .not('donation_type', 'in', '("monthly","weekly")')
       .lte('scheduled_fulfillment_at', now)
       .not('scheduled_fulfillment_at', 'is', null)
+      .select('*')
       .order('created_at', { ascending: true })
       .limit(50);
 
     if (fetchError) {
-      console.error('Error fetching pending donations:', fetchError);
+      console.error('Error claiming pending donations:', fetchError);
       return new Response(JSON.stringify({ error: 'Database error' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -69,15 +71,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     for (const donation of readyToFulfill || []) {
       try {
-        // Mark as fulfilled in Supabase
+        // Mark as fulfilled in Supabase (already claimed as 'processing')
         await supabaseAdmin
           .from('donations')
           .update({
             fulfillment_status: 'fulfilled',
             fulfilled_at: now,
-            fulfillment_event_id: crypto.randomUUID(),
+            fulfillment_event_id: batchId,
           })
-          .eq('id', donation.id);
+          .eq('id', donation.id)
+          .eq('fulfillment_status', 'processing');
 
         // Move GHL pipeline to "Fulfilled"
         if (donation.donor_email) {
@@ -93,10 +96,12 @@ export const POST: APIRoute = async ({ request }) => {
       } catch (err) {
         console.error('Fulfillment error for', donation.id, err);
         fulfillFailed++;
+        // Reset from 'processing' to 'failed' so it can be retried or investigated
         await supabaseAdmin
           .from('donations')
           .update({ fulfillment_status: 'failed' })
-          .eq('id', donation.id);
+          .eq('id', donation.id)
+          .eq('fulfillment_status', 'processing');
       }
     }
 

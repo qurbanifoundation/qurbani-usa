@@ -53,45 +53,49 @@ export const POST: APIRoute = async ({ request }) => {
 
     let event: Stripe.Event;
 
-    // Verify webhook signature if secret is configured
-    if (settings.stripe_webhook_secret) {
-      try {
-        // Use constructEventAsync for Cloudflare Workers compatibility
-        // (Workers use Web Crypto API, not Node's crypto module)
-        event = await stripe.webhooks.constructEventAsync(body, signature, settings.stripe_webhook_secret);
-      } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
-        return new Response(JSON.stringify({ error: 'Invalid signature', detail: err.message }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-    } else {
-      // Parse without verification (not recommended for production)
-      event = JSON.parse(body);
+    // Webhook secret is REQUIRED — never accept unverified payloads
+    if (!settings.stripe_webhook_secret) {
+      console.error('STRIPE_WEBHOOK_SECRET not configured — rejecting webhook');
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Check for idempotency - prevent duplicate processing
-    const { data: existingEvent } = await supabaseAdmin
+    // Verify webhook signature (using async for Cloudflare Workers compatibility)
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, signature, settings.stripe_webhook_secret);
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message);
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Atomic idempotency check — INSERT with ON CONFLICT prevents race conditions
+    // If two webhook deliveries arrive simultaneously, only one will succeed
+    const { data: insertedEvent, error: idempotencyError } = await supabaseAdmin
       .from('webhook_events')
-      .select('id')
-      .eq('stripe_event_id', event.id)
+      .upsert(
+        {
+          stripe_event_id: event.id,
+          event_type: event.type,
+          payload: event.data.object,
+        },
+        { onConflict: 'stripe_event_id', ignoreDuplicates: true }
+      )
+      .select('id, created_at')
       .single();
 
-    if (existingEvent) {
-      console.log('Event already processed:', event.id);
+    // If upsert returned no row, this is a duplicate (ignoreDuplicates skipped the insert)
+    if (idempotencyError || !insertedEvent) {
+      console.log('Event already processed (atomic check):', event.id);
       return new Response(JSON.stringify({ received: true, duplicate: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
-    // Record the event for idempotency
-    await supabaseAdmin.from('webhook_events').insert({
-      stripe_event_id: event.id,
-      event_type: event.type,
-      payload: event.data.object,
-    });
 
     // Handle the event
     switch (event.type) {
