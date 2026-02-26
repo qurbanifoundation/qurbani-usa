@@ -1,14 +1,28 @@
 name: Deploy to Cloudflare Pages
 
+# Manual deploy only — triggered from local machine or GitHub UI
+# Auto-deploy on push is disabled because GitHub Actions secrets don't
+# get properly inlined by Astro/Vite's import.meta.env at build time,
+# causing 1101 Worker crashes in production.
+#
+# Deploy workflow:
+#   1. Build locally:  npm run build
+#   2. Deploy preview: npm run deploy:preview
+#   3. Deploy prod:    npm run deploy:production
 on:
-  push:
-    branches: [main, dev]
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
 
 jobs:
-  # Production deploy — only on push to main
-  deploy-production:
-    if: github.ref_name == 'main'
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,42 +48,9 @@ jobs:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_STRIPE_PUBLISHABLE_KEY }}
 
-      - uses: cloudflare/wrangler-action@v3
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=qurbani-usa --branch=main
-
-  # Preview deploy — only on push to dev
-  deploy-preview:
-    if: github.ref_name == 'dev'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run build
-        env:
-          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          PUBLIC_GOOGLE_PLACES_API_KEY: ${{ secrets.PUBLIC_GOOGLE_PLACES_API_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
-          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-          PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=qurbani-usa --branch=dev
+          command: pages deploy dist --project-name=qurbani-usa --branch=${{ inputs.target == 'production' && 'main' || 'dev' }}

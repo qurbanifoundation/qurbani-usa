@@ -89,18 +89,22 @@ src/
 **Always check `scripts/` before creating new migration scripts.**
 
 ## Branching & Deployment (CRITICAL)
-- **NEVER commit or push directly to `main`** — it auto-deploys to production (`www.qurbani.com`)
-- **Always work on the `dev` branch** — it auto-deploys a preview to `dev.qurbani-usa.pages.dev`
-- Local runs on Node.js but production runs on Cloudflare Workers (different runtime) — always verify the preview
-- To deploy to production: `git checkout main && git merge dev && git push origin main`
+- **NEVER commit or push directly to `main`** — `main` is production-only
+- **Always work on the `dev` branch** — commit and push code to `dev`
+- **Deployments are manual** (not auto-deploy on push) — CI was disabled because GitHub Actions secrets don't get properly inlined by Astro/Vite at build time
+- Deploy preview: `npm run deploy:preview` → deploys to `dev.qurbani-usa.pages.dev`
+- Deploy production: `npm run deploy:production` → deploys to `www.qurbani.com`
+- Always deploy to preview first, verify it works, then deploy to production
 - A pre-push hook blocks accidental pushes to `main` from other branches
-- Run `npm run verify` before merging — it builds and tests under the actual Workers runtime
+- Run `npm run verify` before production deploy — it builds and tests under the actual Workers runtime
 
 ## Common Commands
 ```bash
-npm run dev     # Development (localhost:4321)
-npm run build   # Build
-npm run verify  # Build + test under Cloudflare Workers runtime (run before merging to main)
+npm run dev              # Development (localhost:4321)
+npm run build            # Build
+npm run verify           # Build + test under Cloudflare Workers runtime
+npm run deploy:preview   # Build + deploy to dev.qurbani-usa.pages.dev
+npm run deploy:production # Build + deploy to www.qurbani.com
 ```
 
 ## Environment Variables
