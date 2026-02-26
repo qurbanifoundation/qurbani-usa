@@ -55,10 +55,12 @@ export const POST: APIRoute = async ({ request }) => {
     // Verify webhook signature if secret is configured
     if (settings.stripe_webhook_secret) {
       try {
-        event = stripe.webhooks.constructEvent(body, signature, settings.stripe_webhook_secret);
+        // Use constructEventAsync for Cloudflare Workers compatibility
+        // (Workers use Web Crypto API, not Node's crypto module)
+        event = await stripe.webhooks.constructEventAsync(body, signature, settings.stripe_webhook_secret);
       } catch (err: any) {
         console.error('Webhook signature verification failed:', err.message);
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        return new Response(JSON.stringify({ error: 'Invalid signature', detail: err.message }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         });
@@ -194,17 +196,17 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     return;
   }
 
+  // Parse items for campaign tracking
+  let items: Array<{ name: string; amount: number }> = [];
+  if (donation.items) {
+    items = typeof donation.items === 'string'
+      ? JSON.parse(donation.items)
+      : donation.items;
+  }
+
   // Sync to GoHighLevel with full campaign attribution and lifetime tracking
   if (donation?.donor_email && donation?.donor_name) {
     try {
-      // Parse items for campaign tracking
-      let items: Array<{ name: string; amount: number }> = [];
-      if (donation.items) {
-        items = typeof donation.items === 'string'
-          ? JSON.parse(donation.items)
-          : donation.items;
-      }
-
       // Extract campaign slug from the donation or items
       const campaignSlug = donation.campaign_slug ||
         (items.length > 0 ? items[0].name?.toLowerCase().replace(/\s+/g, '-') : 'general');
