@@ -558,6 +558,7 @@ const availableIcons = Object.keys(categoryIcons);
       input.value = newSlug;
 
       try {
+        showToast('Updating slug & cascading to all campaigns...', 'info');
         const res = await fetch('/api/categories', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -568,7 +569,7 @@ const availableIcons = Object.keys(categoryIcons);
           throw new Error(err.error || 'Failed to update');
         }
         input.dataset.original = newSlug;
-        showToast('Slug updated');
+        showToast('Slug updated — all campaign URLs have been updated!');
       } catch (error) {
         input.value = original;
         showToast(error.message, 'error');

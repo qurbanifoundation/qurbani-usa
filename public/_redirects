@@ -37,10 +37,10 @@
 /fidyah*             /fidya 301
 /kaffara*            /kaffarah 301
 
-# Orphan sponsorship
-/orphan*             /appeals/sponsor-an-orphan 301
-/sponsor-orphan*     /appeals/sponsor-an-orphan 301
-/child-sponsorship*  /appeals/sponsor-an-orphan 301
+# Orphan sponsorship (don't catch /orphans/ category routes)
+/orphan-sponsorship* /orphans/sponsor-an-orphan 301
+/sponsor-orphan*     /orphans/sponsor-an-orphan 301
+/child-sponsorship*  /orphans/sponsor-an-orphan 301
 
 # About pages
 /about-us*           /about 301
@@ -87,22 +87,24 @@
 /aqeeqah*            /aqiqah 301
 /appeals/aqiqah*     /aqiqah 301
 
-# Sadaqah (general charity)
-/sadaqah*            /donate 301
+# Sadaqah (general charity - don't catch /sadaqah/ category routes)
+/sadaqah-donation*   /donate 301
 /sadaqa*             /donate 301
 /charity*            /donate 301
 /general-donation*   /donate 301
 
-# Water/Wells
-/water*              /appeals 301
-/well*               /appeals 301
+# Water/Wells (don't catch /water-aid/ category routes)
+/water-well*         /appeals 301
+/water-project*      /appeals 301
+/water-donation*     /appeals 301
+/well-project*       /appeals 301
 /clean-water*        /appeals 301
 
-# Education
-/education*          /appeals 301
+# Education (don't catch /education/ category routes)
+/education-donation* /appeals 301
 /school*             /appeals 301
 
-# Healthcare
-/health*             /appeals 301
+# Healthcare (don't catch /healthcare/ category routes)
+/health-donation*    /appeals 301
 /medical*            /appeals 301
 
