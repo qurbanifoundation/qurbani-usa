@@ -1,0 +1,33 @@
+#!/bin/bash
+# =============================================================================
+# Pre-push hook: Prevents accidental pushes to main
+#
+# You must be ON the main branch (having done an explicit merge) to push to main.
+# This blocks the common accident of being on dev and typing: git push origin main
+#
+# To bypass in emergencies: git push --no-verify
+# =============================================================================
+
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ "$current_branch" != "main" ]; then
+  while read local_ref local_sha remote_ref remote_sha; do
+    if echo "$remote_ref" | grep -q "refs/heads/main"; then
+      echo ""
+      echo "  BLOCKED: Cannot push to 'main' from branch '${current_branch}'."
+      echo ""
+      echo "  Safe workflow:"
+      echo "    1. Push to dev:          git push origin dev"
+      echo "    2. Check preview:        https://dev.qurbani-usa.pages.dev"
+      echo "    3. Run verification:     npm run verify"
+      echo "    4. Merge to main:        git checkout main && git merge dev"
+      echo "    5. Push production:      git push origin main"
+      echo ""
+      echo "  Emergency bypass: git push origin main --no-verify"
+      echo ""
+      exit 1
+    fi
+  done
+fi
+
+exit 0

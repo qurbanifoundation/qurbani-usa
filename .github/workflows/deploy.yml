@@ -2,10 +2,10 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +29,46 @@ jobs:
           GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # Production deploy — only on push to main
+  deploy-production:
+    needs: build
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=qurbani-usa
+          command: pages deploy dist --project-name=qurbani-usa --branch=main
+
+  # Preview deploy — only on push to dev
+  deploy-preview:
+    needs: build
+    if: github.ref_name == 'dev'
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=qurbani-usa --branch=dev

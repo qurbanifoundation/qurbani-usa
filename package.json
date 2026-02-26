@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "verify": "bash scripts/verify-build.sh",
     "astro": "astro"
   },
   "dependencies": {
