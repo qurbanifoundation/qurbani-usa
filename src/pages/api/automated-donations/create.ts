@@ -1,3 +1,5 @@
+export const prerender = false;
+
 /**
  * API: Create Automated Donation
  * POST /api/automated-donations/create
