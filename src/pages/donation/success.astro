@@ -102,4 +102,36 @@ const orderId = Astro.url.searchParams.get('order_id');
       }
     }
   }
+
+  // Backup GA4 purchase tracking — fires if the DonationCart event didn't fully send
+  // GA4 deduplicates by transaction_id, so firing again is safe
+  try {
+    const purchaseData = sessionStorage.getItem('qurbani_purchase');
+    if (purchaseData) {
+      const purchase = JSON.parse(purchaseData);
+      // Only fire if purchase was recent (within 5 minutes)
+      if (Date.now() - purchase.timestamp < 300000) {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'purchase', {
+            transaction_id: purchase.transaction_id,
+            currency: 'USD',
+            value: purchase.value,
+            items: purchase.items,
+            send_to: 'G-0WC0W1PBKC'
+          });
+          window.gtag('event', 'conversion', {
+            'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
+            'value': purchase.value,
+            'currency': 'USD',
+            'transaction_id': purchase.transaction_id
+          });
+          console.log('[GA4] Backup purchase event fired on success page:', purchase.transaction_id);
+        }
+      }
+      // Clear so it doesn't fire again on page refresh
+      sessionStorage.removeItem('qurbani_purchase');
+    }
+  } catch(e) {
+    console.error('[GA4] Backup tracking error:', e);
+  }
 </script>

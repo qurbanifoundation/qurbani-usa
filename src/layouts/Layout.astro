@@ -42,10 +42,11 @@ const faviconType = adminFavicon
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      // GA4 Config
+      // GA4 Config — transport_url uses sendBeacon for reliable event delivery
       gtag('config', 'G-0WC0W1PBKC', {
         send_page_view: true,
-        cookie_flags: 'SameSite=None;Secure'
+        cookie_flags: 'SameSite=None;Secure',
+        transport_type: 'beacon'
       });
 
       // Google Ads Config
@@ -83,7 +84,7 @@ const faviconType = adminFavicon
       };
 
       window.trackPurchase = function(transactionId, items, total) {
-        // GA4 Purchase Event
+        // GA4 Purchase Event — use send_beacon transport for reliable delivery
         gtag('event', 'purchase', {
           transaction_id: transactionId,
           currency: 'USD',
@@ -96,16 +97,38 @@ const faviconType = adminFavicon
               price: item.amount,
               quantity: item.quantity || 1
             };
-          })
+          }),
+          send_to: 'G-0WC0W1PBKC',
+          event_callback: function() {
+            console.log('[GA4] Purchase event sent:', transactionId);
+          }
         });
 
-        // Google Ads Conversion - Real-time tracking
+        // Google Ads Conversion — use send_beacon transport for reliable delivery
         gtag('event', 'conversion', {
           'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
           'value': total,
           'currency': 'USD',
           'transaction_id': transactionId
         });
+
+        // Store purchase data for success page backup tracking
+        try {
+          sessionStorage.setItem('qurbani_purchase', JSON.stringify({
+            transaction_id: transactionId,
+            value: total,
+            items: items.map(function(item) {
+              return {
+                item_id: item.id || item.slug,
+                item_name: item.name,
+                item_category: item.campaign || 'donation',
+                price: item.amount,
+                quantity: item.quantity || 1
+              };
+            }),
+            timestamp: Date.now()
+          }));
+        } catch(e) {}
       };
 
       // View item (campaign/appeal page)

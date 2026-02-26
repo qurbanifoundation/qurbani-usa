@@ -321,6 +321,46 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     await moveDonationThroughPipeline(donation.donor_email, 'receipt sent')
       .catch(err => console.error('GHL pipeline move to Receipt Sent error:', err));
   }
+
+  // Server-side GA4 tracking via Measurement Protocol
+  // This is the bulletproof backup — fires even if client-side tracking fails (ad blockers, etc.)
+  // GA4 deduplicates by transaction_id so this won't double-count
+  try {
+    const GA4_MEASUREMENT_ID = 'G-0WC0W1PBKC';
+    const GA4_API_SECRET = import.meta.env.GA4_API_SECRET;
+
+    if (GA4_API_SECRET) {
+      const mpPayload = {
+        client_id: donation?.donor_email || paymentIntent.id, // Use email as client_id for server-side
+        events: [{
+          name: 'purchase',
+          params: {
+            transaction_id: paymentIntent.id,
+            currency: 'USD',
+            value: parseFloat(donation?.amount || '0'),
+            items: items.map((item: { name: string; amount: number }) => ({
+              item_id: (item.name || 'donation').toLowerCase().replace(/\s+/g, '-'),
+              item_name: item.name || 'Donation',
+              price: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount,
+              quantity: 1,
+            })),
+          }
+        }]
+      };
+
+      await fetch(
+        `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_MEASUREMENT_ID}&api_secret=${GA4_API_SECRET}`,
+        {
+          method: 'POST',
+          body: JSON.stringify(mpPayload),
+        }
+      );
+      console.log('GA4 server-side purchase event sent:', paymentIntent.id);
+    }
+  } catch (ga4Error) {
+    // Non-critical — don't let GA4 errors break payment processing
+    console.error('GA4 Measurement Protocol error:', ga4Error);
+  }
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {

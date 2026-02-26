@@ -1,8 +1,12 @@
 ---
 /**
- * Category-based Campaign Page
- * Handles URLs like /zakat/zakat-fund, /ramadan/fidya, etc.
- * Looks up campaigns by url_path
+ * Category-based Campaign/Page Route
+ * Handles URLs like /zakat/zakat-fund, /ramadan/fidya, /ramadan/30days, etc.
+ *
+ * Lookup order:
+ * 1. Check `campaigns` table by url_path
+ * 2. Check `campaigns` table by slug + category (fallback)
+ * 3. Check `campaign_pages` table by url_path → redirect to static .astro file
  */
 import GreenWithYellowTemplate from '../../templates/GreenWithYellowTemplate.astro';
 import EmergencyAppealTemplate from '../../templates/EmergencyAppealTemplate.astro';
@@ -48,12 +52,45 @@ try {
       .single();
     campaign = data;
   } catch (e2) {
-    console.error('Campaign not found:', urlPath);
+    // Not in campaigns table — will check campaign_pages below
   }
 }
 
-// If no campaign found, return 404
+// If no campaign found, check campaign_pages table
+// Campaign pages have their own static .astro files — rewrite to the file_path
 if (!campaign) {
+  try {
+    const { data: page } = await supabaseAdmin
+      .from('campaign_pages')
+      .select('file_path, slug, url_path')
+      .eq('url_path', urlPath)
+      .eq('is_active', true)
+      .single();
+
+    if (page && page.file_path) {
+      // file_path is like "ramadan-giving.astro" → rewrite to /ramadan-giving
+      const filePath = page.file_path.replace('.astro', '');
+      return Astro.rewrite(`/${filePath}`);
+    }
+  } catch (e) {
+    // Also try matching by slug alone in campaign_pages
+    try {
+      const { data: page } = await supabaseAdmin
+        .from('campaign_pages')
+        .select('file_path, slug, url_path')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single();
+
+      if (page && page.file_path) {
+        const filePath = page.file_path.replace('.astro', '');
+        return Astro.rewrite(`/${filePath}`);
+      }
+    } catch (e2) {
+      // Not found anywhere
+    }
+  }
+
   return Astro.redirect('/404', 404);
 }
 
