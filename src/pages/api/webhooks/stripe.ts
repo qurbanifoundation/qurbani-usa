@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import { trackDonation } from '../../../lib/ghl-advanced';
+import { trackDonation, trackRefund, markReceiptSent, moveDonationThroughPipeline } from '../../../lib/ghl-advanced';
+import { calculateFulfillmentDate, calculateEmailSendTime, detectTimezone } from '../../../lib/fulfillment';
 import {
   notifyDonationReceived,
   notifySubscriptionStarted,
@@ -179,13 +180,48 @@ export const POST: APIRoute = async ({ request }) => {
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   console.log('Payment succeeded:', paymentIntent.id);
 
-  // Update donation record
+  // Get the donation first to determine campaign type
+  const { data: existingDonation } = await supabaseAdmin
+    .from('donations')
+    .select('campaign_slug, campaign_name, metadata')
+    .eq('stripe_payment_intent_id', paymentIntent.id)
+    .single();
+
+  const campaignSlugCheck = existingDonation?.campaign_slug?.toLowerCase() || '';
+
+  // Determine campaign type for fulfillment
+  const campaignType = campaignSlugCheck.includes('zakat') ? 'zakat'
+    : campaignSlugCheck.includes('qurbani') ? 'qurbani'
+    : campaignSlugCheck.includes('aqeeqah') || campaignSlugCheck.includes('aqiqah') ? 'aqeeqah'
+    : campaignSlugCheck.includes('sadaqah') ? 'sadaqah'
+    : 'general';
+
+  // Smart fulfillment: calculate date based on campaign type + Eid dates
+  const { fulfillmentDate, mode: fulfillmentMode } = await calculateFulfillmentDate(
+    campaignType,
+    new Date(),
+  );
+
+  // Detect donor timezone from billing address
+  const billingAddr = existingDonation?.metadata?.billing_address || paymentIntent.shipping?.address || null;
+  const donorTimezone = detectTimezone(billingAddr);
+
+  // Calculate when to send fulfillment email (1:30 PM donor's local time)
+  const emailSendTime = calculateEmailSendTime(fulfillmentDate, donorTimezone);
+
+  // Update donation record with fulfillment data
   const { data: donation, error } = await supabaseAdmin
     .from('donations')
     .update({
       status: 'completed',
       completed_at: new Date().toISOString(),
       stripe_charge_id: paymentIntent.latest_charge as string,
+      fulfillment_mode: fulfillmentMode,
+      fulfillment_status: 'pending',
+      scheduled_fulfillment_at: fulfillmentDate.toISOString(),
+      fulfillment_email_scheduled_at: emailSendTime.toISOString(),
+      donor_timezone: donorTimezone,
+      campaign_type: campaignType,
     })
     .eq('stripe_payment_intent_id', paymentIntent.id)
     .select()
@@ -227,6 +263,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
           amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount
         })),
         address: billingAddress,
+        stripePaymentId: paymentIntent.id,
+        donationId: donation.id,
+        currency: donation.currency || 'USD',
       });
 
       console.log('Donation synced to GHL:', {
@@ -235,6 +274,10 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         donationCount: result.donationCount,
         donorTier: result.donorTier
       });
+
+      // Move pipeline: New Donation → Payment Received
+      await moveDonationThroughPipeline(donation.donor_email, 'payment received')
+        .catch(err => console.error('GHL pipeline move error:', err));
     } catch (ghlError) {
       console.error('GHL sync error:', ghlError);
     }
@@ -259,6 +302,20 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       date: new Date(),
       billingAddress: donation.metadata?.billing_address,
     });
+
+    // Mark receipt as sent in Supabase + GHL
+    await supabaseAdmin
+      .from('donations')
+      .update({ receipt_sent: true })
+      .eq('id', donation.id);
+
+    await markReceiptSent(donation.donor_email).catch(err =>
+      console.error('GHL markReceiptSent error:', err)
+    );
+
+    // Move pipeline: Payment Received → Receipt Sent
+    await moveDonationThroughPipeline(donation.donor_email, 'receipt sent')
+      .catch(err => console.error('GHL pipeline move to Receipt Sent error:', err));
   }
 }
 
@@ -346,6 +403,22 @@ async function handleRefund(charge: Stripe.Charge) {
       amount: refundAmount,
       originalTransactionId: charge.id,
     });
+
+    // Sync refund to GHL: update fields, add tag, close opportunity, add note
+    try {
+      await trackRefund({
+        email: donation.donor_email,
+        name: donation.donor_name || 'Donor',
+        refundAmount: refundAmount,
+        originalAmount: parseFloat(donation.amount),
+        stripeChargeId: charge.id,
+        stripePaymentId: donation.stripe_payment_intent_id,
+        campaignName: donation.campaign_name,
+      });
+      console.log('Refund synced to GHL for', donation.donor_email);
+    } catch (ghlError) {
+      console.error('GHL refund sync error:', ghlError);
+    }
   }
 }
 
@@ -640,6 +713,9 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
           name: item.name || donationLabel,
           amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount
         })),
+        stripePaymentId: paymentIntentId,
+        donationId: donation?.id,
+        currency: subscriptionRecord.currency || 'USD',
       });
 
       console.log('Recurring donation synced to GHL:', {

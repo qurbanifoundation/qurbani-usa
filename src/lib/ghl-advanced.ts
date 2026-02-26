@@ -1,12 +1,22 @@
 /**
  * Advanced GoHighLevel Integration
  *
- * Captures leads at EVERY touchpoint - before, during, and after donation
- * Uses Custom Fields for proper tracking (not tags)
+ * Enterprise-grade CRM sync with:
+ * - Campaign-specific tags
+ * - Stripe Payment ID tracking
+ * - Fulfillment status tracking
+ * - Refund handling
+ * - Retry logic with persistent logging
+ * - Major donor task creation
+ * - Pipeline opportunity management
  */
+
+import { supabaseAdmin } from './supabase';
 
 const GHL_BASE_URL = 'https://services.leadconnectorhq.com';
 const GHL_API_VERSION = '2021-07-28';
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
 
 function getGHLCredentials() {
   const apiKey = import.meta.env.GHL_API_KEY;
@@ -17,17 +27,115 @@ function getGHLCredentials() {
   return { apiKey, locationId };
 }
 
-async function ghlFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+// ============================================
+// GHL FETCH WITH RETRY + LOGGING
+// ============================================
+
+async function ghlFetch(
+  endpoint: string,
+  options: RequestInit = {},
+  context?: { action?: string; email?: string; donationId?: string }
+): Promise<Response> {
   const { apiKey } = getGHLCredentials();
-  return fetch(`${GHL_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Version': GHL_API_VERSION,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(`${GHL_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Version': GHL_API_VERSION,
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+
+      // Log to database on final response
+      if (context?.action) {
+        const responseBody = res.ok ? { status: res.status } : await res.clone().json().catch(() => ({ status: res.status }));
+        await logGHLSync({
+          action: context.action,
+          contactEmail: context.email,
+          status: res.ok ? 'success' : 'error',
+          requestPayload: options.body ? JSON.parse(options.body as string) : null,
+          responsePayload: responseBody,
+          errorMessage: res.ok ? null : `HTTP ${res.status}`,
+          retryCount: attempt - 1,
+          donationId: context.donationId,
+        });
+      }
+
+      // Retry on 429 (rate limit) or 5xx
+      if (res.status === 429 || res.status >= 500) {
+        if (attempt < MAX_RETRIES) {
+          const delay = RETRY_DELAY_MS * attempt;
+          console.warn(`GHL API ${res.status} on attempt ${attempt}, retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+      }
+
+      return res;
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.error(`GHL fetch attempt ${attempt} failed:`, lastError.message);
+
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+
+  // Log final failure
+  if (context?.action) {
+    await logGHLSync({
+      action: context.action,
+      contactEmail: context.email,
+      status: 'failed',
+      requestPayload: options.body ? JSON.parse(options.body as string) : null,
+      errorMessage: lastError?.message || 'Max retries exceeded',
+      retryCount: MAX_RETRIES,
+      donationId: context.donationId,
+    });
+  }
+
+  throw lastError || new Error('GHL API request failed after retries');
+}
+
+// ============================================
+// PERSISTENT SYNC LOGGING
+// ============================================
+
+async function logGHLSync(data: {
+  action: string;
+  contactEmail?: string;
+  ghlContactId?: string;
+  status: string;
+  requestPayload?: Record<string, unknown> | null;
+  responsePayload?: Record<string, unknown> | null;
+  errorMessage?: string | null;
+  retryCount?: number;
+  donationId?: string;
+  stripePaymentId?: string;
+}) {
+  try {
+    await supabaseAdmin.from('ghl_sync_logs').insert({
+      action: data.action,
+      contact_email: data.contactEmail || null,
+      ghl_contact_id: data.ghlContactId || null,
+      request_payload: data.requestPayload || null,
+      response_payload: data.responsePayload || null,
+      status: data.status,
+      error_message: data.errorMessage || null,
+      retry_count: data.retryCount || 0,
+      donation_id: data.donationId || null,
+      stripe_payment_id: data.stripePaymentId || null,
+    });
+  } catch (err) {
+    // Never let logging failures break the main flow
+    console.error('Failed to log GHL sync:', err);
+  }
 }
 
 // ============================================
@@ -36,33 +144,28 @@ async function ghlFetch(endpoint: string, options: RequestInit = {}): Promise<Re
 
 /**
  * Track when someone views a campaign page
- * Call this when: User lands on /appeals/{slug}
  */
 export async function trackCampaignView(data: {
   email?: string;
-  visitorId?: string;  // Anonymous tracking
+  visitorId?: string;
   campaignSlug: string;
   campaignName: string;
 }) {
   if (!data.email) return { success: false, error: 'No email' };
 
   const { locationId } = getGHLCredentials();
-
-  // Find or create contact
   const existing = await findContactByEmail(data.email);
 
-  // Get current interests
   let currentInterests = '';
   let pagesViewed = 0;
 
   if (existing?.customFields) {
-    for (const f of existing.customFields as any[]) {
+    for (const f of existing.customFields as { key: string; value: string }[]) {
       if (f.key === 'campaign_interests') currentInterests = f.value || '';
       if (f.key === 'pages_viewed') pagesViewed = parseInt(f.value || '0');
     }
   }
 
-  // Add new campaign to interests (avoid duplicates)
   const interestsArray = currentInterests ? currentInterests.split(', ') : [];
   if (!interestsArray.includes(data.campaignSlug)) {
     interestsArray.push(data.campaignSlug);
@@ -79,7 +182,7 @@ export async function trackCampaignView(data: {
     await ghlFetch(`/contacts/${existing.id}`, {
       method: 'PUT',
       body: JSON.stringify({ customFields }),
-    });
+    }, { action: 'campaign_view', email: data.email });
     return { success: true, contactId: existing.id };
   } else {
     const res = await ghlFetch('/contacts/', {
@@ -91,7 +194,7 @@ export async function trackCampaignView(data: {
         tags: ['website', 'prospect'],
         customFields,
       }),
-    });
+    }, { action: 'campaign_view_create', email: data.email });
     const result = await res.json();
     return { success: true, contactId: result.contact?.id };
   }
@@ -99,14 +202,12 @@ export async function trackCampaignView(data: {
 
 /**
  * Track cart abandonment
- * Call this when: User adds to cart but doesn't complete checkout
  */
 export async function trackCartAbandonment(data: {
   email: string;
   cartItems: Array<{ name: string; amount: number; campaignSlug: string }>;
   cartTotal: number;
 }) {
-  const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
 
   const campaigns = data.cartItems.map(i => i.campaignSlug).join(', ');
@@ -125,9 +226,8 @@ export async function trackCartAbandonment(data: {
     await ghlFetch(`/contacts/${existing.id}`, {
       method: 'PUT',
       body: JSON.stringify({ customFields, tags }),
-    });
+    }, { action: 'cart_abandonment', email: data.email });
 
-    // Add note about abandoned cart
     await ghlFetch(`/contacts/${existing.id}/notes`, {
       method: 'POST',
       body: JSON.stringify({
@@ -143,7 +243,6 @@ export async function trackCartAbandonment(data: {
 
 /**
  * Track Zakat calculation (high-intent lead)
- * Call this when: User completes Zakat calculator
  */
 export async function trackZakatCalculation(data: {
   email: string;
@@ -157,8 +256,7 @@ export async function trackZakatCalculation(data: {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
 
-  // Calculate lead score based on Zakat amount
-  let leadScore = 50; // Base score for using calculator
+  let leadScore = 50;
   if (data.zakatAmount >= 100) leadScore += 10;
   if (data.zakatAmount >= 500) leadScore += 10;
   if (data.zakatAmount >= 1000) leadScore += 15;
@@ -182,7 +280,6 @@ export async function trackZakatCalculation(data: {
   let contactId: string | undefined;
 
   try {
-    // Use upsert endpoint - creates if not exists, updates if exists
     const upsertData = {
       email: data.email,
       firstName: data.firstName || '',
@@ -197,7 +294,8 @@ export async function trackZakatCalculation(data: {
     const res = await ghlFetch('/contacts/upsert', {
       method: 'POST',
       body: JSON.stringify(upsertData),
-    });
+    }, { action: 'zakat_calculation', email: data.email });
+
     const result = await res.json();
 
     if (!res.ok) {
@@ -211,7 +309,6 @@ export async function trackZakatCalculation(data: {
       return { success: false, error: 'Contact saved but no ID returned', leadScore };
     }
 
-    // Add note
     await ghlFetch(`/contacts/${contactId}/notes`, {
       method: 'POST',
       body: JSON.stringify({
@@ -219,17 +316,11 @@ export async function trackZakatCalculation(data: {
       }),
     });
 
-    // Email is now handled by GHL Workflow (triggered by "zakat-calculator" tag)
-    // Workflow: "Zakat Calculator – Results & Follow-up"
-    // - Sends immediate email with calculation results
-    // - Waits 2 days → SMS reminder if not donated
-    // - Waits 5 more days → Email reminder if not donated
-    // - Adds "zakat-nurture-complete" tag
-
     return { success: true, contactId, leadScore };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error('GHL trackZakatCalculation error:', error);
-    return { success: false, error: error.message || 'Unknown error', leadScore };
+    return { success: false, error: errMsg, leadScore };
   }
 }
 
@@ -239,7 +330,8 @@ export async function trackZakatCalculation(data: {
 
 /**
  * Track completed donation with full campaign attribution
- * Call this when: Stripe webhook confirms payment
+ * Now includes: Stripe ID, campaign-specific tags, fulfillment status,
+ * receipt tracking, retry logic, and persistent logging
  */
 export async function trackDonation(data: {
   email: string;
@@ -257,12 +349,16 @@ export async function trackDonation(data: {
     postal_code?: string;
     country?: string;
   } | null;
+  // New enterprise fields
+  stripePaymentId?: string;
+  donationId?: string;
+  currency?: string;
 }) {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
   const today = new Date().toISOString().split('T')[0];
+  const year = new Date().getFullYear();
 
-  // Determine recurring status
   const isRecurring = data.donationType === 'monthly' || data.donationType === 'weekly';
   const isMonthly = data.donationType === 'monthly';
   const isWeekly = data.donationType === 'weekly';
@@ -275,7 +371,7 @@ export async function trackDonation(data: {
   let firstDonationDate = today;
 
   if (existing?.customFields) {
-    for (const f of existing.customFields as any[]) {
+    for (const f of existing.customFields as { key: string; value: string }[]) {
       if (f.key === 'total_lifetime_giving') lifetimeGiving = parseFloat(f.value || '0');
       if (f.key === 'donation_count') donationCount = parseInt(f.value || '0');
       if (f.key === 'campaigns_donated') campaignsDonated = f.value || '';
@@ -288,22 +384,20 @@ export async function trackDonation(data: {
   const newLifetime = lifetimeGiving + data.amount;
   const newCount = donationCount + 1;
 
-  // Add campaign to donated list
+  // Campaign tracking
   const campaignsArray = campaignsDonated ? campaignsDonated.split(', ') : [];
   if (!campaignsArray.includes(data.campaignSlug)) {
     campaignsArray.push(data.campaignSlug);
   }
+  const favoriteCause = campaignsArray[campaignsArray.length - 1];
 
-  // Determine favorite cause (most donated to)
-  const favoriteCause = campaignsArray[campaignsArray.length - 1]; // Simple: last one
-
-  // Calculate donor tier
+  // Donor tier
   let donorTier = 'donor';
   if (newLifetime >= 10000) donorTier = 'vip';
   else if (newLifetime >= 5000) donorTier = 'major';
   else if (newLifetime >= 1000) donorTier = 'regular';
 
-  // Update Zakat tracking if it's a Zakat donation
+  // Zakat tracking
   let newZakatRemaining = zakatRemaining;
   let zakatPaid = 0;
   if (data.campaignSlug.includes('zakat') || data.campaignName.toLowerCase().includes('zakat')) {
@@ -311,11 +405,11 @@ export async function trackDonation(data: {
     newZakatRemaining = Math.max(0, zakatRemaining - data.amount);
   }
 
-  // Determine recurring type label
   let recurringTypeLabel = 'none';
   if (isMonthly) recurringTypeLabel = 'monthly';
   if (isWeekly) recurringTypeLabel = 'weekly';
 
+  // ---- CUSTOM FIELDS ----
   const customFields = [
     { key: 'total_lifetime_giving', field_value: newLifetime.toString() },
     { key: 'last_donation_amount', field_value: data.amount.toString() },
@@ -329,21 +423,26 @@ export async function trackDonation(data: {
     { key: 'lead_stage', field_value: newCount > 1 ? 'advocate' : 'donor' },
     { key: 'cart_abandoned', field_value: 'no' },
     { key: 'engagement_score', field_value: Math.min(100, 50 + newCount * 10).toString() },
-    // Recurring donation tracking
+    // Recurring
     { key: 'is_recurring_donor', field_value: isRecurring ? 'yes' : 'no' },
     { key: 'is_monthly_donor', field_value: isMonthly ? 'yes' : 'no' },
     { key: 'is_weekly_donor', field_value: isWeekly ? 'yes' : 'no' },
     { key: 'recurring_type', field_value: recurringTypeLabel },
+    // Enterprise fields
+    { key: 'stripe_payment_id', field_value: data.stripePaymentId || '' },
+    { key: 'fulfillment_status', field_value: 'pending' },
+    { key: 'receipt_sent', field_value: 'no' },
+    { key: 'currency', field_value: data.currency || 'USD' },
   ];
 
-  // Add Jummah-specific tracking
+  // Jummah-specific
   if (isWeekly) {
     customFields.push({ key: 'is_jummah_donor', field_value: 'yes' });
     customFields.push({ key: 'jummah_donation_amount', field_value: data.amount.toString() });
     customFields.push({ key: 'jummah_start_date', field_value: today });
   }
 
-  // Add monthly-specific tracking
+  // Monthly-specific
   if (isMonthly) {
     customFields.push({ key: 'monthly_donation_amount', field_value: data.amount.toString() });
     customFields.push({ key: 'monthly_start_date', field_value: today });
@@ -354,18 +453,47 @@ export async function trackDonation(data: {
     customFields.push({ key: 'zakat_remaining', field_value: newZakatRemaining.toString() });
   }
 
-  // Build tags
-  const tags = ['donor', 'website', `donor-${new Date().getFullYear()}`];
+  // ---- CAMPAIGN-SPECIFIC TAGS ----
+  const tags = ['donor', 'website', `donor-${year}`];
+
+  // Campaign tag: campaign_slug_year (e.g., campaign_gaza_emergency_2026)
+  const campaignTag = `campaign_${data.campaignSlug.replace(/-/g, '_')}_${year}`;
+  tags.push(campaignTag);
+
+  // Also check if campaign has a custom ghl_tag in database
+  try {
+    const { data: campaignRecord } = await supabaseAdmin
+      .from('campaigns')
+      .select('ghl_tag')
+      .eq('slug', data.campaignSlug)
+      .single();
+    if (campaignRecord?.ghl_tag) {
+      tags.push(campaignRecord.ghl_tag);
+    }
+  } catch {
+    // Campaign not found, skip custom tag
+  }
+
+  // Donation type tags
+  if (!isRecurring) tags.push('one-time-donor');
   if (isRecurring) tags.push('recurring-donor');
   if (isMonthly) tags.push('monthly-donor');
   if (isWeekly) {
     tags.push('weekly-donor');
     tags.push('jummah-donor');
   }
+
+  // Tier tags
   if (newLifetime >= 1000) tags.push('major-donor');
   if (newLifetime >= 5000) tags.push('vip-donor');
   if (newCount > 1) tags.push('repeat-donor');
 
+  // Zakat tag
+  if (data.campaignSlug.includes('zakat') || data.campaignName.toLowerCase().includes('zakat')) {
+    tags.push('zakat-donor');
+  }
+
+  // ---- CONTACT DATA ----
   const nameParts = data.name.split(' ');
   const contactData: Record<string, unknown> = {
     firstName: nameParts[0] || '',
@@ -378,7 +506,6 @@ export async function trackDonation(data: {
     customFields,
   };
 
-  // Add address if provided
   if (data.address) {
     if (data.address.line1) contactData.address1 = data.address.line1;
     if (data.address.city) contactData.city = data.address.city;
@@ -387,28 +514,29 @@ export async function trackDonation(data: {
     if (data.address.country) contactData.country = data.address.country;
   }
 
+  // ---- CREATE/UPDATE CONTACT ----
   let contactId: string;
+  const syncContext = { action: 'track_donation', email: data.email, donationId: data.donationId };
 
   if (existing?.id) {
     await ghlFetch(`/contacts/${existing.id}`, {
       method: 'PUT',
       body: JSON.stringify(contactData),
-    });
+    }, syncContext);
     contactId = existing.id;
   } else {
     const res = await ghlFetch('/contacts/', {
       method: 'POST',
       body: JSON.stringify(contactData),
-    });
+    }, syncContext);
     const result = await res.json();
     contactId = result.contact?.id;
   }
 
-  // Add detailed note
   if (contactId) {
+    // ---- DETAILED NOTE ----
     const itemsList = data.items?.map(i => `  • ${i.name}: $${i.amount}`).join('\n') || `  • ${data.campaignName}: $${data.amount}`;
 
-    // Determine donation type label for note
     let donationTypeLabel = 'One-time';
     if (isMonthly) donationTypeLabel = '🔄 Monthly Recurring';
     if (isWeekly) donationTypeLabel = '🕌 Jummah (Every Friday)';
@@ -416,12 +544,27 @@ export async function trackDonation(data: {
     await ghlFetch(`/contacts/${contactId}/notes`, {
       method: 'POST',
       body: JSON.stringify({
-        body: `💰 DONATION RECEIVED\n${'━'.repeat(30)}\nAmount: $${data.amount.toLocaleString()}\nType: ${donationTypeLabel}\nCampaign: ${data.campaignName}\n\nItems:\n${itemsList}\n\n📊 DONOR STATS\n${'━'.repeat(30)}\nLifetime Giving: $${newLifetime.toLocaleString()}\nTotal Donations: ${newCount}\nTier: ${donorTier.toUpperCase()}\nCampaigns Supported: ${campaignsArray.length}${isRecurring ? `\n\n🔄 RECURRING: ${isWeekly ? 'Every Friday (Jummah)' : 'Monthly'}` : ''}${zakatPaid > 0 ? `\n🕌 ZAKAT: Paid $${zakatPaid}, Remaining $${newZakatRemaining}` : ''}`
+        body: `💰 DONATION RECEIVED\n${'━'.repeat(30)}\nAmount: $${data.amount.toLocaleString()}\nType: ${donationTypeLabel}\nCampaign: ${data.campaignName}${data.stripePaymentId ? `\nStripe ID: ${data.stripePaymentId}` : ''}\n\nItems:\n${itemsList}\n\n📊 DONOR STATS\n${'━'.repeat(30)}\nLifetime Giving: $${newLifetime.toLocaleString()}\nTotal Donations: ${newCount}\nTier: ${donorTier.toUpperCase()}\nCampaigns Supported: ${campaignsArray.length}${isRecurring ? `\n\n🔄 RECURRING: ${isWeekly ? 'Every Friday (Jummah)' : 'Monthly'}` : ''}${zakatPaid > 0 ? `\n🕌 ZAKAT: Paid $${zakatPaid}, Remaining $${newZakatRemaining}` : ''}`
       }),
     });
 
-    // Create pipeline opportunity if a pipeline exists
+    // ---- PIPELINE OPPORTUNITY ----
     await createDonationOpportunity(contactId, data, donationTypeLabel);
+
+    // ---- MAJOR DONOR TASK ----
+    if (data.amount >= 5000 || newLifetime >= 10000) {
+      await createMajorDonorTask(contactId, data.name, data.amount, newLifetime, donorTier);
+    }
+
+    // Log success
+    await logGHLSync({
+      action: 'track_donation_complete',
+      contactEmail: data.email,
+      ghlContactId: contactId,
+      status: 'success',
+      stripePaymentId: data.stripePaymentId,
+      donationId: data.donationId,
+    });
   }
 
   return {
@@ -434,12 +577,158 @@ export async function trackDonation(data: {
 }
 
 // ============================================
+// REFUND HANDLING
+// ============================================
+
+/**
+ * Sync refund to GHL: update custom fields, add tag, move pipeline stage, add note
+ */
+export async function trackRefund(data: {
+  email: string;
+  name: string;
+  refundAmount: number;
+  originalAmount: number;
+  stripeChargeId: string;
+  stripePaymentId?: string;
+  campaignName?: string;
+}) {
+  const existing = await findContactByEmail(data.email);
+  if (!existing?.id) {
+    console.error('GHL trackRefund: Contact not found for', data.email);
+    return { success: false, error: 'Contact not found' };
+  }
+
+  const contactId = existing.id;
+
+  // Recalculate lifetime giving
+  let lifetimeGiving = 0;
+  let donationCount = 0;
+  if (existing.customFields) {
+    for (const f of existing.customFields as { key: string; value: string }[]) {
+      if (f.key === 'total_lifetime_giving') lifetimeGiving = parseFloat(f.value || '0');
+      if (f.key === 'donation_count') donationCount = parseInt(f.value || '0');
+    }
+  }
+
+  const adjustedLifetime = Math.max(0, lifetimeGiving - data.refundAmount);
+
+  // Recalculate tier after refund
+  let donorTier = 'donor';
+  if (adjustedLifetime >= 10000) donorTier = 'vip';
+  else if (adjustedLifetime >= 5000) donorTier = 'major';
+  else if (adjustedLifetime >= 1000) donorTier = 'regular';
+
+  const customFields = [
+    { key: 'total_lifetime_giving', field_value: adjustedLifetime.toString() },
+    { key: 'fulfillment_status', field_value: 'refunded' },
+    { key: 'donor_tier', field_value: donorTier },
+  ];
+
+  const tags = ['donation-refunded'];
+
+  try {
+    // Update contact
+    await ghlFetch(`/contacts/${contactId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ customFields, tags }),
+    }, { action: 'track_refund', email: data.email });
+
+    // Add refund note
+    await ghlFetch(`/contacts/${contactId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({
+        body: `🔴 REFUND PROCESSED\n${'━'.repeat(30)}\nRefund Amount: $${data.refundAmount.toLocaleString()}\nOriginal Amount: $${data.originalAmount.toLocaleString()}\nCampaign: ${data.campaignName || 'N/A'}\nStripe Charge: ${data.stripeChargeId}\nDate: ${new Date().toLocaleDateString()}\n\n📊 ADJUSTED STATS\n${'━'.repeat(30)}\nAdjusted Lifetime: $${adjustedLifetime.toLocaleString()}\nTier: ${donorTier.toUpperCase()}`
+      }),
+    });
+
+    // Move opportunity to refunded stage if pipeline supports it
+    await moveOpportunityToRefunded(contactId);
+
+    // Log
+    await logGHLSync({
+      action: 'track_refund_complete',
+      contactEmail: data.email,
+      ghlContactId: contactId,
+      status: 'success',
+      stripePaymentId: data.stripePaymentId,
+    });
+
+    return { success: true, contactId, adjustedLifetime, donorTier };
+  } catch (error) {
+    console.error('GHL trackRefund error:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+// ============================================
+// RECEIPT TRACKING
+// ============================================
+
+/**
+ * Update GHL contact when receipt is sent
+ */
+export async function markReceiptSent(email: string) {
+  const existing = await findContactByEmail(email);
+  if (!existing?.id) return;
+
+  await ghlFetch(`/contacts/${existing.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      customFields: [
+        { key: 'receipt_sent', field_value: 'yes' },
+      ],
+    }),
+  }, { action: 'mark_receipt_sent', email });
+}
+
+// ============================================
 // PIPELINE / OPPORTUNITY FUNCTIONS
 // ============================================
 
-// Cache pipeline ID to avoid repeated lookups
+// Cache pipeline ID and stage IDs
 let cachedPipelineId: string | null = null;
-let cachedStageId: string | null = null;
+let cachedStages: Map<string, string> = new Map();
+
+async function loadPipelineConfig() {
+  if (cachedPipelineId) return;
+
+  const { locationId } = getGHLCredentials();
+  const pipelinesRes = await ghlFetch(`/opportunities/pipelines?locationId=${locationId}`);
+  if (!pipelinesRes.ok) return;
+
+  const pipelinesData = await pipelinesRes.json();
+  const donationPipeline = pipelinesData.pipelines?.find(
+    (p: { name: string }) => p.name.toLowerCase().includes('donation')
+  );
+
+  if (!donationPipeline) {
+    console.log('No donation pipeline found in GHL - skipping opportunity creation');
+    return;
+  }
+
+  cachedPipelineId = donationPipeline.id;
+
+  // Cache all stages by name (lowercase)
+  for (const stage of donationPipeline.stages || []) {
+    cachedStages.set(stage.name.toLowerCase(), stage.id);
+  }
+
+  console.log('GHL Pipeline loaded:', cachedPipelineId, 'Stages:', [...cachedStages.keys()].join(', '));
+}
+
+function getStageId(stageName: string): string | undefined {
+  // Try exact match first, then partial match
+  const exact = cachedStages.get(stageName.toLowerCase());
+  if (exact) return exact;
+
+  for (const [name, id] of cachedStages) {
+    if (name.includes(stageName.toLowerCase())) return id;
+  }
+
+  // Fallback to first stage
+  const firstStage = cachedStages.values().next().value;
+  return firstStage;
+}
 
 async function createDonationOpportunity(
   contactId: string,
@@ -448,25 +737,12 @@ async function createDonationOpportunity(
 ) {
   try {
     const { locationId } = getGHLCredentials();
+    await loadPipelineConfig();
 
-    // Find the "Donations" pipeline (cache it)
-    if (!cachedPipelineId) {
-      const pipelinesRes = await ghlFetch(`/opportunities/pipelines?locationId=${locationId}`);
-      if (!pipelinesRes.ok) return;
-      const pipelinesData = await pipelinesRes.json();
-      const donationPipeline = pipelinesData.pipelines?.find(
-        (p: { name: string }) => p.name.toLowerCase().includes('donation')
-      );
-      if (!donationPipeline) {
-        console.log('No donation pipeline found in GHL - skipping opportunity creation');
-        return;
-      }
-      cachedPipelineId = donationPipeline.id;
-      // Use first stage (e.g., "New Donation")
-      cachedStageId = donationPipeline.stages?.[0]?.id || null;
-    }
+    if (!cachedPipelineId) return;
 
-    if (!cachedPipelineId || !cachedStageId) return;
+    const firstStageId = getStageId('new donation') || getStageId('donations');
+    if (!firstStageId) return;
 
     const itemNames = data.items?.map(i => i.name).join(', ') || data.campaignName;
 
@@ -476,13 +752,13 @@ async function createDonationOpportunity(
         pipelineId: cachedPipelineId,
         locationId,
         name: `$${data.amount} - ${itemNames} (${donationTypeLabel})`,
-        pipelineStageId: cachedStageId,
+        pipelineStageId: firstStageId,
         status: 'open',
         contactId,
         monetaryValue: data.amount,
         source: 'Website Donation',
       }),
-    });
+    }, { action: 'create_opportunity', email: data.email });
 
     console.log('GHL opportunity created for', data.email);
   } catch (err) {
@@ -490,11 +766,138 @@ async function createDonationOpportunity(
   }
 }
 
+/**
+ * Move a donor's latest opportunity to a specific pipeline stage
+ * Called by the fulfillment processor and webhook handlers
+ */
+export async function moveDonationThroughPipeline(email: string, targetStage: string) {
+  const existing = await findContactByEmail(email);
+  if (!existing?.id) return;
+
+  await loadPipelineConfig();
+  if (!cachedPipelineId) return;
+
+  const { locationId } = getGHLCredentials();
+  const stageId = getStageId(targetStage);
+  if (!stageId) {
+    console.log(`GHL: Stage "${targetStage}" not found in pipeline`);
+    return;
+  }
+
+  // Find open opportunities for this contact
+  const searchRes = await ghlFetch(
+    `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${existing.id}&status=open`
+  );
+
+  if (!searchRes.ok) return;
+  const searchData = await searchRes.json();
+  const opportunities = searchData.opportunities || [];
+
+  // Move the most recent opportunity to the target stage
+  if (opportunities.length > 0) {
+    const latestOpp = opportunities[0];
+    await ghlFetch(`/opportunities/${latestOpp.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        pipelineStageId: stageId,
+        pipelineId: cachedPipelineId,
+        locationId,
+      }),
+    }, { action: `pipeline_move_${targetStage}`, email });
+
+    console.log(`GHL opportunity moved to "${targetStage}" for ${email}`);
+  }
+}
+
+/**
+ * Mark a contact as fulfilled in GHL custom fields
+ */
+export async function markFulfilled(email: string) {
+  const existing = await findContactByEmail(email);
+  if (!existing?.id) return;
+
+  await ghlFetch(`/contacts/${existing.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      customFields: [
+        { key: 'fulfillment_status', field_value: 'fulfilled' },
+      ],
+    }),
+  }, { action: 'mark_fulfilled', email });
+}
+
+async function moveOpportunityToRefunded(contactId: string) {
+  try {
+    await loadPipelineConfig();
+    if (!cachedPipelineId) return;
+
+    // Look for a "refunded" stage — if it doesn't exist, we just close the opportunity
+    const { locationId } = getGHLCredentials();
+
+    // Find open opportunities for this contact
+    const searchRes = await ghlFetch(
+      `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${contactId}&status=open`
+    );
+
+    if (!searchRes.ok) return;
+    const searchData = await searchRes.json();
+    const opportunities = searchData.opportunities || [];
+
+    for (const opp of opportunities) {
+      // Close the opportunity as lost (refunded)
+      await ghlFetch(`/opportunities/${opp.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: 'lost',
+          pipelineId: cachedPipelineId,
+          locationId,
+        }),
+      });
+      console.log('GHL opportunity closed (refunded):', opp.id);
+    }
+  } catch (err) {
+    console.error('GHL moveOpportunityToRefunded error:', err);
+  }
+}
+
+// ============================================
+// MAJOR DONOR TASK CREATION
+// ============================================
+
+async function createMajorDonorTask(
+  contactId: string,
+  donorName: string,
+  donationAmount: number,
+  lifetimeGiving: number,
+  donorTier: string,
+) {
+  try {
+    const { locationId } = getGHLCredentials();
+
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 1); // Due tomorrow
+
+    await ghlFetch('/contacts/' + contactId + '/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: `🎯 Follow up: ${donorName} - $${donationAmount.toLocaleString()} donation`,
+        body: `Major donation received!\n\nDonor: ${donorName}\nAmount: $${donationAmount.toLocaleString()}\nLifetime Giving: $${lifetimeGiving.toLocaleString()}\nTier: ${donorTier.toUpperCase()}\n\nAction: Personal thank you call + relationship manager assignment`,
+        dueDate: dueDate.toISOString(),
+        completed: false,
+      }),
+    }, { action: 'major_donor_task', email: donorName });
+
+    console.log('GHL major donor task created for', donorName);
+  } catch (err) {
+    console.error('GHL major donor task creation error:', err);
+  }
+}
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-async function findContactByEmail(email: string): Promise<any> {
+async function findContactByEmail(email: string): Promise<Record<string, unknown> | null> {
   try {
     const { locationId } = getGHLCredentials();
     const searchRes = await ghlFetch(
@@ -522,5 +925,4 @@ async function findContactByEmail(email: string): Promise<any> {
   }
 }
 
-// Export for use
 export { findContactByEmail };

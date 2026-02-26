@@ -718,3 +718,118 @@ www.qurbani.com`;
     emailType: 'Refund Confirmation',
   });
 }
+
+// ============================================
+// FULFILLMENT CONFIRMATION EMAIL
+// ============================================
+
+export async function sendFulfillmentEmail(data: {
+  donorEmail: string;
+  donorName: string;
+  amount: number;
+  items: Array<{ name: string; amount: number }>;
+  campaignName: string;
+  fulfilledAt: Date;
+  certificateUrl?: string;
+}): Promise<{ success: boolean }> {
+  const { donorEmail, donorName, amount, items, campaignName, fulfilledAt, certificateUrl } = data;
+  const firstName = donorName.split(' ')[0] || 'Dear Donor';
+  const fulfillmentDate = fulfilledAt.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'America/New_York',
+  });
+
+  const itemsHtml = items.map(item =>
+    `<tr>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">$${(typeof item.amount === 'number' ? item.amount : parseFloat(String(item.amount))).toFixed(2)}</td>
+    </tr>`
+  ).join('');
+
+  const certificateBlock = certificateUrl
+    ? `<div style="text-align: center; margin: 24px 0;">
+        <a href="${certificateUrl}" style="background: #16a34a; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">View Your Certificate</a>
+      </div>`
+    : '';
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; margin: 0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div style="background: linear-gradient(135deg, #16a34a, #15803d); padding: 32px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">Your Donation Has Been Fulfilled! ✓</h1>
+    </div>
+    <div style="padding: 32px;">
+      <p style="font-size: 16px; color: #374151;">Assalamu Alaikum ${firstName},</p>
+      <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+        Alhamdulillah, we are pleased to inform you that your donation has been successfully fulfilled and distributed to those in need.
+      </p>
+
+      <div style="background: #f0fdf4; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid #bbf7d0;">
+        <p style="margin: 0 0 4px; color: #15803d; font-weight: 600;">Fulfillment Completed</p>
+        <p style="margin: 0; color: #166534; font-size: 14px;">${fulfillmentDate}</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <thead>
+          <tr style="background: #f9fafb;">
+            <th style="padding: 8px 12px; text-align: left; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 13px;">Item</th>
+            <th style="padding: 8px 12px; text-align: right; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 13px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+        <tfoot>
+          <tr>
+            <td style="padding: 12px; font-weight: 700; border-top: 2px solid #e5e7eb;">Total</td>
+            <td style="padding: 12px; font-weight: 700; text-align: right; border-top: 2px solid #e5e7eb; color: #16a34a;">$${amount.toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      ${certificateBlock}
+
+      <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
+        May Allah accept your generosity and reward you abundantly. Your contribution makes a real difference in the lives of those who need it most.
+      </p>
+
+      <p style="font-size: 14px; color: #6b7280;">JazakAllahu Khairan,<br><strong>Qurbani Foundation</strong></p>
+    </div>
+    <div style="background: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+      <p style="margin: 0; font-size: 12px; color: #9ca3af;">Qurbani Foundation USA | www.qurbani.com | 1-800-900-0027</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const plainText = `Assalamu Alaikum ${firstName},
+
+Your donation has been fulfilled!
+
+FULFILLMENT DETAILS
+${'-'.repeat(30)}
+Campaign: ${campaignName}
+Amount: $${amount.toFixed(2)}
+Fulfilled: ${fulfillmentDate}
+
+Items:
+${items.map(i => `  - ${i.name}: $${(typeof i.amount === 'number' ? i.amount : parseFloat(String(i.amount))).toFixed(2)}`).join('\n')}
+
+May Allah accept your generosity and reward you abundantly.
+
+JazakAllahu Khairan,
+Qurbani Foundation
+www.qurbani.com`;
+
+  return sendEmailAndLogToGHL({
+    to: donorEmail,
+    subject: `Your ${campaignName} donation has been fulfilled ✓`,
+    html,
+    plainText,
+    emailType: 'Fulfillment Confirmation',
+  });
+}
