@@ -40,35 +40,70 @@ const hasCampaignGrid = [...widgets.left, ...widgets.center, ...widgets.right]
 const isInteractive = hasCategoryTabs && hasCampaignGrid;
 
 /**
- * Override category-tabs widget configs with live DB categories.
- * This ensures that when a category slug/label/color changes in admin,
- * the mega menu automatically reflects it without manual widget updates.
+ * Refresh category-tabs widget configs with live DB data.
+ *
+ * Strategy: Preserve the admin's category selection and order from the widget config,
+ * but refresh each category's slug/label/color/icon from the live DB.
+ * This way:
+ *   - Admin controls WHICH categories appear and in WHAT ORDER (menu builder works)
+ *   - If a category slug/label/color changes, it automatically reflects here
+ *   - If a selected category was deleted or deactivated, it's removed
+ *   - Zero extra DB queries (dbCategories already fetched in getNavbarData)
  */
-function overrideCategoryTabs(widgetList: MenuWidget[]): MenuWidget[] {
+function refreshCategoryTabs(widgetList: MenuWidget[]): MenuWidget[] {
+  if (dbCategories.length === 0) return widgetList;
+
+  // Build a lookup map: old slug → live DB category data
+  const dbCatMap = new Map<string, CategoryInfo>();
+  for (const cat of dbCategories) {
+    dbCatMap.set(cat.slug, cat);
+  }
+
   return widgetList.map(widget => {
-    if (widget.widget_type === 'category-tabs' && dbCategories.length > 0) {
+    if (widget.widget_type !== 'category-tabs') return widget;
+
+    const storedCategories = widget.config?.categories || [];
+    if (storedCategories.length === 0) {
+      // No admin selection stored — use all DB categories as default
       return {
         ...widget,
         config: {
           ...widget.config,
           categories: dbCategories.map(cat => ({
-            slug: cat.slug,
-            label: cat.label,
-            color: cat.color,
-            icon: cat.icon,
+            slug: cat.slug, label: cat.label, color: cat.color, icon: cat.icon,
           })),
         }
       };
     }
-    return widget;
+
+    // Refresh each admin-selected category with live DB data
+    const refreshedCategories = storedCategories
+      .map((stored: CategoryInfo) => {
+        const live = dbCatMap.get(stored.slug);
+        if (live) {
+          // Category exists in DB — use live data (slug, label, color, icon may have changed)
+          return { slug: live.slug, label: live.label, color: live.color, icon: live.icon };
+        }
+        // Category slug was changed or category was removed — skip it
+        return null;
+      })
+      .filter(Boolean);
+
+    return {
+      ...widget,
+      config: {
+        ...widget.config,
+        categories: refreshedCategories,
+      }
+    };
   });
 }
 
-// Override category-tabs in all columns with live DB data
+// Refresh category-tabs in all columns with live DB data (preserves admin selection & order)
 const liveWidgets = {
-  left: overrideCategoryTabs(widgets.left),
-  center: overrideCategoryTabs(widgets.center),
-  right: overrideCategoryTabs(widgets.right),
+  left: refreshCategoryTabs(widgets.left),
+  center: refreshCategoryTabs(widgets.center),
+  right: refreshCategoryTabs(widgets.right),
 };
 
 // Get the category tabs config (now from live DB)
