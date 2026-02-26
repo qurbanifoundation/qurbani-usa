@@ -1423,7 +1423,7 @@ async function handlePayment() {
     if (!response.ok) throw new Error(data.error || 'Payment failed');
 
     // Confirm payment
-    const { error, paymentIntent } = await window.donationCart.stripe.confirmCardPayment(data.clientSecret, {
+    const result = await window.donationCart.stripe.confirmCardPayment(data.clientSecret, {
       payment_method: {
         card: window.donationCart.cardElement,
         billing_details: {
@@ -1435,9 +1435,12 @@ async function handlePayment() {
       },
     });
 
-    if (error) throw new Error(error.message);
+    if (result.error) throw new Error(result.error.message);
 
-    if (paymentIntent.status === 'succeeded') {
+    const paymentIntent = result.paymentIntent;
+    if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
+
+    if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
       // Track purchase in GA4
       if (window.trackPurchase) {
         window.trackPurchase(paymentIntent.id, items, total);
