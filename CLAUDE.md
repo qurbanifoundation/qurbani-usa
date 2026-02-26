@@ -88,10 +88,19 @@ src/
 
 **Always check `scripts/` before creating new migration scripts.**
 
+## Branching & Deployment (CRITICAL)
+- **NEVER commit or push directly to `main`** — it auto-deploys to production (`www.qurbani.com`)
+- **Always work on the `dev` branch** — it auto-deploys a preview to `dev.qurbani-usa.pages.dev`
+- Local runs on Node.js but production runs on Cloudflare Workers (different runtime) — always verify the preview
+- To deploy to production: `git checkout main && git merge dev && git push origin main`
+- A pre-push hook blocks accidental pushes to `main` from other branches
+- Run `npm run verify` before merging — it builds and tests under the actual Workers runtime
+
 ## Common Commands
 ```bash
-npm run dev     # Development
+npm run dev     # Development (localhost:4321)
 npm run build   # Build
+npm run verify  # Build + test under Cloudflare Workers runtime (run before merging to main)
 ```
 
 ## Environment Variables
