@@ -148,6 +148,21 @@ export const PUT: APIRoute = async ({ request }) => {
 
     updateData.updated_at = new Date().toISOString();
 
+    // Auto-update url_path when category changes (and url_path is not explicitly set in this request)
+    if (updateData.category && !updateData.url_path) {
+      // Get the current campaign to know the slug
+      const { data: current } = await supabaseAdmin
+        .from('campaigns')
+        .select('slug, url_path')
+        .eq('id', id)
+        .single();
+
+      if (current) {
+        const slug = updateData.slug || current.slug;
+        updateData.url_path = `/${updateData.category}/${slug}`;
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from('campaigns')
       .update(updateData)

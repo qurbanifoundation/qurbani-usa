@@ -65,6 +65,12 @@ if (!campaign) {
   return Astro.redirect('/appeals');
 }
 
+// If campaign has a different url_path, redirect to the canonical URL
+const currentPath = `/appeals/${slug}`;
+if (campaign.url_path && campaign.url_path !== currentPath) {
+  return Astro.redirect(campaign.url_path, 301);
+}
+
 // Transform database fields to match template props
 const campaignProps = {
   id: campaign.id,

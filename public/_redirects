@@ -69,7 +69,8 @@
 /projects/*          /appeals 301
 
 # Food/Emergency
-/food-pack*          /food-packs 301
+/food-pack*          /ramadan/food-packs 301
+/food-packs          /ramadan/food-packs 301
 /emergency*          /appeals 301
 /crisis*             /appeals 301
 /disaster*           /appeals 301
@@ -82,9 +83,9 @@
 /news*               /media 301
 /blog*               /media 301
 
-# Aqiqah
-/aqeeqah*            /appeals/aqiqah 301
-/aqiqa*              /appeals/aqiqah 301
+# Aqiqah - now at root level
+/aqeeqah*            /aqiqah 301
+/appeals/aqiqah*     /aqiqah 301
 
 # Sadaqah (general charity)
 /sadaqah*            /donate 301

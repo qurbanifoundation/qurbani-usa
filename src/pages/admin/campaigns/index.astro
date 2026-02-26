@@ -424,10 +424,10 @@ if (totalPages <= maxVisiblePages) {
                         class="inline-url-edit-btn text-xs text-gray-500 truncate max-w-[200px] cursor-pointer hover:bg-yellow-50 hover:text-gray-700 px-1 -mx-1 rounded transition text-left flex items-center gap-1"
                         data-id={campaign.id}
                         data-slug={campaign.slug}
-                        data-url={campaign.url_path || `/appeals/${campaign.slug}`}
+                        data-url={campaign.url_path || (campaign.category ? `/${campaign.category}/${campaign.slug}` : `/${campaign.slug}`)}
                         title="Click to edit URL"
                       >
-                        <span>{campaign.url_path || `/appeals/${campaign.slug}`}</span>
+                        <span>{campaign.url_path || `/${campaign.category || 'appeals'}/${campaign.slug}`}</span>
                         <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
@@ -490,7 +490,7 @@ if (totalPages <= maxVisiblePages) {
                       </svg>
                     </a>
                     <a
-                      href={campaign.url_path || `/appeals/${campaign.slug}`}
+                      href={campaign.url_path || `/${campaign.category || 'appeals'}/${campaign.slug}`}
                       target="_blank"
                       class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
                       title="View Live"
@@ -603,7 +603,7 @@ if (totalPages <= maxVisiblePages) {
         <!-- Preview -->
         <div class="bg-gray-50 rounded-lg p-3">
           <p class="text-xs font-medium text-gray-500 mb-1">URL Preview:</p>
-          <p id="url-preview" class="text-sm font-mono text-[#01534d]">/appeals/</p>
+          <p id="url-preview" class="text-sm font-mono text-[#01534d]">/</p>
         </div>
 
         <!-- Actions -->
@@ -1077,7 +1077,11 @@ if (totalPages <= maxVisiblePages) {
 
         // Parse current URL to get category and slug
         const urlParts = currentUrl.replace(/^\//, '').split('/');
-        let category = 'appeals';
+        // Find the campaign's category from the row data
+        const row = btn.closest('tr');
+        const categoryBadge = row?.querySelector('td:nth-child(3) span');
+        const campaignCategory = categoryBadge?.textContent?.trim().replace(/\s+/g, '-') || '';
+        let category = campaignCategory;
         let slug = currentSlug;
 
         if (urlParts.length === 2) {

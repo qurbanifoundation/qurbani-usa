@@ -30,6 +30,15 @@ const extraMenus = menuOrder
     order: menuOrder.indexOf(menuId)
   }));
 
+// Create sorted menu list for mobile (all menus in correct order)
+const allMenusSorted = menuOrder.map(menuId => ({
+  id: menuId,
+  name: menuNames[menuId] || menuId,
+  color: menuColors[menuId] || '#01534d',
+  isHardcoded: hardcodedMenus.includes(menuId),
+  hasWidgets: hasWidgets(widgets, menuId)
+}));
+
 // Check if a hardcoded menu should be shown (is active in database)
 const isMenuActive = (menuId: string) => menuOrder.includes(menuId);
 
@@ -708,196 +717,200 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
   <div class="hidden lg:hidden bg-[#f8f6f2] shadow-lg max-h-[85vh] overflow-y-auto" id="mobile-menu">
     <div class="px-4 py-4 space-y-1">
 
-      {/* Our Work - Expandable */}
-      {isMenuActive('our-work') && (
-      <div class="mobile-accordion" data-menu="our-work">
-        <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-          <span style="font-family: 'Oswald', sans-serif;">{menuNames['our-work']?.toUpperCase() || 'OUR WORK'}</span>
-          <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-2">
-          {/* Categories */}
-          <p class="text-xs uppercase text-gray-500 font-semibold tracking-wider pt-2">Categories</p>
-          {categories.map(cat => (
-            <a href={`/appeals?category=${cat.id}`} class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#D97718] transition">
-              <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
-              </div>
-              <span class="text-sm">{cat.label}</span>
-            </a>
-          ))}
-
-          {/* Featured Campaigns */}
-          {mobileFeaturedCampaigns.length > 0 && (
-            <>
-              <p class="text-xs uppercase text-gray-500 font-semibold tracking-wider pt-3 border-t border-gray-200 mt-2">Featured Appeals</p>
-              <div class="grid grid-cols-2 gap-2 pt-1">
-                {mobileFeaturedCampaigns.map(campaign => (
-                  <a href={campaign.slug} class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition border border-gray-100">
-                    <img src={getCampaignImage(campaign)} alt={campaign.name} class="w-full h-16 object-cover" loading="lazy" />
-                    <p class="text-xs text-gray-700 p-2 leading-tight line-clamp-2">{campaign.name}</p>
-                  </a>
-                ))}
-              </div>
-            </>
-          )}
-
-          <a href="/appeals" class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition mt-2">
-            <span class="text-sm font-medium">View All Appeals →</span>
-          </a>
-        </div>
-      </div>
-      )}
-
-      {/* Zakat - Expandable */}
-      {isMenuActive('zakat') && (
-      <div class="mobile-accordion" data-menu="zakat">
-        <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-          <span style="font-family: 'Oswald', sans-serif;">{menuNames['zakat']?.toUpperCase() || 'ZAKAT'}</span>
-          <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
-          <a href="/zakat" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#0096D6] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+      {/* Render all menus in database order */}
+      {allMenusSorted.map(menu => (
+        menu.id === 'ramadan' ? (
+          /* Ramadan Menu */
+          <div class="mobile-accordion" data-menu="ramadan">
+            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
+              <span style="font-family: 'Oswald', sans-serif;" class="text-[#024139]">{menu.name.toUpperCase()}</span>
+              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
+              <a href="/ramadan" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#024139] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#024139]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                </div>
+                <span class="text-sm">Ramadan Home</span>
+              </a>
+              <a href="/ramadan-giving" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#024139] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#024139]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Ramadan Giving</span>
+              </a>
+              <a href="/fidya" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#16a34a] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Fidya</span>
+              </a>
+              <a href="/kaffarah" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#dc2626] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#dc2626]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Kaffarah</span>
+              </a>
+              <a href="/zakat-ul-fitr" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#0096D6] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                </div>
+                <span class="text-sm">Zakat ul-Fitr</span>
+              </a>
+              <a href="/iftar" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#ea580c] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#ea580c]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 3a1 1 0 011-1h.01a1 1 0 010 2H7a1 1 0 01-1-1zm2 3a1 1 0 00-2 0v1a2 2 0 00-2 2v1a2 2 0 00-2 2v.683a3.7 3.7 0 011.055.485 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0A3.7 3.7 0 0118 12.683V12a2 2 0 00-2-2V9a2 2 0 00-2-2V6a1 1 0 10-2 0v1h-1V6a1 1 0 10-2 0v1H8V6z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Iftar Meals</span>
+              </a>
+              <a href="/ramadan/food-packs" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#ca8a04] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#ca8a04]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"></path></svg>
+                </div>
+                <span class="text-sm">Food Packs</span>
+              </a>
             </div>
-            <span class="text-sm">Pay Your Zakat</span>
-          </a>
-          <a href="/zakat-calculator" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#16a34a] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7z"></path></svg>
-            </div>
-            <span class="text-sm">Zakat Calculator</span>
-          </a>
-          <a href="/zakat-faq" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#7c3aed] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#7c3aed]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Zakat FAQ</span>
-          </a>
-          <a href="/what-is-zakat" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#ea580c] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#ea580c]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path></svg>
-            </div>
-            <span class="text-sm">What is Zakat?</span>
-          </a>
-        </div>
-      </div>
-      )}
-
-      {/* Appeals - Expandable */}
-      {isMenuActive('appeals') && (
-      <div class="mobile-accordion" data-menu="appeals">
-        <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-          <span style="font-family: 'Oswald', sans-serif;">{menuNames['appeals']?.toUpperCase() || 'APPEALS'}</span>
-          <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
-          <a href="/ramadan" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#024139] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#024139]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-            </div>
-            <span class="text-sm">Ramadan 2026</span>
-          </a>
-          <a href="/30-days-of-ramadan" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#024139] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#024139]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-            </div>
-            <span class="text-sm">30 Days of Ramadan</span>
-          </a>
-          <a href="/fidya" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#16a34a] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Fidya</span>
-          </a>
-          <a href="/kaffarah" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#dc2626] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#dc2626]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Kaffarah</span>
-          </a>
-          <a href="/zakat-ul-fitr" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#0096D6] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-            </div>
-            <span class="text-sm">Zakat ul-Fitr</span>
-          </a>
-          <a href="/iftar" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#ea580c] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#ea580c]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 3a1 1 0 011-1h.01a1 1 0 010 2H7a1 1 0 01-1-1zm2 3a1 1 0 00-2 0v1a2 2 0 00-2 2v1a2 2 0 00-2 2v.683a3.7 3.7 0 011.055.485 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0A3.7 3.7 0 0118 12.683V12a2 2 0 00-2-2V9a2 2 0 00-2-2V6a1 1 0 10-2 0v1h-1V6a1 1 0 10-2 0v1H8V6z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Feed Iftar</span>
-          </a>
-        </div>
-      </div>
-      )}
-
-      {/* About - Expandable */}
-      {isMenuActive('about') && (
-      <div class="mobile-accordion" data-menu="about">
-        <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-          <span style="font-family: 'Oswald', sans-serif;">{menuNames['about']?.toUpperCase() || 'ABOUT'}</span>
-          <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
-          <a href="/about" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#D97718] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#D97718]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Our Story</span>
-          </a>
-          <a href="/reports" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#16a34a] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Annual Reports</span>
-          </a>
-          <a href="/impact" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#7c3aed] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#7c3aed]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Our Impact</span>
-          </a>
-          <a href="/media" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#dc2626] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#dc2626]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
-            </div>
-            <span class="text-sm">Media Center</span>
-          </a>
-          <a href="/contact" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#333] transition">
-            <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#333]">
-              <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-            </div>
-            <span class="text-sm">Contact Us</span>
-          </a>
-        </div>
-      </div>
-      )}
-
-      {/* Extra/Dynamic Menus */}
-      {extraMenus.map(menu => (
-        <div class="mobile-accordion" data-menu={menu.id}>
-          <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-            <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
-            <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </button>
-          <div class="mobile-accordion-content hidden pl-4 pb-3">
-            <a href={`/${menu.id}`} class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition">
-              <span class="text-sm font-medium">View {menu.name} →</span>
-            </a>
           </div>
-        </div>
+        ) : menu.id === 'our-work' ? (
+          /* Our Work Menu */
+          <div class="mobile-accordion" data-menu="our-work">
+            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
+              <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
+              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="mobile-accordion-content hidden pl-2 pb-3 space-y-1">
+              {/* Categories as expandable sub-accordions */}
+              {categories.map(cat => (
+                <div class="mobile-sub-accordion" data-category={cat.id}>
+                  <button type="button" class="mobile-sub-accordion-btn w-full flex items-center justify-between py-2 text-gray-700 hover:text-[#D97718] transition">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+                      </div>
+                      <span class="text-sm font-medium">{cat.label}</span>
+                    </div>
+                    <svg class="mobile-sub-accordion-icon w-3 h-3 transition-transform text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
+                  <div class="mobile-sub-accordion-content hidden pl-8 pb-2 space-y-1">
+                    {(campaignsByCategory[cat.id] || []).slice(0, 6).map(campaign => (
+                      <a href={campaign.slug} class="block py-1.5 text-sm text-gray-600 hover:text-[#D97718] transition">
+                        {campaign.name}
+                      </a>
+                    ))}
+                    <a href={`/appeals?category=${cat.id}`} class="block py-1.5 text-xs text-[#D97718] font-medium">
+                      View All {cat.label} →
+                    </a>
+                  </div>
+                </div>
+              ))}
+              <a href="/appeals" class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition mt-2 border-t border-gray-200 pt-3">
+                <span class="text-sm font-medium">View All Appeals →</span>
+              </a>
+            </div>
+          </div>
+        ) : menu.id === 'zakat' ? (
+          /* Zakat Menu */
+          <div class="mobile-accordion" data-menu="zakat">
+            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
+              <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
+              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
+              <a href="/zakat" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#0096D6] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#0096D6]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                </div>
+                <span class="text-sm">Pay Your Zakat</span>
+              </a>
+              <a href="/zakat-calculator" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#16a34a] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7z"></path></svg>
+                </div>
+                <span class="text-sm">Zakat Calculator</span>
+              </a>
+              <a href="/zakat-faq" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#7c3aed] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#7c3aed]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Zakat FAQ</span>
+              </a>
+              <a href="/what-is-zakat" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#ea580c] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#ea580c]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path></svg>
+                </div>
+                <span class="text-sm">What is Zakat?</span>
+              </a>
+            </div>
+          </div>
+        ) : menu.id === 'about' ? (
+          /* About Menu */
+          <div class="mobile-accordion" data-menu="about">
+            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
+              <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
+              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
+              <a href="/about" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#D97718] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#D97718]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Our Story</span>
+              </a>
+              <a href="/reports" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#16a34a] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#16a34a]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Annual Reports</span>
+              </a>
+              <a href="/impact" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#7c3aed] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#7c3aed]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Our Impact</span>
+              </a>
+              <a href="/media" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#dc2626] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#dc2626]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg>
+                </div>
+                <span class="text-sm">Media Center</span>
+              </a>
+              <a href="/contact" class="flex items-center gap-2 py-2 text-gray-700 hover:text-[#333] transition">
+                <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-[#333]">
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+                </div>
+                <span class="text-sm">Contact Us</span>
+              </a>
+            </div>
+          </div>
+        ) : menu.id === 'appeals' ? (
+          /* Appeals Menu - Skip if not in menuOrder (replaced by Our Work) */
+          null
+        ) : (
+          /* Other dynamic menus */
+          <div class="mobile-accordion" data-menu={menu.id}>
+            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
+              <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
+              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="mobile-accordion-content hidden pl-4 pb-3">
+              <a href={`/${menu.id}`} class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition">
+                <span class="text-sm font-medium">View {menu.name} →</span>
+              </a>
+            </div>
+          </div>
+        )
       ))}
 
       {/* Divider */}
@@ -915,13 +928,6 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
         <a href="/donate" class="block bg-white text-[#D97718] font-semibold py-3 rounded-lg text-center uppercase text-sm transition hover:bg-gray-100" style="font-family: 'Oswald', sans-serif;">
           Custom Amount
         </a>
-      </div>
-
-      {/* Secondary Links */}
-      <div class="flex justify-between mt-4 text-xs text-gray-500">
-        <a href="/zakat-calculator" class="hover:text-[#D97718] transition">Zakat Calculator</a>
-        <a href="/contact" class="hover:text-[#D97718] transition">Contact Us</a>
-        <a href="/about" class="hover:text-[#D97718] transition">About</a>
       </div>
     </div>
   </div>
@@ -1369,6 +1375,25 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
         content.classList.toggle('hidden');
         if (icon) {
           icon.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+      });
+    });
+
+    // Mobile Sub-Accordion Functionality (for categories with campaigns)
+    document.querySelectorAll('.mobile-sub-accordion-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const subAccordion = btn.closest('.mobile-sub-accordion');
+        const content = subAccordion?.querySelector('.mobile-sub-accordion-content');
+        const icon = btn.querySelector('.mobile-sub-accordion-icon');
+
+        if (!content) return;
+
+        // Toggle current sub-accordion
+        const isOpen = content.classList.contains('hidden');
+        content.classList.toggle('hidden');
+        if (icon) {
+          icon.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
         }
       });
     });

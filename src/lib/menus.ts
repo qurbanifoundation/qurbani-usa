@@ -115,7 +115,7 @@ export async function getNavbarData(): Promise<NavbarData> {
 
       supabaseAdmin
         .from('campaigns')
-        .select('slug, name, featured_image, hero_image_url, image_url, category')
+        .select('slug, name, featured_image, hero_image_url, image_url, category, url_path')
         .eq('is_active', true)
         .order('is_featured', { ascending: false })
         .order('sort_order', { ascending: true })
@@ -188,7 +188,8 @@ export async function getNavbarData(): Promise<NavbarData> {
         }
         if (campaignsByCategory[cat].length < 8) {
           campaignsByCategory[cat].push({
-            slug: `/campaigns/${campaign.slug}`, // Campaigns use /campaigns/slug path
+            // Use url_path if set, otherwise build from category/slug
+            slug: campaign.url_path || (campaign.category ? `/${campaign.category}/${campaign.slug}` : `/${campaign.slug}`),
             name: campaign.name,
             image: campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''
           });
