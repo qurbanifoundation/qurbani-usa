@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active: 'general' | 'templates' | 'header-footer' | 'gallery' | 'media' | 'integrations' | 'payments';
+  active: 'general' | 'templates' | 'header-footer' | 'gallery' | 'media' | 'integrations' | 'payments' | 'fulfillment';
 }
 
 const { active } = Astro.props;
@@ -13,11 +13,12 @@ const tabs = [
   { id: 'media', label: 'Media Library', href: '/admin/settings/media' },
   { id: 'integrations', label: 'Integrations', href: '/admin/settings/integrations' },
   { id: 'payments', label: 'Payments', href: '/admin/settings/payments' },
+  { id: 'fulfillment', label: 'Fulfillment', href: '/admin/settings/fulfillment' },
 ];
 ---
 
 <div class="mb-8">
-  <div class="grid grid-cols-4 md:grid-cols-7 gap-2 bg-gray-100 p-2 rounded-xl">
+  <div class="grid grid-cols-4 md:grid-cols-8 gap-2 bg-gray-100 p-2 rounded-xl">
     {tabs.map((tab) => (
       <a
         href={tab.href}
