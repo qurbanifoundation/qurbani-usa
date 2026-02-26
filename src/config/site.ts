@@ -118,7 +118,7 @@ export const siteConfig = {
     quickLinks: [
       { label: 'Cataract Surgery', href: '/appeals/cataract-surgery' },
       { label: 'Water', href: '/appeals/water' },
-      { label: 'Orphan Sponsorship', href: '/appeals/orphan-sponsorship' },
+      { label: 'Orphan Sponsorship', href: '/orphans/sponsor-an-orphan' },
       { label: 'Education', href: '/appeals/education' },
       { label: 'Zakat', href: '/zakat' },
       { label: 'Sadaqah', href: '/sadaqah' },

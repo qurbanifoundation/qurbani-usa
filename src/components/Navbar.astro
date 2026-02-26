@@ -52,6 +52,13 @@ let categories = dbCategories
     icon: cat.icon
   }));
 
+// Helper to get live DB categories for any menu (used by DynamicMegaMenu)
+function getCategoriesForMenu(menuId: string) {
+  return dbCategories
+    .filter(cat => cat.menu === menuId || (!cat.menu && menuId === 'our-work'))
+    .map(cat => ({ slug: cat.slug, label: cat.label, color: cat.color, icon: cat.icon }));
+}
+
 // Transform campaigns for template use
 let campaignsByCategory: Record<string, any[]> = {};
 Object.entries(rawCampaigns).forEach(([cat, campaigns]) => {
@@ -167,7 +174,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
               <!-- OUR WORK MEGA MENU -->
               <div id="our-work-mega-menu" class="mega-menu-panel fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
                 {useCustomWidgets['our-work'] ? (
-                  <DynamicMegaMenu menuId="our-work" menuColor={menuColors['our-work'] || '#D97718'} widgets={getMenuWidgets(widgets, 'our-work')} campaignsByCategory={rawCampaigns} />
+                  <DynamicMegaMenu menuId="our-work" menuColor={menuColors['our-work'] || '#D97718'} widgets={getMenuWidgets(widgets, 'our-work')} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu('our-work')} />
                 ) : (
                 <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
                   <!-- Orange top border -->
@@ -280,7 +287,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
               <!-- ZAKAT MEGA MENU -->
               <div id="zakat-mega-menu" class="mega-menu-panel fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
                 {useCustomWidgets['zakat'] ? (
-                  <DynamicMegaMenu menuId="zakat" menuColor={menuColors['zakat'] || '#0096D6'} widgets={getMenuWidgets(widgets, 'zakat')} campaignsByCategory={rawCampaigns} />
+                  <DynamicMegaMenu menuId="zakat" menuColor={menuColors['zakat'] || '#0096D6'} widgets={getMenuWidgets(widgets, 'zakat')} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu('zakat')} />
                 ) : (
                 <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
                   <div class="h-1 bg-[#0096D6]"></div>
@@ -388,7 +395,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
               <!-- APPEALS MEGA MENU -->
               <div id="appeals-mega-menu" class="mega-menu-panel fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
                 {useCustomWidgets['appeals'] ? (
-                  <DynamicMegaMenu menuId="appeals" menuColor={menuColors['appeals'] || '#024139'} widgets={getMenuWidgets(widgets, 'appeals')} campaignsByCategory={rawCampaigns} />
+                  <DynamicMegaMenu menuId="appeals" menuColor={menuColors['appeals'] || '#024139'} widgets={getMenuWidgets(widgets, 'appeals')} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu('appeals')} />
                 ) : (
                 <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
                   <div class="h-1 bg-[#024139]"></div>
@@ -536,7 +543,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
               <!-- ABOUT US MEGA MENU -->
               <div id="about-mega-menu" class="mega-menu-panel fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
                 {useCustomWidgets['about'] ? (
-                  <DynamicMegaMenu menuId="about" menuColor={menuColors['about'] || '#D97718'} widgets={getMenuWidgets(widgets, 'about')} campaignsByCategory={rawCampaigns} />
+                  <DynamicMegaMenu menuId="about" menuColor={menuColors['about'] || '#D97718'} widgets={getMenuWidgets(widgets, 'about')} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu('about')} />
                 ) : (
                 <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
                   <div class="h-1 bg-[#D97718]"></div>
@@ -654,7 +661,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
                 {/* Dynamic Mega Menu */}
                 <div id={`${menu.id}-mega-menu`} class="mega-menu-panel dynamic-mega-menu fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
                   {menu.hasWidgets ? (
-                    <DynamicMegaMenu menuId={menu.id} menuColor={menu.color} widgets={getMenuWidgets(widgets, menu.id)} campaignsByCategory={rawCampaigns} />
+                    <DynamicMegaMenu menuId={menu.id} menuColor={menu.color} widgets={getMenuWidgets(widgets, menu.id)} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu(menu.id)} />
                   ) : (
                     <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
                       <div class="h-1" style={`background-color: ${menu.color}`}></div>
@@ -1739,7 +1746,7 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
       { name: 'Zakat ul-Fitr', slug: '/zakat-ul-fitr', description: 'Pay Zakat ul-Fitr', type: 'page' },
       { name: 'Feed Iftar', slug: '/iftar', description: 'Sponsor Iftar meals', type: 'page' },
       { name: 'Food Packs', slug: '/food-packs', description: 'Provide food packs to families', type: 'page' },
-      { name: 'Orphan Sponsorship', slug: '/appeals/orphan-sponsorship', description: 'Sponsor an orphan child', type: 'page' },
+      { name: 'Orphan Sponsorship', slug: '/orphans/sponsor-an-orphan', description: 'Sponsor an orphan child', type: 'page' },
       { name: 'Water Wells', slug: '/appeals/water-wells', description: 'Build water wells', type: 'page' },
     ];
 

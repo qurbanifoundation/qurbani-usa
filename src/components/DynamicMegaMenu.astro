@@ -3,10 +3,20 @@
  * DynamicMegaMenu - Renders a mega menu from widget configuration
  * Used when admin has configured widgets for a menu
  * Supports interactive Category Tabs + Campaign Grid combination
+ *
+ * IMPORTANT: category-tabs widgets are dynamically overridden with live DB categories
+ * so that changing a category slug in admin automatically reflects everywhere.
  */
 
 import MegaMenuWidget from './MegaMenuWidget.astro';
 import type { MenuWidget } from '../lib/menus';
+
+interface CategoryInfo {
+  slug: string;
+  label: string;
+  color: string;
+  icon: string;
+}
 
 interface Props {
   menuId: string;
@@ -17,9 +27,10 @@ interface Props {
     right: MenuWidget[];
   };
   campaignsByCategory?: Record<string, Array<{ slug: string; name: string; image: string }>>;
+  dbCategories?: CategoryInfo[];
 }
 
-const { menuId, menuColor, widgets, campaignsByCategory = {} } = Astro.props;
+const { menuId, menuColor, widgets, campaignsByCategory = {}, dbCategories = [] } = Astro.props;
 
 // Check if we have interactive category-tabs + campaign-grid combo
 const hasCategoryTabs = [...widgets.left, ...widgets.center, ...widgets.right]
@@ -28,8 +39,40 @@ const hasCampaignGrid = [...widgets.left, ...widgets.center, ...widgets.right]
   .some(w => w.widget_type === 'campaign-grid');
 const isInteractive = hasCategoryTabs && hasCampaignGrid;
 
-// Get the category tabs config to know which categories are in the menu
-const categoryTabsWidget = [...widgets.left, ...widgets.center, ...widgets.right]
+/**
+ * Override category-tabs widget configs with live DB categories.
+ * This ensures that when a category slug/label/color changes in admin,
+ * the mega menu automatically reflects it without manual widget updates.
+ */
+function overrideCategoryTabs(widgetList: MenuWidget[]): MenuWidget[] {
+  return widgetList.map(widget => {
+    if (widget.widget_type === 'category-tabs' && dbCategories.length > 0) {
+      return {
+        ...widget,
+        config: {
+          ...widget.config,
+          categories: dbCategories.map(cat => ({
+            slug: cat.slug,
+            label: cat.label,
+            color: cat.color,
+            icon: cat.icon,
+          })),
+        }
+      };
+    }
+    return widget;
+  });
+}
+
+// Override category-tabs in all columns with live DB data
+const liveWidgets = {
+  left: overrideCategoryTabs(widgets.left),
+  center: overrideCategoryTabs(widgets.center),
+  right: overrideCategoryTabs(widgets.right),
+};
+
+// Get the category tabs config (now from live DB)
+const categoryTabsWidget = [...liveWidgets.left, ...liveWidgets.center, ...liveWidgets.right]
   .find(w => w.widget_type === 'category-tabs');
 const menuCategories = categoryTabsWidget?.config?.categories || [];
 
@@ -69,11 +112,11 @@ function enrichWidgets(widgetList: MenuWidget[]): MenuWidget[] {
   });
 }
 
-// Process all widget columns
+// Process all widget columns (use liveWidgets which have DB-overridden categories)
 const enrichedWidgets = {
-  left: enrichWidgets(widgets.left),
-  center: enrichWidgets(widgets.center),
-  right: enrichWidgets(widgets.right)
+  left: enrichWidgets(liveWidgets.left),
+  center: enrichWidgets(liveWidgets.center),
+  right: enrichWidgets(liveWidgets.right)
 };
 
 const hasLeft = enrichedWidgets.left.length > 0;
