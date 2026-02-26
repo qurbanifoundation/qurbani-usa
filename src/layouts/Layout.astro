@@ -200,5 +200,30 @@ const faviconType = adminFavicon
   <body class="bg-stone-50 text-stone-900 antialiased">
     <slot />
     <DonationCart />
+
+    <!-- Mobile auto-scroll to donation box on page load -->
+    <script is:inline>
+      (function() {
+        if (window.innerWidth >= 768) return;
+        // Only on fresh navigations, not back/forward
+        if (window.performance) {
+          var nav = window.performance.getEntriesByType('navigation');
+          if (nav.length && nav[0].type === 'back_forward') return;
+        }
+        // Don't scroll if there's already a hash in the URL
+        if (window.location.hash) return;
+
+        function scrollToDonate() {
+          var target = document.querySelector('[data-mobile-donate]');
+          if (!target) return;
+          setTimeout(function() {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 300);
+        }
+
+        // DOM is already loaded since this script is at end of body
+        scrollToDonate();
+      })();
+    </script>
   </body>
 </html>

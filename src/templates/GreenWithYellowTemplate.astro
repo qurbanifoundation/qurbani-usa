@@ -495,7 +495,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
             <!-- Mobile Donation Box -->
             {isListStyle ? (
-              <div class="lg:hidden">
+              <div class="lg:hidden" data-mobile-donate>
                 <ListStyleDonationBox
                   campaignSlug={campaign.slug}
                   campaignTitle={campaign.title}
@@ -523,7 +523,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                 />
               </div>
             ) : isUrgentAppeal ? (
-              <div class="lg:hidden">
+              <div class="lg:hidden" data-mobile-donate>
                 <UrgentAppealDonationBox
                   campaignSlug={campaign.slug}
                   campaignTitle={campaign.title}
@@ -551,6 +551,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
             ) : (
               <div
                 class="lg:hidden rounded-2xl p-6 shadow-xl"
+                data-mobile-donate
                 style={`background-color: ${colors.bgColor}; ${isWhiteTheme ? 'border: 2px solid #01534d;' : ''}`}
               >
                 <div class="text-center mb-5">
