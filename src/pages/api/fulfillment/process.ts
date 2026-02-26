@@ -43,11 +43,14 @@ export const POST: APIRoute = async ({ request }) => {
     // PHASE 1: FULFILL donations that are due
     // ============================================
 
+    // Fetch donations due for fulfillment
+    // Excludes recurring donations (monthly/weekly) — they follow the Active Subscriber lifecycle
     const { data: readyToFulfill, error: fetchError } = await supabaseAdmin
       .from('donations')
       .select('*')
       .eq('fulfillment_status', 'pending')
       .eq('status', 'completed')
+      .not('donation_type', 'in', '("monthly","weekly")')
       .lte('scheduled_fulfillment_at', now)
       .not('scheduled_fulfillment_at', 'is', null)
       .order('created_at', { ascending: true })
@@ -191,12 +194,15 @@ export const GET: APIRoute = async ({ request }) => {
 
   const now = new Date().toISOString();
 
+  // Stats exclude recurring donations (monthly/weekly) — they follow Active Subscriber lifecycle
   const [readyFulfill, pendingFulfill, readyEmail, pendingEmail, recentFulfilled] = await Promise.all([
     supabaseAdmin.from('donations').select('*', { count: 'exact', head: true })
       .eq('fulfillment_status', 'pending').eq('status', 'completed')
+      .not('donation_type', 'in', '("monthly","weekly")')
       .lte('scheduled_fulfillment_at', now).not('scheduled_fulfillment_at', 'is', null),
     supabaseAdmin.from('donations').select('*', { count: 'exact', head: true })
-      .eq('fulfillment_status', 'pending').eq('status', 'completed'),
+      .eq('fulfillment_status', 'pending').eq('status', 'completed')
+      .not('donation_type', 'in', '("monthly","weekly")'),
     supabaseAdmin.from('donations').select('*', { count: 'exact', head: true })
       .eq('fulfillment_status', 'fulfilled').eq('fulfillment_email_sent', false)
       .lte('fulfillment_email_scheduled_at', now).not('fulfillment_email_scheduled_at', 'is', null),

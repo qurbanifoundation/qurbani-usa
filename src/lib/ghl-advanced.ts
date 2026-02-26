@@ -430,7 +430,7 @@ export async function trackDonation(data: {
     { key: 'recurring_type', field_value: recurringTypeLabel },
     // Enterprise fields
     { key: 'stripe_payment_id', field_value: data.stripePaymentId || '' },
-    { key: 'fulfillment_status', field_value: 'pending' },
+    { key: 'fulfillment_status', field_value: isRecurring ? 'not_applicable' : 'pending' },
     { key: 'receipt_sent', field_value: 'no' },
     { key: 'currency', field_value: data.currency || 'USD' },
   ];

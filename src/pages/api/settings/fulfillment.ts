@@ -22,9 +22,11 @@ export const GET: APIRoute = async () => {
     // Get fulfillment stats
     const now = new Date().toISOString();
 
+    // Stats exclude recurring donations (monthly/weekly) — they follow Active Subscriber lifecycle
     const [pending, fulfilled, failed, emailsPending] = await Promise.all([
       supabaseAdmin.from('donations').select('*', { count: 'exact', head: true })
-        .eq('fulfillment_status', 'pending').eq('status', 'completed'),
+        .eq('fulfillment_status', 'pending').eq('status', 'completed')
+        .not('donation_type', 'in', '("monthly","weekly")'),
       supabaseAdmin.from('donations').select('*', { count: 'exact', head: true })
         .eq('fulfillment_status', 'fulfilled'),
       supabaseAdmin.from('donations').select('*', { count: 'exact', head: true })

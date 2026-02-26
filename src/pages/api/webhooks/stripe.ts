@@ -498,6 +498,10 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         nextBillingDate: nextBillingDate,
         items: items,
       });
+
+      // Move GHL pipeline to "Active Subscriber" for recurring donors
+      await moveDonationThroughPipeline(subRecord.donor_email, 'active subscriber')
+        .catch(err => console.error('GHL pipeline move to Active Subscriber error:', err));
     }
   }
 }
@@ -528,16 +532,32 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     ? new Date(subscription.current_period_end * 1000).toISOString()
     : null;
 
-  const { error } = await supabaseAdmin
+  const { data: subRecord, error } = await supabaseAdmin
     .from('donation_subscriptions')
     .update({
       status,
       next_billing_date: nextBillingDate,
     })
-    .eq('stripe_subscription_id', subscription.id);
+    .eq('stripe_subscription_id', subscription.id)
+    .select()
+    .single();
 
   if (error) {
     console.error('Error updating subscription:', error);
+  }
+
+  // Move GHL pipeline based on subscription status changes
+  if (subRecord?.donor_email) {
+    if (status === 'past_due') {
+      await moveDonationThroughPipeline(subRecord.donor_email, 'past due')
+        .catch(err => console.error('GHL pipeline move to Past Due error:', err));
+    } else if (status === 'active') {
+      await moveDonationThroughPipeline(subRecord.donor_email, 'active subscriber')
+        .catch(err => console.error('GHL pipeline move to Active Subscriber error:', err));
+    } else if (status === 'cancelled') {
+      await moveDonationThroughPipeline(subRecord.donor_email, 'cancelled')
+        .catch(err => console.error('GHL pipeline move to Cancelled error:', err));
+    }
   }
 }
 
@@ -578,6 +598,10 @@ async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
         donorName: subRecord.donor_name || 'Donor',
         amount: parseFloat(subRecord.amount),
       });
+
+      // Move GHL pipeline to "Cancelled"
+      await moveDonationThroughPipeline(subRecord.donor_email, 'cancelled')
+        .catch(err => console.error('GHL pipeline move to Cancelled error:', err));
     }
   }
 }
@@ -595,7 +619,8 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
   // We can detect this by checking if billing_reason is 'subscription_create'
   if (invoice.billing_reason === 'subscription_create') {
     console.log('First subscription invoice - already handled during creation');
-    // Still update the donation status to completed
+    // Update the donation status to completed, and mark fulfillment as not applicable
+    // (recurring donations follow Active Subscriber lifecycle, not Fulfilled)
     if (invoice.payment_intent) {
       const paymentIntentId = typeof invoice.payment_intent === 'string'
         ? invoice.payment_intent
@@ -606,6 +631,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
+          fulfillment_status: 'not_applicable',
         })
         .eq('stripe_payment_intent_id', paymentIntentId);
     }
@@ -639,6 +665,8 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
   const donationType = isWeekly ? 'weekly' : 'monthly';
 
   // Create new donation record for this recurring payment
+  // NOTE: Recurring donations do NOT get fulfillment fields (fulfillment_status, scheduled_fulfillment_at, etc.)
+  // They follow the Active Subscriber lifecycle, not the Fulfilled lifecycle
   const { data: donation, error: donationError } = await supabaseAdmin
     .from('donations')
     .insert({
@@ -652,6 +680,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
       donor_name: subscriptionRecord.donor_name,
       items: subscriptionRecord.items || [],
       completed_at: new Date().toISOString(),
+      fulfillment_status: 'not_applicable',
       metadata: {
         stripe_customer_id: subscriptionRecord.stripe_customer_id,
         is_recurring: true,
@@ -724,6 +753,12 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
         donationCount: result.donationCount,
         donationType: donationType,
       });
+
+      // Move pipeline: Payment Received → Active Subscriber (recurring lifecycle)
+      await moveDonationThroughPipeline(subscriptionRecord.donor_email, 'payment received')
+        .catch(err => console.error('GHL pipeline move to Payment Received error:', err));
+      await moveDonationThroughPipeline(subscriptionRecord.donor_email, 'active subscriber')
+        .catch(err => console.error('GHL pipeline move to Active Subscriber error:', err));
     } catch (ghlError) {
       console.error('GHL sync error for recurring donation:', ghlError);
     }
@@ -785,6 +820,12 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         failure_count: (subscription.failure_count || 0) + 1,
       },
     });
+  }
+
+  // Move GHL pipeline to "Past Due"
+  if (subscription?.donor_email) {
+    await moveDonationThroughPipeline(subscription.donor_email, 'past due')
+      .catch(err => console.error('GHL pipeline move to Past Due error:', err));
   }
 
   console.log('Subscription payment failed, status updated to past_due:', subscriptionId);
