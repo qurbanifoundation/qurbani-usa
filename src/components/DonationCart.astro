@@ -916,28 +916,100 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Initialize Stripe Elements
+// Initialize Stripe Elements - now deferred until we have a clientSecret
 function initializeStripeElements() {
-  if (!window.donationCart.stripe) return;
-  const elements = window.donationCart.stripe.elements();
-  window.donationCart.cardElement = elements.create('card', {
-    style: {
-      base: { fontSize: '16px', color: '#333', fontFamily: 'system-ui, sans-serif' },
-      invalid: { color: '#dc2626' },
-    },
-  });
+  // No-op: Payment Element requires clientSecret, initialized in mountPaymentElement()
 }
 
-// Mount card element
-function mountCardElement() {
-  if (!window.donationCart.cardElement || window.donationCart.cardMounted) return;
-  const container = document.getElementById('card-element');
-  if (container) {
-    window.donationCart.cardElement.mount('#card-element');
+// Mount Payment Element with clientSecret (called when moving to step 2)
+async function mountPaymentElement() {
+  var container = document.getElementById('card-element');
+  if (!container || !window.donationCart.stripe) return;
+
+  // Build payment request from current cart
+  var items = window.donationCart.items.slice();
+  var total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
+  var hasWeekly = items.some(function(i) { return i.type === 'weekly' || i.recurringInterval === 'weekly'; });
+  var hasMonthly = items.some(function(i) { return i.type === 'monthly' || i.recurringInterval === 'monthly'; });
+  var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : 'single');
+  var coverFees = window.donationCart.coverFees || false;
+  var feeAmount = coverFees ? (total * 0.03) : 0;
+  total = total + feeAmount;
+
+  var customer = {
+    firstName: document.getElementById('modal-firstName').value,
+    lastName: document.getElementById('modal-lastName').value,
+    email: document.getElementById('modal-email').value,
+    phone: document.getElementById('modal-phone').value,
+  };
+
+  var billingAddress = {
+    line1: document.getElementById('modal-address').value || '',
+    city: document.getElementById('modal-city').value || '',
+    state: document.getElementById('modal-state').value || '',
+    postal_code: document.getElementById('modal-zip').value || '',
+    country: document.getElementById('modal-country').value || 'US',
+  };
+
+  // Create PaymentIntent/Subscription upfront
+  try {
+    var response = await fetch('/api/payments/create-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: total,
+        items: items,
+        customer: customer,
+        billingAddress: billingAddress,
+        type: donationType,
+        coverFees: coverFees,
+        feeAmount: feeAmount,
+        baseAmount: total - feeAmount,
+      }),
+    });
+
+    var data = await response.json();
+    if (!response.ok) {
+      document.getElementById('card-errors').textContent = data.error || 'Failed to initialize payment';
+      return;
+    }
+
+    // Store for use in handlePayment
+    window.donationCart.pendingPayment = data;
+
+    // Unmount previous Payment Element if any
+    if (window.donationCart.stripeElements) {
+      container.innerHTML = '';
+      window.donationCart.cardMounted = false;
+    }
+
+    // Create Elements instance with clientSecret
+    var elements = window.donationCart.stripe.elements({
+      clientSecret: data.clientSecret,
+      appearance: {
+        theme: 'stripe',
+        variables: {
+          colorPrimary: '#d97706',
+          fontFamily: 'system-ui, sans-serif',
+          borderRadius: '12px',
+        },
+      },
+    });
+    window.donationCart.stripeElements = elements;
+
+    // Create and mount Payment Element
+    var paymentElement = elements.create('payment', {
+      layout: 'tabs',
+    });
+    paymentElement.mount('#card-element');
     window.donationCart.cardMounted = true;
-    window.donationCart.cardElement.on('change', function(event) {
+
+    paymentElement.on('change', function(event) {
       document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
     });
+  } catch (err) {
+    document.getElementById('card-errors').textContent = 'Failed to load payment form. Please try again.';
+    console.error('Payment Element mount error:', err);
   }
 }
 
@@ -1333,7 +1405,7 @@ function goToPaymentStep() {
 
   document.getElementById('modal-step-1').classList.add('hidden');
   document.getElementById('modal-step-2').classList.remove('hidden');
-  mountCardElement();
+  mountPaymentElement();
 
   // Track add_payment_info in GA4
   if (window.trackAddPaymentInfo) {
@@ -1368,7 +1440,16 @@ async function handlePayment() {
   errorDiv.classList.add('hidden');
 
   try {
-    // Get form data
+    // Get stored payment data from mountPaymentElement
+    const data = window.donationCart.pendingPayment;
+    if (!data || !data.clientSecret) {
+      throw new Error('Payment session expired. Please go back and try again.');
+    }
+
+    if (!window.donationCart.stripeElements) {
+      throw new Error('Payment form not loaded. Please refresh and try again.');
+    }
+
     const customer = {
       firstName: document.getElementById('modal-firstName').value,
       lastName: document.getElementById('modal-lastName').value,
@@ -1384,55 +1465,27 @@ async function handlePayment() {
       country: document.getElementById('modal-country').value,
     };
 
-    // Calculate total - upsells are already in cart from checkbox change
     let items = [...window.donationCart.items];
-    let total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
-    const hasWeekly = items.some(i => i.type === 'weekly' || i.recurringInterval === 'weekly');
-    const hasMonthly = items.some(i => i.type === 'monthly' || i.recurringInterval === 'monthly');
-
-    // Determine donation type: weekly (Jummah) takes priority, then monthly, then single
-    let donationType = 'single';
-    if (hasWeekly) {
-      donationType = 'weekly';
-    } else if (hasMonthly) {
-      donationType = 'monthly';
-    }
-
-    // Add fee coverage if selected
+    let total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
     const coverFees = window.donationCart.coverFees || false;
     const feeAmount = coverFees ? (total * 0.03) : 0;
     total = total + feeAmount;
 
-    // Create payment intent
-    const response = await fetch('/api/payments/create-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: total,
-        items: items,
-        customer,
-        billingAddress,
-        type: donationType,
-        coverFees: coverFees,
-        feeAmount: feeAmount,
-        baseAmount: total - feeAmount,
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Payment failed');
-
-    // Confirm payment
-    const result = await window.donationCart.stripe.confirmCardPayment(data.clientSecret, {
-      payment_method: {
-        card: window.donationCart.cardElement,
-        billing_details: {
-          name: `${customer.firstName} ${customer.lastName}`,
-          email: customer.email,
-          phone: customer.phone,
-          address: billingAddress,
+    // Confirm payment using latest Stripe Payment Element flow
+    const result = await window.donationCart.stripe.confirmPayment({
+      elements: window.donationCart.stripeElements,
+      confirmParams: {
+        return_url: window.location.origin + '/donation/success?donation_id=' + (data.donationId || ''),
+        payment_method_data: {
+          billing_details: {
+            name: customer.firstName + ' ' + customer.lastName,
+            email: customer.email,
+            phone: customer.phone,
+            address: billingAddress,
+          },
         },
       },
+      redirect: 'if_required',
     });
 
     if (result.error) throw new Error(result.error.message);

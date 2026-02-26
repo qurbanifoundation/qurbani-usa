@@ -140,7 +140,9 @@ export const POST: APIRoute = async ({ request }) => {
       currency,
       customer: stripeCustomerId,
       metadata,
-      payment_method_types: ['card'],
+      automatic_payment_methods: {
+        enabled: true,
+      },
       description: `Donation - ${items?.map((i: any) => i.name).join(', ') || 'General'}`,
     });
 
