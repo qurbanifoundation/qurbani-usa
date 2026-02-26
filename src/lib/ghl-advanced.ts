@@ -244,12 +244,19 @@ export async function trackZakatCalculation(data: {
 export async function trackDonation(data: {
   email: string;
   name: string;
-  phone?: string;
+  phone?: string | null;
   amount: number;
   campaignSlug: string;
   campaignName: string;
   donationType: 'single' | 'monthly' | 'weekly';
   items?: Array<{ name: string; amount: number }>;
+  address?: {
+    line1?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  } | null;
 }) {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
@@ -360,16 +367,25 @@ export async function trackDonation(data: {
   if (newCount > 1) tags.push('repeat-donor');
 
   const nameParts = data.name.split(' ');
-  const contactData: any = {
+  const contactData: Record<string, unknown> = {
     firstName: nameParts[0] || '',
     lastName: nameParts.slice(1).join(' ') || '',
     email: data.email,
-    phone: data.phone,
+    phone: data.phone || undefined,
     locationId,
     source: 'Donation',
     tags,
     customFields,
   };
+
+  // Add address if provided
+  if (data.address) {
+    if (data.address.line1) contactData.address1 = data.address.line1;
+    if (data.address.city) contactData.city = data.address.city;
+    if (data.address.state) contactData.state = data.address.state;
+    if (data.address.postal_code) contactData.postalCode = data.address.postal_code;
+    if (data.address.country) contactData.country = data.address.country;
+  }
 
   let contactId: string;
 
@@ -403,6 +419,9 @@ export async function trackDonation(data: {
         body: `💰 DONATION RECEIVED\n${'━'.repeat(30)}\nAmount: $${data.amount.toLocaleString()}\nType: ${donationTypeLabel}\nCampaign: ${data.campaignName}\n\nItems:\n${itemsList}\n\n📊 DONOR STATS\n${'━'.repeat(30)}\nLifetime Giving: $${newLifetime.toLocaleString()}\nTotal Donations: ${newCount}\nTier: ${donorTier.toUpperCase()}\nCampaigns Supported: ${campaignsArray.length}${isRecurring ? `\n\n🔄 RECURRING: ${isWeekly ? 'Every Friday (Jummah)' : 'Monthly'}` : ''}${zakatPaid > 0 ? `\n🕌 ZAKAT: Paid $${zakatPaid}, Remaining $${newZakatRemaining}` : ''}`
       }),
     });
+
+    // Create pipeline opportunity if a pipeline exists
+    await createDonationOpportunity(contactId, data, donationTypeLabel);
   }
 
   return {
@@ -412,6 +431,63 @@ export async function trackDonation(data: {
     donationCount: newCount,
     donorTier
   };
+}
+
+// ============================================
+// PIPELINE / OPPORTUNITY FUNCTIONS
+// ============================================
+
+// Cache pipeline ID to avoid repeated lookups
+let cachedPipelineId: string | null = null;
+let cachedStageId: string | null = null;
+
+async function createDonationOpportunity(
+  contactId: string,
+  data: { email: string; name: string; amount: number; campaignName: string; items?: Array<{ name: string; amount: number }> },
+  donationTypeLabel: string,
+) {
+  try {
+    const { locationId } = getGHLCredentials();
+
+    // Find the "Donations" pipeline (cache it)
+    if (!cachedPipelineId) {
+      const pipelinesRes = await ghlFetch(`/opportunities/pipelines?locationId=${locationId}`);
+      if (!pipelinesRes.ok) return;
+      const pipelinesData = await pipelinesRes.json();
+      const donationPipeline = pipelinesData.pipelines?.find(
+        (p: { name: string }) => p.name.toLowerCase().includes('donation')
+      );
+      if (!donationPipeline) {
+        console.log('No donation pipeline found in GHL - skipping opportunity creation');
+        return;
+      }
+      cachedPipelineId = donationPipeline.id;
+      // Use first stage (e.g., "New Donation")
+      cachedStageId = donationPipeline.stages?.[0]?.id || null;
+    }
+
+    if (!cachedPipelineId || !cachedStageId) return;
+
+    const itemNames = data.items?.map(i => i.name).join(', ') || data.campaignName;
+
+    await ghlFetch('/opportunities/', {
+      method: 'POST',
+      body: JSON.stringify({
+        pipelineId: cachedPipelineId,
+        locationId,
+        name: `$${data.amount} - ${itemNames} (${donationTypeLabel})`,
+        pipelineStageId: cachedStageId,
+        status: 'open',
+        contactId,
+        monetaryValue: data.amount,
+        source: 'Website Donation',
+      }),
+    });
+
+    console.log('GHL opportunity created for', data.email);
+  } catch (err) {
+    console.error('GHL opportunity creation error:', err);
+  }
 }
 
 // ============================================

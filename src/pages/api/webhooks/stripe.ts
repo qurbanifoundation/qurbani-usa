@@ -211,6 +211,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       const campaignSlug = donation.campaign_slug ||
         (items.length > 0 ? items[0].name?.toLowerCase().replace(/\s+/g, '-') : 'general');
 
+      // Extract billing address from metadata
+      const billingAddress = donation.metadata?.billing_address || null;
+
       const result = await trackDonation({
         email: donation.donor_email,
         name: donation.donor_name,
@@ -223,6 +226,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
           name: item.name || 'Donation',
           amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount
         })),
+        address: billingAddress,
       });
 
       console.log('Donation synced to GHL:', {
