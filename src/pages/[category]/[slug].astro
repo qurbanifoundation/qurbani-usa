@@ -85,10 +85,32 @@ if (!campaign) {
   }
 
   if (foundPage && foundPage.file_path) {
-    // file_path is like "zakat-calculator.astro" → derive route "/zakat-calculator"
+    // Serve the static page at the current category URL
+    // Astro.rewrite() doesn't work for prerendered pages on Cloudflare Pages,
+    // so we fetch the static HTML from the CDN and return it directly
     let filePath = foundPage.file_path.replace('.astro', '');
     if (filePath.endsWith('/index')) filePath = filePath.replace('/index', '');
-    return Astro.rewrite(`/${filePath}`);
+    try {
+      const staticUrl = new URL(`/${filePath}`, Astro.url.origin);
+      const res = await fetch(staticUrl.toString(), {
+        headers: { 'Accept': 'text/html' },
+        redirect: 'follow',
+      });
+      if (res.ok) {
+        const html = await res.text();
+        return new Response(html, {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=0, must-revalidate',
+          },
+        });
+      }
+    } catch (fetchErr) {
+      console.error('Campaign page proxy error:', fetchErr);
+    }
+    // Last resort fallback: redirect to the static page directly
+    return Astro.redirect(`/${filePath}`, 302);
   }
 
   return Astro.redirect('/404', 404);
