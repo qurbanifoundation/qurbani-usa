@@ -1522,7 +1522,7 @@ async function handlePayment() {
     const result = await window.donationCart.stripe.confirmPayment({
       elements: window.donationCart.stripeElements,
       confirmParams: {
-        return_url: window.location.origin + '/donation/success?donation_id=' + (data.donationId || ''),
+        return_url: window.location.origin + '/donate/success?donation_id=' + (data.donationId || '') + '&type=' + (data.type || 'single'),
         payment_method_data: {
           billing_details: {
             name: customer.firstName + ' ' + customer.lastName,
@@ -1541,67 +1541,38 @@ async function handlePayment() {
     if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
 
     if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
-      // Track purchase in GA4
-      if (window.trackPurchase) {
-        window.trackPurchase(paymentIntent.id, items, total);
-      }
+      // Store purchase data for the success page (tracking + display)
+      var successData = {
+        transaction_id: paymentIntent.id,
+        donation_id: data.donationId || '',
+        total: total,
+        items: items.map(function(item) {
+          return {
+            id: item.id || item.slug,
+            name: item.name || item.campaign || 'Donation',
+            category: item.campaign || 'donation',
+            amount: item.amount,
+            quantity: item.quantity || 1
+          };
+        }),
+        cover_fees: coverFees && feeAmount > 0,
+        fee_amount: feeAmount,
+        is_subscription: data.type === 'subscription' && !!data.subscriptionId,
+        subscription_id: data.subscriptionId || '',
+        is_jummah: data.isJummah || data.interval === 'weekly',
+        interval: data.interval || '',
+        next_billing_date: data.nextBillingDate || '',
+        donor_email: customer.email,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
 
-      // Show success
-      document.getElementById('modal-step-2').classList.add('hidden');
-      document.getElementById('modal-success').classList.remove('hidden');
-
-      // Populate donation summary
-      document.getElementById('success-amount').textContent = '$' + total.toFixed(2);
-      var itemsListEl = document.getElementById('success-items-list');
-      if (itemsListEl) {
-        itemsListEl.innerHTML = items.map(function(item) {
-          return '<div class="flex justify-between"><span>' + (item.name || item.campaign || 'Donation') + (item.quantity > 1 ? ' x' + item.quantity : '') + '</span><span class="font-medium text-stone-800">$' + (item.amount * (item.quantity || 1)).toFixed(2) + '</span></div>';
-        }).join('');
-        if (coverFees && feeAmount > 0) {
-          itemsListEl.innerHTML += '<div class="flex justify-between text-emerald-600"><span>Processing fee covered</span><span>+$' + feeAmount.toFixed(2) + '</span></div>';
-        }
-      }
-
-      // Show subscription info if this was a recurring donation
-      if (data.type === 'subscription' && data.subscriptionId) {
-        document.getElementById('subscription-info').classList.remove('hidden');
-
-        // Customize message based on interval (Jummah vs Monthly)
-        var isJummah = data.isJummah || data.interval === 'weekly';
-        if (isJummah) {
-          document.getElementById('success-message').textContent = 'Your Jummah (Friday) donation is active!';
-          document.getElementById('subscription-type-title').textContent = 'Jummah (Friday) Recurring';
-          document.getElementById('billing-interval-text').textContent = 'every Friday';
-        } else {
-          document.getElementById('success-message').textContent = 'Your monthly donation is active!';
-          document.getElementById('subscription-type-title').textContent = 'Monthly Recurring';
-          document.getElementById('billing-interval-text').textContent = 'each month';
-        }
-        document.getElementById('monthly-amount').textContent = '$' + total.toFixed(2);
-
-        // Format next billing date
-        if (data.nextBillingDate) {
-          var nextDate = new Date(data.nextBillingDate);
-          var dateStr = nextDate.toLocaleDateString('en-US', {
-            weekday: isJummah ? 'long' : undefined,
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-          document.getElementById('next-billing-date').textContent = dateStr;
-        }
-
-        // Set management link
-        fetchManagementLink(customer.email, data.donationId);
-      } else {
-        document.getElementById('subscription-info').classList.add('hidden');
-        document.getElementById('success-message').textContent = 'Your generous donation has been received. May Allah reward you.';
-      }
-
-      // Clear cart
+      // Clear cart before redirect
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
-      updateCartUI();
+
+      // Redirect to success page
+      window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
     }
 
   } catch (err) {

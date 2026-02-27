@@ -1,0 +1,333 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+// Get params from URL (Stripe 3DS redirect includes payment_intent and payment_intent_client_secret)
+const paymentIntentId = Astro.url.searchParams.get('payment_intent') || '';
+const donationId = Astro.url.searchParams.get('donation_id') || '';
+
+// Try to fetch donation details server-side (for 3D Secure redirects where sessionStorage is empty)
+let serverDonation: { amount: string; campaign_name: string; donor_email: string; stripe_payment_intent_id: string; is_recurring: boolean; } | null = null;
+let serverSubscription: { id: string; amount: string; interval: string; next_billing_date: string; management_token: string; } | null = null;
+
+if (donationId || paymentIntentId) {
+  try {
+    // Fetch donation by ID or payment intent
+    const query = donationId
+      ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring').eq('id', donationId).single()
+      : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring').eq('stripe_payment_intent_id', paymentIntentId).single();
+
+    const { data } = await query;
+    if (data) {
+      serverDonation = data;
+
+      // If recurring, fetch subscription details
+      if (data.is_recurring && donationId) {
+        const { data: sub } = await supabaseAdmin
+          .from('donation_subscriptions')
+          .select('id, amount, interval, next_billing_date, management_token')
+          .eq('donation_id', donationId)
+          .eq('status', 'active')
+          .single();
+        if (sub) serverSubscription = sub;
+      }
+    }
+  } catch (e) {
+    console.error('Error fetching donation for success page:', e);
+  }
+}
+---
+
+<Layout title="Thank You for Your Donation - Qurbani Foundation">
+  <Navbar />
+
+  <main class="min-h-[60vh] flex items-center justify-center py-12 sm:py-20 bg-gradient-to-b from-stone-100 to-stone-50">
+    <div class="max-w-lg mx-auto px-4 w-full">
+
+      <!-- Success Card -->
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+
+        <!-- Green banner with checkmark -->
+        <div class="relative bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 pt-10 pb-8 px-6 text-center overflow-hidden">
+          <!-- Decorative circles -->
+          <div class="absolute top-3 left-6 w-3 h-3 bg-yellow-300 rounded-full opacity-80"></div>
+          <div class="absolute top-8 left-16 w-2 h-2 bg-white rounded-full opacity-60"></div>
+          <div class="absolute top-4 right-8 w-4 h-4 bg-amber-300 rounded-full opacity-70"></div>
+          <div class="absolute top-10 right-20 w-2 h-2 bg-emerald-200 rounded-full opacity-80"></div>
+          <div class="absolute bottom-4 left-10 w-2 h-2 bg-yellow-200 rounded-full opacity-60"></div>
+          <div class="absolute bottom-6 right-12 w-3 h-3 bg-white rounded-full opacity-40"></div>
+
+          <div class="w-20 h-20 mx-auto bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-5 ring-4 ring-white/30">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h1 class="text-3xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">JazakAllah Khair!</h1>
+          <p class="text-emerald-100 text-base" id="success-message">Your generous donation has been received. May Allah reward you.</p>
+        </div>
+
+        <!-- Content -->
+        <div class="px-6 py-6">
+
+          <!-- Donation summary card -->
+          <div id="donation-summary" class="bg-stone-50 rounded-2xl p-5 mb-5 border border-stone-200">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm font-medium text-stone-500 uppercase tracking-wide">Donation Amount</span>
+              <span id="success-amount" class="text-2xl font-bold text-emerald-700" style="font-family: 'Signika', sans-serif;">
+                {serverDonation ? `$${parseFloat(serverDonation.amount).toFixed(2)}` : 'Loading...'}
+              </span>
+            </div>
+            <div class="h-px bg-stone-200 mb-3"></div>
+            <div id="success-items-list" class="space-y-2 text-sm text-stone-600">
+              {serverDonation && (
+                <div class="flex justify-between">
+                  <span>{serverDonation.campaign_name || 'Donation'}</span>
+                  <span class="font-medium text-stone-800">${parseFloat(serverDonation.amount).toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <!-- Subscription Info (hidden by default, shown via JS if recurring) -->
+          <div id="subscription-info" class={`${serverSubscription ? '' : 'hidden'} bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 mb-5`}>
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p id="subscription-type-title" class="font-bold text-stone-800 text-lg">
+                  {serverSubscription?.interval === 'weekly' ? 'Jummah (Friday) Recurring' : 'Monthly Recurring'}
+                </p>
+                <p class="text-stone-600 mt-1">
+                  You will be automatically charged <span id="monthly-amount" class="font-bold text-amber-700">
+                    {serverSubscription ? `$${parseFloat(serverSubscription.amount).toFixed(2)}` : ''}
+                  </span> <span id="billing-interval-text">
+                    {serverSubscription?.interval === 'weekly' ? 'every Friday' : 'each month'}
+                  </span>.
+                </p>
+                <div class="flex items-center gap-2 mt-2 text-sm text-stone-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  Next billing: <span id="next-billing-date" class="font-medium text-stone-700">
+                    {serverSubscription?.next_billing_date ? new Date(serverSubscription.next_billing_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {serverSubscription && (
+              <a href={`/manage-subscription/${serverSubscription.id}_${serverSubscription.management_token}`} id="manage-subscription-link" class="mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-amber-700 bg-white border border-amber-200 rounded-xl py-2.5 px-4 hover:bg-amber-50 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Manage Your Subscription
+              </a>
+            )}
+          </div>
+
+          <!-- Trust signals -->
+          <div class="flex items-center gap-3 bg-emerald-50 rounded-xl p-4 mb-5">
+            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-sm text-emerald-800">A tax-deductible receipt has been sent to your email.</p>
+          </div>
+
+          <!-- Impact message -->
+          <div class="text-center mb-6 px-4">
+            <p class="text-stone-500 text-sm italic">"Whoever saves a life, it is as if they have saved all of humanity." - Quran 5:32</p>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="space-y-3">
+            <a href="/" class="block w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition shadow-sm text-base text-center">
+              Continue Browsing
+            </a>
+            <a href="/appeals" class="block w-full py-3 text-center text-emerald-700 font-medium rounded-xl border border-emerald-200 hover:bg-emerald-50 transition text-sm">
+              View More Campaigns
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share Section -->
+      <div class="mt-8 text-center">
+        <p class="text-stone-500 mb-4">Share the blessing with others</p>
+        <div class="flex justify-center gap-4">
+          <a href="https://www.facebook.com/sharer/sharer.php?u=https://qurbani.com" target="_blank" rel="noopener" class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          </a>
+          <a href="https://twitter.com/intent/tweet?text=I%20just%20donated%20to%20Qurbani%20Foundation%20USA!%20Join%20me%20in%20supporting%20those%20in%20need.&url=https://qurbani.com" target="_blank" rel="noopener" class="w-10 h-10 bg-stone-900 text-white rounded-full flex items-center justify-center hover:bg-stone-800 transition">
+            <span class="text-sm font-bold">𝕏</span>
+          </a>
+          <a href="https://wa.me/?text=I%20just%20donated%20to%20Qurbani%20Foundation%20USA!%20Join%20me%20in%20supporting%20those%20in%20need.%20https://qurbani.com" target="_blank" rel="noopener" class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.94 9.94 0 01-5.38-1.576l-.386-.232-2.64.885.885-2.64-.232-.386A9.94 9.94 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script is:inline>
+  // GA4 + Google Ads Conversion Tracking on Success Page
+  // This is the PRIMARY tracking location — fires on every successful donation
+  (function() {
+    var purchaseDataStr = sessionStorage.getItem('qurbani_purchase');
+    var purchaseData = null;
+
+    if (purchaseDataStr) {
+      try {
+        purchaseData = JSON.parse(purchaseDataStr);
+      } catch(e) {
+        console.error('[Tracking] Error parsing purchase data:', e);
+      }
+    }
+
+    // If we have sessionStorage data, populate the UI with full details
+    if (purchaseData && purchaseData.items && purchaseData.items.length > 0) {
+      // Update amount
+      var amountEl = document.getElementById('success-amount');
+      if (amountEl) amountEl.textContent = '$' + purchaseData.total.toFixed(2);
+
+      // Update items list
+      var itemsListEl = document.getElementById('success-items-list');
+      if (itemsListEl) {
+        var html = purchaseData.items.map(function(item) {
+          var qty = item.quantity || 1;
+          var itemTotal = (item.amount * qty).toFixed(2);
+          return '<div class="flex justify-between"><span>' +
+            (item.name || 'Donation') + (qty > 1 ? ' x' + qty : '') +
+            '</span><span class="font-medium text-stone-800">$' + itemTotal + '</span></div>';
+        }).join('');
+
+        // Add processing fee if covered
+        if (purchaseData.cover_fees && purchaseData.fee_amount > 0) {
+          html += '<div class="flex justify-between text-emerald-600"><span>Processing fee covered</span><span>+$' + purchaseData.fee_amount.toFixed(2) + '</span></div>';
+        }
+
+        itemsListEl.innerHTML = html;
+      }
+
+      // Update success message
+      var msgEl = document.getElementById('success-message');
+      if (purchaseData.is_subscription) {
+        // Show subscription info
+        var subInfoEl = document.getElementById('subscription-info');
+        if (subInfoEl) subInfoEl.classList.remove('hidden');
+
+        var titleEl = document.getElementById('subscription-type-title');
+        var intervalTextEl = document.getElementById('billing-interval-text');
+        var monthlyEl = document.getElementById('monthly-amount');
+
+        if (purchaseData.is_jummah) {
+          if (msgEl) msgEl.textContent = 'Your Jummah (Friday) donation is active!';
+          if (titleEl) titleEl.textContent = 'Jummah (Friday) Recurring';
+          if (intervalTextEl) intervalTextEl.textContent = 'every Friday';
+        } else {
+          if (msgEl) msgEl.textContent = 'Your monthly donation is active!';
+          if (titleEl) titleEl.textContent = 'Monthly Recurring';
+          if (intervalTextEl) intervalTextEl.textContent = 'each month';
+        }
+
+        if (monthlyEl) monthlyEl.textContent = '$' + purchaseData.total.toFixed(2);
+
+        // Set next billing date
+        if (purchaseData.next_billing_date) {
+          var nextDate = new Date(purchaseData.next_billing_date);
+          var dateOpts = { year: 'numeric', month: 'long', day: 'numeric' };
+          if (purchaseData.is_jummah) dateOpts.weekday = 'long';
+          var dateEl = document.getElementById('next-billing-date');
+          if (dateEl) dateEl.textContent = nextDate.toLocaleDateString('en-US', dateOpts);
+        }
+
+        // Fetch management link
+        if (purchaseData.donor_email) {
+          fetch('/api/subscriptions/manage?email=' + encodeURIComponent(purchaseData.donor_email))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.subscriptions && data.subscriptions.length > 0) {
+                var sub = data.subscriptions[0];
+                var linkEl = document.getElementById('manage-subscription-link');
+                if (linkEl) linkEl.href = '/manage-subscription/' + sub.id + '_' + sub.management_token;
+              }
+            })
+            .catch(function() {});
+        }
+      }
+    }
+
+    // --- FIRE GA4 + GOOGLE ADS TRACKING ---
+    // Wait for gtag to be available, then fire
+    function fireTracking() {
+      if (typeof window.gtag !== 'function') {
+        // Wait and retry
+        setTimeout(fireTracking, 200);
+        return;
+      }
+
+      var transactionId, value, gaItems;
+
+      if (purchaseData) {
+        // Normal flow: data from sessionStorage
+        transactionId = purchaseData.transaction_id;
+        value = purchaseData.total;
+        gaItems = purchaseData.items.map(function(item) {
+          return {
+            item_id: item.id,
+            item_name: item.name,
+            item_category: item.category || 'donation',
+            price: item.amount,
+            quantity: item.quantity || 1
+          };
+        });
+      } else {
+        // 3D Secure flow: get payment_intent from URL, use server-rendered amount
+        var urlParams = new URLSearchParams(window.location.search);
+        transactionId = urlParams.get('payment_intent');
+        var amountText = document.getElementById('success-amount')?.textContent || '0';
+        value = parseFloat(amountText.replace('$', '')) || 0;
+        gaItems = [{ item_id: 'donation', item_name: 'Donation', price: value, quantity: 1 }];
+      }
+
+      if (!transactionId) {
+        console.log('[Tracking] No transaction ID found, skipping tracking');
+        return;
+      }
+
+      // GA4 Purchase Event
+      window.gtag('event', 'purchase', {
+        transaction_id: transactionId,
+        currency: 'USD',
+        value: value,
+        items: gaItems,
+        send_to: 'G-0WC0W1PBKC'
+      });
+
+      // Google Ads Conversion
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
+        'value': value,
+        'currency': 'USD',
+        'transaction_id': transactionId
+      });
+
+      console.log('[Tracking] Purchase event fired — transaction:', transactionId, 'value:', value);
+
+      // Clear sessionStorage to prevent duplicate tracking on refresh
+      sessionStorage.removeItem('qurbani_purchase');
+    }
+
+    // Fire tracking after a short delay to ensure gtag is loaded
+    setTimeout(fireTracking, 100);
+  })();
+</script>

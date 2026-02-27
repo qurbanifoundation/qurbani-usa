@@ -84,7 +84,7 @@ const faviconType = adminFavicon
       };
 
       window.trackPurchase = function(transactionId, items, total) {
-        // GA4 Purchase Event — use send_beacon transport for reliable delivery
+        // GA4 Purchase Event
         gtag('event', 'purchase', {
           transaction_id: transactionId,
           currency: 'USD',
@@ -98,37 +98,16 @@ const faviconType = adminFavicon
               quantity: item.quantity || 1
             };
           }),
-          send_to: 'G-0WC0W1PBKC',
-          event_callback: function() {
-            console.log('[GA4] Purchase event sent:', transactionId);
-          }
+          send_to: 'G-0WC0W1PBKC'
         });
 
-        // Google Ads Conversion — use send_beacon transport for reliable delivery
+        // Google Ads Conversion
         gtag('event', 'conversion', {
           'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
           'value': total,
           'currency': 'USD',
           'transaction_id': transactionId
         });
-
-        // Store purchase data for success page backup tracking
-        try {
-          sessionStorage.setItem('qurbani_purchase', JSON.stringify({
-            transaction_id: transactionId,
-            value: total,
-            items: items.map(function(item) {
-              return {
-                item_id: item.id || item.slug,
-                item_name: item.name,
-                item_category: item.campaign || 'donation',
-                price: item.amount,
-                quantity: item.quantity || 1
-              };
-            }),
-            timestamp: Date.now()
-          }));
-        } catch(e) {}
       };
 
       // View item (campaign/appeal page)
