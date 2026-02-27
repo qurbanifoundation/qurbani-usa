@@ -184,6 +184,11 @@ export const POST: APIRoute = async ({ request }) => {
       metadata: i.metadata || null,
     })) || [];
 
+    // Extract campaign info from items
+    const primaryItem = items?.[0];
+    const campaignSlug = primaryItem?.campaign || 'general';
+    const campaignName = primaryItem?.name || 'General Donation';
+
     // Create pending donation record
     const { data: donation, error: donationError } = await supabaseAdmin
       .from('donations')
@@ -197,6 +202,8 @@ export const POST: APIRoute = async ({ request }) => {
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
         donor_phone: customer?.phone,
         items: itemsWithMetadata,
+        campaign_slug: campaignSlug,
+        campaign_name: campaignName,
         covers_fees: coverFees,
         fee_amount: feeAmount,
         base_amount: baseAmount || amount,
@@ -360,6 +367,11 @@ async function createRecurringSubscription({
       metadata: i.metadata || null,
     })) || [];
 
+    // Extract campaign info from items
+    const primaryItem = items?.[0];
+    const campaignSlug = primaryItem?.campaign || 'general';
+    const campaignName = primaryItem?.name || 'General Donation';
+
     // Create subscription record in database
     const { data: subscriptionRecord, error: subError } = await supabaseAdmin
       .from('donation_subscriptions')
@@ -368,11 +380,13 @@ async function createRecurringSubscription({
         stripe_customer_id: stripeCustomerId,
         donor_email: customer?.email,
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
+        donor_phone: customer?.phone,
         amount,
         currency,
         status: 'active',
         interval: interval,
         items: itemsWithMetadata,
+        campaign_slug: campaignSlug,
         next_billing_date: nextBillingDate.toISOString(),
       })
       .select()
@@ -396,6 +410,8 @@ async function createRecurringSubscription({
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
         donor_phone: customer?.phone,
         items: itemsWithMetadata,
+        campaign_slug: campaignSlug,
+        campaign_name: campaignName,
         metadata: {
           stripe_customer_id: stripeCustomerId,
           billing_address: billingAddress || null,

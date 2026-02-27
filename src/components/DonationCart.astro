@@ -1481,12 +1481,24 @@ async function handlePayment() {
   const processing = document.getElementById('processing-indicator');
   const errorDiv = document.getElementById('payment-error');
 
+  // Prevent double-click while processing
+  if (payBtn.disabled) return;
+
   payBtn.disabled = true;
   payText.textContent = 'Processing...';
   processing.classList.remove('hidden');
   errorDiv.classList.add('hidden');
 
   try {
+    // Wait for payment element to be ready if still mounting
+    if (!window.donationCart.pendingPayment || !window.donationCart.stripeElements) {
+      // mountPaymentElement might still be running — wait up to 5 seconds
+      var waitStart = Date.now();
+      while ((!window.donationCart.pendingPayment || !window.donationCart.stripeElements) && (Date.now() - waitStart < 5000)) {
+        await new Promise(function(r) { setTimeout(r, 200); });
+      }
+    }
+
     // Get stored payment data from mountPaymentElement
     const data = window.donationCart.pendingPayment;
     if (!data || !data.clientSecret) {

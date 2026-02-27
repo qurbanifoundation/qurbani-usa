@@ -685,35 +685,48 @@ export async function markReceiptSent(email: string) {
 // PIPELINE / OPPORTUNITY FUNCTIONS
 // ============================================
 
-// Cache pipeline ID and stage IDs
+// Cache pipeline ID and stage IDs (NOTE: resets on cold start in serverless)
 let cachedPipelineId: string | null = null;
 let cachedStages: Map<string, string> = new Map();
 
-async function loadPipelineConfig() {
-  if (cachedPipelineId) return;
+async function loadPipelineConfig(): Promise<boolean> {
+  if (cachedPipelineId && cachedStages.size > 0) return true;
 
-  const { locationId } = getGHLCredentials();
-  const pipelinesRes = await ghlFetch(`/opportunities/pipelines?locationId=${locationId}`);
-  if (!pipelinesRes.ok) return;
+  // Reset in case of partial load
+  cachedPipelineId = null;
+  cachedStages = new Map();
 
-  const pipelinesData = await pipelinesRes.json();
-  const donationPipeline = pipelinesData.pipelines?.find(
-    (p: { name: string }) => p.name.toLowerCase().includes('donation')
-  );
+  try {
+    const { locationId } = getGHLCredentials();
+    const pipelinesRes = await ghlFetch(`/opportunities/pipelines?locationId=${locationId}`);
+    if (!pipelinesRes.ok) {
+      console.error('GHL pipeline config fetch failed:', pipelinesRes.status);
+      return false;
+    }
 
-  if (!donationPipeline) {
-    console.log('No donation pipeline found in GHL - skipping opportunity creation');
-    return;
+    const pipelinesData = await pipelinesRes.json();
+    const donationPipeline = pipelinesData.pipelines?.find(
+      (p: { name: string }) => p.name.toLowerCase().includes('donation')
+    );
+
+    if (!donationPipeline) {
+      console.error('No donation pipeline found in GHL — check pipeline name contains "donation"');
+      return false;
+    }
+
+    cachedPipelineId = donationPipeline.id;
+
+    // Cache all stages by name (lowercase)
+    for (const stage of donationPipeline.stages || []) {
+      cachedStages.set(stage.name.toLowerCase(), stage.id);
+    }
+
+    console.log('GHL Pipeline loaded:', cachedPipelineId, 'Stages:', [...cachedStages.keys()].join(', '));
+    return true;
+  } catch (err) {
+    console.error('GHL loadPipelineConfig error:', err);
+    return false;
   }
-
-  cachedPipelineId = donationPipeline.id;
-
-  // Cache all stages by name (lowercase)
-  for (const stage of donationPipeline.stages || []) {
-    cachedStages.set(stage.name.toLowerCase(), stage.id);
-  }
-
-  console.log('GHL Pipeline loaded:', cachedPipelineId, 'Stages:', [...cachedStages.keys()].join(', '));
 }
 
 function getStageId(stageName: string): string | undefined {
@@ -737,16 +750,22 @@ async function createDonationOpportunity(
 ) {
   try {
     const { locationId } = getGHLCredentials();
-    await loadPipelineConfig();
+    const loaded = await loadPipelineConfig();
 
-    if (!cachedPipelineId) return;
+    if (!loaded || !cachedPipelineId) {
+      console.error('GHL: Cannot create opportunity — pipeline config not loaded');
+      return;
+    }
 
     const firstStageId = getStageId('new donation') || getStageId('donations');
-    if (!firstStageId) return;
+    if (!firstStageId) {
+      console.error('GHL: Cannot create opportunity — no stage found for "new donation"');
+      return;
+    }
 
     const itemNames = data.items?.map(i => i.name).join(', ') || data.campaignName;
 
-    await ghlFetch('/opportunities/', {
+    const oppRes = await ghlFetch('/opportunities/', {
       method: 'POST',
       body: JSON.stringify({
         pipelineId: cachedPipelineId,
@@ -760,7 +779,12 @@ async function createDonationOpportunity(
       }),
     }, { action: 'create_opportunity', email: data.email });
 
-    console.log('GHL opportunity created for', data.email);
+    if (!oppRes.ok) {
+      const errBody = await oppRes.text();
+      console.error('GHL opportunity creation failed:', oppRes.status, errBody);
+    } else {
+      console.log('GHL opportunity created for', data.email);
+    }
   } catch (err) {
     console.error('GHL opportunity creation error:', err);
   }

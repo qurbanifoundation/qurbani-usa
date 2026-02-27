@@ -46,8 +46,10 @@ const notificationConfig: Record<NotificationType, { emoji: string; severity: st
 };
 
 /**
- * Send notification through all channels
- * Admin notifications go to GHL only (not Resend - that's for donors)
+ * Send notification through all channels:
+ * 1. Database (admin dashboard)
+ * 2. Admin email (Resend)
+ * 3. GHL admin contact note
  */
 export async function sendNotification(data: NotificationData): Promise<void> {
   const config = notificationConfig[data.type];
@@ -57,7 +59,10 @@ export async function sendNotification(data: NotificationData): Promise<void> {
     // 1. Save to database (for admin dashboard)
     saveToDatabase(data, config),
 
-    // 2. Add note to GHL admin contact (primary notification channel)
+    // 2. Send admin email via Resend
+    sendEmail(data, config),
+
+    // 3. Add note to GHL admin contact
     sendToGHL(data, config),
   ]);
 }
@@ -156,7 +161,7 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Qurbani USA <notifications@qurbani.com>',
+        from: 'Qurbani USA <notifications@receipts.qurbani.com>',
         to: ADMIN_EMAIL,
         subject: `${config.emoji} ${data.title}`,
         html: htmlContent,

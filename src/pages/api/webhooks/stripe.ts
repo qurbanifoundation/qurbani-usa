@@ -187,11 +187,19 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   // Get the donation first to determine campaign type
   const { data: existingDonation } = await supabaseAdmin
     .from('donations')
-    .select('campaign_slug, campaign_name, metadata')
+    .select('campaign_slug, campaign_name, items, metadata')
     .eq('stripe_payment_intent_id', paymentIntent.id)
     .single();
 
-  const campaignSlugCheck = existingDonation?.campaign_slug?.toLowerCase() || '';
+  // Extract campaign slug from items if not set (backwards compatibility)
+  let campaignSlugCheck = existingDonation?.campaign_slug?.toLowerCase() || '';
+  if (!campaignSlugCheck && existingDonation?.items) {
+    const donationItems = typeof existingDonation.items === 'string'
+      ? JSON.parse(existingDonation.items) : existingDonation.items;
+    if (Array.isArray(donationItems) && donationItems.length > 0) {
+      campaignSlugCheck = (donationItems[0].campaign || '').toLowerCase();
+    }
+  }
 
   // Determine campaign type for fulfillment
   const campaignType = campaignSlugCheck.includes('zakat') ? 'zakat'
@@ -213,20 +221,42 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   // Calculate when to send fulfillment email (1:30 PM donor's local time)
   const emailSendTime = calculateEmailSendTime(fulfillmentDate, donorTimezone);
 
+  // Extract campaign info from items if not already set
+  let campaignSlugForUpdate = existingDonation?.campaign_slug;
+  let campaignNameForUpdate = existingDonation?.campaign_name;
+  if (!campaignSlugForUpdate && existingDonation?.items) {
+    const donItems = typeof existingDonation.items === 'string'
+      ? JSON.parse(existingDonation.items) : existingDonation.items;
+    if (Array.isArray(donItems) && donItems.length > 0) {
+      campaignSlugForUpdate = donItems[0].campaign || 'general';
+      campaignNameForUpdate = donItems[0].name || 'General Donation';
+    }
+  }
+
   // Update donation record with fulfillment data
+  const updateFields: Record<string, unknown> = {
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+    stripe_charge_id: paymentIntent.latest_charge as string,
+    fulfillment_mode: fulfillmentMode,
+    fulfillment_status: 'pending',
+    scheduled_fulfillment_at: fulfillmentDate.toISOString(),
+    fulfillment_email_scheduled_at: emailSendTime.toISOString(),
+    donor_timezone: donorTimezone,
+    campaign_type: campaignType,
+  };
+
+  // Backfill campaign_slug/name if missing
+  if (!existingDonation?.campaign_slug && campaignSlugForUpdate) {
+    updateFields.campaign_slug = campaignSlugForUpdate;
+  }
+  if (!existingDonation?.campaign_name && campaignNameForUpdate) {
+    updateFields.campaign_name = campaignNameForUpdate;
+  }
+
   const { data: donation, error } = await supabaseAdmin
     .from('donations')
-    .update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      stripe_charge_id: paymentIntent.latest_charge as string,
-      fulfillment_mode: fulfillmentMode,
-      fulfillment_status: 'pending',
-      scheduled_fulfillment_at: fulfillmentDate.toISOString(),
-      fulfillment_email_scheduled_at: emailSendTime.toISOString(),
-      donor_timezone: donorTimezone,
-      campaign_type: campaignType,
-    })
+    .update(updateFields)
     .eq('stripe_payment_intent_id', paymentIntent.id)
     .select()
     .single();
