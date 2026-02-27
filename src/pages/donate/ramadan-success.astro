@@ -151,11 +151,70 @@ const managementUrl = token ? `/manage-donation/${token}` : null;
         btn.innerHTML = '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
 
         setTimeout(() => {
-          btn.innerHTML = '<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+          btn.innerHTML = '<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
         }, 2000);
       } catch (err) {
         console.error('Failed to copy:', err);
       }
     }
   });
+</script>
+
+<script is:inline>
+  // GA4 + Google Ads Conversion Tracking for Ramadan 30-Days donations
+  (function() {
+    function fireTracking() {
+      if (typeof window.gtag !== 'function') {
+        setTimeout(fireTracking, 200);
+        return;
+      }
+
+      var purchaseDataStr = sessionStorage.getItem('qurbani_purchase');
+      if (!purchaseDataStr) {
+        console.log('[Tracking] No Ramadan purchase data found in sessionStorage');
+        return;
+      }
+
+      try {
+        var purchase = JSON.parse(purchaseDataStr);
+
+        // Only fire if recent (within 5 minutes)
+        if (Date.now() - purchase.timestamp > 300000) return;
+
+        // GA4 Purchase Event
+        window.gtag('event', 'purchase', {
+          transaction_id: purchase.transaction_id,
+          currency: 'USD',
+          value: purchase.total,
+          items: purchase.items.map(function(item) {
+            return {
+              item_id: item.id,
+              item_name: item.name,
+              item_category: item.category || '30-days-of-ramadan',
+              price: item.amount,
+              quantity: item.quantity || 1
+            };
+          }),
+          send_to: 'G-0WC0W1PBKC'
+        });
+
+        // Google Ads Conversion
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
+          'value': purchase.total,
+          'currency': 'USD',
+          'transaction_id': purchase.transaction_id
+        });
+
+        console.log('[Tracking] Ramadan purchase event fired — transaction:', purchase.transaction_id, 'value:', purchase.total);
+
+        // Clear to prevent duplicate on refresh
+        sessionStorage.removeItem('qurbani_purchase');
+      } catch(e) {
+        console.error('[Tracking] Error:', e);
+      }
+    }
+
+    setTimeout(fireTracking, 100);
+  })();
 </script>

@@ -1782,22 +1782,26 @@ import Footer from '../../components/Footer.astro';
         const data = await response.json();
 
         if (data.success) {
-          // Track purchase in GA4
-          if (window.trackPurchase) {
+          // Store purchase data for success page tracking
+          try {
             const causes = JSON.parse(formData.get('causes') as string);
-            const items = causes.map((c: any) => ({
-              id: c.cause.toLowerCase().replace(/\s+/g, '-'),
-              name: c.cause,
-              amount: c.daily * 30,
-              quantity: 1,
-              campaign: '30-days-of-ramadan'
-            }));
             const total = parseFloat(formData.get('total_amount') as string);
-            window.trackPurchase(data.donation.id || data.donation.access_token, items, total);
-          }
+            sessionStorage.setItem('qurbani_purchase', JSON.stringify({
+              transaction_id: data.donation.id || data.donation.access_token,
+              total: total,
+              items: causes.map((c: any) => ({
+                id: c.cause.toLowerCase().replace(/\s+/g, '-'),
+                name: c.cause + ' (30 Days)',
+                category: '30-days-of-ramadan',
+                amount: c.daily * 30,
+                quantity: 1
+              })),
+              timestamp: Date.now()
+            }));
+          } catch(e) {}
 
           // Redirect to success page with token
-          window.location.href = `/donation/ramadan-success?token=${data.donation.access_token}`;
+          window.location.href = `/donate/ramadan-success?token=${data.donation.access_token}`;
         } else {
           throw new Error(data.error || 'Failed to create donation');
         }
