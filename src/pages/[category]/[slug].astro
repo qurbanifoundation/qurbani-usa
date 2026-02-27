@@ -57,8 +57,10 @@ try {
 }
 
 // If no campaign found, check campaign_pages table
-// Campaign pages have their own static .astro files — rewrite to the file_path
+// Campaign pages have their own static .astro files — serve via rewrite or redirect
 if (!campaign) {
+  let foundPage: { file_path: string; slug: string; url_path: string } | null = null;
+
   try {
     const { data: page } = await supabaseAdmin
       .from('campaign_pages')
@@ -66,12 +68,7 @@ if (!campaign) {
       .eq('url_path', urlPath)
       .eq('is_active', true)
       .single();
-
-    if (page && page.file_path) {
-      // file_path is like "ramadan-giving.astro" → rewrite to /ramadan-giving
-      const filePath = page.file_path.replace('.astro', '');
-      return Astro.rewrite(`/${filePath}`);
-    }
+    if (page) foundPage = page;
   } catch (e) {
     // Also try matching by slug alone in campaign_pages
     try {
@@ -81,14 +78,17 @@ if (!campaign) {
         .eq('slug', slug)
         .eq('is_active', true)
         .single();
-
-      if (page && page.file_path) {
-        const filePath = page.file_path.replace('.astro', '');
-        return Astro.rewrite(`/${filePath}`);
-      }
+      if (page) foundPage = page;
     } catch (e2) {
       // Not found anywhere
     }
+  }
+
+  if (foundPage && foundPage.file_path) {
+    // file_path is like "zakat-calculator.astro" → derive route "/zakat-calculator"
+    let filePath = foundPage.file_path.replace('.astro', '');
+    if (filePath.endsWith('/index')) filePath = filePath.replace('/index', '');
+    return Astro.rewrite(`/${filePath}`);
   }
 
   return Astro.redirect('/404', 404);

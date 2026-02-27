@@ -21,6 +21,7 @@
 /eid-ul-adha*        /qurbani 301
 
 # Zakat related
+/zakat/calculator    /zakat-calculator 301
 /zakat-donation*     /zakat 301
 /pay-zakat*          /zakat 301
 /calculate-zakat*    /zakat-calculator 301
