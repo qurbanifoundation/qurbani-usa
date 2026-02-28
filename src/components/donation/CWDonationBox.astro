@@ -201,118 +201,166 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
 
       <!-- Monthly Amounts (State 1) -->
       <div class="cw-monthly-grid">
-        <!-- Row 1: first 3 amounts -->
-        <div class="grid grid-cols-3 gap-2.5 mb-2.5">
-          {monthlyAmounts.slice(0, 3).map((amt, i) => (
-            <button
-              type="button"
-              class={`cw-amt-btn relative rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${i === defaultMonthlyIndex ? 'cw-amt-selected' : ''}`}
-              data-amount={amt}
-              data-freq="monthly"
-              style={i === defaultMonthlyIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-            >
-              <span class={`text-[17px] font-bold ${i === defaultMonthlyIndex ? '' : 'text-gray-400'}`}>${amt}</span>
-              <span class={`text-[11px] ml-0.5 font-medium ${i === defaultMonthlyIndex ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
-            </button>
-          ))}
-        </div>
-        <!-- Row 2: 4th amount + Other amount (2x wider) -->
-        <div class="grid grid-cols-3 gap-2.5">
-          {monthlyAmounts.slice(3).map((amt) => {
-            const isDefault = monthlyAmounts.indexOf(amt) === defaultMonthlyIndex;
-            return (
-              <button
-                type="button"
-                class={`cw-amt-btn relative rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
-                data-amount={amt}
-                data-freq="monthly"
-                style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-              >
-                <span class={`text-[17px] font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                <span class={`text-[11px] ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
-              </button>
-            );
-          })}
-          <!-- Other amount: button and input share the same col-span-2 slot -->
-          <button
-            type="button"
-            class="cw-monthly-other-btn col-span-2 rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold text-[17px]"
-            style="background-color: #f4f5f0;"
-          >
-            Other
-          </button>
-          <div class="cw-monthly-custom-wrap col-span-2 hidden">
-            <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
-              <input
-                type="number"
-                step="0.01"
-                min="1"
-                class="cw-monthly-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
-                placeholder="Other"
-              />
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD/mo</span>
-            </div>
-          </div>
-        </div>
+        {(() => {
+          const total = monthlyAmounts.length;
+          const row1 = monthlyAmounts.slice(0, 3);
+          const row2 = monthlyAmounts.slice(3);
+          const otherColSpan = 3 - row2.length;
+          const needsSmallText = total > 4;
+          const amtSize = needsSmallText ? 'text-[14px]' : 'text-[17px]';
+          const suffSize = needsSmallText ? 'text-[10px]' : 'text-[11px]';
+          const otherSpanClass = otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : '';
+          return (
+            <>
+              <div class="grid grid-cols-3 gap-2.5 mb-2.5">
+                {row1.map((amt, i) => (
+                  <button
+                    type="button"
+                    class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${i === defaultMonthlyIndex ? 'cw-amt-selected' : ''}`}
+                    data-amount={amt}
+                    data-freq="monthly"
+                    style={i === defaultMonthlyIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                  >
+                    <span class={`${amtSize} font-bold ${i === defaultMonthlyIndex ? '' : 'text-gray-400'}`}>${amt}</span>
+                    <span class={`${suffSize} ml-0.5 font-medium ${i === defaultMonthlyIndex ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
+                  </button>
+                ))}
+              </div>
+              <div class="grid grid-cols-3 gap-2.5">
+                {row2.map((amt) => {
+                  const isDefault = monthlyAmounts.indexOf(amt) === defaultMonthlyIndex;
+                  return (
+                    <button
+                      type="button"
+                      class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
+                      data-amount={amt}
+                      data-freq="monthly"
+                      style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                    >
+                      <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                      <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  class={`cw-monthly-other-btn ${otherSpanClass} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtSize}`}
+                  style="background-color: #f4f5f0;"
+                >
+                  Other
+                </button>
+                <div class={`cw-monthly-custom-wrap ${otherSpanClass} hidden`}>
+                  <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      class="cw-monthly-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                      placeholder="Other"
+                    />
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD/mo</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       <!-- One-Time Amounts (State 2, hidden initially) -->
       <div class="cw-onetime-grid hidden">
-        <!-- Row 1: first 3 amounts -->
-        <div class="grid grid-cols-3 gap-2.5 mb-2.5">
-          {oneTimeAmounts.slice(0, 3).map((amt, i) => (
-            <button
-              type="button"
-              class={`cw-amt-btn rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${i === defaultOnetimeIndex ? 'cw-amt-selected' : ''}`}
-              data-amount={amt}
-              data-freq="single"
-              style={i === defaultOnetimeIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-            >
-              <span class={`text-[17px] font-bold ${i === defaultOnetimeIndex ? '' : 'text-gray-400'}`}>${amt}</span>
-              <span class={`text-[11px] ml-0.5 font-medium ${i === defaultOnetimeIndex ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
-            </button>
-          ))}
-        </div>
-        <!-- Row 2: remaining amounts + Other amount (2x wider) -->
-        <div class="grid grid-cols-3 gap-2.5">
-          {oneTimeAmounts.slice(3).map((amt) => {
-            const isOnetimeDefault = oneTimeAmounts.indexOf(amt) === defaultOnetimeIndex;
-            return (
-              <button
-                type="button"
-                class={`cw-amt-btn rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${isOnetimeDefault ? 'cw-amt-selected' : ''}`}
-                data-amount={amt}
-                data-freq="single"
-                style={isOnetimeDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-              >
-                <span class={`text-[17px] font-bold ${isOnetimeDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                <span class={`text-[11px] ml-0.5 font-medium ${isOnetimeDefault ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
-              </button>
-            );
-          })}
-          <!-- Other amount: button and input share the same col-span-2 slot -->
-          <button
-            type="button"
-            class="cw-other-btn col-span-2 rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold text-[17px]"
-            style="background-color: #f4f5f0;"
-          >
-            Other
-          </button>
-          <div class="cw-onetime-custom-wrap col-span-2 hidden">
-            <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
-              <input
-                type="number"
-                step="0.01"
-                min="1"
-                class="cw-onetime-custom w-full pl-8 pr-14 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
-                placeholder="Other"
-              />
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD</span>
-            </div>
-          </div>
-        </div>
+        {/* Compute how many amounts go in row 1 vs row 2 to keep 3-col grid balanced with Other btn */}
+        {(() => {
+          const total = oneTimeAmounts.length;
+          // Determine split: Other takes col-span based on remaining space in last row
+          // Row 1 always gets 3. Row 2 gets rest + Other filling remaining cols.
+          const row1 = oneTimeAmounts.slice(0, 3);
+          const row2 = oneTimeAmounts.slice(3);
+          const otherColSpan = 3 - row2.length; // e.g. 1 remaining → Other gets 2 cols; 2 remaining → Other gets 1 col
+          const needsSmallText = total > 4; // Shrink text when many amounts
+          const amtTextSize = needsSmallText ? 'text-[14px]' : 'text-[17px]';
+          const suffTextSize = needsSmallText ? 'text-[10px]' : 'text-[11px]';
+          return (
+            <>
+              {/* Row 1: first 3 amounts */}
+              <div class="grid grid-cols-3 gap-2.5 mb-2.5">
+                {row1.map((amt, i) => (
+                  <button
+                    type="button"
+                    class={`cw-amt-btn rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${i === defaultOnetimeIndex ? 'cw-amt-selected' : ''}`}
+                    data-amount={amt}
+                    data-freq="single"
+                    style={i === defaultOnetimeIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                  >
+                    <span class={`${amtTextSize} font-bold ${i === defaultOnetimeIndex ? '' : 'text-gray-400'}`}>${amt}</span>
+                    <span class={`${suffTextSize} ml-0.5 font-medium ${i === defaultOnetimeIndex ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
+                  </button>
+                ))}
+              </div>
+              {/* Row 2: remaining amounts + Other button filling rest of the 3-col grid */}
+              <div class="grid grid-cols-3 gap-2.5">
+                {row2.map((amt) => {
+                  const isOnetimeDefault = oneTimeAmounts.indexOf(amt) === defaultOnetimeIndex;
+                  return (
+                    <button
+                      type="button"
+                      class={`cw-amt-btn rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isOnetimeDefault ? 'cw-amt-selected' : ''}`}
+                      data-amount={amt}
+                      data-freq="single"
+                      style={isOnetimeDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                    >
+                      <span class={`${amtTextSize} font-bold ${isOnetimeDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                      <span class={`${suffTextSize} ml-0.5 font-medium ${isOnetimeDefault ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
+                    </button>
+                  );
+                })}
+                {/* Other amount: fills remaining columns in the 3-col grid */}
+                <button
+                  type="button"
+                  class={`cw-other-btn ${otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : ''} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtTextSize}`}
+                  style="background-color: #f4f5f0;"
+                >
+                  Other
+                </button>
+                <div class={`cw-onetime-custom-wrap ${otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : ''} hidden`}>
+                  <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      class="cw-onetime-custom w-full pl-8 pr-14 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                      placeholder="Other"
+                    />
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD</span>
+                  </div>
+                </div>
+              </div>
+              {/* Row 3: if there are more than 5 amounts, overflow into additional row */}
+              {total > 5 && (
+                <div class="grid grid-cols-3 gap-2.5 mt-2.5">
+                  {oneTimeAmounts.slice(5).map((amt) => {
+                    const isOnetimeDefault = oneTimeAmounts.indexOf(amt) === defaultOnetimeIndex;
+                    return (
+                      <button
+                        type="button"
+                        class={`cw-amt-btn rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isOnetimeDefault ? 'cw-amt-selected' : ''}`}
+                        data-amount={amt}
+                        data-freq="single"
+                        style={isOnetimeDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                      >
+                        <span class={`${amtTextSize} font-bold ${isOnetimeDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                        <span class={`${suffTextSize} ml-0.5 font-medium ${isOnetimeDefault ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          );
+        })()}
+
 
         {showSpecialProject && (
           <button
@@ -804,6 +852,18 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
       clearOnetimeBtnStyles();
     }
 
+    // Get the text size class from a button's existing span (preserves adaptive sizing)
+    function getAmtSizeClass(btn) {
+      var s = btn.querySelector('span:first-child');
+      if (s && s.className.indexOf('text-[14px]') !== -1) return 'text-[14px]';
+      return 'text-[17px]';
+    }
+    function getSuffSizeClass(btn) {
+      var s = btn.querySelector('span:last-child');
+      if (s && s.className.indexOf('text-[10px]') !== -1) return 'text-[10px]';
+      return 'text-[11px]';
+    }
+
     function clearMonthlyBtnStyles() {
       monthlyBtns.forEach(function(b) {
         b.style.backgroundColor = '#f4f5f0';
@@ -811,9 +871,9 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
         b.style.borderColor = '#e0e1dc';
         b.classList.remove('cw-amt-selected');
         var amtSpan = b.querySelector('span:first-child');
-        if (amtSpan) amtSpan.className = 'text-[17px] font-bold text-gray-400';
+        if (amtSpan) amtSpan.className = getAmtSizeClass(b) + ' font-bold text-gray-400';
         var suffSpan = b.querySelector('span:last-child');
-        if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium text-gray-400';
+        if (suffSpan) suffSpan.className = getSuffSizeClass(b) + ' ml-0.5 font-medium text-gray-400';
       });
     }
 
@@ -824,9 +884,9 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
       btn.style.borderColor = accentColor;
       btn.classList.add('cw-amt-selected');
       var amtSpan = btn.querySelector('span:first-child');
-      if (amtSpan) amtSpan.className = 'text-[17px] font-bold';
+      if (amtSpan) amtSpan.className = getAmtSizeClass(btn) + ' font-bold';
       var suffSpan = btn.querySelector('span:last-child');
-      if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium opacity-70';
+      if (suffSpan) suffSpan.className = getSuffSizeClass(btn) + ' ml-0.5 font-medium opacity-70';
     }
 
     function clearOnetimeBtnStyles() {
@@ -836,9 +896,9 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
         b.style.borderColor = '#e0e1dc';
         b.classList.remove('cw-amt-selected');
         var amtSpan = b.querySelector('span:first-child');
-        if (amtSpan) amtSpan.className = 'text-[17px] font-bold text-gray-400';
+        if (amtSpan) amtSpan.className = getAmtSizeClass(b) + ' font-bold text-gray-400';
         var suffSpan = b.querySelector('span:last-child');
-        if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium text-gray-400';
+        if (suffSpan) suffSpan.className = getSuffSizeClass(b) + ' ml-0.5 font-medium text-gray-400';
       });
       if (specialBtn) {
         specialBtn.style.borderColor = '#e0e1dc';
@@ -854,9 +914,9 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
       btn.style.borderColor = accentColor;
       btn.classList.add('cw-amt-selected');
       var amtSpan = btn.querySelector('span:first-child');
-      if (amtSpan) amtSpan.className = 'text-[17px] font-bold';
+      if (amtSpan) amtSpan.className = getAmtSizeClass(btn) + ' font-bold';
       var suffSpan = btn.querySelector('span:last-child');
-      if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium opacity-70';
+      if (suffSpan) suffSpan.className = getSuffSizeClass(btn) + ' ml-0.5 font-medium opacity-70';
     }
 
     // ═══════════════════════════════════════════
