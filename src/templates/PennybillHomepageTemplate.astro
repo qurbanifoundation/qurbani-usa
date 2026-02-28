@@ -184,7 +184,7 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
                   </p>
 
                   <!-- CTA Buttons -->
-                  <div class="flex flex-wrap gap-4 mb-16">
+                  <div class="flex flex-wrap gap-4 mb-6 lg:mb-16">
                     <a href={slide.primaryCta.href} class="group inline-flex items-center gap-3 bg-[#d97706] hover:bg-[#b45309] text-white font-semibold px-8 py-4 rounded-full transition-all shadow-lg shadow-[#d97706]/25 hover:shadow-xl hover:shadow-[#d97706]/40">
                       <span>{slide.primaryCta.text}</span>
                       <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,6 +194,17 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
                     <a href={slide.secondaryCta.href} class="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold px-8 py-4 rounded-full transition-all border border-white/20">
                       <span>{slide.secondaryCta.text}</span>
                     </a>
+                  </div>
+
+                  <!-- Mobile dots (below CTA buttons, inline) -->
+                  <div class="flex lg:hidden justify-center gap-2.5 mb-10">
+                    {heroSlides.map((_: any, di: number) => (
+                      <button
+                        class={`carousel-dot w-2.5 h-2.5 rounded-full transition-all duration-300 ${di === 0 ? 'bg-[#d97706] scale-125' : 'bg-white/30 hover:bg-white/50'}`}
+                        data-goto={di}
+                        aria-label={`Go to slide ${di + 1}`}
+                      ></button>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -277,22 +288,20 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
         </div>
       </div>
 
-      <!-- Left Arrow -->
-      <button class="carousel-prev flex absolute left-2 lg:left-4 xl:left-8 top-1/3 lg:top-1/2 -translate-y-1/2 z-20 w-9 h-9 lg:w-12 lg:h-12 rounded-full items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm" aria-label="Previous slide">
-        <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <!-- Arrows: desktop only -->
+      <button class="carousel-prev hidden lg:flex absolute left-4 xl:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm" aria-label="Previous slide">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
         </svg>
       </button>
-
-      <!-- Right Arrow -->
-      <button class="carousel-next flex absolute right-2 lg:right-4 xl:right-8 top-1/3 lg:top-1/2 -translate-y-1/2 z-20 w-9 h-9 lg:w-12 lg:h-12 rounded-full items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm" aria-label="Next slide">
-        <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <button class="carousel-next hidden lg:flex absolute right-4 xl:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm" aria-label="Next slide">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
         </svg>
       </button>
 
-      <!-- Center Dots + Counter -->
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
+      <!-- Dots + Counter: desktop at bottom center, mobile hidden (mobile dots are inline in content) -->
+      <div class="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-20 items-center gap-3">
         <div class="flex items-center gap-2">
           {heroSlides.map((_: any, index: number) => (
             <button
