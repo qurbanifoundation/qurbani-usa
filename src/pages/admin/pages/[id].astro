@@ -813,6 +813,21 @@ if (page?.content) {
       });
     }
 
+    // Stats
+    var defaultStatsData = [
+      { value: '2M+', label: 'Lives Changed' },
+      { value: '53+', label: 'Countries' },
+      { value: '100%', label: 'Zakat Delivered' }
+    ];
+    var slideStats = (slide.stats && slide.stats.length === 3) ? slide.stats : defaultStatsData;
+    var statsHtml = '';
+    slideStats.forEach(function(stat, si) {
+      statsHtml += '<div class="space-y-1">' +
+        '<input type="text" placeholder="Value (e.g., 2M+)" value="' + (stat.value || '').replace(/"/g, '&quot;') + '" class="hs-stat-value w-full px-2 py-1.5 border border-gray-200 rounded text-sm font-bold" />' +
+        '<input type="text" placeholder="Label (e.g., Lives Changed)" value="' + (stat.label || '').replace(/"/g, '&quot;') + '" class="hs-stat-label w-full px-2 py-1.5 border border-gray-200 rounded text-xs" />' +
+        '</div>';
+    });
+
     var card = document.createElement('div');
     card.className = 'hero-slide-card border border-gray-200 rounded-lg overflow-hidden';
     card.dataset.slideIndex = String(index);
@@ -886,6 +901,17 @@ if (page?.content) {
             '<div>' +
               '<label class="block text-xs font-medium text-gray-600 mb-1">Secondary Button Link</label>' +
               '<input type="text" placeholder="/about" value="' + (secondaryCta.href || '').replace(/"/g, '&quot;') + '" class="hs-secondary-href w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<!-- Stats -->' +
+          '<div class="border-t border-gray-100 pt-3 mt-3">' +
+            '<div class="flex items-center justify-between mb-2">' +
+              '<h4 class="font-semibold text-gray-700 text-sm flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Stats (3 items)</h4>' +
+              '<button type="button" class="hs-reset-stats text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">Reset to defaults</button>' +
+            '</div>' +
+            '<p class="text-xs text-gray-400 mb-2">The 3 stat numbers shown below the hero text (e.g., 2M+ Lives Changed)</p>' +
+            '<div class="hs-stats-container grid grid-cols-3 gap-2">' +
+              statsHtml +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -1044,6 +1070,26 @@ if (page?.content) {
       addHeroSlideAmountRow(card.querySelector('.hs-onetime-container'), 'onetime');
     });
 
+    // Reset stats to defaults
+    var resetStatsBtn = card.querySelector('.hs-reset-stats');
+    if (resetStatsBtn) {
+      resetStatsBtn.addEventListener('click', function() {
+        var statsContainer = card.querySelector('.hs-stats-container');
+        var defaults = [
+          { value: '2M+', label: 'Lives Changed' },
+          { value: '53+', label: 'Countries' },
+          { value: '100%', label: 'Zakat Delivered' }
+        ];
+        var statDivs = statsContainer.querySelectorAll(':scope > div');
+        defaults.forEach(function(d, i) {
+          if (statDivs[i]) {
+            statDivs[i].querySelector('.hs-stat-value').value = d.value;
+            statDivs[i].querySelector('.hs-stat-label').value = d.label;
+          }
+        });
+      });
+    }
+
     // Remove amount row buttons (for pre-existing rows)
     card.querySelectorAll('.hs-remove-amount').forEach(function(btn) {
       btn.addEventListener('click', function() { btn.closest('.hs-m-row, .hs-o-row').remove(); });
@@ -1102,6 +1148,20 @@ if (page?.content) {
         text: card.querySelector('.hs-secondary-text')?.value || '',
         href: card.querySelector('.hs-secondary-href')?.value || ''
       };
+
+      // Stats
+      var stats = [];
+      var statDivs = card.querySelectorAll('.hs-stats-container > div');
+      statDivs.forEach(function(div) {
+        var val = div.querySelector('.hs-stat-value')?.value || '';
+        var label = div.querySelector('.hs-stat-label')?.value || '';
+        if (val || label) {
+          stats.push({ value: val, label: label });
+        }
+      });
+      if (stats.length > 0) {
+        slide.stats = stats;
+      }
 
       // Donation config
       var donation = {};
