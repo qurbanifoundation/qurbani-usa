@@ -157,7 +157,7 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
       <!-- Content -->
       <div class="relative z-10 w-full">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-          <div class="grid lg:grid-cols-5 gap-16 items-center">
+          <div class="grid lg:grid-cols-5 gap-16 items-start">
 
             <!-- Left Content (3 cols) -->
             <div class="lg:col-span-3 text-white">
@@ -285,6 +285,9 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
                         upsellMonthlyRatio={0.4}
                         buttonTextMonthly={slideConfig.buttonTextMonthly || homepageCWConfig.buttonTextMonthly || "JOIN TODAY"}
                         buttonTextOneTime={slideConfig.buttonTextOneTime || homepageCWConfig.buttonTextOneTime || "GIVE"}
+                        tabEmoji={slideConfig.tabEmoji || homepageCWConfig.tabEmoji || ''}
+                        tabLabelMonthly={slideConfig.tabLabelMonthly || homepageCWConfig.tabLabelMonthly || 'MONTHLY'}
+                        tabLabelOneTime={slideConfig.tabLabelOneTime || homepageCWConfig.tabLabelOneTime || 'GIVE ONCE'}
                         donationBoxHeading={slideConfig.donationBoxHeading || homepageCWConfig.donationBoxHeading}
                       />
                     </div>

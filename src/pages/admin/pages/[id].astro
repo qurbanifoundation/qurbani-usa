@@ -221,6 +221,21 @@ if (page?.content) {
           <input type="text" id="cwDonationBoxHeading" placeholder="e.g. Be the Reason They Smile Every Month" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
           <p class="text-xs text-gray-400 mt-1">Heading displayed above the donation box. Leave blank for no heading.</p>
         </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tab Icon / Emoji</label>
+            <input type="text" id="cwTabEmoji" placeholder="e.g., 🤲 💧 🌙 ❤️ (auto-detects if blank)" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+            <p class="text-xs text-gray-400 mt-1">Icon shown on the monthly tab and impact line</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Tab Label</label>
+            <input type="text" id="cwTabLabelMonthly" placeholder="MONTHLY" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">One-Time Tab Label</label>
+            <input type="text" id="cwTabLabelOneTime" placeholder="GIVE ONCE" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          </div>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Button Text</label>
@@ -672,6 +687,9 @@ if (page?.content) {
     var btnMonthly = document.getElementById('cwButtonTextMonthly')?.value;
     var btnOneTime = document.getElementById('cwButtonTextOneTime')?.value;
     var heading = document.getElementById('cwDonationBoxHeading')?.value;
+    var cwTabEmoji = document.getElementById('cwTabEmoji')?.value;
+    var cwTabLabelMonthly = document.getElementById('cwTabLabelMonthly')?.value;
+    var cwTabLabelOneTime = document.getElementById('cwTabLabelOneTime')?.value;
 
     if (monthlyImpactText) config.monthlyImpactText = monthlyImpactText;
     if (upsellBody) config.upsellBody = upsellBody;
@@ -679,6 +697,9 @@ if (page?.content) {
     if (btnMonthly) config.buttonTextMonthly = btnMonthly;
     if (btnOneTime) config.buttonTextOneTime = btnOneTime;
     if (heading) config.donationBoxHeading = heading;
+    if (cwTabEmoji) config.tabEmoji = cwTabEmoji;
+    if (cwTabLabelMonthly) config.tabLabelMonthly = cwTabLabelMonthly;
+    if (cwTabLabelOneTime) config.tabLabelOneTime = cwTabLabelOneTime;
 
     return Object.keys(config).length > 0 ? config : null;
   }
@@ -720,6 +741,13 @@ if (page?.content) {
     if (bMonthly) bMonthly.value = cwConfig.buttonTextMonthly || '';
     if (bOneTime) bOneTime.value = cwConfig.buttonTextOneTime || '';
     if (headingInput) headingInput.value = cwConfig.donationBoxHeading || '';
+
+    var tabEmojiInput = document.getElementById('cwTabEmoji');
+    var tabLabelMonthlyInput = document.getElementById('cwTabLabelMonthly');
+    var tabLabelOneTimeInput = document.getElementById('cwTabLabelOneTime');
+    if (tabEmojiInput) tabEmojiInput.value = cwConfig.tabEmoji || '';
+    if (tabLabelMonthlyInput) tabLabelMonthlyInput.value = cwConfig.tabLabelMonthly || '';
+    if (tabLabelOneTimeInput) tabLabelOneTimeInput.value = cwConfig.tabLabelOneTime || '';
   }
 
   // Init on load
@@ -878,6 +906,20 @@ if (page?.content) {
           '<div>' +
             '<label class="block text-xs font-medium text-gray-600 mb-1">Donation Box Heading</label>' +
             '<input type="text" placeholder="e.g., Be the Reason They Smile" value="' + (donation.donationBoxHeading || '').replace(/"/g, '&quot;') + '" class="hs-donation-heading w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+          '</div>' +
+          '<div class="grid grid-cols-3 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Tab Icon / Emoji</label>' +
+              '<input type="text" placeholder="e.g., 🤲 💧 🌙 (auto-detects if blank)" value="' + (donation.tabEmoji || '').replace(/"/g, '&quot;') + '" class="hs-tab-emoji w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Monthly Tab Text</label>' +
+              '<input type="text" placeholder="MONTHLY" value="' + (donation.tabLabelMonthly || '').replace(/"/g, '&quot;') + '" class="hs-tab-label-monthly w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">One-Time Tab Text</label>' +
+              '<input type="text" placeholder="GIVE ONCE" value="' + (donation.tabLabelOneTime || '').replace(/"/g, '&quot;') + '" class="hs-tab-label-onetime w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
           '</div>' +
           '<!-- Monthly Amounts -->' +
           '<div>' +
@@ -1066,6 +1108,9 @@ if (page?.content) {
       var campaignSlug = card.querySelector('.hs-campaign-slug')?.value;
       var campaignTitle = card.querySelector('.hs-campaign-title')?.value;
       var donationHeading = card.querySelector('.hs-donation-heading')?.value;
+      var tabEmojiVal = card.querySelector('.hs-tab-emoji')?.value;
+      var tabLabelMonthlyVal = card.querySelector('.hs-tab-label-monthly')?.value;
+      var tabLabelOneTimeVal = card.querySelector('.hs-tab-label-onetime')?.value;
       var btnMonthly = card.querySelector('.hs-btn-monthly')?.value;
       var btnOneTime = card.querySelector('.hs-btn-onetime')?.value;
       var monthlyImpact = card.querySelector('.hs-monthly-impact-text')?.value;
@@ -1075,6 +1120,9 @@ if (page?.content) {
       if (campaignSlug) donation.campaignSlug = campaignSlug;
       if (campaignTitle) donation.campaignTitle = campaignTitle;
       if (donationHeading) donation.donationBoxHeading = donationHeading;
+      if (tabEmojiVal) donation.tabEmoji = tabEmojiVal;
+      if (tabLabelMonthlyVal) donation.tabLabelMonthly = tabLabelMonthlyVal;
+      if (tabLabelOneTimeVal) donation.tabLabelOneTime = tabLabelOneTimeVal;
       if (btnMonthly) donation.buttonTextMonthly = btnMonthly;
       if (btnOneTime) donation.buttonTextOneTime = btnOneTime;
       if (monthlyImpact) donation.monthlyImpactText = monthlyImpact;
