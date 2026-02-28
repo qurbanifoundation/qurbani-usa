@@ -631,6 +631,10 @@ if (page?.content) {
             '</div>' +
           '</div>' +
           '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">&ldquo;Other&rdquo; Amount Impact Text</label>' +
+            '<input type="text" placeholder="Shown when donor enters a custom amount" value="' + (freq.otherImpactText || '').replace(/"/g, '&quot;') + '" class="cw-freq-other-impact w-full px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '</div>' +
+          '<div>' +
             '<div class="flex items-center justify-between mb-2">' +
               '<label class="text-xs font-medium text-gray-600">Amounts & Impact Texts</label>' +
               '<button type="button" class="cw-freq-add-amt text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">+ Add</button>' +
@@ -739,6 +743,7 @@ if (page?.content) {
       var buttonText = div.querySelector('.cw-freq-btntext')?.value || def.buttonText;
       var suffix = div.querySelector('.cw-freq-suffix')?.value || def.suffix;
       var fallbackImpactText = div.querySelector('.cw-freq-fallback')?.value || '';
+      var otherImpactText = div.querySelector('.cw-freq-other-impact')?.value || '';
 
       var amounts = [];
       var impactTexts = {};
@@ -751,7 +756,7 @@ if (page?.content) {
         }
       });
 
-      frequencies.push({
+      var freqObj = {
         key: key,
         label: label,
         type: def.type,
@@ -762,7 +767,9 @@ if (page?.content) {
         impactTexts: impactTexts,
         defaultAmountIndex: 1,
         fallbackImpactText: fallbackImpactText,
-      });
+      };
+      if (otherImpactText) freqObj.otherImpactText = otherImpactText;
+      frequencies.push(freqObj);
     });
     return frequencies.length > 0 ? frequencies : null;
   }

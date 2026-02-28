@@ -23,6 +23,7 @@ interface FrequencyConfig {
   impactTexts: Record<number, string>;
   defaultAmountIndex: number;
   fallbackImpactText: string;
+  otherImpactText?: string;
 }
 
 interface Props {
@@ -523,15 +524,26 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
       if (suffSpan) suffSpan.className = getSuffSizeClass(btn) + ' ml-0.5 font-medium opacity-70';
     }
 
-    function updateImpact() {
+    function updateImpact(isCustom) {
       if (!impactText) return;
       var freq = getActiveFreq();
       if (!freq) return;
+
+      // If this is a custom/other amount and we have an otherImpactText, use it
+      if (isCustom && freq.otherImpactText) {
+        impactText.innerHTML = freq.otherImpactText;
+        return;
+      }
 
       // Check for amount-specific impact text
       if (freq.impactTexts && selectedAmount > 0) {
         if (freq.impactTexts[selectedAmount]) {
           impactText.innerHTML = freq.impactTexts[selectedAmount];
+          return;
+        }
+        // For custom amounts, check otherImpactText first before closest-lower
+        if (isCustom && freq.otherImpactText) {
+          impactText.innerHTML = freq.otherImpactText;
           return;
         }
         // Find closest lower amount
@@ -543,7 +555,11 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
           }
         }
       }
-      // Fallback
+      // Fallback: otherImpactText for custom, then fallbackImpactText
+      if (isCustom && freq.otherImpactText) {
+        impactText.innerHTML = freq.otherImpactText;
+        return;
+      }
       impactText.innerHTML = freq.fallbackImpactText || '';
     }
 
@@ -677,6 +693,7 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
           otherBtnEl.classList.add('hidden');
           clearGridBtnStyles(grid);
           selectedAmount = 0;
+          updateImpact(true);
           if (customInput) customInput.focus();
         });
       }
@@ -688,7 +705,7 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
           if (this.value) {
             selectedAmount = parseFloat(this.value) || 0;
             clearGridBtnStyles(grid);
-            updateImpact();
+            updateImpact(true);
           }
         });
       }
