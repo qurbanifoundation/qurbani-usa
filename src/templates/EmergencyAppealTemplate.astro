@@ -402,6 +402,8 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
                   buttonTextMonthly={cwConfig.buttonTextMonthly}
                   buttonTextOneTime={cwConfig.buttonTextOneTime}
                   donationBoxHeading={cwConfig.donationBoxHeading}
+                  tabEmoji={cwConfig.tabEmoji || ''}
+                  frequencies={cwConfig.frequencies}
                 />
               ) : isHomeDonation ? (
                 <HomeDonationBox campaignSlug={campaign.slug} campaignTitle={campaign.title} />

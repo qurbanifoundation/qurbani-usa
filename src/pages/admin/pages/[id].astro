@@ -189,72 +189,32 @@ if (page?.content) {
       <h2 class="text-lg font-bold text-gray-800 mb-2">Donation Box Settings</h2>
       <p class="text-sm text-gray-500 mb-6">Configure amounts, impact texts, and labels for the CW Donation Box on this page</p>
 
-      <!-- Monthly Amounts -->
+      <!-- Frequency Tabs Selector -->
       <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="font-semibold text-gray-700">Monthly Amounts</h3>
-            <p class="text-xs text-gray-400">Set preset monthly donation amounts and their impact descriptions</p>
-          </div>
-          <button type="button" id="addCWMonthlyBtn" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Amount</button>
+        <div class="mb-4">
+          <h3 class="font-semibold text-gray-700">Donation Frequency Tabs</h3>
+          <p class="text-xs text-gray-400">Check frequencies to enable them as tabs. First checked = default tab. Drag to reorder.</p>
         </div>
-        <div id="cwMonthlyAmounts" class="space-y-3"></div>
+        <div id="cwFrequencyList" class="space-y-3"></div>
       </div>
 
-      <!-- One-Time Amounts -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="font-semibold text-gray-700">One-Time Amounts</h3>
-            <p class="text-xs text-gray-400">Set preset one-time donation amounts and their impact descriptions</p>
-          </div>
-          <button type="button" id="addCWOneTimeBtn" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Amount</button>
-        </div>
-        <div id="cwOneTimeAmounts" class="space-y-3"></div>
-      </div>
-
-      <!-- Text Settings -->
+      <!-- General Settings -->
       <div class="space-y-4">
-        <h3 class="font-semibold text-gray-700 mb-2">Text Settings</h3>
+        <h3 class="font-semibold text-gray-700 mb-2">General Settings</h3>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Donation Box Heading</label>
           <input type="text" id="cwDonationBoxHeading" placeholder="e.g. Be the Reason They Smile Every Month" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
           <p class="text-xs text-gray-400 mt-1">Heading displayed above the donation box. Leave blank for no heading.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Tab Icon / Emoji</label>
-            <input type="text" id="cwTabEmoji" placeholder="e.g., 🤲 💧 🌙 ❤️ (auto-detects if blank)" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-            <p class="text-xs text-gray-400 mt-1">Icon shown on the monthly tab and impact line</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Tab Label</label>
-            <input type="text" id="cwTabLabelMonthly" placeholder="MONTHLY" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">One-Time Tab Label</label>
-            <input type="text" id="cwTabLabelOneTime" placeholder="GIVE ONCE" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Button Text</label>
-            <input type="text" id="cwButtonTextMonthly" placeholder="JOIN TODAY" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">One-Time Button Text</label>
-            <input type="text" id="cwButtonTextOneTime" placeholder="GIVE" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-          </div>
-        </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Impact Text (fallback)</label>
-          <input type="text" id="cwMonthlyImpactText" placeholder="Your monthly gift transforms lives around the world" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-          <p class="text-xs text-gray-400 mt-1">Shown under monthly tab when no amount-specific text exists. HTML allowed.</p>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tab Icon / Emoji</label>
+          <input type="text" id="cwTabEmoji" placeholder="e.g., 🤲 💧 🌙 ❤️ (auto-detects if blank)" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          <p class="text-xs text-gray-400 mt-1">Icon shown on the recurring tabs and impact line</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Body Text</label>
           <textarea id="cwUpsellBody" rows="3" placeholder="By making a monthly donation, you'll empower us to make long-term investments..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
-          <p class="text-xs text-gray-400 mt-1">Shown on the monthly upsell page after one-time "GIVE" is clicked</p>
+          <p class="text-xs text-gray-400 mt-1">Shown on the upsell page after one-time "GIVE" is clicked</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Sub Text</label>
@@ -593,6 +553,224 @@ if (page?.content) {
   var cwMonthlyIndex = 0;
   var cwOneTimeIndex = 0;
 
+  // ═══════════════════════════════════════════
+  // FREQUENCY TABS SYSTEM
+  // ═══════════════════════════════════════════
+  var FREQ_DEFINITIONS = [
+    { key: 'monthly', label: 'MONTHLY', type: 'recurring', stripeInterval: 'month', suffix: 'USD/mo', buttonText: 'JOIN TODAY', defaultAmounts: [10, 20, 40, 100], fallbackImpactText: 'Your monthly gift transforms lives around the world' },
+    { key: 'single', label: 'GIVE ONCE', type: 'single', stripeInterval: null, suffix: 'USD', buttonText: 'GIVE', defaultAmounts: [50, 100, 150, 200], fallbackImpactText: '' },
+    { key: 'yearly', label: 'YEARLY', type: 'recurring', stripeInterval: 'year', suffix: 'USD/yr', buttonText: 'GIVE YEARLY', defaultAmounts: [100, 250, 500, 1000], fallbackImpactText: 'Your yearly gift makes a lasting impact' },
+    { key: 'weekly', label: 'EVERY FRIDAY', type: 'recurring', stripeInterval: 'week', suffix: 'USD/wk', buttonText: 'GIVE WEEKLY', defaultAmounts: [5, 10, 20, 50], fallbackImpactText: 'Your Jummah gift blesses every Friday' },
+    { key: 'daily', label: 'DAILY', type: 'recurring', stripeInterval: 'day', suffix: 'USD/day', buttonText: 'GIVE DAILY', defaultAmounts: [1, 3, 5, 10], fallbackImpactText: 'Your daily gift provides consistent support' },
+  ];
+  var cwFreqAmtIndex = 0;
+
+  function renderFrequencyList(containerId, frequencies) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+
+    FREQ_DEFINITIONS.forEach(function(def) {
+      var existing = null;
+      if (frequencies) {
+        for (var i = 0; i < frequencies.length; i++) {
+          if (frequencies[i].key === def.key) { existing = frequencies[i]; break; }
+        }
+      }
+      var isChecked = existing ? true : false;
+      var freq = existing || def;
+
+      var div = document.createElement('div');
+      div.className = 'cw-freq-item border border-gray-200 rounded-lg overflow-hidden';
+      div.dataset.freqKey = def.key;
+
+      var amounts = freq.amounts || def.defaultAmounts || [];
+      var impactTexts = freq.impactTexts || {};
+      var amountsHtml = '';
+      amounts.forEach(function(amt) {
+        var impact = impactTexts[amt] || '';
+        amountsHtml += '<div class="cw-freq-amt-row flex gap-2 items-center mb-2">' +
+          '<input type="number" placeholder="$" value="' + amt + '" class="cw-fa-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '<input type="text" placeholder="Impact text" value="' + (impact || '').replace(/"/g, '&quot;') + '" class="cw-fa-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '<button type="button" class="cw-fa-remove p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>' +
+          '</div>';
+      });
+
+      div.innerHTML =
+        '<div class="cw-freq-header flex items-center gap-3 px-4 py-3 bg-gray-50 cursor-pointer select-none">' +
+          '<input type="checkbox" class="cw-freq-check w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" ' + (isChecked ? 'checked' : '') + ' />' +
+          '<div class="flex-1">' +
+            '<span class="font-semibold text-sm text-gray-700">' + def.label + '</span>' +
+            '<span class="text-xs text-gray-400 ml-2">(' + (def.type === 'single' ? 'one-time' : def.stripeInterval) + ')</span>' +
+          '</div>' +
+          '<div class="flex gap-1">' +
+            '<button type="button" class="cw-freq-up p-1 text-gray-400 hover:text-gray-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>' +
+            '<button type="button" class="cw-freq-down p-1 text-gray-400 hover:text-gray-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>' +
+          '</div>' +
+          '<svg class="cw-freq-chevron w-4 h-4 text-gray-400 transition-transform ' + (isChecked ? 'rotate-180' : '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>' +
+        '</div>' +
+        '<div class="cw-freq-body px-4 py-3 space-y-3 ' + (isChecked ? '' : 'hidden') + '">' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Tab Label</label>' +
+              '<input type="text" placeholder="' + def.label + '" value="' + (freq.label || '').replace(/"/g, '&quot;') + '" class="cw-freq-label w-full px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Button Text</label>' +
+              '<input type="text" placeholder="' + def.buttonText + '" value="' + (freq.buttonText || '').replace(/"/g, '&quot;') + '" class="cw-freq-btntext w-full px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Suffix</label>' +
+              '<input type="text" placeholder="' + def.suffix + '" value="' + (freq.suffix || '').replace(/"/g, '&quot;') + '" class="cw-freq-suffix w-full px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Fallback Impact Text</label>' +
+              '<input type="text" placeholder="Shown when no amount-specific text" value="' + (freq.fallbackImpactText || '').replace(/"/g, '&quot;') + '" class="cw-freq-fallback w-full px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<div class="flex items-center justify-between mb-2">' +
+              '<label class="text-xs font-medium text-gray-600">Amounts & Impact Texts</label>' +
+              '<button type="button" class="cw-freq-add-amt text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">+ Add</button>' +
+            '</div>' +
+            '<div class="cw-freq-amounts">' + amountsHtml + '</div>' +
+          '</div>' +
+        '</div>';
+
+      container.appendChild(div);
+      attachFreqItemListeners(div);
+    });
+
+    // Reorder based on existing frequencies order
+    if (frequencies && frequencies.length > 0) {
+      var orderedKeys = frequencies.map(function(f) { return f.key; });
+      // Move checked items to top in order
+      orderedKeys.forEach(function(key) {
+        var item = container.querySelector('[data-freq-key="' + key + '"]');
+        if (item) container.appendChild(item);
+      });
+      // Then append unchecked items
+      FREQ_DEFINITIONS.forEach(function(def) {
+        if (orderedKeys.indexOf(def.key) === -1) {
+          var item = container.querySelector('[data-freq-key="' + def.key + '"]');
+          if (item) container.appendChild(item);
+        }
+      });
+    }
+  }
+
+  function attachFreqItemListeners(div) {
+    var check = div.querySelector('.cw-freq-check');
+    var body = div.querySelector('.cw-freq-body');
+    var chevron = div.querySelector('.cw-freq-chevron');
+    var header = div.querySelector('.cw-freq-header');
+
+    // Toggle body on header click (but not on checkbox or buttons)
+    header.addEventListener('click', function(e) {
+      if (e.target.closest('.cw-freq-check') || e.target.closest('.cw-freq-up') || e.target.closest('.cw-freq-down')) return;
+      if (check.checked) {
+        body.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+      }
+    });
+
+    // Checkbox toggle
+    check.addEventListener('change', function() {
+      if (check.checked) {
+        body.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+      } else {
+        body.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+      }
+    });
+
+    // Move up/down
+    div.querySelector('.cw-freq-up').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var prev = div.previousElementSibling;
+      if (prev) div.parentNode.insertBefore(div, prev);
+    });
+    div.querySelector('.cw-freq-down').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var next = div.nextElementSibling;
+      if (next) div.parentNode.insertBefore(next, div);
+    });
+
+    // Add amount
+    div.querySelector('.cw-freq-add-amt').addEventListener('click', function() {
+      addFreqAmountRow(div.querySelector('.cw-freq-amounts'));
+    });
+
+    // Remove amount
+    div.querySelectorAll('.cw-fa-remove').forEach(function(btn) {
+      btn.addEventListener('click', function() { btn.closest('.cw-freq-amt-row').remove(); });
+    });
+  }
+
+  function addFreqAmountRow(container, amount, impact) {
+    amount = amount || '';
+    impact = impact || '';
+    var row = document.createElement('div');
+    row.className = 'cw-freq-amt-row flex gap-2 items-center mb-2';
+    row.innerHTML = '<input type="number" placeholder="$" value="' + amount + '" class="cw-fa-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+      '<input type="text" placeholder="Impact text" value="' + (impact || '').replace(/"/g, '&quot;') + '" class="cw-fa-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+      '<button type="button" class="cw-fa-remove p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>';
+    container.appendChild(row);
+    row.querySelector('.cw-fa-remove').addEventListener('click', function() { row.remove(); });
+  }
+
+  function collectFrequenciesFromContainer(container) {
+    if (!container) return null;
+    var frequencies = [];
+    container.querySelectorAll('.cw-freq-item').forEach(function(div) {
+      var check = div.querySelector('.cw-freq-check');
+      if (!check || !check.checked) return;
+      var key = div.dataset.freqKey;
+      var def = null;
+      for (var i = 0; i < FREQ_DEFINITIONS.length; i++) {
+        if (FREQ_DEFINITIONS[i].key === key) { def = FREQ_DEFINITIONS[i]; break; }
+      }
+      if (!def) return;
+
+      var label = div.querySelector('.cw-freq-label')?.value || def.label;
+      var buttonText = div.querySelector('.cw-freq-btntext')?.value || def.buttonText;
+      var suffix = div.querySelector('.cw-freq-suffix')?.value || def.suffix;
+      var fallbackImpactText = div.querySelector('.cw-freq-fallback')?.value || '';
+
+      var amounts = [];
+      var impactTexts = {};
+      div.querySelectorAll('.cw-freq-amt-row').forEach(function(row) {
+        var amt = parseFloat(row.querySelector('.cw-fa-amount')?.value);
+        var impact = row.querySelector('.cw-fa-impact')?.value;
+        if (amt) {
+          amounts.push(amt);
+          if (impact) impactTexts[amt] = impact;
+        }
+      });
+
+      frequencies.push({
+        key: key,
+        label: label,
+        type: def.type,
+        stripeInterval: def.stripeInterval,
+        suffix: suffix,
+        buttonText: buttonText,
+        amounts: amounts.length > 0 ? amounts : def.defaultAmounts,
+        impactTexts: impactTexts,
+        defaultAmountIndex: 1,
+        fallbackImpactText: fallbackImpactText,
+      });
+    });
+    return frequencies.length > 0 ? frequencies : null;
+  }
+
+  function collectFrequencies(containerId) {
+    return collectFrequenciesFromContainer(document.getElementById(containerId));
+  }
+
   // Toggle visibility based on donation box template selection
   var donationBoxSelect = document.getElementById('donationBoxTemplate');
   var cwSettingsPanel = document.getElementById('cwDonationSettings');
@@ -644,62 +822,27 @@ if (page?.content) {
     div.querySelector('.cw-remove-btn').addEventListener('click', function() { div.remove(); });
   }
 
-  // Wire up add buttons
+  // Wire up add buttons (legacy - kept for backward compat)
   document.getElementById('addCWMonthlyBtn')?.addEventListener('click', function() { addCWMonthlyAmount(); });
   document.getElementById('addCWOneTimeBtn')?.addEventListener('click', function() { addCWOneTimeAmount(); });
 
   // Collect CW donation config into an object
   function getCWDonationConfig() {
-    var monthlyAmounts = [];
-    var monthlyImpacts = {};
-    document.querySelectorAll('#cwMonthlyAmounts > div').forEach(function(div) {
-      var amount = parseFloat(div.querySelector('.cw-m-amount').value);
-      var impact = div.querySelector('.cw-m-impact').value;
-      if (amount) {
-        monthlyAmounts.push(amount);
-        if (impact) monthlyImpacts[amount] = impact;
-      }
-    });
-
-    var oneTimeAmounts = [];
-    var singleImpacts = {};
-    document.querySelectorAll('#cwOneTimeAmounts > div').forEach(function(div) {
-      var amount = parseFloat(div.querySelector('.cw-o-amount').value);
-      var impact = div.querySelector('.cw-o-impact').value;
-      if (amount) {
-        oneTimeAmounts.push(amount);
-        if (impact) singleImpacts[amount] = impact;
-      }
-    });
-
     var config = {};
-    if (monthlyAmounts.length > 0) config.monthlyAmounts = monthlyAmounts;
-    if (oneTimeAmounts.length > 0) config.oneTimeAmounts = oneTimeAmounts;
 
-    var impactTexts = {};
-    if (Object.keys(monthlyImpacts).length > 0) impactTexts.monthly = monthlyImpacts;
-    if (Object.keys(singleImpacts).length > 0) impactTexts.single = singleImpacts;
-    if (Object.keys(impactTexts).length > 0) config.impactTexts = impactTexts;
+    // Collect frequencies from the frequency list
+    var frequencies = collectFrequencies('cwFrequencyList');
+    if (frequencies) config.frequencies = frequencies;
 
-    var monthlyImpactText = document.getElementById('cwMonthlyImpactText')?.value;
     var upsellBody = document.getElementById('cwUpsellBody')?.value;
     var upsellSubText = document.getElementById('cwUpsellSubText')?.value;
-    var btnMonthly = document.getElementById('cwButtonTextMonthly')?.value;
-    var btnOneTime = document.getElementById('cwButtonTextOneTime')?.value;
     var heading = document.getElementById('cwDonationBoxHeading')?.value;
     var cwTabEmoji = document.getElementById('cwTabEmoji')?.value;
-    var cwTabLabelMonthly = document.getElementById('cwTabLabelMonthly')?.value;
-    var cwTabLabelOneTime = document.getElementById('cwTabLabelOneTime')?.value;
 
-    if (monthlyImpactText) config.monthlyImpactText = monthlyImpactText;
     if (upsellBody) config.upsellBody = upsellBody;
     if (upsellSubText) config.upsellSubText = upsellSubText;
-    if (btnMonthly) config.buttonTextMonthly = btnMonthly;
-    if (btnOneTime) config.buttonTextOneTime = btnOneTime;
     if (heading) config.donationBoxHeading = heading;
     if (cwTabEmoji) config.tabEmoji = cwTabEmoji;
-    if (cwTabLabelMonthly) config.tabLabelMonthly = cwTabLabelMonthly;
-    if (cwTabLabelOneTime) config.tabLabelOneTime = cwTabLabelOneTime;
 
     return Object.keys(config).length > 0 ? config : null;
   }
@@ -708,46 +851,58 @@ if (page?.content) {
   function initCWDonationSettings() {
     var cwConfig = existingTemplateConfig?.cwDonation || {};
 
-    if (cwConfig.monthlyAmounts && cwConfig.monthlyAmounts.length > 0) {
-      var monthlyImpacts = cwConfig.impactTexts?.monthly || {};
-      cwConfig.monthlyAmounts.forEach(function(amt) {
-        addCWMonthlyAmount(amt, monthlyImpacts[amt] || '');
-      });
-    } else {
-      // Default amounts
-      [10, 20, 40, 100].forEach(function(amt) { addCWMonthlyAmount(amt, ''); });
+    // Build frequencies from saved config or convert legacy format
+    var frequencies = cwConfig.frequencies || null;
+    if (!frequencies && (cwConfig.monthlyAmounts || cwConfig.oneTimeAmounts)) {
+      // Convert legacy format to frequencies
+      frequencies = [];
+      if (cwConfig.monthlyAmounts) {
+        frequencies.push({
+          key: 'monthly',
+          label: cwConfig.tabLabelMonthly || 'MONTHLY',
+          type: 'recurring',
+          stripeInterval: 'month',
+          suffix: 'USD/mo',
+          buttonText: cwConfig.buttonTextMonthly || 'JOIN TODAY',
+          amounts: cwConfig.monthlyAmounts,
+          impactTexts: cwConfig.impactTexts?.monthly || {},
+          defaultAmountIndex: 2,
+          fallbackImpactText: cwConfig.monthlyImpactText || '',
+        });
+      }
+      if (cwConfig.oneTimeAmounts) {
+        frequencies.push({
+          key: 'single',
+          label: cwConfig.tabLabelOneTime || 'GIVE ONCE',
+          type: 'single',
+          stripeInterval: null,
+          suffix: 'USD',
+          buttonText: cwConfig.buttonTextOneTime || 'GIVE',
+          amounts: cwConfig.oneTimeAmounts,
+          impactTexts: cwConfig.impactTexts?.single || {},
+          defaultAmountIndex: 1,
+          fallbackImpactText: '',
+        });
+      }
     }
 
-    if (cwConfig.oneTimeAmounts && cwConfig.oneTimeAmounts.length > 0) {
-      var singleImpacts = cwConfig.impactTexts?.single || {};
-      cwConfig.oneTimeAmounts.forEach(function(amt) {
-        addCWOneTimeAmount(amt, singleImpacts[amt] || '');
-      });
-    } else {
-      [50, 100, 150, 200].forEach(function(amt) { addCWOneTimeAmount(amt, ''); });
-    }
+    // Render frequency list with saved or default frequencies
+    renderFrequencyList('cwFrequencyList', frequencies || [
+      { key: 'monthly', label: 'MONTHLY', type: 'recurring', stripeInterval: 'month', suffix: 'USD/mo', buttonText: 'JOIN TODAY', amounts: [10, 20, 40, 100], impactTexts: {}, fallbackImpactText: '' },
+      { key: 'single', label: 'GIVE ONCE', type: 'single', stripeInterval: null, suffix: 'USD', buttonText: 'GIVE', amounts: [50, 100, 150, 200], impactTexts: {}, fallbackImpactText: '' },
+    ]);
 
-    // Populate text fields
-    var mImpact = document.getElementById('cwMonthlyImpactText');
+    // Populate general text fields
     var uBody = document.getElementById('cwUpsellBody');
     var uSub = document.getElementById('cwUpsellSubText');
-    var bMonthly = document.getElementById('cwButtonTextMonthly');
-    var bOneTime = document.getElementById('cwButtonTextOneTime');
     var headingInput = document.getElementById('cwDonationBoxHeading');
 
-    if (mImpact) mImpact.value = cwConfig.monthlyImpactText || '';
     if (uBody) uBody.value = cwConfig.upsellBody || '';
     if (uSub) uSub.value = cwConfig.upsellSubText || '';
-    if (bMonthly) bMonthly.value = cwConfig.buttonTextMonthly || '';
-    if (bOneTime) bOneTime.value = cwConfig.buttonTextOneTime || '';
     if (headingInput) headingInput.value = cwConfig.donationBoxHeading || '';
 
     var tabEmojiInput = document.getElementById('cwTabEmoji');
-    var tabLabelMonthlyInput = document.getElementById('cwTabLabelMonthly');
-    var tabLabelOneTimeInput = document.getElementById('cwTabLabelOneTime');
     if (tabEmojiInput) tabEmojiInput.value = cwConfig.tabEmoji || '';
-    if (tabLabelMonthlyInput) tabLabelMonthlyInput.value = cwConfig.tabLabelMonthly || '';
-    if (tabLabelOneTimeInput) tabLabelOneTimeInput.value = cwConfig.tabLabelOneTime || '';
   }
 
   // Init on load
@@ -787,31 +942,26 @@ if (page?.content) {
     var donation = slide.donation || {};
     var id = 'hero-slide-' + (heroSlideIndex++);
 
-    var monthlyHtml = '';
-    var monthlyAmounts = donation.monthlyAmounts || [];
-    var monthlyImpacts = (donation.impactTexts && donation.impactTexts.monthly) || {};
-    if (monthlyAmounts.length > 0) {
-      monthlyAmounts.forEach(function(amt) {
-        monthlyHtml += '<div class="flex gap-2 items-center hs-m-row">' +
-          '<input type="number" placeholder="$" value="' + amt + '" class="hs-m-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
-          '<input type="text" placeholder="Impact text" value="' + ((monthlyImpacts[amt] || '').replace(/"/g, '&quot;')) + '" class="hs-m-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
-          '<button type="button" class="hs-remove-amount p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>' +
-          '</div>';
-      });
+    // Build per-slide frequencies from saved data or legacy format
+    var slideFrequencies = donation.frequencies || null;
+    if (!slideFrequencies && (donation.monthlyAmounts || donation.oneTimeAmounts)) {
+      slideFrequencies = [];
+      if (donation.monthlyAmounts) {
+        slideFrequencies.push({
+          key: 'monthly', label: donation.tabLabelMonthly || 'MONTHLY', type: 'recurring', stripeInterval: 'month', suffix: 'USD/mo',
+          buttonText: donation.buttonTextMonthly || 'JOIN TODAY', amounts: donation.monthlyAmounts,
+          impactTexts: (donation.impactTexts && donation.impactTexts.monthly) || {}, fallbackImpactText: donation.monthlyImpactText || '',
+        });
+      }
+      if (donation.oneTimeAmounts) {
+        slideFrequencies.push({
+          key: 'single', label: donation.tabLabelOneTime || 'GIVE ONCE', type: 'single', stripeInterval: null, suffix: 'USD',
+          buttonText: donation.buttonTextOneTime || 'GIVE', amounts: donation.oneTimeAmounts,
+          impactTexts: (donation.impactTexts && donation.impactTexts.single) || {}, fallbackImpactText: '',
+        });
+      }
     }
-
-    var oneTimeHtml = '';
-    var oneTimeAmounts = donation.oneTimeAmounts || [];
-    var singleImpacts = (donation.impactTexts && donation.impactTexts.single) || {};
-    if (oneTimeAmounts.length > 0) {
-      oneTimeAmounts.forEach(function(amt) {
-        oneTimeHtml += '<div class="flex gap-2 items-center hs-o-row">' +
-          '<input type="number" placeholder="$" value="' + amt + '" class="hs-o-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
-          '<input type="text" placeholder="Impact text" value="' + ((singleImpacts[amt] || '').replace(/"/g, '&quot;')) + '" class="hs-o-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
-          '<button type="button" class="hs-remove-amount p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>' +
-          '</div>';
-      });
-    }
+    var slideFreqContainerId = 'hs-freq-' + heroSlideIndex;
 
     // Stats
     var defaultStatsData = [
@@ -933,49 +1083,14 @@ if (page?.content) {
             '<label class="block text-xs font-medium text-gray-600 mb-1">Donation Box Heading</label>' +
             '<input type="text" placeholder="e.g., Be the Reason They Smile" value="' + (donation.donationBoxHeading || '').replace(/"/g, '&quot;') + '" class="hs-donation-heading w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
           '</div>' +
-          '<div class="grid grid-cols-3 gap-3">' +
-            '<div>' +
-              '<label class="block text-xs font-medium text-gray-600 mb-1">Tab Icon / Emoji</label>' +
-              '<input type="text" placeholder="e.g., 🤲 💧 🌙 (auto-detects if blank)" value="' + (donation.tabEmoji || '').replace(/"/g, '&quot;') + '" class="hs-tab-emoji w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
-            '</div>' +
-            '<div>' +
-              '<label class="block text-xs font-medium text-gray-600 mb-1">Monthly Tab Text</label>' +
-              '<input type="text" placeholder="MONTHLY" value="' + (donation.tabLabelMonthly || '').replace(/"/g, '&quot;') + '" class="hs-tab-label-monthly w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
-            '</div>' +
-            '<div>' +
-              '<label class="block text-xs font-medium text-gray-600 mb-1">One-Time Tab Text</label>' +
-              '<input type="text" placeholder="GIVE ONCE" value="' + (donation.tabLabelOneTime || '').replace(/"/g, '&quot;') + '" class="hs-tab-label-onetime w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
-            '</div>' +
-          '</div>' +
-          '<!-- Monthly Amounts -->' +
           '<div>' +
-            '<div class="flex items-center justify-between mb-2">' +
-              '<label class="text-xs font-medium text-gray-600">Monthly Amounts</label>' +
-              '<button type="button" class="hs-add-monthly text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">+ Add</button>' +
-            '</div>' +
-            '<div class="hs-monthly-container space-y-2">' + monthlyHtml + '</div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Tab Icon / Emoji</label>' +
+            '<input type="text" placeholder="e.g., 🤲 💧 🌙 (auto-detects if blank)" value="' + (donation.tabEmoji || '').replace(/"/g, '&quot;') + '" class="hs-tab-emoji w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
           '</div>' +
-          '<!-- One-Time Amounts -->' +
+          '<!-- Frequency Tabs Selector -->' +
           '<div>' +
-            '<div class="flex items-center justify-between mb-2">' +
-              '<label class="text-xs font-medium text-gray-600">One-Time Amounts</label>' +
-              '<button type="button" class="hs-add-onetime text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">+ Add</button>' +
-            '</div>' +
-            '<div class="hs-onetime-container space-y-2">' + oneTimeHtml + '</div>' +
-          '</div>' +
-          '<div class="grid grid-cols-2 gap-3">' +
-            '<div>' +
-              '<label class="block text-xs font-medium text-gray-600 mb-1">Monthly Button Text</label>' +
-              '<input type="text" placeholder="JOIN TODAY" value="' + (donation.buttonTextMonthly || '').replace(/"/g, '&quot;') + '" class="hs-btn-monthly w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
-            '</div>' +
-            '<div>' +
-              '<label class="block text-xs font-medium text-gray-600 mb-1">One-Time Button Text</label>' +
-              '<input type="text" placeholder="GIVE" value="' + (donation.buttonTextOneTime || '').replace(/"/g, '&quot;') + '" class="hs-btn-onetime w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
-            '</div>' +
-          '</div>' +
-          '<div>' +
-            '<label class="block text-xs font-medium text-gray-600 mb-1">Monthly Impact Text (fallback)</label>' +
-            '<input type="text" placeholder="Your monthly gift transforms lives..." value="' + (donation.monthlyImpactText || '').replace(/"/g, '&quot;') + '" class="hs-monthly-impact-text w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '<label class="text-xs font-medium text-gray-600 mb-2 block">Frequency Tabs (leave blank to use page defaults)</label>' +
+            '<div id="' + slideFreqContainerId + '" class="hs-freq-list space-y-2"></div>' +
           '</div>' +
           '<div>' +
             '<label class="block text-xs font-medium text-gray-600 mb-1">Upsell Body Text</label>' +
@@ -988,6 +1103,7 @@ if (page?.content) {
         '</div>' +
       '</div>';
 
+    card._slideFrequencies = slideFrequencies;
     return card;
   }
 
@@ -1060,15 +1176,11 @@ if (page?.content) {
       });
     }
 
-    // Add monthly amount row
-    card.querySelector('.hs-add-monthly').addEventListener('click', function() {
-      addHeroSlideAmountRow(card.querySelector('.hs-monthly-container'), 'monthly');
-    });
-
-    // Add one-time amount row
-    card.querySelector('.hs-add-onetime').addEventListener('click', function() {
-      addHeroSlideAmountRow(card.querySelector('.hs-onetime-container'), 'onetime');
-    });
+    // Render per-slide frequency list
+    var hsFreqList = card.querySelector('.hs-freq-list');
+    if (hsFreqList && hsFreqList.id) {
+      renderFrequencyList(hsFreqList.id, card._slideFrequencies || null);
+    }
 
     // Reset stats to defaults
     var resetStatsBtn = card.querySelector('.hs-reset-stats');
@@ -1090,10 +1202,6 @@ if (page?.content) {
       });
     }
 
-    // Remove amount row buttons (for pre-existing rows)
-    card.querySelectorAll('.hs-remove-amount').forEach(function(btn) {
-      btn.addEventListener('click', function() { btn.closest('.hs-m-row, .hs-o-row').remove(); });
-    });
   }
 
   // Add amount row helper
@@ -1169,11 +1277,6 @@ if (page?.content) {
       var campaignTitle = card.querySelector('.hs-campaign-title')?.value;
       var donationHeading = card.querySelector('.hs-donation-heading')?.value;
       var tabEmojiVal = card.querySelector('.hs-tab-emoji')?.value;
-      var tabLabelMonthlyVal = card.querySelector('.hs-tab-label-monthly')?.value;
-      var tabLabelOneTimeVal = card.querySelector('.hs-tab-label-onetime')?.value;
-      var btnMonthly = card.querySelector('.hs-btn-monthly')?.value;
-      var btnOneTime = card.querySelector('.hs-btn-onetime')?.value;
-      var monthlyImpact = card.querySelector('.hs-monthly-impact-text')?.value;
       var upsellBody = card.querySelector('.hs-upsell-body')?.value;
       var upsellSub = card.querySelector('.hs-upsell-sub')?.value;
 
@@ -1181,45 +1284,17 @@ if (page?.content) {
       if (campaignTitle) donation.campaignTitle = campaignTitle;
       if (donationHeading) donation.donationBoxHeading = donationHeading;
       if (tabEmojiVal) donation.tabEmoji = tabEmojiVal;
-      if (tabLabelMonthlyVal) donation.tabLabelMonthly = tabLabelMonthlyVal;
-      if (tabLabelOneTimeVal) donation.tabLabelOneTime = tabLabelOneTimeVal;
-      if (btnMonthly) donation.buttonTextMonthly = btnMonthly;
-      if (btnOneTime) donation.buttonTextOneTime = btnOneTime;
-      if (monthlyImpact) donation.monthlyImpactText = monthlyImpact;
       if (upsellBody) donation.upsellBody = upsellBody;
       if (upsellSub) donation.upsellSubText = upsellSub;
 
-      // Monthly amounts
-      var mAmounts = [];
-      var mImpacts = {};
-      card.querySelectorAll('.hs-m-row').forEach(function(row) {
-        var amt = parseFloat(row.querySelector('.hs-m-amount')?.value);
-        var impact = row.querySelector('.hs-m-impact')?.value;
-        if (amt) {
-          mAmounts.push(amt);
-          if (impact) mImpacts[amt] = impact;
+      // Collect per-slide frequencies
+      var hsFreqList = card.querySelector('.hs-freq-list');
+      if (hsFreqList && hsFreqList.id) {
+        var slideFreqs = collectFrequenciesFromContainer(hsFreqList);
+        if (slideFreqs && slideFreqs.length > 0) {
+          donation.frequencies = slideFreqs;
         }
-      });
-      if (mAmounts.length > 0) donation.monthlyAmounts = mAmounts;
-
-      // One-time amounts
-      var oAmounts = [];
-      var oImpacts = {};
-      card.querySelectorAll('.hs-o-row').forEach(function(row) {
-        var amt = parseFloat(row.querySelector('.hs-o-amount')?.value);
-        var impact = row.querySelector('.hs-o-impact')?.value;
-        if (amt) {
-          oAmounts.push(amt);
-          if (impact) oImpacts[amt] = impact;
-        }
-      });
-      if (oAmounts.length > 0) donation.oneTimeAmounts = oAmounts;
-
-      // Impact texts
-      var impactTexts = {};
-      if (Object.keys(mImpacts).length > 0) impactTexts.monthly = mImpacts;
-      if (Object.keys(oImpacts).length > 0) impactTexts.single = oImpacts;
-      if (Object.keys(impactTexts).length > 0) donation.impactTexts = impactTexts;
+      }
 
       if (Object.keys(donation).length > 0) {
         slide.donation = donation;

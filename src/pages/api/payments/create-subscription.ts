@@ -5,8 +5,20 @@ import Stripe from 'stripe';
 export const prerender = false;
 
 // Product names for recurring donations
-const MONTHLY_DONATION_PRODUCT_NAME = 'Monthly Donation';
-const WEEKLY_DONATION_PRODUCT_NAME = 'Jummah (Friday) Donation';
+const DONATION_PRODUCT_NAMES: Record<string, string> = {
+  monthly: 'Monthly Donation',
+  weekly: 'Jummah (Friday) Donation',
+  yearly: 'Yearly Donation',
+  daily: 'Daily Donation',
+};
+
+// Map interval keys to Stripe interval values
+const STRIPE_INTERVALS: Record<string, Stripe.Price.Recurring.Interval> = {
+  monthly: 'month',
+  weekly: 'week',
+  yearly: 'year',
+  daily: 'day',
+};
 
 // Helper function to get next Friday (for Jummah donations)
 function getNextFriday(): Date {
@@ -94,10 +106,11 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Get or create the donation product
     const isWeekly = interval === 'weekly';
-    const productName = isWeekly ? WEEKLY_DONATION_PRODUCT_NAME : MONTHLY_DONATION_PRODUCT_NAME;
+    const stripeInterval = STRIPE_INTERVALS[interval] || 'month';
+    const productName = DONATION_PRODUCT_NAMES[interval] || 'Recurring Donation';
     const productDescription = isWeekly
       ? 'Jummah (Friday) recurring donation to Qurbani USA'
-      : 'Monthly recurring donation to Qurbani USA';
+      : `${interval.charAt(0).toUpperCase() + interval.slice(1)} recurring donation to Qurbani USA`;
 
     let product: Stripe.Product;
     const existingProducts = await stripe.products.list({ active: true, limit: 100 });
@@ -118,7 +131,7 @@ export const POST: APIRoute = async ({ request }) => {
       unit_amount: Math.round(amount * 100),
       currency,
       recurring: {
-        interval: isWeekly ? 'week' : 'month',
+        interval: stripeInterval,
       },
       metadata: {
         donation_amount: amount.toString(),
@@ -184,10 +197,14 @@ export const POST: APIRoute = async ({ request }) => {
     const invoice = subscription.latest_invoice as Stripe.Invoice;
     const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
-    // Calculate next billing date
+    // Calculate next billing date based on interval
     const nextBillingDate = isWeekly ? getNextFriday() : new Date();
-    if (!isWeekly) {
+    if (interval === 'monthly') {
       nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+    } else if (interval === 'yearly') {
+      nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+    } else if (interval === 'daily') {
+      nextBillingDate.setDate(nextBillingDate.getDate() + 1);
     }
 
     // Prepare items with full metadata

@@ -1296,8 +1296,10 @@ function mountPaymentElement() {
   var total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
   var hasWeekly = items.some(function(i) { return i.type === 'weekly' || i.recurringInterval === 'weekly'; });
   var hasMonthly = items.some(function(i) { return i.type === 'monthly' || i.recurringInterval === 'monthly'; });
-  var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : 'single');
-  var isRecurring = (donationType === 'monthly' || donationType === 'weekly');
+  var hasYearly = items.some(function(i) { return i.type === 'yearly' || i.recurringInterval === 'yearly'; });
+  var hasDaily = items.some(function(i) { return i.type === 'daily' || i.recurringInterval === 'daily'; });
+  var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : (hasYearly ? 'yearly' : (hasDaily ? 'daily' : 'single')));
+  var isRecurring = (donationType === 'monthly' || donationType === 'weekly' || donationType === 'yearly' || donationType === 'daily');
   var coverFees = window.donationCart.coverFees || false;
   var feeAmount = coverFees ? (total * 0.03) : 0;
   total = total + feeAmount;
@@ -1468,7 +1470,7 @@ function updateCartUI() {
     if (cartItems) cartItems.innerHTML = items.map((item, index) => {
       // Each item shows its own type
       const itemType = item.recurringInterval || item.type || 'single';
-      const itemTypeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : itemType === 'annual' ? 'Annual' : 'One-time';
+      const itemTypeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : itemType === 'annual' ? 'Annual' : itemType === 'yearly' ? 'Yearly' : itemType === 'daily' ? 'Daily' : 'One-time';
 
       // Check for notes in metadata (Aqiqah items)
       const hasNotes = item.metadata?.notes && item.metadata.notes.trim() !== '';
@@ -1503,16 +1505,22 @@ function updateCartUI() {
   const hasWeekly = items.some(item => (item.recurringInterval || item.type) === 'weekly');
   const hasMonthly = items.some(item => (item.recurringInterval || item.type) === 'monthly');
   const hasAnnual = items.some(item => (item.recurringInterval || item.type) === 'annual');
+  const hasYearly = items.some(item => (item.recurringInterval || item.type) === 'yearly');
+  const hasDaily = items.some(item => (item.recurringInterval || item.type) === 'daily');
   const hasSingle = items.some(item => !item.type || item.type === 'single');
-  const hasRecurring = hasWeekly || hasMonthly || hasAnnual;
+  const hasRecurring = hasWeekly || hasMonthly || hasAnnual || hasYearly || hasDaily;
 
   let paymentLabel = 'One-time Payment';
-  if (hasWeekly && !hasMonthly && !hasAnnual && !hasSingle) {
+  if (hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
     paymentLabel = 'Every Jummah';
-  } else if (hasMonthly && !hasWeekly && !hasAnnual && !hasSingle) {
+  } else if (hasMonthly && !hasWeekly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
     paymentLabel = 'Monthly Payment';
-  } else if (hasAnnual && !hasWeekly && !hasMonthly && !hasSingle) {
+  } else if (hasAnnual && !hasWeekly && !hasMonthly && !hasYearly && !hasDaily && !hasSingle) {
     paymentLabel = 'Annual Payment';
+  } else if (hasYearly && !hasWeekly && !hasMonthly && !hasAnnual && !hasDaily && !hasSingle) {
+    paymentLabel = 'Yearly Payment';
+  } else if (hasDaily && !hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasSingle) {
+    paymentLabel = 'Daily Payment';
   } else if (hasRecurring) {
     paymentLabel = 'Includes Recurring';
   }
@@ -1843,9 +1851,13 @@ function openCheckoutModal() {
         var itemTotal = (item.amount * (item.quantity || 1));
         var isMonthly = item.type === 'monthly' || item.recurringInterval === 'monthly' || item.originalType === 'monthly' || (item.label && item.label.indexOf('/mo') >= 0);
         var isWeekly = item.type === 'weekly' || item.recurringInterval === 'weekly' || item.originalType === 'weekly';
+        var isYearly = item.type === 'yearly' || item.recurringInterval === 'yearly' || item.originalType === 'yearly';
+        var isDaily = item.type === 'daily' || item.recurringInterval === 'daily' || item.originalType === 'daily';
         var recurLabel = '';
         if (isMonthly) recurLabel = '/mo';
         else if (isWeekly) recurLabel = '/wk';
+        else if (isYearly) recurLabel = '/yr';
+        else if (isDaily) recurLabel = '/day';
         html += '<div class="flex items-center text-sm py-1.5">' +
           '<div class="flex-1 min-w-0">' +
             '<span class="text-gray-700">' + (item.name || item.label || item.campaign || 'Donation') + '</span>' +
@@ -1957,7 +1969,7 @@ function updateModalCart() {
 
   container.innerHTML = items.map(item => {
     const itemType = item.recurringInterval || item.type || 'single';
-    const typeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : 'One-time';
+    const typeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : itemType === 'yearly' ? 'Yearly' : itemType === 'daily' ? 'Daily' : 'One-time';
     const hasNotes = item.metadata?.notes && item.metadata.notes.trim() !== '';
     const notesHtml = hasNotes ? `<p class="text-xs text-gray-500 italic">📝 ${item.metadata.notes}</p>` : '';
     return `
@@ -1979,7 +1991,9 @@ function updateModalTotal() {
   let baseTotal = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
   const hasWeekly = window.donationCart.items.some(i => i.type === 'weekly' || i.recurringInterval === 'weekly');
   const hasMonthly = window.donationCart.items.some(i => i.type === 'monthly' || i.recurringInterval === 'monthly');
-  const hasRecurring = hasWeekly || hasMonthly;
+  const hasYearly = window.donationCart.items.some(i => i.type === 'yearly' || i.recurringInterval === 'yearly');
+  const hasDaily = window.donationCart.items.some(i => i.type === 'daily' || i.recurringInterval === 'daily');
+  const hasRecurring = hasWeekly || hasMonthly || hasYearly || hasDaily;
 
   // Calculate fees (3% processing fee)
   const feePercentage = 0.03;
@@ -2008,10 +2022,14 @@ function updateModalTotal() {
 
   // Determine payment type label
   let paymentTypeLabel = 'One-time donation';
-  if (hasWeekly && !hasMonthly) {
+  if (hasWeekly && !hasMonthly && !hasYearly && !hasDaily) {
     paymentTypeLabel = coverFees ? 'Every Jummah + fees covered' : 'Every Jummah (Friday)';
-  } else if (hasMonthly && !hasWeekly) {
+  } else if (hasMonthly && !hasWeekly && !hasYearly && !hasDaily) {
     paymentTypeLabel = coverFees ? 'Monthly + fees covered' : 'Monthly donation';
+  } else if (hasYearly && !hasWeekly && !hasMonthly && !hasDaily) {
+    paymentTypeLabel = coverFees ? 'Yearly + fees covered' : 'Yearly donation';
+  } else if (hasDaily && !hasWeekly && !hasMonthly && !hasYearly) {
+    paymentTypeLabel = coverFees ? 'Daily + fees covered' : 'Daily donation';
   } else if (hasRecurring) {
     paymentTypeLabel = coverFees ? 'Recurring + fees covered' : 'Includes recurring';
   } else if (coverFees) {
@@ -2137,7 +2155,7 @@ async function handlePayment() {
     total = total + feeAmount;
 
     var donationType = window.donationCart.pendingDonationType || 'single';
-    var isRecurring = (donationType === 'monthly' || donationType === 'weekly');
+    var isRecurring = (donationType === 'monthly' || donationType === 'weekly' || donationType === 'yearly' || donationType === 'daily');
 
     if (isRecurring) {
       // ═══════════════════════════════════════════════════════════
@@ -2484,7 +2502,7 @@ function updateTwoStepCart() {
 
     var itemsHtml = items.filter(function(i) { return !i.isUpsell; }).map(function(item, index) {
       var itemType = item.recurringInterval || item.type || 'single';
-      var typeLabel = itemType === 'weekly' ? 'Jummah' : itemType === 'monthly' ? 'Monthly' : '';
+      var typeLabel = itemType === 'weekly' ? 'Jummah' : itemType === 'monthly' ? 'Monthly' : itemType === 'yearly' ? 'Yearly' : itemType === 'daily' ? 'Daily' : '';
       var typeBadge = typeLabel ? '<span class="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded">' + typeLabel + '</span>' : '';
 
       return '<div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">' +
@@ -2583,7 +2601,9 @@ async function mountTwoStepPaymentElement() {
   var total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
   var hasWeekly = items.some(function(i) { return i.type === 'weekly' || i.recurringInterval === 'weekly'; });
   var hasMonthly = items.some(function(i) { return i.type === 'monthly' || i.recurringInterval === 'monthly'; });
-  var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : 'single');
+  var hasYearly = items.some(function(i) { return i.type === 'yearly' || i.recurringInterval === 'yearly'; });
+  var hasDaily = items.some(function(i) { return i.type === 'daily' || i.recurringInterval === 'daily'; });
+  var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : (hasYearly ? 'yearly' : (hasDaily ? 'daily' : 'single')));
   var coverFees = window.donationCart.coverFees || false;
   var feeAmount = coverFees ? Math.round(total * 0.03 * 100) / 100 : 0;
   total = total + feeAmount;

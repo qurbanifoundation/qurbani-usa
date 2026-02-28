@@ -2,20 +2,35 @@
 /**
  * CW DONATION BOX TEMPLATE
  *
- * Charity:water-inspired donation box with 3-state flow:
- *   State 1: Monthly (default) — monthly amounts, "JOIN TODAY" CTA
- *   State 2: Give Once — one-time amounts, "GIVE" CTA
- *   State 3: Monthly Upsell — shown after clicking GIVE, nudges monthly conversion
+ * Charity:water-inspired donation box with dynamic frequency tabs:
+ *   - Configurable tabs: Monthly, Give Once, Yearly, Every Friday, Daily
+ *   - Each tab has its own amounts, impact texts, and CTA button text
+ *   - Upsell view shown only for "single" (one-time) donations
  *
  * Design: Individual rounded pill buttons, soft shadows, clean typography
  */
 
 import { generateImpactTexts, getDefaultMonthlyImpact } from '../../lib/donation-defaults';
 
+interface FrequencyConfig {
+  key: string;
+  label: string;
+  type: 'single' | 'recurring';
+  stripeInterval: string | null;
+  suffix: string;
+  buttonText: string;
+  amounts: number[];
+  impactTexts: Record<number, string>;
+  defaultAmountIndex: number;
+  fallbackImpactText: string;
+}
+
 interface Props {
   campaignSlug?: string;
   campaignTitle?: string;
   campaignImage?: string;
+  frequencies?: FrequencyConfig[];
+  // Legacy props (used when frequencies is not provided)
   monthlyAmounts?: number[];
   oneTimeAmounts?: number[];
   impactTexts?: Record<string, Record<number, string>>;
@@ -44,6 +59,7 @@ const {
   campaignSlug = 'general',
   campaignTitle = 'Donation',
   campaignImage = '',
+  frequencies,
   monthlyAmounts = [10, 20, 40, 100],
   oneTimeAmounts = [50, 100, 150, 200],
   impactTexts = {},
@@ -133,7 +149,7 @@ function getEmojiForCampaign(slug: string): string {
 const resolvedEmoji = tabEmoji || getEmojiForCampaign(campaignSlug);
 const useHeartSvg = resolvedEmoji === 'heart';
 
-// Use provided impactTexts, or auto-generate from campaign slug (imported from lib/donation-defaults)
+// Use provided impactTexts, or auto-generate from campaign slug
 const hasCustomImpactTexts = Object.keys(impactTexts).length > 0;
 const resolvedImpactTexts = hasCustomImpactTexts ? impactTexts : generateImpactTexts(campaignSlug);
 
@@ -141,13 +157,45 @@ const resolvedMonthlyImpact = monthlyImpactText !== 'Gives <strong>12 people</st
   ? monthlyImpactText
   : getDefaultMonthlyImpact(campaignSlug);
 
-// Pre-select 3rd monthly amount (index 2) as default
-const defaultMonthlyIndex = 2;
-const defaultMonthlyAmount = monthlyAmounts[defaultMonthlyIndex] || 40;
+// Build frequency tabs: use provided frequencies or construct from legacy props
+const frequencyTabs: FrequencyConfig[] = (frequencies && frequencies.length > 0)
+  ? frequencies
+  : [
+      {
+        key: 'monthly',
+        label: tabLabelMonthly,
+        type: 'recurring' as const,
+        stripeInterval: 'month',
+        suffix: 'USD/mo',
+        buttonText: buttonTextMonthly,
+        amounts: monthlyAmounts,
+        impactTexts: (resolvedImpactTexts as any)?.monthly || {},
+        defaultAmountIndex: 2,
+        fallbackImpactText: resolvedMonthlyImpact,
+      },
+      {
+        key: 'single',
+        label: tabLabelOneTime,
+        type: 'single' as const,
+        stripeInterval: null,
+        suffix: 'USD',
+        buttonText: buttonTextOneTime,
+        amounts: oneTimeAmounts,
+        impactTexts: (resolvedImpactTexts as any)?.single || {},
+        defaultAmountIndex: 1,
+        fallbackImpactText: '',
+      }
+    ];
 
-// Pre-select 2nd one-time amount (index 1 = $100) as default
-const defaultOnetimeIndex = 1;
-const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
+// Compute tab grid columns class
+const tabColsClass = frequencyTabs.length === 2 ? 'grid-cols-2'
+  : frequencyTabs.length === 3 ? 'grid-cols-3'
+  : frequencyTabs.length === 4 ? 'grid-cols-4'
+  : frequencyTabs.length === 5 ? 'grid-cols-5'
+  : 'grid-cols-2';
+
+// Tab text size: smaller when 3+ tabs
+const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
 ---
 
 {donationBoxHeading && (
@@ -161,27 +209,25 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
 >
   <!-- Toggle header with background -->
   <div class="px-5 pt-5 pb-4 sm:px-7 sm:pt-6 sm:pb-5" style="background-color: #F4F5F0;">
-    <!-- Form tabs (shown in States 1 & 2) -->
-    <div class="cw-form-header grid grid-cols-2 gap-3">
-      <button
-        type="button"
-        class="cw-toggle flex items-center justify-center gap-1.5 py-2.5 rounded text-[13px] font-bold uppercase tracking-wider transition-all border-2"
-        data-type="monthly"
-        style={`background-color: ${accentColor}; color: ${accentTextColor}; border-color: ${accentColor};`}
-      >
-        {tabLabelMonthly} {useHeartSvg ? (
-          <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        ) : (
-          <span class="text-base">{resolvedEmoji}</span>
-        )}
-      </button>
-      <button
-        type="button"
-        class="cw-toggle flex items-center justify-center py-2.5 rounded text-[13px] font-bold uppercase tracking-wider transition-all text-gray-400 hover:text-gray-600 border-2 border-transparent"
-        data-type="single"
-      >
-        {tabLabelOneTime}
-      </button>
+    <!-- Form tabs (shown in form view) -->
+    <div class={`cw-form-header grid ${tabColsClass} gap-2`}>
+      {frequencyTabs.map((freq, i) => (
+        <button
+          type="button"
+          class={`cw-toggle flex items-center justify-center gap-1 py-2.5 rounded ${tabTextSize} font-bold uppercase tracking-wider transition-all border-2`}
+          data-type={freq.key}
+          data-freq-index={i}
+          style={i === 0
+            ? `background-color: ${accentColor}; color: ${accentTextColor}; border-color: ${accentColor};`
+            : 'background-color: transparent; color: #9ca3af; border-color: transparent;'}
+        >
+          {freq.label} {i === 0 && (useHeartSvg ? (
+            <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          ) : (
+            <span class="text-base">{resolvedEmoji}</span>
+          ))}
+        </button>
+      ))}
     </div>
     <!-- Upsell header (shown in State 3, replaces tabs) -->
     <div class="cw-upsell-header hidden">
@@ -195,183 +241,119 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
   <div class="px-5 pt-5 pb-5 sm:px-7 sm:pt-6 sm:pb-6">
 
     <!-- ═══════════════════════════════════════════ -->
-    <!-- FORM VIEW (States 1 & 2)                   -->
+    <!-- FORM VIEW                                  -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="cw-form-view">
 
-      <!-- Monthly Amounts (State 1) -->
-      <div class="cw-monthly-grid">
-        {(() => {
-          const total = monthlyAmounts.length;
-          const row1 = monthlyAmounts.slice(0, 3);
-          const row2 = monthlyAmounts.slice(3);
-          const otherColSpan = 3 - row2.length;
-          const needsSmallText = total > 4;
-          const amtSize = needsSmallText ? 'text-[14px]' : 'text-[17px]';
-          const suffSize = needsSmallText ? 'text-[10px]' : 'text-[11px]';
-          const otherSpanClass = otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : '';
-          return (
-            <>
-              <div class="grid grid-cols-3 gap-2.5 mb-2.5">
-                {row1.map((amt, i) => (
+      <!-- Dynamic frequency grids -->
+      {frequencyTabs.map((freq, fi) => {
+        const amounts = freq.amounts || [];
+        const total = amounts.length;
+        const row1 = amounts.slice(0, 3);
+        const row2 = amounts.slice(3, 5);
+        const otherColSpan = 3 - row2.length;
+        const needsSmallText = total > 4;
+        const amtSize = needsSmallText ? 'text-[14px]' : 'text-[17px]';
+        const suffSize = needsSmallText ? 'text-[10px]' : 'text-[11px]';
+        const otherSpanClass = otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : '';
+        const defaultIdx = freq.defaultAmountIndex ?? 1;
+        const defaultAmt = amounts[defaultIdx] || amounts[0] || 0;
+
+        return (
+          <div class={`cw-freq-grid ${fi === 0 ? '' : 'hidden'}`} data-freq-key={freq.key}>
+            {/* Row 1: first 3 amounts */}
+            <div class="grid grid-cols-3 gap-2.5 mb-2.5">
+              {row1.map((amt, i) => {
+                const isDefault = i === defaultIdx;
+                return (
                   <button
                     type="button"
-                    class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${i === defaultMonthlyIndex ? 'cw-amt-selected' : ''}`}
+                    class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
                     data-amount={amt}
-                    data-freq="monthly"
-                    style={i === defaultMonthlyIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                    data-freq={freq.key}
+                    style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
                   >
-                    <span class={`${amtSize} font-bold ${i === defaultMonthlyIndex ? '' : 'text-gray-400'}`}>${amt}</span>
-                    <span class={`${suffSize} ml-0.5 font-medium ${i === defaultMonthlyIndex ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
+                    <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                    <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
                   </button>
-                ))}
+                );
+              })}
+            </div>
+            {/* Row 2: remaining amounts + Other button */}
+            <div class="grid grid-cols-3 gap-2.5">
+              {row2.map((amt) => {
+                const idx = amounts.indexOf(amt);
+                const isDefault = idx === defaultIdx;
+                return (
+                  <button
+                    type="button"
+                    class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
+                    data-amount={amt}
+                    data-freq={freq.key}
+                    style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                  >
+                    <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                    <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
+                  </button>
+                );
+              })}
+              {/* Other amount button */}
+              <button
+                type="button"
+                class={`cw-freq-other-btn ${otherSpanClass} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtSize}`}
+                style="background-color: #f4f5f0;"
+              >
+                Other
+              </button>
+              {/* Custom amount input */}
+              <div class={`cw-freq-custom-wrap ${otherSpanClass} hidden`}>
+                <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    class="cw-freq-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                    placeholder="Other"
+                  />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">{freq.suffix}</span>
+                </div>
               </div>
-              <div class="grid grid-cols-3 gap-2.5">
-                {row2.map((amt) => {
-                  const isDefault = monthlyAmounts.indexOf(amt) === defaultMonthlyIndex;
+            </div>
+            {/* Row 3: overflow amounts (6+) */}
+            {total > 5 && (
+              <div class="grid grid-cols-3 gap-2.5 mt-2.5">
+                {amounts.slice(5).map((amt) => {
+                  const idx = amounts.indexOf(amt);
+                  const isDefault = idx === defaultIdx;
                   return (
                     <button
                       type="button"
                       class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
                       data-amount={amt}
-                      data-freq="monthly"
+                      data-freq={freq.key}
                       style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
                     >
                       <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                      <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
+                      <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
                     </button>
                   );
                 })}
-                <button
-                  type="button"
-                  class={`cw-monthly-other-btn ${otherSpanClass} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtSize}`}
-                  style="background-color: #f4f5f0;"
-                >
-                  Other
-                </button>
-                <div class={`cw-monthly-custom-wrap ${otherSpanClass} hidden`}>
-                  <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      class="cw-monthly-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
-                      placeholder="Other"
-                    />
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD/mo</span>
-                  </div>
-                </div>
               </div>
-            </>
-          );
-        })()}
-      </div>
+            )}
+          </div>
+        );
+      })}
 
-      <!-- One-Time Amounts (State 2, hidden initially) -->
-      <div class="cw-onetime-grid hidden">
-        {/* Compute how many amounts go in row 1 vs row 2 to keep 3-col grid balanced with Other btn */}
-        {(() => {
-          const total = oneTimeAmounts.length;
-          // Determine split: Other takes col-span based on remaining space in last row
-          // Row 1 always gets 3. Row 2 gets rest + Other filling remaining cols.
-          const row1 = oneTimeAmounts.slice(0, 3);
-          const row2 = oneTimeAmounts.slice(3);
-          const otherColSpan = 3 - row2.length; // e.g. 1 remaining → Other gets 2 cols; 2 remaining → Other gets 1 col
-          const needsSmallText = total > 4; // Shrink text when many amounts
-          const amtTextSize = needsSmallText ? 'text-[14px]' : 'text-[17px]';
-          const suffTextSize = needsSmallText ? 'text-[10px]' : 'text-[11px]';
-          return (
-            <>
-              {/* Row 1: first 3 amounts */}
-              <div class="grid grid-cols-3 gap-2.5 mb-2.5">
-                {row1.map((amt, i) => (
-                  <button
-                    type="button"
-                    class={`cw-amt-btn rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${i === defaultOnetimeIndex ? 'cw-amt-selected' : ''}`}
-                    data-amount={amt}
-                    data-freq="single"
-                    style={i === defaultOnetimeIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-                  >
-                    <span class={`${amtTextSize} font-bold ${i === defaultOnetimeIndex ? '' : 'text-gray-400'}`}>${amt}</span>
-                    <span class={`${suffTextSize} ml-0.5 font-medium ${i === defaultOnetimeIndex ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
-                  </button>
-                ))}
-              </div>
-              {/* Row 2: remaining amounts + Other button filling rest of the 3-col grid */}
-              <div class="grid grid-cols-3 gap-2.5">
-                {row2.map((amt) => {
-                  const isOnetimeDefault = oneTimeAmounts.indexOf(amt) === defaultOnetimeIndex;
-                  return (
-                    <button
-                      type="button"
-                      class={`cw-amt-btn rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isOnetimeDefault ? 'cw-amt-selected' : ''}`}
-                      data-amount={amt}
-                      data-freq="single"
-                      style={isOnetimeDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-                    >
-                      <span class={`${amtTextSize} font-bold ${isOnetimeDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                      <span class={`${suffTextSize} ml-0.5 font-medium ${isOnetimeDefault ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
-                    </button>
-                  );
-                })}
-                {/* Other amount: fills remaining columns in the 3-col grid */}
-                <button
-                  type="button"
-                  class={`cw-other-btn ${otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : ''} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtTextSize}`}
-                  style="background-color: #f4f5f0;"
-                >
-                  Other
-                </button>
-                <div class={`cw-onetime-custom-wrap ${otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : ''} hidden`}>
-                  <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      class="cw-onetime-custom w-full pl-8 pr-14 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
-                      placeholder="Other"
-                    />
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD</span>
-                  </div>
-                </div>
-              </div>
-              {/* Row 3: if there are more than 5 amounts, overflow into additional row */}
-              {total > 5 && (
-                <div class="grid grid-cols-3 gap-2.5 mt-2.5">
-                  {oneTimeAmounts.slice(5).map((amt) => {
-                    const isOnetimeDefault = oneTimeAmounts.indexOf(amt) === defaultOnetimeIndex;
-                    return (
-                      <button
-                        type="button"
-                        class={`cw-amt-btn rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isOnetimeDefault ? 'cw-amt-selected' : ''}`}
-                        data-amount={amt}
-                        data-freq="single"
-                        style={isOnetimeDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-                      >
-                        <span class={`${amtTextSize} font-bold ${isOnetimeDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                        <span class={`${suffTextSize} ml-0.5 font-medium ${isOnetimeDefault ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          );
-        })()}
-
-
-        {showSpecialProject && (
-          <button
-            type="button"
-            class="cw-special-btn w-full py-3 rounded border-2 border-gray-200 text-sm text-gray-600 font-medium mt-2.5 hover:border-gray-300 transition"
-            data-amount={specialProjectAmount}
-          >
-            {specialProjectText}
-          </button>
-        )}
-      </div>
+      {showSpecialProject && (
+        <button
+          type="button"
+          class="cw-special-btn w-full py-3 rounded border-2 border-gray-200 text-sm text-gray-600 font-medium mt-2.5 hover:border-gray-300 transition"
+          data-amount={specialProjectAmount}
+        >
+          {specialProjectText}
+        </button>
+      )}
 
       <!-- Impact Line -->
       <div class="cw-impact-line flex items-start gap-2 mt-5 mb-5">
@@ -389,7 +371,7 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
         class="cw-donate-btn w-full py-4 rounded font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all hover:brightness-105 active:scale-[0.99]"
         style={`background-color: ${accentColor}; color: ${accentTextColor};`}
       >
-        {buttonTextMonthly}
+        {frequencyTabs[0]?.buttonText || buttonTextMonthly}
       </button>
 
       {showAlternatePayments && (
@@ -416,7 +398,7 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
       <!-- Monthly toggle card -->
       <div class="rounded-lg p-4 mb-5 border border-gray-200" style="background-color: #f9f9f7;">
         <div class="flex items-center gap-3">
-          <!-- Toggle switch (wider, matching charity:water style) -->
+          <!-- Toggle switch -->
           <button type="button" class="cw-upsell-toggle relative w-14 h-7 rounded-full bg-gray-300 transition-colors flex-shrink-0" role="switch" aria-checked="false">
             <span class="cw-upsell-toggle-dot absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform flex items-center justify-center">
               <svg class="cw-toggle-x w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
@@ -448,42 +430,27 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
   campaignSlug,
   campaignTitle,
   campaignImage,
-  monthlyAmounts,
-  oneTimeAmounts,
-  impactTexts: resolvedImpactTexts,
-  monthlyImpactText: resolvedMonthlyImpact,
+  frequencyTabs,
   upsellBody,
   upsellSubText,
   upsellMonthlyRatio,
   specialProjectAmount,
   accentColor,
-  accentTextColor,
-  buttonTextMonthly,
-  buttonTextOneTime,
-  defaultMonthlyAmount,
-  defaultOnetimeAmount
+  accentTextColor
 }}>
   document.addEventListener('DOMContentLoaded', function() {
     var box = document.getElementById(boxId);
     if (!box) return;
 
-    var selectedAmount = defaultMonthlyAmount;
-    var donationType = 'monthly';
+    // Current state
+    var activeFreqIndex = 0;
+    var activeFreqKey = frequencyTabs[0].key;
+    var selectedAmount = frequencyTabs[0].amounts[frequencyTabs[0].defaultAmountIndex] || frequencyTabs[0].amounts[0] || 0;
     var upsellMonthlyActive = false;
 
     // Elements
     var toggleBtns = box.querySelectorAll('.cw-toggle');
-    var monthlyGrid = box.querySelector('.cw-monthly-grid');
-    var onetimeGrid = box.querySelector('.cw-onetime-grid');
-    var monthlyBtns = box.querySelectorAll('.cw-monthly-grid .cw-amt-btn');
-    var onetimeBtns = box.querySelectorAll('.cw-onetime-grid .cw-amt-btn');
-    var monthlyOtherBtn = box.querySelector('.cw-monthly-other-btn');
-    var monthlyCustomWrap = box.querySelector('.cw-monthly-custom-wrap');
-    var monthlyCustom = box.querySelector('.cw-monthly-custom');
-    var onetimeCustom = box.querySelector('.cw-onetime-custom');
-    var onetimeCustomWrap = box.querySelector('.cw-onetime-custom-wrap');
-    var otherBtn = box.querySelector('.cw-other-btn');
-    var specialBtn = box.querySelector('.cw-special-btn');
+    var freqGrids = box.querySelectorAll('.cw-freq-grid');
     var impactText = box.querySelector('.cw-impact-text');
     var donateBtn = box.querySelector('.cw-donate-btn');
     var altPayments = box.querySelector('.cw-alt-payments');
@@ -500,397 +467,35 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
     var upsellMonthlyLabel = box.querySelector('.cw-upsell-monthly-label');
     var upsellBtn = box.querySelector('.cw-upsell-btn');
     var editLink = box.querySelector('.cw-edit-link');
-
-    // ═══════════════════════════════════════════
-    // TOGGLE: Monthly / Give Once
-    // ═══════════════════════════════════════════
-    toggleBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        donationType = this.dataset.type;
-        var isMonthly = donationType === 'monthly';
-
-        toggleBtns.forEach(function(b) {
-          if (b.dataset.type === donationType) {
-            b.style.backgroundColor = accentColor;
-            b.style.color = accentTextColor;
-            b.style.borderColor = accentColor;
-          } else {
-            b.style.backgroundColor = 'transparent';
-            b.style.color = '#9ca3af';
-            b.style.borderColor = 'transparent';
-          }
-        });
-
-        if (isMonthly) {
-          monthlyGrid.classList.remove('hidden');
-          onetimeGrid.classList.add('hidden');
-          if (altPayments) altPayments.classList.add('hidden');
-        } else {
-          monthlyGrid.classList.add('hidden');
-          onetimeGrid.classList.remove('hidden');
-          if (altPayments) altPayments.classList.remove('hidden');
-        }
-
-        clearAllAmountStyles();
-        if (monthlyCustom) monthlyCustom.value = '';
-        if (onetimeCustom) onetimeCustom.value = '';
-        if (monthlyCustomWrap) monthlyCustomWrap.classList.add('hidden');
-        if (monthlyOtherBtn) monthlyOtherBtn.classList.remove('hidden');
-        if (onetimeCustomWrap) onetimeCustomWrap.classList.add('hidden');
-        if (otherBtn) otherBtn.classList.remove('hidden');
-
-        // Pre-select default amount for the active tab
-        if (isMonthly) {
-          selectedAmount = defaultMonthlyAmount;
-          monthlyBtns.forEach(function(b) {
-            if (parseFloat(b.dataset.amount) === defaultMonthlyAmount) {
-              highlightMonthlyBtn(b);
-            }
-          });
-        } else {
-          selectedAmount = defaultOnetimeAmount;
-          onetimeBtns.forEach(function(b) {
-            if (parseFloat(b.dataset.amount) === defaultOnetimeAmount) {
-              highlightOnetimeBtn(b);
-            }
-          });
-        }
-
-        donateBtn.textContent = isMonthly ? buttonTextMonthly : buttonTextOneTime;
-        updateImpact();
-      });
-    });
-
-    // ═══════════════════════════════════════════
-    // AMOUNT SELECTION: Monthly
-    // ═══════════════════════════════════════════
-    monthlyBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        selectedAmount = parseFloat(this.dataset.amount);
-        if (monthlyCustom) monthlyCustom.value = '';
-        if (monthlyCustomWrap) monthlyCustomWrap.classList.add('hidden');
-        if (monthlyOtherBtn) monthlyOtherBtn.classList.remove('hidden');
-        highlightMonthlyBtn(this);
-        updateImpact();
-      });
-    });
-
-    // Monthly "Other amount" button
-    if (monthlyOtherBtn) {
-      monthlyOtherBtn.addEventListener('click', function() {
-        if (monthlyCustomWrap) monthlyCustomWrap.classList.remove('hidden');
-        monthlyOtherBtn.classList.add('hidden');
-        clearMonthlyBtnStyles();
-        selectedAmount = 0;
-        if (monthlyCustom) monthlyCustom.focus();
-      });
-    }
-
-    // Monthly custom input
-    if (monthlyCustom) {
-      monthlyCustom.addEventListener('input', function() {
-        if (this.value) {
-          selectedAmount = parseFloat(this.value) || 0;
-          clearMonthlyBtnStyles();
-          updateImpact();
-        }
-      });
-    }
-
-    // ═══════════════════════════════════════════
-    // AMOUNT SELECTION: One-Time
-    // ═══════════════════════════════════════════
-    onetimeBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        selectedAmount = parseFloat(this.dataset.amount);
-        if (onetimeCustom) onetimeCustom.value = '';
-        if (onetimeCustomWrap) onetimeCustomWrap.classList.add('hidden');
-        if (otherBtn) otherBtn.classList.remove('hidden');
-        highlightOnetimeBtn(this);
-        updateImpact();
-      });
-    });
-
-    // "Other amount" button → reveals input
-    if (otherBtn) {
-      otherBtn.addEventListener('click', function() {
-        if (onetimeCustomWrap) onetimeCustomWrap.classList.remove('hidden');
-        otherBtn.classList.add('hidden');
-        clearOnetimeBtnStyles();
-        selectedAmount = 0;
-        if (onetimeCustom) onetimeCustom.focus();
-      });
-    }
-
-    // One-time custom input
-    if (onetimeCustom) {
-      onetimeCustom.addEventListener('input', function() {
-        if (this.value) {
-          selectedAmount = parseFloat(this.value) || 0;
-          clearOnetimeBtnStyles();
-          updateImpact();
-        }
-      });
-    }
-
-    // Special project button
-    if (specialBtn) {
-      specialBtn.addEventListener('click', function() {
-        selectedAmount = parseFloat(this.dataset.amount);
-        clearOnetimeBtnStyles();
-        if (onetimeCustom) onetimeCustom.value = '';
-        specialBtn.style.borderColor = accentColor;
-        specialBtn.style.backgroundColor = accentColor;
-        specialBtn.style.color = accentTextColor;
-        updateImpact();
-      });
-    }
-
-    // ═══════════════════════════════════════════
-    // CTA BUTTON
-    // ═══════════════════════════════════════════
-    donateBtn.addEventListener('click', function() {
-      var amt = selectedAmount;
-      if (donationType === 'monthly' && monthlyCustom && monthlyCustom.value) {
-        amt = parseFloat(monthlyCustom.value) || amt;
-      }
-      if (donationType === 'single' && onetimeCustom && onetimeCustom.value) {
-        amt = parseFloat(onetimeCustom.value) || amt;
-      }
-
-      if (!amt || amt < 1) {
-        alert('Please select or enter a donation amount');
-        return;
-      }
-
-      if (donationType === 'monthly') {
-        addItemToCart(amt, 'monthly');
-        return;
-      }
-
-      // Skip upsell for amounts over $200 — go straight to cart
-      if (amt > 200) {
-        addItemToCart(amt, 'single');
-        return;
-      }
-
-      showUpsell(amt);
-    });
-
-    // ═══════════════════════════════════════════
-    // UPSELL VIEW (State 3)
-    // ═══════════════════════════════════════════
-    function showUpsell(amount) {
-      var suggestedMonthly = Math.round(amount * upsellMonthlyRatio);
-      if (suggestedMonthly < 5) suggestedMonthly = 5;
-
-      formView.classList.add('hidden');
-      upsellView.classList.remove('hidden');
-      formHeader.classList.add('hidden');
-      upsellHeader.classList.remove('hidden');
-
-      upsellAmountEl.textContent = '$' + amount + ' USD';
-
-      // Build dynamic upsell body using the selected amount's impact text
-      var impactPhrase = '';
-      if (impactTexts && impactTexts.single && impactTexts.single[amount]) {
-        // Strip HTML tags to get plain text (e.g. "Provide <strong>emergency food parcels</strong>" → "emergency food parcels")
-        var temp = document.createElement('div');
-        temp.innerHTML = impactTexts.single[amount];
-        impactPhrase = temp.textContent || temp.innerText || '';
-        // Lowercase the first letter for mid-sentence use
-        impactPhrase = impactPhrase.charAt(0).toLowerCase() + impactPhrase.slice(1);
-      }
-      if (impactPhrase) {
-        upsellBodyEl.textContent = "By making a monthly donation, you'll empower us to make long-term investments to " + impactPhrase + " for more families around the world.";
-      } else {
-        upsellBodyEl.textContent = upsellBody;
-      }
-      upsellSubtextEl.textContent = upsellSubText;
-      upsellMonthlyLabel.textContent = 'Give $' + suggestedMonthly + ' per month instead';
-      upsellBtn.textContent = buttonTextOneTime + ' $' + amount;
-
-      upsellView._oneTimeAmount = amount;
-      upsellView._monthlyAmount = suggestedMonthly;
-      upsellMonthlyActive = false;
-
-      upsellToggle.setAttribute('aria-checked', 'false');
-      upsellToggle.style.backgroundColor = '#d1d5db';
-      upsellToggleDot.style.transform = 'translateX(0)';
-      upsellToggleDot.style.backgroundColor = '#ffffff';
-      // Show X icon, hide checkmark when toggle is off
-      var toggleX = upsellToggleDot.querySelector('.cw-toggle-x');
-      var toggleCheck = upsellToggleDot.querySelector('.cw-toggle-check');
-      if (toggleX) toggleX.classList.remove('hidden');
-      if (toggleCheck) toggleCheck.classList.add('hidden');
-    }
-
-    // Edit link → back to State 2
-    if (editLink) {
-      editLink.addEventListener('click', function() {
-        upsellView.classList.add('hidden');
-        formView.classList.remove('hidden');
-        upsellHeader.classList.add('hidden');
-        formHeader.classList.remove('hidden');
-        donationType = 'single';
-        toggleBtns.forEach(function(b) {
-          if (b.dataset.type === 'single') {
-            b.style.backgroundColor = accentColor;
-            b.style.color = accentTextColor;
-            b.style.borderColor = accentColor;
-          } else {
-            b.style.backgroundColor = 'transparent';
-            b.style.color = '#9ca3af';
-            b.style.borderColor = 'transparent';
-          }
-        });
-        monthlyGrid.classList.add('hidden');
-        onetimeGrid.classList.remove('hidden');
-        if (altPayments) altPayments.classList.remove('hidden');
-        donateBtn.textContent = buttonTextOneTime;
-      });
-    }
-
-    // Upsell toggle switch
-    if (upsellToggle) {
-      upsellToggle.addEventListener('click', function() {
-        upsellMonthlyActive = !upsellMonthlyActive;
-        this.setAttribute('aria-checked', upsellMonthlyActive ? 'true' : 'false');
-        var toggleX = upsellToggleDot.querySelector('.cw-toggle-x');
-        var toggleCheck = upsellToggleDot.querySelector('.cw-toggle-check');
-
-        if (upsellMonthlyActive) {
-          this.style.backgroundColor = accentColor;
-          upsellToggleDot.style.transform = 'translateX(28px)';
-          upsellToggleDot.style.backgroundColor = accentColor;
-          if (toggleX) toggleX.classList.add('hidden');
-          if (toggleCheck) toggleCheck.classList.remove('hidden');
-          upsellBtn.textContent = buttonTextOneTime + ' $' + upsellView._monthlyAmount;
-          upsellAmountEl.textContent = '$' + upsellView._monthlyAmount + ' USD';
-          if (upsellPeriodEl) upsellPeriodEl.textContent = ' per month';
-        } else {
-          this.style.backgroundColor = '#d1d5db';
-          upsellToggleDot.style.transform = 'translateX(0)';
-          upsellToggleDot.style.backgroundColor = '#ffffff';
-          if (toggleX) toggleX.classList.remove('hidden');
-          if (toggleCheck) toggleCheck.classList.add('hidden');
-          upsellBtn.textContent = buttonTextOneTime + ' $' + upsellView._oneTimeAmount;
-          upsellAmountEl.textContent = '$' + upsellView._oneTimeAmount + ' USD';
-          if (upsellPeriodEl) upsellPeriodEl.textContent = '';
-        }
-      });
-    }
-
-    // Upsell CTA button
-    if (upsellBtn) {
-      upsellBtn.addEventListener('click', function() {
-        if (upsellMonthlyActive) {
-          addItemToCart(upsellView._monthlyAmount, 'monthly');
-        } else {
-          addItemToCart(upsellView._oneTimeAmount, 'single');
-        }
-      });
-    }
+    var specialBtn = box.querySelector('.cw-special-btn');
 
     // ═══════════════════════════════════════════
     // HELPERS
     // ═══════════════════════════════════════════
-    function addItemToCart(amount, type) {
-      var itemId = campaignSlug + '-' + amount + '-' + type;
-      if (typeof window.addToCart === 'function') {
-        window.addToCart({
-          id: itemId,
-          name: campaignTitle,
-          label: '$' + amount + ' Donation',
-          amount: amount,
-          quantity: 1,
-          type: type,
-          recurringInterval: type === 'monthly' ? 'monthly' : undefined,
-          image: campaignImage,
-          campaign: campaignSlug
-        });
-      }
+    function getActiveFreq() {
+      return frequencyTabs[activeFreqIndex];
     }
 
-    function updateImpact() {
-      if (!impactText) return;
-
-      if (donationType === 'monthly') {
-        // Check for amount-specific monthly impact texts
-        if (impactTexts && impactTexts.monthly && selectedAmount > 0) {
-          var monthlyTexts = impactTexts.monthly;
-          if (monthlyTexts[selectedAmount]) {
-            impactText.innerHTML = monthlyTexts[selectedAmount];
-            return;
-          }
-        }
-        impactText.innerHTML = monthlyImpactText || '';
-        return;
-      }
-
-      // One-time: check for amount-specific text
-      if (impactTexts && impactTexts.single && selectedAmount > 0) {
-        var singleTexts = impactTexts.single;
-        if (singleTexts[selectedAmount]) {
-          impactText.innerHTML = singleTexts[selectedAmount];
-          return;
-        }
-        // Find closest lower amount
-        var amounts = Object.keys(singleTexts).map(Number).sort(function(a, b) { return b - a; });
-        for (var i = 0; i < amounts.length; i++) {
-          if (selectedAmount >= amounts[i]) {
-            impactText.innerHTML = singleTexts[amounts[i]];
-            return;
-          }
-        }
-      }
-      impactText.innerHTML = monthlyImpactText || '';
+    function getActiveGrid() {
+      return box.querySelector('.cw-freq-grid[data-freq-key="' + activeFreqKey + '"]');
     }
 
-    function clearAllAmountStyles() {
-      clearMonthlyBtnStyles();
-      clearOnetimeBtnStyles();
-    }
-
-    // Get the text size class from a button's existing span (preserves adaptive sizing)
     function getAmtSizeClass(btn) {
       var s = btn.querySelector('span:first-child');
       if (s && s.className.indexOf('text-[14px]') !== -1) return 'text-[14px]';
       return 'text-[17px]';
     }
+
     function getSuffSizeClass(btn) {
       var s = btn.querySelector('span:last-child');
       if (s && s.className.indexOf('text-[10px]') !== -1) return 'text-[10px]';
       return 'text-[11px]';
     }
 
-    function clearMonthlyBtnStyles() {
-      monthlyBtns.forEach(function(b) {
-        b.style.backgroundColor = '#f4f5f0';
-        b.style.color = '';
-        b.style.borderColor = '#e0e1dc';
-        b.classList.remove('cw-amt-selected');
-        var amtSpan = b.querySelector('span:first-child');
-        if (amtSpan) amtSpan.className = getAmtSizeClass(b) + ' font-bold text-gray-400';
-        var suffSpan = b.querySelector('span:last-child');
-        if (suffSpan) suffSpan.className = getSuffSizeClass(b) + ' ml-0.5 font-medium text-gray-400';
-      });
-    }
-
-    function highlightMonthlyBtn(btn) {
-      clearMonthlyBtnStyles();
-      btn.style.backgroundColor = accentColor;
-      btn.style.color = accentTextColor;
-      btn.style.borderColor = accentColor;
-      btn.classList.add('cw-amt-selected');
-      var amtSpan = btn.querySelector('span:first-child');
-      if (amtSpan) amtSpan.className = getAmtSizeClass(btn) + ' font-bold';
-      var suffSpan = btn.querySelector('span:last-child');
-      if (suffSpan) suffSpan.className = getSuffSizeClass(btn) + ' ml-0.5 font-medium opacity-70';
-    }
-
-    function clearOnetimeBtnStyles() {
-      onetimeBtns.forEach(function(b) {
+    function clearGridBtnStyles(grid) {
+      if (!grid) return;
+      var btns = grid.querySelectorAll('.cw-amt-btn');
+      btns.forEach(function(b) {
         b.style.backgroundColor = '#f4f5f0';
         b.style.color = '';
         b.style.borderColor = '#e0e1dc';
@@ -907,8 +512,7 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
       }
     }
 
-    function highlightOnetimeBtn(btn) {
-      clearOnetimeBtnStyles();
+    function highlightBtn(btn) {
       btn.style.backgroundColor = accentColor;
       btn.style.color = accentTextColor;
       btn.style.borderColor = accentColor;
@@ -917,6 +521,367 @@ const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
       if (amtSpan) amtSpan.className = getAmtSizeClass(btn) + ' font-bold';
       var suffSpan = btn.querySelector('span:last-child');
       if (suffSpan) suffSpan.className = getSuffSizeClass(btn) + ' ml-0.5 font-medium opacity-70';
+    }
+
+    function updateImpact() {
+      if (!impactText) return;
+      var freq = getActiveFreq();
+      if (!freq) return;
+
+      // Check for amount-specific impact text
+      if (freq.impactTexts && selectedAmount > 0) {
+        if (freq.impactTexts[selectedAmount]) {
+          impactText.innerHTML = freq.impactTexts[selectedAmount];
+          return;
+        }
+        // Find closest lower amount
+        var amounts = Object.keys(freq.impactTexts).map(Number).sort(function(a, b) { return b - a; });
+        for (var i = 0; i < amounts.length; i++) {
+          if (selectedAmount >= amounts[i]) {
+            impactText.innerHTML = freq.impactTexts[amounts[i]];
+            return;
+          }
+        }
+      }
+      // Fallback
+      impactText.innerHTML = freq.fallbackImpactText || '';
+    }
+
+    function addItemToCart(amount, type) {
+      var freq = getActiveFreq();
+      var recurringInterval;
+      if (freq && freq.type === 'recurring') {
+        recurringInterval = freq.key; // 'monthly', 'weekly', 'yearly', 'daily'
+      }
+      var itemId = campaignSlug + '-' + amount + '-' + type;
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: itemId,
+          name: campaignTitle,
+          label: '$' + amount + ' Donation',
+          amount: amount,
+          quantity: 1,
+          type: type,
+          recurringInterval: recurringInterval,
+          image: campaignImage,
+          campaign: campaignSlug
+        });
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // TAB SWITCHING
+    // ═══════════════════════════════════════════
+    toggleBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var freqKey = this.dataset.type;
+        var freqIdx = parseInt(this.dataset.freqIndex || '0', 10);
+
+        activeFreqKey = freqKey;
+        activeFreqIndex = freqIdx;
+
+        // Style tabs
+        toggleBtns.forEach(function(b) {
+          if (b.dataset.type === freqKey) {
+            b.style.backgroundColor = accentColor;
+            b.style.color = accentTextColor;
+            b.style.borderColor = accentColor;
+          } else {
+            b.style.backgroundColor = 'transparent';
+            b.style.color = '#9ca3af';
+            b.style.borderColor = 'transparent';
+          }
+        });
+
+        // Show/hide grids
+        freqGrids.forEach(function(g) {
+          if (g.dataset.freqKey === freqKey) {
+            g.classList.remove('hidden');
+          } else {
+            g.classList.add('hidden');
+          }
+        });
+
+        // Show alt payments only for single/one-time
+        if (altPayments) {
+          if (freqKey === 'single') {
+            altPayments.classList.remove('hidden');
+          } else {
+            altPayments.classList.add('hidden');
+          }
+        }
+
+        // Reset custom inputs in all grids
+        freqGrids.forEach(function(g) {
+          var customWrap = g.querySelector('.cw-freq-custom-wrap');
+          var customInput = g.querySelector('.cw-freq-custom');
+          var otherBtnEl = g.querySelector('.cw-freq-other-btn');
+          if (customWrap) customWrap.classList.add('hidden');
+          if (customInput) customInput.value = '';
+          if (otherBtnEl) otherBtnEl.classList.remove('hidden');
+        });
+
+        // Pre-select default amount for the active tab
+        var freq = frequencyTabs[freqIdx];
+        var defaultIdx = freq.defaultAmountIndex || 0;
+        var defaultAmt = freq.amounts[defaultIdx] || freq.amounts[0] || 0;
+        selectedAmount = defaultAmt;
+
+        var activeGrid = getActiveGrid();
+        clearGridBtnStyles(activeGrid);
+        if (activeGrid) {
+          var amtBtns = activeGrid.querySelectorAll('.cw-amt-btn');
+          amtBtns.forEach(function(b) {
+            if (parseFloat(b.dataset.amount) === defaultAmt) {
+              highlightBtn(b);
+            }
+          });
+        }
+
+        // Update button text
+        donateBtn.textContent = freq.buttonText || 'DONATE';
+        updateImpact();
+      });
+    });
+
+    // ═══════════════════════════════════════════
+    // AMOUNT SELECTION (applies to all grids)
+    // ═══════════════════════════════════════════
+    freqGrids.forEach(function(grid) {
+      var gridKey = grid.dataset.freqKey;
+
+      // Amount buttons
+      var amtBtns = grid.querySelectorAll('.cw-amt-btn');
+      amtBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          selectedAmount = parseFloat(this.dataset.amount);
+          var customInput = grid.querySelector('.cw-freq-custom');
+          var customWrap = grid.querySelector('.cw-freq-custom-wrap');
+          var otherBtnEl = grid.querySelector('.cw-freq-other-btn');
+          if (customInput) customInput.value = '';
+          if (customWrap) customWrap.classList.add('hidden');
+          if (otherBtnEl) otherBtnEl.classList.remove('hidden');
+          clearGridBtnStyles(grid);
+          highlightBtn(this);
+          updateImpact();
+        });
+      });
+
+      // Other button
+      var otherBtnEl = grid.querySelector('.cw-freq-other-btn');
+      if (otherBtnEl) {
+        otherBtnEl.addEventListener('click', function() {
+          var customWrap = grid.querySelector('.cw-freq-custom-wrap');
+          var customInput = grid.querySelector('.cw-freq-custom');
+          if (customWrap) customWrap.classList.remove('hidden');
+          otherBtnEl.classList.add('hidden');
+          clearGridBtnStyles(grid);
+          selectedAmount = 0;
+          if (customInput) customInput.focus();
+        });
+      }
+
+      // Custom input
+      var customInput = grid.querySelector('.cw-freq-custom');
+      if (customInput) {
+        customInput.addEventListener('input', function() {
+          if (this.value) {
+            selectedAmount = parseFloat(this.value) || 0;
+            clearGridBtnStyles(grid);
+            updateImpact();
+          }
+        });
+      }
+    });
+
+    // Special project button
+    if (specialBtn) {
+      specialBtn.addEventListener('click', function() {
+        selectedAmount = parseFloat(this.dataset.amount);
+        var activeGrid = getActiveGrid();
+        clearGridBtnStyles(activeGrid);
+        var customInput = activeGrid ? activeGrid.querySelector('.cw-freq-custom') : null;
+        if (customInput) customInput.value = '';
+        specialBtn.style.borderColor = accentColor;
+        specialBtn.style.backgroundColor = accentColor;
+        specialBtn.style.color = accentTextColor;
+        updateImpact();
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // CTA BUTTON
+    // ═══════════════════════════════════════════
+    donateBtn.addEventListener('click', function() {
+      var freq = getActiveFreq();
+      var amt = selectedAmount;
+
+      // Check for custom input value
+      var activeGrid = getActiveGrid();
+      if (activeGrid) {
+        var customInput = activeGrid.querySelector('.cw-freq-custom');
+        if (customInput && customInput.value) {
+          amt = parseFloat(customInput.value) || amt;
+        }
+      }
+
+      if (!amt || amt < 1) {
+        alert('Please select or enter a donation amount');
+        return;
+      }
+
+      // For recurring frequencies, go straight to cart (no upsell)
+      if (freq.type === 'recurring') {
+        addItemToCart(amt, freq.key);
+        return;
+      }
+
+      // For single/one-time: show upsell for amounts ≤ $200
+      if (amt > 200) {
+        addItemToCart(amt, 'single');
+        return;
+      }
+
+      showUpsell(amt);
+    });
+
+    // ═══════════════════════════════════════════
+    // UPSELL VIEW (State 3) — only for single
+    // ═══════════════════════════════════════════
+    function showUpsell(amount) {
+      var suggestedMonthly = Math.round(amount * upsellMonthlyRatio);
+      if (suggestedMonthly < 5) suggestedMonthly = 5;
+
+      // Find the single frequency's button text
+      var singleFreq = null;
+      for (var i = 0; i < frequencyTabs.length; i++) {
+        if (frequencyTabs[i].key === 'single') { singleFreq = frequencyTabs[i]; break; }
+      }
+      var singleButtonText = singleFreq ? singleFreq.buttonText : 'GIVE';
+
+      formView.classList.add('hidden');
+      upsellView.classList.remove('hidden');
+      formHeader.classList.add('hidden');
+      upsellHeader.classList.remove('hidden');
+
+      upsellAmountEl.textContent = '$' + amount + ' USD';
+
+      // Build dynamic upsell body using the selected amount's impact text
+      var impactPhrase = '';
+      if (singleFreq && singleFreq.impactTexts && singleFreq.impactTexts[amount]) {
+        var temp = document.createElement('div');
+        temp.innerHTML = singleFreq.impactTexts[amount];
+        impactPhrase = temp.textContent || temp.innerText || '';
+        impactPhrase = impactPhrase.charAt(0).toLowerCase() + impactPhrase.slice(1);
+      }
+      if (impactPhrase) {
+        upsellBodyEl.textContent = "By making a monthly donation, you'll empower us to make long-term investments to " + impactPhrase + " for more families around the world.";
+      } else {
+        upsellBodyEl.textContent = upsellBody;
+      }
+      upsellSubtextEl.textContent = upsellSubText;
+      upsellMonthlyLabel.textContent = 'Give $' + suggestedMonthly + ' per month instead';
+      upsellBtn.textContent = singleButtonText + ' $' + amount;
+
+      upsellView._oneTimeAmount = amount;
+      upsellView._monthlyAmount = suggestedMonthly;
+      upsellMonthlyActive = false;
+
+      upsellToggle.setAttribute('aria-checked', 'false');
+      upsellToggle.style.backgroundColor = '#d1d5db';
+      upsellToggleDot.style.transform = 'translateX(0)';
+      upsellToggleDot.style.backgroundColor = '#ffffff';
+      var toggleX = upsellToggleDot.querySelector('.cw-toggle-x');
+      var toggleCheck = upsellToggleDot.querySelector('.cw-toggle-check');
+      if (toggleX) toggleX.classList.remove('hidden');
+      if (toggleCheck) toggleCheck.classList.add('hidden');
+    }
+
+    // Edit link → back to form view on single tab
+    if (editLink) {
+      editLink.addEventListener('click', function() {
+        upsellView.classList.add('hidden');
+        formView.classList.remove('hidden');
+        upsellHeader.classList.add('hidden');
+        formHeader.classList.remove('hidden');
+
+        // Switch back to single tab
+        var singleIdx = -1;
+        for (var i = 0; i < frequencyTabs.length; i++) {
+          if (frequencyTabs[i].key === 'single') { singleIdx = i; break; }
+        }
+        if (singleIdx >= 0) {
+          activeFreqKey = 'single';
+          activeFreqIndex = singleIdx;
+          toggleBtns.forEach(function(b) {
+            if (b.dataset.type === 'single') {
+              b.style.backgroundColor = accentColor;
+              b.style.color = accentTextColor;
+              b.style.borderColor = accentColor;
+            } else {
+              b.style.backgroundColor = 'transparent';
+              b.style.color = '#9ca3af';
+              b.style.borderColor = 'transparent';
+            }
+          });
+          freqGrids.forEach(function(g) {
+            if (g.dataset.freqKey === 'single') {
+              g.classList.remove('hidden');
+            } else {
+              g.classList.add('hidden');
+            }
+          });
+          donateBtn.textContent = frequencyTabs[singleIdx].buttonText || 'GIVE';
+        }
+        if (altPayments) altPayments.classList.remove('hidden');
+      });
+    }
+
+    // Upsell toggle switch
+    if (upsellToggle) {
+      upsellToggle.addEventListener('click', function() {
+        upsellMonthlyActive = !upsellMonthlyActive;
+        this.setAttribute('aria-checked', upsellMonthlyActive ? 'true' : 'false');
+        var toggleX = upsellToggleDot.querySelector('.cw-toggle-x');
+        var toggleCheck = upsellToggleDot.querySelector('.cw-toggle-check');
+
+        var singleFreq = null;
+        for (var i = 0; i < frequencyTabs.length; i++) {
+          if (frequencyTabs[i].key === 'single') { singleFreq = frequencyTabs[i]; break; }
+        }
+        var singleButtonText = singleFreq ? singleFreq.buttonText : 'GIVE';
+
+        if (upsellMonthlyActive) {
+          this.style.backgroundColor = accentColor;
+          upsellToggleDot.style.transform = 'translateX(28px)';
+          upsellToggleDot.style.backgroundColor = accentColor;
+          if (toggleX) toggleX.classList.add('hidden');
+          if (toggleCheck) toggleCheck.classList.remove('hidden');
+          upsellBtn.textContent = singleButtonText + ' $' + upsellView._monthlyAmount;
+          upsellAmountEl.textContent = '$' + upsellView._monthlyAmount + ' USD';
+          if (upsellPeriodEl) upsellPeriodEl.textContent = ' per month';
+        } else {
+          this.style.backgroundColor = '#d1d5db';
+          upsellToggleDot.style.transform = 'translateX(0)';
+          upsellToggleDot.style.backgroundColor = '#ffffff';
+          if (toggleX) toggleX.classList.remove('hidden');
+          if (toggleCheck) toggleCheck.classList.add('hidden');
+          upsellBtn.textContent = singleButtonText + ' $' + upsellView._oneTimeAmount;
+          upsellAmountEl.textContent = '$' + upsellView._oneTimeAmount + ' USD';
+          if (upsellPeriodEl) upsellPeriodEl.textContent = '';
+        }
+      });
+    }
+
+    // Upsell CTA button
+    if (upsellBtn) {
+      upsellBtn.addEventListener('click', function() {
+        if (upsellMonthlyActive) {
+          addItemToCart(upsellView._monthlyAmount, 'monthly');
+        } else {
+          addItemToCart(upsellView._oneTimeAmount, 'single');
+        }
+      });
     }
 
     // ═══════════════════════════════════════════

@@ -381,6 +381,8 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
           buttonTextMonthly={cwConfig.buttonTextMonthly}
           buttonTextOneTime={cwConfig.buttonTextOneTime}
           donationBoxHeading={cwConfig.donationBoxHeading}
+          tabEmoji={cwConfig.tabEmoji || ''}
+          frequencies={cwConfig.frequencies}
         />
       </div>
     ) : isHomeDonation ? (
@@ -604,6 +606,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                   buttonTextMonthly={cwConfig.buttonTextMonthly}
                   buttonTextOneTime={cwConfig.buttonTextOneTime}
                   donationBoxHeading={cwConfig.donationBoxHeading}
+                  frequencies={cwConfig.frequencies}
                 />
               </div>
             ) : isHomeDonation ? (

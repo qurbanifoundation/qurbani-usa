@@ -7,6 +7,18 @@ export const prerender = false;
 // Product names for recurring donations
 const MONTHLY_DONATION_PRODUCT_NAME = 'Monthly Donation';
 const WEEKLY_DONATION_PRODUCT_NAME = 'Jummah (Friday) Donation';
+const DONATION_PRODUCT_NAMES: Record<string, string> = {
+  monthly: 'Monthly Donation',
+  weekly: 'Jummah (Friday) Donation',
+  yearly: 'Yearly Donation',
+  daily: 'Daily Donation',
+};
+const STRIPE_INTERVALS: Record<string, string> = {
+  monthly: 'month',
+  weekly: 'week',
+  yearly: 'year',
+  daily: 'day',
+};
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -112,7 +124,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
     } else {
       // Customer email is required for subscriptions
-      if (type === 'monthly' || type === 'weekly') {
+      if (type === 'monthly' || type === 'weekly' || type === 'yearly' || type === 'daily') {
         return new Response(JSON.stringify({ error: 'Email is required for recurring donations' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -157,10 +169,10 @@ export const POST: APIRoute = async ({ request }) => {
       metadata.customer_phone = customer.phone || '';
     }
 
-    // Recurring donations (monthly/weekly) now use the SetupIntent → create-subscription flow
+    // Recurring donations (monthly/weekly/yearly/daily) now use the SetupIntent → create-subscription flow
     // See: /api/payments/create-setup-intent + /api/payments/create-subscription
     // This endpoint only handles one-time (single) donations
-    if (type === 'monthly' || type === 'weekly') {
+    if (type === 'monthly' || type === 'weekly' || type === 'yearly' || type === 'daily') {
       return new Response(JSON.stringify({
         error: 'Recurring donations should use the SetupIntent flow. Use /api/payments/create-setup-intent instead.',
       }), {
@@ -283,14 +295,15 @@ async function createRecurringSubscription({
   customer: any;
   billingAddress: any;
   metadata: Record<string, string>;
-  interval: 'monthly' | 'weekly';
+  interval: 'monthly' | 'weekly' | 'yearly' | 'daily';
 }) {
   try {
     const isWeekly = interval === 'weekly';
-    const productName = isWeekly ? WEEKLY_DONATION_PRODUCT_NAME : MONTHLY_DONATION_PRODUCT_NAME;
+    const stripeInterval = STRIPE_INTERVALS[interval] || 'month';
+    const productName = DONATION_PRODUCT_NAMES[interval] || 'Recurring Donation';
     const productDescription = isWeekly
       ? 'Jummah (Friday) recurring donation to Qurbani USA'
-      : 'Monthly recurring donation to Qurbani USA';
+      : `${interval.charAt(0).toUpperCase() + interval.slice(1)} recurring donation to Qurbani USA`;
 
     // Get or create the donation product
     let product: Stripe.Product;
@@ -316,7 +329,7 @@ async function createRecurringSubscription({
       unit_amount: Math.round(amount * 100), // Convert to cents
       currency,
       recurring: {
-        interval: isWeekly ? 'week' : 'month',
+        interval: stripeInterval as any,
       },
       metadata: {
         donation_amount: amount.toString(),
@@ -367,10 +380,14 @@ async function createRecurringSubscription({
       throw new Error('Failed to create subscription payment');
     }
 
-    // Calculate next billing date
+    // Calculate next billing date based on interval
     const nextBillingDate = isWeekly ? getNextFriday() : new Date();
-    if (!isWeekly) {
+    if (interval === 'monthly') {
       nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+    } else if (interval === 'yearly') {
+      nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+    } else if (interval === 'daily') {
+      nextBillingDate.setDate(nextBillingDate.getDate() + 1);
     }
 
     // Prepare items with full metadata (childName, notes, etc.)
