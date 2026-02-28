@@ -56,6 +56,7 @@ try {
 // Priority: page-level override > site default > fallback
 let donationBoxTemplate = 'pennybill-default';
 let homepageCWConfig: Record<string, any> = {};
+let configuredHeroSlides: any[] = [];
 try {
   // Check page-level override first (Home page)
   const { data: homePage } = await supabaseAdmin
@@ -82,14 +83,19 @@ try {
   if (homePage?.template_config?.cwDonation) {
     homepageCWConfig = homePage.template_config.cwDonation;
   }
+
+  // Extract hero slides config from page template_config
+  if (homePage?.template_config?.heroSlides && Array.isArray(homePage.template_config.heroSlides) && homePage.template_config.heroSlides.length > 0) {
+    configuredHeroSlides = homePage.template_config.heroSlides;
+  }
 } catch (e) {
   console.error('[Homepage] Error fetching donation box template setting:', e);
 }
 const isCWDonation = donationBoxTemplate === 'cw-donation';
 const isHomeDonation = donationBoxTemplate === 'home-donation';
 
-// Hero slides data
-const heroSlides = [
+// Hero slides data - use admin-configured slides or fall back to hardcoded defaults
+const defaultHeroSlides = [
   {
     image: '/images/qurbani-foundation-zakat-hero.png',
     eyebrow: '100% Zakat Policy',
@@ -118,6 +124,8 @@ const heroSlides = [
     secondaryCta: { text: 'View Food Programs', href: '/food-packs' }
   }
 ];
+
+const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defaultHeroSlides;
 ---
 
 <Layout title="Qurbani Foundation - A Muslim Charity Serving Humanity | 100% Zakat Policy">
@@ -206,27 +214,46 @@ const heroSlides = [
                 </div>
               </div>
 
-              <!-- Carousel Indicators -->
-              <div class="flex items-center gap-3 mt-8">
-                {heroSlides.map((_, index) => (
-                  <button
-                    class={`carousel-dot w-12 h-1 rounded-full transition-all ${index === 0 ? 'bg-[#d97706]' : 'bg-white/30 hover:bg-white/50'}`}
-                    data-goto={index}
-                  ></button>
-                ))}
+              <!-- Carousel Navigation: Arrows + Dots -->
+              <div class="flex items-center gap-4 mt-8">
+                <!-- Previous Arrow -->
+                <button class="carousel-prev w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/20" aria-label="Previous slide">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                </button>
+
+                <!-- Dots -->
+                <div class="flex items-center gap-2">
+                  {heroSlides.map((_: any, index: number) => (
+                    <button
+                      class={`carousel-dot w-3 h-3 rounded-full transition-all duration-300 ${index === 0 ? 'bg-[#d97706] scale-125' : 'bg-white/30 hover:bg-white/50'}`}
+                      data-goto={index}
+                      aria-label={`Go to slide ${index + 1}`}
+                    ></button>
+                  ))}
+                </div>
+
+                <!-- Next Arrow -->
+                <button class="carousel-next w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/20" aria-label="Next slide">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+
+                <!-- Slide Counter -->
+                <span class="text-white/40 text-sm ml-2 font-mono">
+                  <span class="carousel-current">1</span>/<span class="carousel-total">{heroSlides.length}</span>
+                </span>
               </div>
             </div>
 
-            <!-- Right: Donation Widget (2 cols) -->
-            <div class="lg:col-span-2" id="donate">
+            <!-- Right: Donation Widget (2 cols) - one per slide -->
+            <div class="lg:col-span-2 relative" id="donate">
               {isCWDonation ? (
-                <CWDonationBox
-                  campaignSlug="where-needed"
-                  campaignTitle="Where Most Needed"
-                  campaignImage="/images/qurbani-foundation-zakat-hero.png"
-                  monthlyAmounts={homepageCWConfig.monthlyAmounts || [10, 20, 40, 100]}
-                  oneTimeAmounts={homepageCWConfig.oneTimeAmounts || [50, 100, 150, 200]}
-                  impactTexts={homepageCWConfig.impactTexts || {
+                heroSlides.map((slide: any, index: number) => {
+                  const slideConfig = slide.donation || {};
+                  const defaultImpacts = {
                     monthly: {
                       10: 'Feed a child for a month',
                       20: 'Provide clean water for a family',
@@ -239,15 +266,30 @@ const heroSlides = [
                       150: 'Build a water well share',
                       200: 'Emergency shelter for a family'
                     }
-                  }}
-                  monthlyImpactText={homepageCWConfig.monthlyImpactText || "Your monthly gift serves people all year long."}
-                  upsellBody={homepageCWConfig.upsellBody || "Make your gift go further by giving monthly. Monthly donors provide sustainable support that changes lives all year."}
-                  upsellSubText={homepageCWConfig.upsellSubText || "Monthly giving helps us plan ahead and reach more people in need."}
-                  upsellMonthlyRatio={0.4}
-                  buttonTextMonthly={homepageCWConfig.buttonTextMonthly || "JOIN TODAY"}
-                  buttonTextOneTime={homepageCWConfig.buttonTextOneTime || "GIVE"}
-                  donationBoxHeading={homepageCWConfig.donationBoxHeading}
-                />
+                  };
+                  return (
+                    <div
+                      class={`hero-donation-box transition-opacity duration-700 ${index === 0 ? 'opacity-100 relative z-10' : 'opacity-0 absolute inset-0 z-0 pointer-events-none'}`}
+                      data-donation-slide={index}
+                    >
+                      <CWDonationBox
+                        campaignSlug={slideConfig.campaignSlug || homepageCWConfig.campaignSlug || 'where-needed'}
+                        campaignTitle={slideConfig.campaignTitle || homepageCWConfig.campaignTitle || 'Where Most Needed'}
+                        campaignImage={slide.image || '/images/qurbani-foundation-zakat-hero.png'}
+                        monthlyAmounts={slideConfig.monthlyAmounts || homepageCWConfig.monthlyAmounts || [10, 20, 40, 100]}
+                        oneTimeAmounts={slideConfig.oneTimeAmounts || homepageCWConfig.oneTimeAmounts || [50, 100, 150, 200]}
+                        impactTexts={slideConfig.impactTexts || homepageCWConfig.impactTexts || defaultImpacts}
+                        monthlyImpactText={slideConfig.monthlyImpactText || homepageCWConfig.monthlyImpactText || "Your monthly gift serves people all year long."}
+                        upsellBody={slideConfig.upsellBody || homepageCWConfig.upsellBody || "Make your gift go further by giving monthly. Monthly donors provide sustainable support that changes lives all year."}
+                        upsellSubText={slideConfig.upsellSubText || homepageCWConfig.upsellSubText || "Monthly giving helps us plan ahead and reach more people in need."}
+                        upsellMonthlyRatio={0.4}
+                        buttonTextMonthly={slideConfig.buttonTextMonthly || homepageCWConfig.buttonTextMonthly || "JOIN TODAY"}
+                        buttonTextOneTime={slideConfig.buttonTextOneTime || homepageCWConfig.buttonTextOneTime || "GIVE"}
+                        donationBoxHeading={slideConfig.donationBoxHeading || homepageCWConfig.donationBoxHeading}
+                      />
+                    </div>
+                  );
+                })
               ) : (
                 <HomeDonationBox campaignSlug="where-needed" campaignTitle="Where Most Needed" />
               )}
@@ -924,36 +966,70 @@ const heroSlides = [
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     // ═══════════════════════════════════════════════════════════════
-    // Hero Carousel
+    // Hero Carousel (with per-slide donation boxes + arrow nav)
     // ═══════════════════════════════════════════════════════════════
     const slides = document.querySelectorAll('.hero-slide');
     const contents = document.querySelectorAll('.hero-content');
+    const donationBoxes = document.querySelectorAll('.hero-donation-box');
     const dots = document.querySelectorAll('.carousel-dot');
+    const prevBtn = document.querySelector('.carousel-prev');
+    const nextBtn = document.querySelector('.carousel-next');
+    const slideCounter = document.querySelector('.carousel-current');
     let currentSlide = 0;
     let autoplayInterval: ReturnType<typeof setInterval>;
 
     const goToSlide = (index: number) => {
+      // Background images
       slides.forEach(slide => slide.classList.replace('opacity-100', 'opacity-0'));
+
+      // Text content
       contents.forEach(content => {
         content.classList.add('hidden', 'opacity-0');
         content.classList.remove('block', 'opacity-100');
       });
+
+      // Donation boxes - swap active/inactive with positioning
+      donationBoxes.forEach(box => {
+        box.classList.remove('opacity-100', 'relative', 'z-10');
+        box.classList.add('opacity-0', 'absolute', 'inset-0', 'z-0', 'pointer-events-none');
+      });
+
+      // Dots
       dots.forEach(dot => {
-        dot.classList.remove('bg-[#d97706]');
+        dot.classList.remove('bg-[#d97706]', 'scale-125');
         dot.classList.add('bg-white/30');
       });
 
+      // Activate current slide
       slides[index]?.classList.replace('opacity-0', 'opacity-100');
+
       contents[index]?.classList.remove('hidden', 'opacity-0');
       contents[index]?.classList.add('block', 'opacity-100');
-      dots[index]?.classList.add('bg-[#d97706]');
-      dots[index]?.classList.remove('bg-white/30');
+
+      if (donationBoxes[index]) {
+        donationBoxes[index].classList.remove('opacity-0', 'absolute', 'inset-0', 'z-0', 'pointer-events-none');
+        donationBoxes[index].classList.add('opacity-100', 'relative', 'z-10');
+      }
+
+      if (dots[index]) {
+        dots[index].classList.add('bg-[#d97706]', 'scale-125');
+        dots[index].classList.remove('bg-white/30');
+      }
+
+      // Update slide counter
+      if (slideCounter) {
+        slideCounter.textContent = String(index + 1);
+      }
 
       currentSlide = index;
     };
 
     const nextSlide = () => {
       goToSlide((currentSlide + 1) % slides.length);
+    };
+
+    const prevSlide = () => {
+      goToSlide((currentSlide - 1 + slides.length) % slides.length);
     };
 
     const startAutoplay = () => {
@@ -964,6 +1040,7 @@ const heroSlides = [
       clearInterval(autoplayInterval);
     };
 
+    // Dot navigation
     dots.forEach((dot, index) => {
       dot.addEventListener('click', () => {
         stopAutoplay();
@@ -971,6 +1048,23 @@ const heroSlides = [
         startAutoplay();
       });
     });
+
+    // Arrow navigation
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        stopAutoplay();
+        prevSlide();
+        startAutoplay();
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        stopAutoplay();
+        nextSlide();
+        startAutoplay();
+      });
+    }
 
     if (slides.length > 1) {
       startAutoplay();

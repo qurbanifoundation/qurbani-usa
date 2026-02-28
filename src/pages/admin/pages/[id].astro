@@ -249,6 +249,35 @@ if (page?.content) {
       </div>
     </div>
 
+    <!-- Hero Campaign Slides (shown only for home page) -->
+    <div id="heroSlidesSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hidden">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">Hero Campaign Slides</h2>
+          <p class="text-sm text-gray-500">Configure the homepage hero carousel. Each slide has its own content and donation box.</p>
+        </div>
+        <button type="button" id="addHeroSlideBtn"
+          class="flex items-center gap-2 px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Add Slide
+        </button>
+      </div>
+
+      <div id="heroSlidesContainer" class="space-y-3 mt-4">
+        <!-- Slide cards rendered by JS -->
+      </div>
+
+      <div id="heroSlidesEmpty" class="hidden text-center py-8 border-2 border-dashed border-gray-300 rounded-lg mt-4">
+        <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <p class="text-gray-500 mb-2">No hero slides configured</p>
+        <p class="text-gray-400 text-sm">The homepage will use default hardcoded slides</p>
+      </div>
+    </div>
+
     <!-- SEO Settings -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
       <h2 class="text-lg font-bold text-gray-800 mb-4">SEO Settings</h2>
@@ -696,6 +725,441 @@ if (page?.content) {
   // Init on load
   initCWDonationSettings();
 
+  // ═══════════════════════════════════════════
+  // HERO CAMPAIGN SLIDES SETTINGS
+  // ═══════════════════════════════════════════
+  var heroSlidesData = [];
+  var heroSlideIndex = 0;
+
+  // Toggle visibility - only show for home page
+  function toggleHeroSlidesSettings() {
+    var panel = document.getElementById('heroSlidesSettings');
+    var slugInput = document.getElementById('pageSlug');
+    var templateSelect = document.getElementById('pageTemplate');
+    if (!panel) return;
+
+    var slugVal = slugInput ? slugInput.value.replace(/^\/+/, '') : '';
+    var templateVal = templateSelect ? templateSelect.value : '';
+    var isHome = (slugVal === 'home' || slugVal === '' && templateVal === 'home') || templateVal === 'home';
+
+    panel.classList.toggle('hidden', !isHome);
+  }
+
+  var pageTemplateSelect = document.getElementById('pageTemplate');
+  var pageSlugField = document.getElementById('pageSlug');
+  if (pageTemplateSelect) pageTemplateSelect.addEventListener('change', toggleHeroSlidesSettings);
+  if (pageSlugField) pageSlugField.addEventListener('input', toggleHeroSlidesSettings);
+  toggleHeroSlidesSettings();
+
+  // Render a single hero slide card
+  function renderHeroSlideCard(index, slide) {
+    slide = slide || {};
+    var primaryCta = slide.primaryCta || {};
+    var secondaryCta = slide.secondaryCta || {};
+    var donation = slide.donation || {};
+    var id = 'hero-slide-' + (heroSlideIndex++);
+
+    var monthlyHtml = '';
+    var monthlyAmounts = donation.monthlyAmounts || [];
+    var monthlyImpacts = (donation.impactTexts && donation.impactTexts.monthly) || {};
+    if (monthlyAmounts.length > 0) {
+      monthlyAmounts.forEach(function(amt) {
+        monthlyHtml += '<div class="flex gap-2 items-center hs-m-row">' +
+          '<input type="number" placeholder="$" value="' + amt + '" class="hs-m-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '<input type="text" placeholder="Impact text" value="' + ((monthlyImpacts[amt] || '').replace(/"/g, '&quot;')) + '" class="hs-m-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '<button type="button" class="hs-remove-amount p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>' +
+          '</div>';
+      });
+    }
+
+    var oneTimeHtml = '';
+    var oneTimeAmounts = donation.oneTimeAmounts || [];
+    var singleImpacts = (donation.impactTexts && donation.impactTexts.single) || {};
+    if (oneTimeAmounts.length > 0) {
+      oneTimeAmounts.forEach(function(amt) {
+        oneTimeHtml += '<div class="flex gap-2 items-center hs-o-row">' +
+          '<input type="number" placeholder="$" value="' + amt + '" class="hs-o-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '<input type="text" placeholder="Impact text" value="' + ((singleImpacts[amt] || '').replace(/"/g, '&quot;')) + '" class="hs-o-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+          '<button type="button" class="hs-remove-amount p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>' +
+          '</div>';
+      });
+    }
+
+    var card = document.createElement('div');
+    card.className = 'hero-slide-card border border-gray-200 rounded-lg overflow-hidden';
+    card.dataset.slideIndex = String(index);
+    card.id = id;
+
+    card.innerHTML = '' +
+      '<!-- Header -->' +
+      '<div class="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer hero-slide-header">' +
+        '<div class="flex items-center gap-3">' +
+          '<span class="text-gray-400 text-sm font-mono font-bold">#' + (index + 1) + '</span>' +
+          '<div class="w-16 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0">' +
+            (slide.image ? '<img src="' + slide.image + '" class="w-full h-full object-cover" />' : '<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No img</div>') +
+          '</div>' +
+          '<span class="font-medium text-gray-700 text-sm truncate max-w-[200px]">' + (slide.headline ? slide.headline + ' ' + (slide.headlineAccent || '') : 'New Slide') + '</span>' +
+        '</div>' +
+        '<div class="flex items-center gap-1">' +
+          '<button type="button" class="hs-move-up p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Move up"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>' +
+          '<button type="button" class="hs-move-down p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Move down"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>' +
+          '<button type="button" class="hs-delete p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete slide"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>' +
+          '<button type="button" class="hs-toggle p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Expand/collapse"><svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>' +
+        '</div>' +
+      '</div>' +
+      '<!-- Body (collapsed by default) -->' +
+      '<div class="hs-body hidden px-4 py-4 space-y-5 border-t border-gray-100">' +
+        '<!-- Slide Content -->' +
+        '<div class="space-y-3">' +
+          '<h4 class="font-semibold text-gray-700 text-sm flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Slide Content</h4>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Background Image URL</label>' +
+            '<div class="flex gap-2">' +
+              '<input type="text" placeholder="https://..." value="' + (slide.image || '').replace(/"/g, '&quot;') + '" class="hs-image flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+              '<label class="cursor-pointer flex-shrink-0">' +
+                '<input type="file" accept="image/*" class="hidden hs-image-upload" />' +
+                '<span class="inline-flex items-center px-3 py-2 bg-[#01534d] text-white rounded-lg text-sm hover:bg-[#01433f] cursor-pointer">Upload</span>' +
+              '</label>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Eyebrow Text</label>' +
+              '<input type="text" placeholder="e.g., 100% Zakat Policy" value="' + (slide.eyebrow || '').replace(/"/g, '&quot;') + '" class="hs-eyebrow w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Headline</label>' +
+              '<input type="text" placeholder="e.g., Your Zakat," value="' + (slide.headline || '').replace(/"/g, '&quot;') + '" class="hs-headline w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Headline Accent (colored text)</label>' +
+            '<input type="text" placeholder="e.g., Their Future" value="' + (slide.headlineAccent || '').replace(/"/g, '&quot;') + '" class="hs-headline-accent w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Description</label>' +
+            '<textarea placeholder="Short paragraph about this campaign..." rows="2" class="hs-description w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">' + (slide.description || '') + '</textarea>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Primary Button Text</label>' +
+              '<input type="text" placeholder="e.g., Give Zakat" value="' + (primaryCta.text || '').replace(/"/g, '&quot;') + '" class="hs-primary-text w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Primary Button Link</label>' +
+              '<input type="text" placeholder="/zakat" value="' + (primaryCta.href || '').replace(/"/g, '&quot;') + '" class="hs-primary-href w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Secondary Button Text</label>' +
+              '<input type="text" placeholder="e.g., Learn More" value="' + (secondaryCta.text || '').replace(/"/g, '&quot;') + '" class="hs-secondary-text w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Secondary Button Link</label>' +
+              '<input type="text" placeholder="/about" value="' + (secondaryCta.href || '').replace(/"/g, '&quot;') + '" class="hs-secondary-href w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<!-- Donation Box Config -->' +
+        '<div class="border-t border-gray-100 pt-4 space-y-3">' +
+          '<h4 class="font-semibold text-gray-700 text-sm flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Donation Box Config</h4>' +
+          '<p class="text-xs text-gray-400">Leave blank to use the default donation box settings from above</p>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Campaign Slug</label>' +
+              '<input type="text" placeholder="e.g., where-needed" value="' + (donation.campaignSlug || '').replace(/"/g, '&quot;') + '" class="hs-campaign-slug w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Campaign Title</label>' +
+              '<input type="text" placeholder="e.g., Where Most Needed" value="' + (donation.campaignTitle || '').replace(/"/g, '&quot;') + '" class="hs-campaign-title w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Donation Box Heading</label>' +
+            '<input type="text" placeholder="e.g., Be the Reason They Smile" value="' + (donation.donationBoxHeading || '').replace(/"/g, '&quot;') + '" class="hs-donation-heading w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+          '</div>' +
+          '<!-- Monthly Amounts -->' +
+          '<div>' +
+            '<div class="flex items-center justify-between mb-2">' +
+              '<label class="text-xs font-medium text-gray-600">Monthly Amounts</label>' +
+              '<button type="button" class="hs-add-monthly text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">+ Add</button>' +
+            '</div>' +
+            '<div class="hs-monthly-container space-y-2">' + monthlyHtml + '</div>' +
+          '</div>' +
+          '<!-- One-Time Amounts -->' +
+          '<div>' +
+            '<div class="flex items-center justify-between mb-2">' +
+              '<label class="text-xs font-medium text-gray-600">One-Time Amounts</label>' +
+              '<button type="button" class="hs-add-onetime text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">+ Add</button>' +
+            '</div>' +
+            '<div class="hs-onetime-container space-y-2">' + oneTimeHtml + '</div>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">Monthly Button Text</label>' +
+              '<input type="text" placeholder="JOIN TODAY" value="' + (donation.buttonTextMonthly || '').replace(/"/g, '&quot;') + '" class="hs-btn-monthly w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-gray-600 mb-1">One-Time Button Text</label>' +
+              '<input type="text" placeholder="GIVE" value="' + (donation.buttonTextOneTime || '').replace(/"/g, '&quot;') + '" class="hs-btn-onetime w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Monthly Impact Text (fallback)</label>' +
+            '<input type="text" placeholder="Your monthly gift transforms lives..." value="' + (donation.monthlyImpactText || '').replace(/"/g, '&quot;') + '" class="hs-monthly-impact-text w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Upsell Body Text</label>' +
+            '<textarea placeholder="By making a monthly donation..." rows="2" class="hs-upsell-body w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">' + (donation.upsellBody || '') + '</textarea>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-gray-600 mb-1">Upsell Sub Text</label>' +
+            '<textarea placeholder="Please consider joining..." rows="2" class="hs-upsell-sub w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">' + (donation.upsellSubText || '') + '</textarea>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    return card;
+  }
+
+  // Attach event listeners to a slide card
+  function attachHeroSlideListeners(card) {
+    // Toggle expand/collapse
+    var header = card.querySelector('.hero-slide-header');
+    var body = card.querySelector('.hs-body');
+    var toggleBtn = card.querySelector('.hs-toggle');
+    header.addEventListener('click', function(e) {
+      if (e.target.closest('.hs-move-up') || e.target.closest('.hs-move-down') || e.target.closest('.hs-delete')) return;
+      body.classList.toggle('hidden');
+      var svg = toggleBtn.querySelector('svg');
+      if (svg) svg.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    });
+
+    // Delete
+    card.querySelector('.hs-delete').addEventListener('click', function() {
+      if (confirm('Delete this hero slide?')) {
+        card.remove();
+        reindexHeroSlides();
+      }
+    });
+
+    // Move up
+    card.querySelector('.hs-move-up').addEventListener('click', function() {
+      var container = document.getElementById('heroSlidesContainer');
+      var prev = card.previousElementSibling;
+      if (prev) {
+        container.insertBefore(card, prev);
+        reindexHeroSlides();
+      }
+    });
+
+    // Move down
+    card.querySelector('.hs-move-down').addEventListener('click', function() {
+      var container = document.getElementById('heroSlidesContainer');
+      var next = card.nextElementSibling;
+      if (next) {
+        container.insertBefore(next, card);
+        reindexHeroSlides();
+      }
+    });
+
+    // Image upload
+    var imageUpload = card.querySelector('.hs-image-upload');
+    var imageInput = card.querySelector('.hs-image');
+    if (imageUpload) {
+      imageUpload.addEventListener('change', function(e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        var formData = new FormData();
+        formData.append('file', file);
+        fetch('/api/media/upload', { method: 'POST', body: formData })
+          .then(function(res) { return res.json(); })
+          .then(function(result) {
+            if (result.success && result.url) {
+              imageInput.value = result.url;
+              // Update thumbnail in header
+              var thumb = card.querySelector('.hero-slide-header img');
+              if (thumb) {
+                thumb.src = result.url;
+              } else {
+                var thumbContainer = card.querySelector('.hero-slide-header .w-16');
+                if (thumbContainer) thumbContainer.innerHTML = '<img src="' + result.url + '" class="w-full h-full object-cover" />';
+              }
+            }
+          })
+          .catch(function() { showToast('Upload failed', true); });
+      });
+    }
+
+    // Add monthly amount row
+    card.querySelector('.hs-add-monthly').addEventListener('click', function() {
+      addHeroSlideAmountRow(card.querySelector('.hs-monthly-container'), 'monthly');
+    });
+
+    // Add one-time amount row
+    card.querySelector('.hs-add-onetime').addEventListener('click', function() {
+      addHeroSlideAmountRow(card.querySelector('.hs-onetime-container'), 'onetime');
+    });
+
+    // Remove amount row buttons (for pre-existing rows)
+    card.querySelectorAll('.hs-remove-amount').forEach(function(btn) {
+      btn.addEventListener('click', function() { btn.closest('.hs-m-row, .hs-o-row').remove(); });
+    });
+  }
+
+  // Add amount row helper
+  function addHeroSlideAmountRow(container, type) {
+    var prefix = type === 'monthly' ? 'hs-m' : 'hs-o';
+    var rowClass = type === 'monthly' ? 'hs-m-row' : 'hs-o-row';
+    var div = document.createElement('div');
+    div.className = 'flex gap-2 items-center ' + rowClass;
+    div.innerHTML = '<input type="number" placeholder="$" class="' + prefix + '-amount w-24 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+      '<input type="text" placeholder="Impact text" class="' + prefix + '-impact flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm" />' +
+      '<button type="button" class="hs-remove-amount p-1 text-red-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>';
+    container.appendChild(div);
+    div.querySelector('.hs-remove-amount').addEventListener('click', function() { div.remove(); });
+  }
+
+  // Re-index slide numbers after reorder/delete
+  function reindexHeroSlides() {
+    var container = document.getElementById('heroSlidesContainer');
+    var emptyState = document.getElementById('heroSlidesEmpty');
+    var cards = container.querySelectorAll('.hero-slide-card');
+    cards.forEach(function(card, i) {
+      card.dataset.slideIndex = String(i);
+      var numEl = card.querySelector('.hero-slide-header .font-mono');
+      if (numEl) numEl.textContent = '#' + (i + 1);
+    });
+    if (emptyState) {
+      emptyState.classList.toggle('hidden', cards.length > 0);
+    }
+  }
+
+  // Collect all hero slides data from the UI
+  function getHeroSlidesConfig() {
+    var container = document.getElementById('heroSlidesContainer');
+    if (!container) return [];
+    var cards = container.querySelectorAll('.hero-slide-card');
+    var slides = [];
+
+    cards.forEach(function(card) {
+      var slide = {};
+
+      // Slide content
+      slide.image = card.querySelector('.hs-image')?.value || '';
+      slide.eyebrow = card.querySelector('.hs-eyebrow')?.value || '';
+      slide.headline = card.querySelector('.hs-headline')?.value || '';
+      slide.headlineAccent = card.querySelector('.hs-headline-accent')?.value || '';
+      slide.description = card.querySelector('.hs-description')?.value || '';
+      slide.primaryCta = {
+        text: card.querySelector('.hs-primary-text')?.value || '',
+        href: card.querySelector('.hs-primary-href')?.value || ''
+      };
+      slide.secondaryCta = {
+        text: card.querySelector('.hs-secondary-text')?.value || '',
+        href: card.querySelector('.hs-secondary-href')?.value || ''
+      };
+
+      // Donation config
+      var donation = {};
+      var campaignSlug = card.querySelector('.hs-campaign-slug')?.value;
+      var campaignTitle = card.querySelector('.hs-campaign-title')?.value;
+      var donationHeading = card.querySelector('.hs-donation-heading')?.value;
+      var btnMonthly = card.querySelector('.hs-btn-monthly')?.value;
+      var btnOneTime = card.querySelector('.hs-btn-onetime')?.value;
+      var monthlyImpact = card.querySelector('.hs-monthly-impact-text')?.value;
+      var upsellBody = card.querySelector('.hs-upsell-body')?.value;
+      var upsellSub = card.querySelector('.hs-upsell-sub')?.value;
+
+      if (campaignSlug) donation.campaignSlug = campaignSlug;
+      if (campaignTitle) donation.campaignTitle = campaignTitle;
+      if (donationHeading) donation.donationBoxHeading = donationHeading;
+      if (btnMonthly) donation.buttonTextMonthly = btnMonthly;
+      if (btnOneTime) donation.buttonTextOneTime = btnOneTime;
+      if (monthlyImpact) donation.monthlyImpactText = monthlyImpact;
+      if (upsellBody) donation.upsellBody = upsellBody;
+      if (upsellSub) donation.upsellSubText = upsellSub;
+
+      // Monthly amounts
+      var mAmounts = [];
+      var mImpacts = {};
+      card.querySelectorAll('.hs-m-row').forEach(function(row) {
+        var amt = parseFloat(row.querySelector('.hs-m-amount')?.value);
+        var impact = row.querySelector('.hs-m-impact')?.value;
+        if (amt) {
+          mAmounts.push(amt);
+          if (impact) mImpacts[amt] = impact;
+        }
+      });
+      if (mAmounts.length > 0) donation.monthlyAmounts = mAmounts;
+
+      // One-time amounts
+      var oAmounts = [];
+      var oImpacts = {};
+      card.querySelectorAll('.hs-o-row').forEach(function(row) {
+        var amt = parseFloat(row.querySelector('.hs-o-amount')?.value);
+        var impact = row.querySelector('.hs-o-impact')?.value;
+        if (amt) {
+          oAmounts.push(amt);
+          if (impact) oImpacts[amt] = impact;
+        }
+      });
+      if (oAmounts.length > 0) donation.oneTimeAmounts = oAmounts;
+
+      // Impact texts
+      var impactTexts = {};
+      if (Object.keys(mImpacts).length > 0) impactTexts.monthly = mImpacts;
+      if (Object.keys(oImpacts).length > 0) impactTexts.single = oImpacts;
+      if (Object.keys(impactTexts).length > 0) donation.impactTexts = impactTexts;
+
+      if (Object.keys(donation).length > 0) {
+        slide.donation = donation;
+      }
+
+      slides.push(slide);
+    });
+
+    return slides;
+  }
+
+  // Initialize hero slides from existing template_config
+  function initHeroSlides() {
+    var slidesConfig = existingTemplateConfig?.heroSlides;
+    var container = document.getElementById('heroSlidesContainer');
+    var emptyState = document.getElementById('heroSlidesEmpty');
+    if (!container) return;
+
+    if (slidesConfig && Array.isArray(slidesConfig) && slidesConfig.length > 0) {
+      slidesConfig.forEach(function(slideData, i) {
+        var card = renderHeroSlideCard(i, slideData);
+        container.appendChild(card);
+        attachHeroSlideListeners(card);
+      });
+      if (emptyState) emptyState.classList.add('hidden');
+    } else {
+      if (emptyState) emptyState.classList.remove('hidden');
+    }
+  }
+
+  // Add new slide button
+  document.getElementById('addHeroSlideBtn')?.addEventListener('click', function() {
+    var container = document.getElementById('heroSlidesContainer');
+    var emptyState = document.getElementById('heroSlidesEmpty');
+    var currentCount = container.querySelectorAll('.hero-slide-card').length;
+    var card = renderHeroSlideCard(currentCount, {});
+    container.appendChild(card);
+    attachHeroSlideListeners(card);
+    if (emptyState) emptyState.classList.add('hidden');
+    // Auto-expand the new slide
+    var body = card.querySelector('.hs-body');
+    if (body) body.classList.remove('hidden');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // Init hero slides on load
+  initHeroSlides();
+
   // Save page
   const saveBtn = document.getElementById('saveBtn');
   const saveBtnText = document.getElementById('saveBtnText');
@@ -737,13 +1201,21 @@ if (page?.content) {
     if (saveBtnText) saveBtnText.textContent = 'Saving...';
 
     try {
-      // Build template_config with CW donation box settings
+      // Build template_config with CW donation box settings + hero slides
       var templateConfig = Object.assign({}, existingTemplateConfig);
       var cwDonation = getCWDonationConfig();
       if (cwDonation) {
         templateConfig.cwDonation = cwDonation;
       } else {
         delete templateConfig.cwDonation;
+      }
+
+      // Hero slides config
+      var heroSlidesConfig = getHeroSlidesConfig();
+      if (heroSlidesConfig && heroSlidesConfig.length > 0) {
+        templateConfig.heroSlides = heroSlidesConfig;
+      } else {
+        delete templateConfig.heroSlides;
       }
 
       const data = {
