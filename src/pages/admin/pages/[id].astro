@@ -184,6 +184,71 @@ if (page?.content) {
       </div>
     </div>
 
+    <!-- CW Donation Box Settings (shown when donation box = cw-donation) -->
+    <div id="cwDonationSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hidden">
+      <h2 class="text-lg font-bold text-gray-800 mb-2">Donation Box Settings</h2>
+      <p class="text-sm text-gray-500 mb-6">Configure amounts, impact texts, and labels for the CW Donation Box on this page</p>
+
+      <!-- Monthly Amounts -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-semibold text-gray-700">Monthly Amounts</h3>
+            <p class="text-xs text-gray-400">Set preset monthly donation amounts and their impact descriptions</p>
+          </div>
+          <button type="button" id="addCWMonthlyBtn" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Amount</button>
+        </div>
+        <div id="cwMonthlyAmounts" class="space-y-3"></div>
+      </div>
+
+      <!-- One-Time Amounts -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-semibold text-gray-700">One-Time Amounts</h3>
+            <p class="text-xs text-gray-400">Set preset one-time donation amounts and their impact descriptions</p>
+          </div>
+          <button type="button" id="addCWOneTimeBtn" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Amount</button>
+        </div>
+        <div id="cwOneTimeAmounts" class="space-y-3"></div>
+      </div>
+
+      <!-- Text Settings -->
+      <div class="space-y-4">
+        <h3 class="font-semibold text-gray-700 mb-2">Text Settings</h3>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Donation Box Heading</label>
+          <input type="text" id="cwDonationBoxHeading" placeholder="e.g. Be the Reason They Smile Every Month" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          <p class="text-xs text-gray-400 mt-1">Heading displayed above the donation box. Leave blank for no heading.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Button Text</label>
+            <input type="text" id="cwButtonTextMonthly" placeholder="JOIN TODAY" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">One-Time Button Text</label>
+            <input type="text" id="cwButtonTextOneTime" placeholder="GIVE" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Impact Text (fallback)</label>
+          <input type="text" id="cwMonthlyImpactText" placeholder="Your monthly gift transforms lives around the world" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+          <p class="text-xs text-gray-400 mt-1">Shown under monthly tab when no amount-specific text exists. HTML allowed.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Body Text</label>
+          <textarea id="cwUpsellBody" rows="3" placeholder="By making a monthly donation, you'll empower us to make long-term investments..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
+          <p class="text-xs text-gray-400 mt-1">Shown on the monthly upsell page after one-time "GIVE" is clicked</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Sub Text</label>
+          <textarea id="cwUpsellSubText" rows="2" placeholder="Please consider joining our monthly giving community..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
+          <p class="text-xs text-gray-400 mt-1">Shown below the monthly toggle on the upsell page</p>
+        </div>
+      </div>
+    </div>
+
     <!-- SEO Settings -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
       <h2 class="text-lg font-bold text-gray-800 mb-4">SEO Settings</h2>
@@ -318,7 +383,7 @@ if (page?.content) {
   </div>
 </AdminLayout>
 
-<script define:vars={{ pageId: id, initialContent: pageContent, existingPage: page }}>
+<script define:vars={{ pageId: id, initialContent: pageContent, existingPage: page, existingTemplateConfig: page?.template_config || {} }}>
   let sections = initialContent?.sections || [];
   const isNew = !existingPage;
 
@@ -478,6 +543,159 @@ if (page?.content) {
     });
   });
 
+  // ═══════════════════════════════════════════
+  // CW DONATION BOX SETTINGS
+  // ═══════════════════════════════════════════
+  var cwMonthlyIndex = 0;
+  var cwOneTimeIndex = 0;
+
+  // Toggle visibility based on donation box template selection
+  var donationBoxSelect = document.getElementById('donationBoxTemplate');
+  var cwSettingsPanel = document.getElementById('cwDonationSettings');
+
+  function toggleCWSettings() {
+    if (!donationBoxSelect || !cwSettingsPanel) return;
+    var isCW = donationBoxSelect.value === 'cw-donation';
+    cwSettingsPanel.classList.toggle('hidden', !isCW);
+  }
+
+  if (donationBoxSelect) {
+    donationBoxSelect.addEventListener('change', toggleCWSettings);
+    toggleCWSettings();
+  }
+
+  // Add monthly amount row
+  function addCWMonthlyAmount(amount, impactText) {
+    amount = amount || '';
+    impactText = impactText || '';
+    var container = document.getElementById('cwMonthlyAmounts');
+    var idx = cwMonthlyIndex++;
+    var div = document.createElement('div');
+    div.id = 'cw-monthly-' + idx;
+    div.className = 'flex gap-3 items-center';
+    div.innerHTML = '<input type="number" placeholder="Amount ($)" value="' + amount + '" class="cw-m-amount w-28 px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+      '<input type="text" placeholder="Impact text (e.g., Feeds a family for a month)" value="' + (impactText || '').replace(/"/g, '&quot;') + '" class="cw-m-impact flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+      '<button type="button" class="cw-remove-btn p-2 text-red-500 hover:bg-red-50 rounded" data-target="cw-monthly-' + idx + '">' +
+        '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+      '</button>';
+    container.appendChild(div);
+    div.querySelector('.cw-remove-btn').addEventListener('click', function() { div.remove(); });
+  }
+
+  // Add one-time amount row
+  function addCWOneTimeAmount(amount, impactText) {
+    amount = amount || '';
+    impactText = impactText || '';
+    var container = document.getElementById('cwOneTimeAmounts');
+    var idx = cwOneTimeIndex++;
+    var div = document.createElement('div');
+    div.id = 'cw-onetime-' + idx;
+    div.className = 'flex gap-3 items-center';
+    div.innerHTML = '<input type="number" placeholder="Amount ($)" value="' + amount + '" class="cw-o-amount w-28 px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+      '<input type="text" placeholder="Impact text (e.g., Provide emergency food parcels)" value="' + (impactText || '').replace(/"/g, '&quot;') + '" class="cw-o-impact flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+      '<button type="button" class="cw-remove-btn p-2 text-red-500 hover:bg-red-50 rounded" data-target="cw-onetime-' + idx + '">' +
+        '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+      '</button>';
+    container.appendChild(div);
+    div.querySelector('.cw-remove-btn').addEventListener('click', function() { div.remove(); });
+  }
+
+  // Wire up add buttons
+  document.getElementById('addCWMonthlyBtn')?.addEventListener('click', function() { addCWMonthlyAmount(); });
+  document.getElementById('addCWOneTimeBtn')?.addEventListener('click', function() { addCWOneTimeAmount(); });
+
+  // Collect CW donation config into an object
+  function getCWDonationConfig() {
+    var monthlyAmounts = [];
+    var monthlyImpacts = {};
+    document.querySelectorAll('#cwMonthlyAmounts > div').forEach(function(div) {
+      var amount = parseFloat(div.querySelector('.cw-m-amount').value);
+      var impact = div.querySelector('.cw-m-impact').value;
+      if (amount) {
+        monthlyAmounts.push(amount);
+        if (impact) monthlyImpacts[amount] = impact;
+      }
+    });
+
+    var oneTimeAmounts = [];
+    var singleImpacts = {};
+    document.querySelectorAll('#cwOneTimeAmounts > div').forEach(function(div) {
+      var amount = parseFloat(div.querySelector('.cw-o-amount').value);
+      var impact = div.querySelector('.cw-o-impact').value;
+      if (amount) {
+        oneTimeAmounts.push(amount);
+        if (impact) singleImpacts[amount] = impact;
+      }
+    });
+
+    var config = {};
+    if (monthlyAmounts.length > 0) config.monthlyAmounts = monthlyAmounts;
+    if (oneTimeAmounts.length > 0) config.oneTimeAmounts = oneTimeAmounts;
+
+    var impactTexts = {};
+    if (Object.keys(monthlyImpacts).length > 0) impactTexts.monthly = monthlyImpacts;
+    if (Object.keys(singleImpacts).length > 0) impactTexts.single = singleImpacts;
+    if (Object.keys(impactTexts).length > 0) config.impactTexts = impactTexts;
+
+    var monthlyImpactText = document.getElementById('cwMonthlyImpactText')?.value;
+    var upsellBody = document.getElementById('cwUpsellBody')?.value;
+    var upsellSubText = document.getElementById('cwUpsellSubText')?.value;
+    var btnMonthly = document.getElementById('cwButtonTextMonthly')?.value;
+    var btnOneTime = document.getElementById('cwButtonTextOneTime')?.value;
+    var heading = document.getElementById('cwDonationBoxHeading')?.value;
+
+    if (monthlyImpactText) config.monthlyImpactText = monthlyImpactText;
+    if (upsellBody) config.upsellBody = upsellBody;
+    if (upsellSubText) config.upsellSubText = upsellSubText;
+    if (btnMonthly) config.buttonTextMonthly = btnMonthly;
+    if (btnOneTime) config.buttonTextOneTime = btnOneTime;
+    if (heading) config.donationBoxHeading = heading;
+
+    return Object.keys(config).length > 0 ? config : null;
+  }
+
+  // Initialize CW settings from existing template_config
+  function initCWDonationSettings() {
+    var cwConfig = existingTemplateConfig?.cwDonation || {};
+
+    if (cwConfig.monthlyAmounts && cwConfig.monthlyAmounts.length > 0) {
+      var monthlyImpacts = cwConfig.impactTexts?.monthly || {};
+      cwConfig.monthlyAmounts.forEach(function(amt) {
+        addCWMonthlyAmount(amt, monthlyImpacts[amt] || '');
+      });
+    } else {
+      // Default amounts
+      [10, 20, 40, 100].forEach(function(amt) { addCWMonthlyAmount(amt, ''); });
+    }
+
+    if (cwConfig.oneTimeAmounts && cwConfig.oneTimeAmounts.length > 0) {
+      var singleImpacts = cwConfig.impactTexts?.single || {};
+      cwConfig.oneTimeAmounts.forEach(function(amt) {
+        addCWOneTimeAmount(amt, singleImpacts[amt] || '');
+      });
+    } else {
+      [50, 100, 150, 200].forEach(function(amt) { addCWOneTimeAmount(amt, ''); });
+    }
+
+    // Populate text fields
+    var mImpact = document.getElementById('cwMonthlyImpactText');
+    var uBody = document.getElementById('cwUpsellBody');
+    var uSub = document.getElementById('cwUpsellSubText');
+    var bMonthly = document.getElementById('cwButtonTextMonthly');
+    var bOneTime = document.getElementById('cwButtonTextOneTime');
+    var headingInput = document.getElementById('cwDonationBoxHeading');
+
+    if (mImpact) mImpact.value = cwConfig.monthlyImpactText || '';
+    if (uBody) uBody.value = cwConfig.upsellBody || '';
+    if (uSub) uSub.value = cwConfig.upsellSubText || '';
+    if (bMonthly) bMonthly.value = cwConfig.buttonTextMonthly || '';
+    if (bOneTime) bOneTime.value = cwConfig.buttonTextOneTime || '';
+    if (headingInput) headingInput.value = cwConfig.donationBoxHeading || '';
+  }
+
+  // Init on load
+  initCWDonationSettings();
+
   // Save page
   const saveBtn = document.getElementById('saveBtn');
   const saveBtnText = document.getElementById('saveBtnText');
@@ -519,12 +737,22 @@ if (page?.content) {
     if (saveBtnText) saveBtnText.textContent = 'Saving...';
 
     try {
+      // Build template_config with CW donation box settings
+      var templateConfig = Object.assign({}, existingTemplateConfig);
+      var cwDonation = getCWDonationConfig();
+      if (cwDonation) {
+        templateConfig.cwDonation = cwDonation;
+      } else {
+        delete templateConfig.cwDonation;
+      }
+
       const data = {
         title,
         slug,
         status,
         template,
         donation_box_template: donationBoxTemplate || null,
+        template_config: templateConfig,
         meta_title: metaTitle,
         meta_description: metaDescription,
         featured_image: featuredImage,

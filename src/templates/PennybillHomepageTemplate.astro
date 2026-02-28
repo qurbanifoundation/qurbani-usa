@@ -52,15 +52,15 @@ try {
   console.error('[Homepage] Error fetching campaigns:', e);
 }
 
-// Fetch donation box template setting
+// Fetch donation box template setting + config from home page record
 // Priority: page-level override > site default > fallback
 let donationBoxTemplate = 'pennybill-default';
-let homepageDonationBoxHeading = '';
+let homepageCWConfig: Record<string, any> = {};
 try {
   // Check page-level override first (Home page)
   const { data: homePage } = await supabaseAdmin
     .from('pages')
-    .select('donation_box_template')
+    .select('donation_box_template, template_config')
     .eq('slug', '/home')
     .single();
 
@@ -70,26 +70,17 @@ try {
     // Fall back to site default
     const { data: dbSettings } = await supabaseAdmin
       .from('site_settings')
-      .select('default_donation_box_template, donation_box_heading')
+      .select('default_donation_box_template')
       .eq('id', 'main')
       .single();
     if (dbSettings?.default_donation_box_template) {
       donationBoxTemplate = dbSettings.default_donation_box_template;
     }
-    if (dbSettings?.donation_box_heading) {
-      homepageDonationBoxHeading = dbSettings.donation_box_heading;
-    }
   }
-  // If heading not set yet, try fetching it separately
-  if (!homepageDonationBoxHeading) {
-    const { data: headingSettings } = await supabaseAdmin
-      .from('site_settings')
-      .select('donation_box_heading')
-      .eq('id', 'main')
-      .single();
-    if (headingSettings?.donation_box_heading) {
-      homepageDonationBoxHeading = headingSettings.donation_box_heading;
-    }
+
+  // Extract CW donation box config from page template_config
+  if (homePage?.template_config?.cwDonation) {
+    homepageCWConfig = homePage.template_config.cwDonation;
   }
 } catch (e) {
   console.error('[Homepage] Error fetching donation box template setting:', e);
@@ -233,9 +224,9 @@ const heroSlides = [
                   campaignSlug="where-needed"
                   campaignTitle="Where Most Needed"
                   campaignImage="/images/qurbani-foundation-zakat-hero.png"
-                  monthlyAmounts={[10, 20, 40, 100]}
-                  oneTimeAmounts={[50, 100, 150, 200]}
-                  impactTexts={{
+                  monthlyAmounts={homepageCWConfig.monthlyAmounts || [10, 20, 40, 100]}
+                  oneTimeAmounts={homepageCWConfig.oneTimeAmounts || [50, 100, 150, 200]}
+                  impactTexts={homepageCWConfig.impactTexts || {
                     monthly: {
                       10: 'Feed a child for a month',
                       20: 'Provide clean water for a family',
@@ -249,13 +240,13 @@ const heroSlides = [
                       200: 'Emergency shelter for a family'
                     }
                   }}
-                  monthlyImpactText="Your monthly gift serves people all year long."
-                  upsellBody="Make your gift go further by giving monthly. Monthly donors provide sustainable support that changes lives all year."
-                  upsellSubText="Monthly giving helps us plan ahead and reach more people in need."
+                  monthlyImpactText={homepageCWConfig.monthlyImpactText || "Your monthly gift serves people all year long."}
+                  upsellBody={homepageCWConfig.upsellBody || "Make your gift go further by giving monthly. Monthly donors provide sustainable support that changes lives all year."}
+                  upsellSubText={homepageCWConfig.upsellSubText || "Monthly giving helps us plan ahead and reach more people in need."}
                   upsellMonthlyRatio={0.4}
-                  buttonTextMonthly="JOIN TODAY"
-                  buttonTextOneTime="GIVE"
-                  donationBoxHeading={homepageDonationBoxHeading}
+                  buttonTextMonthly={homepageCWConfig.buttonTextMonthly || "JOIN TODAY"}
+                  buttonTextOneTime={homepageCWConfig.buttonTextOneTime || "GIVE"}
+                  donationBoxHeading={homepageCWConfig.donationBoxHeading}
                 />
               ) : (
                 <HomeDonationBox campaignSlug="where-needed" campaignTitle="Where Most Needed" />
