@@ -479,7 +479,7 @@ const uniqueId = Math.random().toString(36).substring(7);
     // Amount row selection
     amountRows.forEach(row => {
       row.addEventListener('click', function() {
-        selectAmount(parseInt(this.dataset.amount), this.dataset.label);
+        selectAmount(parseFloat(this.dataset.amount), this.dataset.label);
 
         // Update visual state
         amountRows.forEach(r => {
@@ -622,7 +622,7 @@ const uniqueId = Math.random().toString(36).substring(7);
       if (arrow) {
         arrow.addEventListener('click', function(e) {
           e.stopPropagation();
-          selectAmount(parseInt(row.dataset.amount), row.dataset.label);
+          selectAmount(parseFloat(row.dataset.amount), row.dataset.label);
           handleDonate();
         });
       }

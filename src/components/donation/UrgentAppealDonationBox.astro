@@ -277,7 +277,7 @@ const {
     // Amount card clicks - clicking selects, arrow also adds to cart immediately
     amountButtons.forEach(btn => {
       btn.addEventListener('click', function(e) {
-        selectedAmount = parseInt(this.dataset.amount);
+        selectedAmount = parseFloat(this.dataset.amount);
         selectedLabel = this.dataset.label || '';
 
         // Select this card

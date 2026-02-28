@@ -325,6 +325,22 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       type: donation.donation_type,
     });
 
+    // Fetch subscription management URL for recurring donations
+    let managementUrl: string | undefined;
+    if (donation.is_recurring || donation.donation_type === 'monthly' || donation.donation_type === 'weekly') {
+      const { data: sub } = await supabaseAdmin
+        .from('donation_subscriptions')
+        .select('id, management_token')
+        .eq('donor_email', donation.donor_email)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (sub?.management_token) {
+        managementUrl = `https://www.qurbani.com/manage-subscription/${sub.id}_${sub.management_token}`;
+      }
+    }
+
     // Send donor receipt email (Resend + log to GHL Conversations)
     await sendDonationReceipt({
       donorEmail: donation.donor_email,
@@ -335,6 +351,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       donationType: (donation.donation_type as 'single' | 'monthly' | 'weekly') || 'single',
       date: new Date(),
       billingAddress: donation.metadata?.billing_address,
+      managementUrl,
     });
 
     // Mark receipt as sent in Supabase + GHL
@@ -564,6 +581,11 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
           : subRecord.items;
       }
 
+      // Build management URL
+      const subManagementUrl = subRecord.management_token
+        ? `https://www.qurbani.com/manage-subscription/${subRecord.id}_${subRecord.management_token}`
+        : undefined;
+
       await sendSubscriptionConfirmation({
         donorEmail: subRecord.donor_email,
         donorName: subRecord.donor_name || 'Donor',
@@ -571,6 +593,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         interval: (subRecord.interval as 'monthly' | 'weekly') || 'monthly',
         nextBillingDate: nextBillingDate,
         items: items,
+        managementUrl: subManagementUrl,
       });
 
       // Move GHL pipeline to "Active Subscriber" for recurring donors

@@ -176,7 +176,7 @@ const progressPercent = goalAmount > 0 ? Math.min((progressAmount / goalAmount) 
     // Amount selection
     amountButtons.forEach(btn => {
       btn.addEventListener('click', function() {
-        selectedAmount = parseInt(this.dataset.amount);
+        selectedAmount = parseFloat(this.dataset.amount);
         const option = donationOptions.find(o => o.amount === selectedAmount);
         selectedLabel = option ? option.label : '';
         customInput.value = selectedAmount;

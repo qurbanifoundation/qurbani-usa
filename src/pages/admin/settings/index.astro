@@ -1,8 +1,11 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
+import { getSettings } from '../../../lib/settings';
 
 export const prerender = false;
+
+const settings = await getSettings();
 
 // Site settings - replace with Supabase data
 const siteSettings = {
@@ -209,6 +212,58 @@ const campaignTemplates = [
         </div>
       </div>
 
+      <!-- Promotions & Popups -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-2">Promotions & Popups</h2>
+        <p class="text-sm text-gray-500 mb-6">Control promotional popups and banners displayed across the site.</p>
+        <div class="space-y-4">
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+            <div>
+              <span class="font-medium text-gray-800">🌙 Ramadan Popup</span>
+              <p class="text-sm text-gray-500">Show the Ramadan giving popup to visitors after they've been on the page for a few seconds. The popup encourages monthly giving during Ramadan.</p>
+            </div>
+            <input
+              type="checkbox"
+              name="showRamadanPopup"
+              id="showRamadanPopup"
+              checked={settings.show_ramadan_popup !== false}
+              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
+            />
+          </label>
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+            <div>
+              <span class="font-medium text-gray-800">🛒 Cart Reminder Popup</span>
+              <p class="text-sm text-gray-500">Show a bottom-left reminder popup when visitors have items in their cart but haven't checked out. Appears after 5 seconds of inactivity on desktop.</p>
+            </div>
+            <input
+              type="checkbox"
+              name="showCartReminder"
+              id="showCartReminder"
+              checked={settings.show_cart_reminder !== false}
+              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
+            />
+          </label>
+        </div>
+      </div>
+
+      <!-- Homepage Donation Box -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-2">Homepage Donation Box</h2>
+        <p class="text-sm text-gray-500 mb-6">Customize the heading above the donation box on the homepage. Leave blank for no heading.</p>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Heading</label>
+          <input
+            type="text"
+            name="donationBoxHeading"
+            id="donationBoxHeading"
+            value={(settings as any).donation_box_heading || ''}
+            placeholder="e.g. Be the Reason They Smile Every Month"
+            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-gray-800"
+          />
+          <p class="text-xs text-gray-500 mt-1">This text appears above the donation widget on the homepage hero section.</p>
+        </div>
+      </div>
+
       <!-- Save Button -->
       <div class="flex justify-end gap-4">
         <button type="button" id="cancelBtn">
@@ -350,34 +405,45 @@ const campaignTemplates = [
 
     // Collect form data
     const formData = new FormData(form);
-    const settings: Record<string, string> = {};
+    const settingsData: Record<string, any> = {};
 
     formData.forEach((value, key) => {
-      settings[key] = value as string;
+      settingsData[key] = value as string;
     });
 
-    // Simulate API call delay (replace with actual Supabase call)
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Handle checkboxes explicitly (unchecked ones aren't in FormData)
+    settingsData.showRamadanPopup = (document.getElementById('showRamadanPopup') as HTMLInputElement)?.checked ?? true;
+    settingsData.showCartReminder = (document.getElementById('showCartReminder') as HTMLInputElement)?.checked ?? true;
 
-    // Save to localStorage
-    localStorage.setItem('siteSettings', JSON.stringify(settings));
+    // Handle donation box heading
+    settingsData.donationBoxHeading = (document.getElementById('donationBoxHeading') as HTMLInputElement)?.value || '';
 
-    // TODO: Save to Supabase
-    // const { error } = await supabase
-    //   .from('site_settings')
-    //   .upsert(settings);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsData),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Failed to save settings');
+      }
+
+      // Show success toast
+      successToast.classList.remove('hidden');
+      setTimeout(() => {
+        successToast.classList.add('hidden');
+      }, 3000);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      alert('Failed to save settings: ' + (err as Error).message);
+    }
 
     // Hide loading state
     saveBtn.disabled = false;
     saveSpinner.classList.add('hidden');
-
-    // Show success toast
-    successToast.classList.remove('hidden');
-    setTimeout(() => {
-      successToast.classList.add('hidden');
-    }, 3000);
-
-    console.log('Settings saved:', settings);
   });
 
   // Cancel button - reload page to reset form

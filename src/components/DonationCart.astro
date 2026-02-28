@@ -2,6 +2,13 @@
 // Donation Cart Sidebar + Full-Screen Checkout Modal
 import { supabaseAdmin } from '../lib/supabase';
 
+interface Props {
+  checkoutTemplate?: string;
+  showCartReminder?: boolean;
+}
+
+const { checkoutTemplate = 'three-step', showCartReminder = true } = Astro.props;
+
 // Google Places API key
 const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
 
@@ -13,11 +20,12 @@ let paymentSettings = {
   apple_pay_enabled: true,
   paypal_enabled: false,
 };
+let siteLogo = '';
 
 try {
   const { data } = await supabaseAdmin
     .from('site_settings')
-    .select('stripe_enabled, stripe_publishable_key, google_pay_enabled, apple_pay_enabled, paypal_enabled')
+    .select('stripe_enabled, stripe_publishable_key, google_pay_enabled, apple_pay_enabled, paypal_enabled, site_logo')
     .single();
 
   if (data) {
@@ -28,6 +36,7 @@ try {
       apple_pay_enabled: data.apple_pay_enabled ?? true,
       paypal_enabled: data.paypal_enabled ?? false,
     };
+    siteLogo = (data as any)?.site_logo || '';
   }
 } catch (e) {}
 ---
@@ -150,7 +159,11 @@ try {
   }
 </style>
 
+<!-- Checkout template setting for client-side JS -->
+<div id="checkout-template-setting" data-checkout-template={checkoutTemplate} data-site-logo={siteLogo} class="hidden"></div>
+
 <!-- ==================== CART REMINDER POPUP ==================== -->
+{showCartReminder && (
 <div id="cart-reminder" class="fixed bottom-6 left-6 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-[99] hidden max-w-xs transform transition-all duration-300 translate-y-4 opacity-0">
   <button id="close-cart-reminder" class="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 transition" aria-label="Close reminder">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,6 +185,7 @@ try {
     Give Now
   </button>
 </div>
+)}
 
 <!-- ==================== SIDECART ==================== -->
 <div id="cart-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden opacity-0 transition-opacity duration-300"></div>
@@ -212,7 +226,7 @@ try {
       <div id="recurring-options" class="mb-5 hidden">
         <!-- Handwritten-style header with arrow pointing to Jummah -->
         <div class="relative mb-1">
-          <p class="text-gray-500 text-[24px] text-center pr-8" style="font-family: 'Caveat', cursive;">Make a bigger impact with every Friday gift</p>
+          <p class="text-gray-500 text-[18px] sm:text-[24px] text-center pr-8 whitespace-nowrap" style="font-family: 'Caveat', cursive;">Make a bigger impact with every Friday gift</p>
           <!-- Clear curved arrow pointing down -->
           <svg class="absolute right-0 top-3 w-10 h-14 text-[#d97706]" viewBox="0 0 40 56" fill="none">
             <!-- Curved line ending before the arrowhead -->
@@ -264,7 +278,7 @@ try {
 
       <!-- Checkout Button -->
       <button id="proceed-checkout-btn" disabled class="w-full bg-[#d97706] text-white font-bold py-3 rounded-xl hover:bg-[#b45309] transition disabled:opacity-50 disabled:cursor-not-allowed" style="font-family: 'Signika', sans-serif;">
-        Proceed To Checkout
+        Continue to Secure Payment
       </button>
     </div>
   </div>
@@ -276,8 +290,8 @@ try {
   <div class="absolute inset-0 bg-white overflow-y-auto">
 
     <!-- Close Button -->
-    <button id="close-checkout-modal" class="fixed top-4 right-4 z-20 p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-lg" aria-label="Close checkout">
-      <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <button id="close-checkout-modal" class="fixed top-2 right-3 z-20 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-md" aria-label="Close checkout">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
       </svg>
     </button>
@@ -711,6 +725,308 @@ try {
         </div>
 </div>
 
+<!-- ==================== 2-STEP CHECKOUT MODAL ==================== -->
+<div id="two-step-checkout" class="fixed inset-0 z-[200] hidden">
+  <div class="absolute inset-0 bg-white overflow-y-auto">
+
+    <!-- Header Bar -->
+    <div class="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg class="w-6 h-6 text-[#01534d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+          <span class="font-bold text-gray-800 text-lg" style="font-family: 'Signika', sans-serif;">Secure Checkout</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+            </svg>
+            <span>256-bit SSL Encrypted</span>
+          </div>
+          <button id="close-two-step" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition" aria-label="Close checkout">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+      <div class="grid md:grid-cols-5 gap-8">
+
+        <!-- LEFT COLUMN: Forms (3 cols on desktop) -->
+        <div class="md:col-span-3 space-y-0">
+
+          <!-- YOUR CART - Mobile Accordion -->
+          <div class="md:hidden mb-6">
+            <button type="button" id="ts-cart-toggle" class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <span class="font-semibold text-gray-800" style="font-family: 'Signika', sans-serif;">Your Cart</span>
+                <span id="ts-cart-count-badge" class="px-2 py-0.5 bg-[#d97706] text-white text-xs font-bold rounded-full">0</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="ts-cart-total-badge" class="font-bold text-[#d97706]">$0.00</span>
+                <svg id="ts-cart-chevron" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </button>
+            <div id="ts-cart-mobile-body" class="hidden mt-2 bg-gray-50 rounded-xl border border-gray-200 p-4">
+              <div id="ts-cart-mobile-items"><!-- Items rendered by JS --></div>
+            </div>
+          </div>
+
+          <!-- YOUR INFORMATION -->
+          <div class="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+              <span class="w-7 h-7 rounded-full bg-[#01534d] text-white flex items-center justify-center text-sm font-bold">1</span>
+              Your Information
+            </h2>
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                  <input type="text" id="ts-firstName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                  <input type="text" id="ts-lastName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                <input type="email" id="ts-email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" id="ts-phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+              </div>
+
+              <!-- Communication Preferences -->
+              <div class="pt-4 border-t border-gray-100">
+                <p class="text-sm font-medium text-gray-700 mb-2">Keep in touch:</p>
+                <div class="flex flex-wrap gap-3">
+                  <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-600">
+                    <input type="checkbox" id="ts-pref-email" checked class="w-4 h-4 text-[#01534d] border-gray-300 rounded focus:ring-[#01534d]" /> Email
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-600">
+                    <input type="checkbox" id="ts-pref-sms" checked class="w-4 h-4 text-[#01534d] border-gray-300 rounded focus:ring-[#01534d]" /> SMS
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-600">
+                    <input type="checkbox" id="ts-pref-whatsapp" checked class="w-4 h-4 text-[#01534d] border-gray-300 rounded focus:ring-[#01534d]" /> WhatsApp
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-600">
+                    <input type="checkbox" id="ts-pref-phone" checked class="w-4 h-4 text-[#01534d] border-gray-300 rounded focus:ring-[#01534d]" /> Phone
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAYMENT DETAILS -->
+          <div class="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+              <span class="w-7 h-7 rounded-full bg-[#01534d] text-white flex items-center justify-center text-sm font-bold">2</span>
+              Payment Details
+            </h2>
+
+            <!-- Card Element -->
+            <div class="mb-5">
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-medium text-gray-700">Card Details *</label>
+                <div class="flex items-center gap-1">
+                  <div class="w-8 h-5 bg-blue-600 rounded flex items-center justify-center text-white text-[9px] font-bold">VISA</div>
+                  <div class="w-8 h-5 bg-red-500 rounded flex items-center justify-center text-white text-[9px] font-bold">MC</div>
+                  <div class="w-8 h-5 bg-blue-400 rounded flex items-center justify-center text-white text-[9px] font-bold">AMEX</div>
+                </div>
+              </div>
+              <div id="ts-card-element" class="p-4 border border-gray-300 rounded-xl bg-white min-h-[50px]"></div>
+              <div id="ts-card-errors" class="text-red-500 text-sm mt-2" role="alert"></div>
+            </div>
+
+            <!-- Billing Address -->
+            <h3 class="text-base font-semibold text-gray-800 mb-3">Billing Address</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                <input type="text" id="ts-address" required autocomplete="off" placeholder="Start typing to search..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                  <input type="text" id="ts-city" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                  <input type="text" id="ts-state" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
+                  <input type="text" id="ts-zip" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                  <select id="ts-country" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white transition">
+                    <option value="US" selected>United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AU">Australia</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cover Transaction Fees -->
+            <div class="mt-5 p-4 bg-amber-50 rounded-xl border border-amber-200">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" id="ts-cover-fees" class="mt-1 w-5 h-5 text-[#d97706] border-gray-300 rounded focus:ring-[#d97706]" />
+                <div>
+                  <span class="font-semibold text-gray-800 text-sm">Cover transaction fees</span>
+                  <span class="ml-1 px-1.5 py-0.5 bg-amber-200 text-amber-800 text-xs font-bold rounded">+3%</span>
+                  <p id="ts-fee-description" class="text-xs text-gray-500 mt-0.5">Add $0.00 so 100% of your donation reaches those in need</p>
+                </div>
+              </label>
+            </div>
+
+            <!-- Pay Error Display -->
+            <div id="ts-payment-error" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"></div>
+
+            <!-- Complete Donation Button -->
+            <div class="mt-6">
+              <button type="button" id="ts-pay-btn" disabled class="w-full py-4 bg-[#01534d] text-white font-bold text-lg rounded-xl hover:bg-[#013d39] disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg" style="font-family: 'Signika', sans-serif;">
+                <span id="ts-pay-btn-text">Complete Secure Donation</span>
+                <span id="ts-pay-btn-spinner" class="hidden">
+                  <svg class="animate-spin inline w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              </button>
+            </div>
+
+            <!-- Trust Signals -->
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-400">
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Secure Payment</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Tax-Deductible</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                </svg>
+                <span>Receipt Emailed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Order Summary (2 cols on desktop, sticky) -->
+        <div class="md:col-span-2">
+          <div class="md:sticky md:top-20">
+            <div class="bg-white rounded-xl border border-gray-200 p-5 sm:p-6">
+              <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">Order Summary</h3>
+
+              <!-- Cart Items -->
+              <div id="ts-cart-items" class="space-y-3 mb-4">
+                <!-- Items rendered by JS -->
+              </div>
+
+              <div id="ts-empty-cart" class="hidden text-center py-6 text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <p class="text-sm">Your cart is empty</p>
+              </div>
+
+              <!-- Recurring Option -->
+              <div id="ts-recurring-section" class="hidden mb-4 pt-3 border-t border-gray-100">
+                <p class="text-sm font-medium text-gray-700 mb-2">Make it recurring:</p>
+                <div class="flex gap-2">
+                  <label class="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition recurring-option">
+                    <input type="radio" name="ts-recurring" value="monthly" class="text-[#d97706] focus:ring-[#d97706]" />
+                    <span class="text-sm font-medium text-gray-700">Monthly</span>
+                  </label>
+                  <label class="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition recurring-option">
+                    <input type="radio" name="ts-recurring" value="weekly" class="text-[#d97706] focus:ring-[#d97706]" />
+                    <span class="text-sm font-medium text-gray-700">Every Jummah</span>
+                  </label>
+                </div>
+                <button type="button" id="ts-clear-recurring" class="hidden text-xs text-gray-400 hover:text-gray-600 mt-1 ml-1">Clear selection</button>
+              </div>
+
+              <!-- Divider -->
+              <div class="border-t border-gray-200 pt-3 mb-3"></div>
+
+              <!-- Upsells -->
+              <div class="space-y-3 mb-4">
+                <p class="text-sm font-semibold text-gray-700">Please support us further:</p>
+                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition border border-transparent hover:border-gray-200">
+                  <input type="checkbox" id="ts-upsell-prophetic" class="w-5 h-5 text-[#d97706] border-gray-300 rounded focus:ring-[#d97706]" />
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold text-gray-800">Prophetic Qurbani</p>
+                    <p class="text-xs text-gray-500">Follow the Sunnah of the Prophet ﷺ</p>
+                  </div>
+                  <span class="font-bold text-[#d97706]">$50</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition border border-transparent hover:border-gray-200">
+                  <input type="checkbox" id="ts-upsell-feed" class="w-5 h-5 text-[#d97706] border-gray-300 rounded focus:ring-[#d97706]" />
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold text-gray-800">Feed a Family</p>
+                    <p class="text-xs text-gray-500">Provide meals for a family in need</p>
+                  </div>
+                  <span class="font-bold text-[#d97706]">$25</span>
+                </label>
+              </div>
+
+              <!-- Totals -->
+              <div class="border-t border-gray-200 pt-3 space-y-2">
+                <div class="flex justify-between text-sm text-gray-600">
+                  <span>Subtotal</span>
+                  <span id="ts-subtotal">$0.00</span>
+                </div>
+                <div id="ts-fee-row" class="hidden flex justify-between text-sm text-gray-600">
+                  <span>Transaction fee (3%)</span>
+                  <span id="ts-fee-amount">$0.00</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-100">
+                  <span>Total</span>
+                  <span id="ts-total" class="text-[#d97706]">$0.00</span>
+                </div>
+              </div>
+
+              <!-- Quick Trust -->
+              <div class="mt-4 p-3 bg-green-50 rounded-lg text-center">
+                <p class="text-xs text-green-700 font-medium">100% of your donation goes to those in need</p>
+                <p class="text-xs text-green-600 mt-0.5">Qurbani Foundation USA • 501(c)(3) • Tax-Deductible</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
 <script is:inline define:vars={{ stripePublishableKey: paymentSettings.stripe_publishable_key, stripeEnabled: paymentSettings.stripe_enabled, googlePlacesApiKey: googlePlacesApiKey }}>
 // Cart State
 window.donationCart = {
@@ -968,71 +1284,38 @@ function initializeStripeElements() {
   // No-op: Payment Element requires clientSecret, initialized in mountPaymentElement()
 }
 
-// Mount Payment Element with clientSecret (called when moving to step 2)
-async function mountPaymentElement() {
+// Mount Payment Element IMMEDIATELY — no API calls, no waiting for email
+// Uses Stripe deferred mode: mode='payment' for one-time, mode='setup' for recurring
+// All Stripe objects (PaymentIntent/SetupIntent/Subscription) are created at submit time only
+function mountPaymentElement() {
   var container = document.getElementById('card-element');
   if (!container || !window.donationCart.stripe) return;
 
-  // Build payment request from current cart
+  // Determine donation type from cart
   var items = window.donationCart.items.slice();
   var total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
   var hasWeekly = items.some(function(i) { return i.type === 'weekly' || i.recurringInterval === 'weekly'; });
   var hasMonthly = items.some(function(i) { return i.type === 'monthly' || i.recurringInterval === 'monthly'; });
   var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : 'single');
+  var isRecurring = (donationType === 'monthly' || donationType === 'weekly');
   var coverFees = window.donationCart.coverFees || false;
   var feeAmount = coverFees ? (total * 0.03) : 0;
   total = total + feeAmount;
 
-  var customer = {
-    firstName: document.getElementById('modal-firstName').value,
-    lastName: document.getElementById('modal-lastName').value,
-    email: document.getElementById('modal-email').value,
-    phone: document.getElementById('modal-phone').value,
-  };
+  // Store donation type for handlePayment
+  window.donationCart.pendingDonationType = donationType;
 
-  var billingAddress = {
-    line1: document.getElementById('modal-address').value || '',
-    city: document.getElementById('modal-city').value || '',
-    state: document.getElementById('modal-state').value || '',
-    postal_code: document.getElementById('modal-zip').value || '',
-    country: document.getElementById('modal-country').value || 'US',
-  };
-
-  // Create PaymentIntent/Subscription upfront
   try {
-    var response = await fetch('/api/payments/create-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: total,
-        items: items,
-        customer: customer,
-        billingAddress: billingAddress,
-        type: donationType,
-        coverFees: coverFees,
-        feeAmount: feeAmount,
-        baseAmount: total - feeAmount,
-      }),
-    });
-
-    var data = await response.json();
-    if (!response.ok) {
-      document.getElementById('card-errors').textContent = data.error || 'Failed to initialize payment';
-      return;
-    }
-
-    // Store for use in handlePayment
-    window.donationCart.pendingPayment = data;
-
     // Unmount previous Payment Element if any
     if (window.donationCart.stripeElements) {
       container.innerHTML = '';
       window.donationCart.cardMounted = false;
     }
 
-    // Create Elements instance with clientSecret
-    var elements = window.donationCart.stripe.elements({
-      clientSecret: data.clientSecret,
+    // Mount with deferred mode — NO API calls, card fields appear instantly
+    var elementsConfig = {
+      mode: isRecurring ? 'setup' : 'payment',
+      currency: 'usd',
       appearance: {
         theme: 'stripe',
         variables: {
@@ -1041,15 +1324,36 @@ async function mountPaymentElement() {
           borderRadius: '12px',
         },
       },
-    });
+    };
+
+    // For one-time payments, include amount so Stripe can show relevant payment methods
+    if (!isRecurring) {
+      elementsConfig.amount = Math.round(total * 100);
+    }
+
+    var elements = window.donationCart.stripe.elements(elementsConfig);
     window.donationCart.stripeElements = elements;
 
     // Create and mount Payment Element
-    var paymentElement = elements.create('payment', {
-      layout: 'tabs',
-    });
+    var checkoutMode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
+    var paymentOpts = { layout: 'tabs' };
+    if (checkoutMode === 'two-step') {
+      paymentOpts.fields = {
+        billingDetails: {
+          address: {
+            country: 'never',
+            postalCode: 'never',
+          }
+        }
+      };
+    }
+    var paymentElement = elements.create('payment', paymentOpts);
     paymentElement.mount('#card-element');
     window.donationCart.cardMounted = true;
+
+    // Clear any previous pending data
+    window.donationCart.pendingPayment = null;
+    window.donationCart.setupIntentData = null;
 
     paymentElement.on('change', function(event) {
       document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
@@ -1101,8 +1405,15 @@ window.addToCart = function(item) {
     });
   }
   saveCart();
-  updateCartUI();
-  openCart();
+  try { updateCartUI(); } catch(e) { console.warn('updateCartUI error:', e); }
+
+  // Check checkout template mode - two-step skips side cart, opens checkout directly
+  var mode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
+  if (mode === 'two-step') {
+    openCheckoutModal();
+  } else {
+    openCart();
+  }
 };
 
 window.removeFromCart = function(index) {
@@ -1135,17 +1446,17 @@ function updateCartUI() {
   const proceedBtn = document.getElementById('proceed-checkout-btn');
 
   if (items.length === 0) {
-    cartEmpty.classList.remove('hidden');
-    cartItems.classList.add('hidden');
-    recurringOptions.classList.add('hidden');
-    proceedBtn.disabled = true;
+    if (cartEmpty) cartEmpty.classList.remove('hidden');
+    if (cartItems) cartItems.classList.add('hidden');
+    if (recurringOptions) recurringOptions.classList.add('hidden');
+    if (proceedBtn) proceedBtn.disabled = true;
   } else {
-    cartEmpty.classList.add('hidden');
-    cartItems.classList.remove('hidden');
-    proceedBtn.disabled = false;
+    if (cartEmpty) cartEmpty.classList.add('hidden');
+    if (cartItems) cartItems.classList.remove('hidden');
+    if (proceedBtn) proceedBtn.disabled = false;
 
     // Always show recurring options when there are items
-    recurringOptions.classList.remove('hidden');
+    if (recurringOptions) recurringOptions.classList.remove('hidden');
 
     // Check if there are any convertible items (originally single)
     // Only show the checkbox option if there are items that CAN be converted
@@ -1154,7 +1465,7 @@ function updateCartUI() {
     // Don't auto-check the checkbox - user must manually select it
     // The checkbox state is preserved as-is unless user interacts with it
 
-    cartItems.innerHTML = items.map((item, index) => {
+    if (cartItems) cartItems.innerHTML = items.map((item, index) => {
       // Each item shows its own type
       const itemType = item.recurringInterval || item.type || 'single';
       const itemTypeLabel = itemType === 'weekly' ? 'Every Jummah' : itemType === 'monthly' ? 'Monthly' : itemType === 'annual' ? 'Annual' : 'One-time';
@@ -1206,8 +1517,10 @@ function updateCartUI() {
     paymentLabel = 'Includes Recurring';
   }
 
-  document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('payment-type-label').textContent = paymentLabel;
+  var cartTotalEl = document.getElementById('cart-total');
+  var paymentLabelEl = document.getElementById('payment-type-label');
+  if (cartTotalEl) cartTotalEl.textContent = '$' + total.toFixed(2);
+  if (paymentLabelEl) paymentLabelEl.textContent = paymentLabel;
 
   // Update cart count badge (if exists)
   const badge = document.getElementById('cart-count');
@@ -1281,9 +1594,11 @@ function hideCartReminder() {
 // Open/Close Cart
 function openCart() {
   window.donationCart.isOpen = true;
-  document.getElementById('cart-overlay').classList.remove('hidden');
-  document.getElementById('cart-sidebar').classList.remove('translate-x-full');
-  setTimeout(() => document.getElementById('cart-overlay').classList.remove('opacity-0'), 10);
+  var overlay = document.getElementById('cart-overlay');
+  var sidebar = document.getElementById('cart-sidebar');
+  if (overlay) overlay.classList.remove('hidden');
+  if (sidebar) sidebar.classList.remove('translate-x-full');
+  setTimeout(function() { if (overlay) overlay.classList.remove('opacity-0'); }, 10);
   document.body.style.overflow = 'hidden';
 
   // Track view_cart in GA4
@@ -1295,9 +1610,11 @@ function openCart() {
 
 function closeCart() {
   window.donationCart.isOpen = false;
-  document.getElementById('cart-overlay').classList.add('opacity-0');
-  document.getElementById('cart-sidebar').classList.add('translate-x-full');
-  setTimeout(() => document.getElementById('cart-overlay').classList.add('hidden'), 300);
+  var overlay = document.getElementById('cart-overlay');
+  var sidebar = document.getElementById('cart-sidebar');
+  if (overlay) overlay.classList.add('opacity-0');
+  if (sidebar) sidebar.classList.add('translate-x-full');
+  setTimeout(function() { if (overlay) overlay.classList.add('hidden'); }, 300);
   document.body.style.overflow = '';
 }
 
@@ -1307,8 +1624,13 @@ window.closeCart = closeCart;
 // Checkout Modal Functions
 function openCheckoutModal() {
   closeCart();
-  document.getElementById('checkout-modal').classList.remove('hidden');
+  var checkoutModal = document.getElementById('checkout-modal');
+  if (!checkoutModal) return;
+  checkoutModal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // Check if we're in two-step mode
+  var isTwoStep = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) === 'two-step';
 
   // Track begin_checkout in GA4
   if (window.trackBeginCheckout) {
@@ -1316,17 +1638,272 @@ function openCheckoutModal() {
     window.trackBeginCheckout(window.donationCart.items, total);
   }
 
-  // Reset to step 1
-  document.getElementById('modal-step-1').classList.remove('hidden');
-  document.getElementById('modal-step-2').classList.add('hidden');
-  document.getElementById('modal-success').classList.add('hidden');
+  var step1 = document.getElementById('modal-step-1');
+  var step2 = document.getElementById('modal-step-2');
+  var success = document.getElementById('modal-success');
+  if (success) success.classList.add('hidden');
+
+  if (isTwoStep) {
+    // Two-step mode: single centered page with everything on one screen
+    // Hide step 1 entirely (we'll rebuild the layout)
+    if (step1) step1.classList.add('hidden');
+    if (step2) step2.classList.remove('hidden');
+
+    // Hide step progress indicators
+    var stepBars = checkoutModal.querySelectorAll('.bg-gray-100.px-6.py-4.border-b');
+    stepBars.forEach(function(bar) { bar.classList.add('hidden'); });
+
+    // Hide back button
+    var backBtn = document.getElementById('modal-back-btn');
+    if (backBtn) backBtn.classList.add('hidden');
+
+    // Rebuild step 2 content for two-step layout (only once)
+    if (!checkoutModal.dataset.twoStepInit) {
+      checkoutModal.dataset.twoStepInit = 'true';
+
+      // Find the step 2 content container
+      var step2Inner = document.querySelector('#modal-step-2 .p-6');
+      if (!step2Inner) step2Inner = document.querySelector('#modal-step-2 > div > div:last-child');
+      if (!step2Inner) return;
+
+      // Replace entire step 2 inner content with clean single-column layout
+      step2Inner.className = 'p-6 md:py-8 max-w-lg mx-auto';
+      step2Inner.innerHTML =
+        // Logo left + Secure badge right — sticky on mobile
+        '<div class="flex items-center justify-between mb-5 sticky top-0 z-10 bg-white py-3 md:static md:py-0">' +
+          '<img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815947323-nkje6c.png" alt="Qurbani Foundation" class="h-10" onerror="this.style.display=\'none\'" />' +
+          '<div class="flex items-center gap-1.5 text-green-700">' +
+            '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>' +
+            '<span class="text-xs font-medium">Secure &amp; Encrypted</span>' +
+          '</div>' +
+        '</div>' +
+
+        // Total Impact banner with expandable breakdown
+        '<div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-200">' +
+          '<div class="flex justify-between items-center">' +
+            '<div>' +
+              '<span class="text-gray-600 font-medium">Your Total Impact</span>' +
+              '<p class="text-xs text-green-600 mt-0.5">100% of your donation goes to those in need</p>' +
+            '</div>' +
+            '<span class="text-2xl font-bold text-[#d97706]" id="payment-total">$0.00</span>' +
+          '</div>' +
+          '<button type="button" id="toggle-breakdown" class="text-xs text-[#d97706] hover:text-[#b45309] mt-2 flex items-center gap-1 font-medium transition">' +
+            '<svg id="breakdown-arrow" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>' +
+            'See full donation breakdown' +
+          '</button>' +
+          '<div id="donation-breakdown" class="hidden mt-3 pt-3 border-t border-green-200 space-y-1.5">' +
+          '</div>' +
+        '</div>' +
+
+        // Your Information — single heading for personal + billing
+        '<h3 class="text-lg font-bold text-gray-800 mb-3" style="font-family: \'Signika\', sans-serif;">Your Information</h3>' +
+        '<div class="space-y-3 mb-5">' +
+          // First Name + Last Name
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<input type="text" id="ts-info-firstName" placeholder="First Name *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+            '<input type="text" id="ts-info-lastName" placeholder="Last Name *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+          '</div>' +
+          // Email + Phone
+          '<div class="grid grid-cols-2 gap-3">' +
+            '<input type="email" id="ts-info-email" placeholder="Email Address *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+            '<input type="tel" id="ts-info-phone" placeholder="Phone Number" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+          '</div>' +
+        '</div>' +
+
+        // Payment (Stripe Payment Element)
+        '<div class="mb-5">' +
+          '<div id="card-element" class="min-h-[44px]">' +
+            '<div class="animate-pulse text-gray-400 text-sm text-center py-3">Loading secure payment...</div>' +
+          '</div>' +
+          '<div id="card-errors" class="text-red-500 text-sm mt-1" role="alert"></div>' +
+        '</div>' +
+
+        // Billing Address — below card details
+        '<div class="space-y-3 mb-5">' +
+          '<label class="block text-sm font-medium text-gray-700">Billing Address</label>' +
+          // Address search (Google Places autocomplete)
+          '<div>' +
+            '<input type="text" id="modal-address" autocomplete="off" placeholder="Search address..." class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+          '</div>' +
+          // City, State, Zip, Country — compact row, auto-populated
+          '<div class="grid grid-cols-4 gap-2">' +
+            '<input type="text" id="modal-city" placeholder="City" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />' +
+            '<input type="text" id="modal-state" placeholder="State" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />' +
+            '<input type="text" id="modal-zip" placeholder="ZIP" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />' +
+            '<select id="modal-country" required class="w-full px-2 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-sm">' +
+              '<option value="US" selected>US</option>' +
+              '<option value="CA">CA</option>' +
+              '<option value="GB">UK</option>' +
+              '<option value="AU">AU</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+
+        // Cover fees
+        '<div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200">' +
+          '<label class="flex items-center gap-3 cursor-pointer">' +
+            '<input type="checkbox" id="cover-fees-checkbox" class="w-4 h-4 text-[#d97706] rounded focus:ring-[#d97706] accent-[#d97706]" />' +
+            '<span class="text-sm text-gray-700">Cover transaction fees <span class="text-xs text-green-600 font-medium">(+3%)</span> — <span id="fee-amount-display" class="font-medium">$0.00</span></span>' +
+          '</label>' +
+        '</div>' +
+
+        // Total
+        '<div class="flex justify-between items-center mb-4 py-2.5 px-4 bg-white rounded-xl border border-gray-200">' +
+          '<span class="font-medium text-gray-700">Your Total</span>' +
+          '<span class="text-xl font-bold text-[#d97706]" id="step2-total">$0.00</span>' +
+        '</div>' +
+
+        // Pay button
+        '<button type="button" id="pay-btn" class="w-full bg-[#d97706] text-white font-bold py-4 rounded-xl hover:bg-[#b45309] transition text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">' +
+          '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>' +
+          '<span id="pay-btn-text">Complete Secure Donation</span>' +
+        '</button>' +
+
+        // Trust indicators
+        '<div class="mt-4 flex items-center justify-center gap-5 text-xs text-gray-500">' +
+          '<div class="flex items-center gap-1"><svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg><span>Secure Payment</span></div>' +
+          '<div class="flex items-center gap-1"><svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>100% Zakat Eligible</span></div>' +
+          '<div class="flex items-center gap-1"><svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span>Instant Tax Receipt</span></div>' +
+        '</div>' +
+
+        // Processing + Error (hidden)
+        '<div id="processing-indicator" class="hidden mt-4 text-center">' +
+          '<div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d97706]"></div>' +
+          '<p class="text-gray-600 mt-2">Processing your donation...</p>' +
+        '</div>' +
+        '<div id="payment-error" class="hidden mt-4 p-4 bg-red-50 rounded-xl text-center">' +
+          '<p class="text-red-600" id="payment-error-text"></p>' +
+        '</div>';
+
+      // Sync two-step info fields → original modal fields (for payment handler)
+      ['firstName', 'lastName', 'email', 'phone'].forEach(function(field) {
+        var tsField = document.getElementById('ts-info-' + field);
+        var modalField = document.getElementById('modal-' + field);
+        if (tsField) {
+          tsField.addEventListener('input', function() {
+            if (modalField) modalField.value = this.value;
+          });
+        }
+      });
+
+      // Re-attach pay button handler
+      document.getElementById('pay-btn')?.addEventListener('click', handlePayment);
+
+      // Re-attach cover fees handler
+      document.getElementById('cover-fees-checkbox')?.addEventListener('change', function() {
+        try { updateModalTotal(); } catch(e) {}
+      });
+
+      // Init Google Places on the address field
+      setTimeout(function() {
+        if (window.google?.maps?.places) {
+          var addrInput = document.getElementById('modal-address');
+          if (addrInput && !addrInput._placesInit) {
+            addrInput._placesInit = true;
+            var autocomplete = new window.google.maps.places.Autocomplete(addrInput, {
+              types: ['address'],
+              componentRestrictions: { country: ['us', 'ca', 'gb', 'au'] },
+              fields: ['address_components', 'formatted_address'],
+            });
+            autocomplete.addListener('place_changed', function() {
+              var place = autocomplete.getPlace();
+              if (!place.address_components) return;
+              var streetNumber = '', route = '';
+              place.address_components.forEach(function(c) {
+                var t = c.types[0];
+                if (t === 'street_number') streetNumber = c.long_name;
+                if (t === 'route') route = c.long_name;
+                if (t === 'locality') document.getElementById('modal-city').value = c.long_name;
+                if (t === 'administrative_area_level_1') document.getElementById('modal-state').value = c.short_name;
+                if (t === 'postal_code') document.getElementById('modal-zip').value = c.long_name;
+                if (t === 'country') {
+                  var sel = document.getElementById('modal-country');
+                  for (var i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value === c.short_name) { sel.selectedIndex = i; break; }
+                  }
+                }
+              });
+              addrInput.value = (streetNumber + ' ' + route).trim();
+            });
+          }
+        }
+      }, 300);
+    }
+
+    // Toggle breakdown visibility
+    var toggleBtn = document.getElementById('toggle-breakdown');
+    var breakdownDiv = document.getElementById('donation-breakdown');
+    var breakdownArrow = document.getElementById('breakdown-arrow');
+    // Render breakdown items with remove buttons
+    function renderBreakdown() {
+      if (!breakdownDiv) return;
+      var items = window.donationCart.items || [];
+      var html = '';
+      items.forEach(function(item, index) {
+        var itemTotal = (item.amount * (item.quantity || 1));
+        var isMonthly = item.type === 'monthly' || item.recurringInterval === 'monthly' || item.originalType === 'monthly' || (item.label && item.label.indexOf('/mo') >= 0);
+        var isWeekly = item.type === 'weekly' || item.recurringInterval === 'weekly' || item.originalType === 'weekly';
+        var recurLabel = '';
+        if (isMonthly) recurLabel = '/mo';
+        else if (isWeekly) recurLabel = '/wk';
+        html += '<div class="flex items-center text-sm py-1.5">' +
+          '<div class="flex-1 min-w-0">' +
+            '<span class="text-gray-700">' + (item.name || item.label || item.campaign || 'Donation') + '</span>' +
+            (item.quantity > 1 ? '<span class="text-gray-400 ml-1">x' + item.quantity + '</span>' : '') +
+          '</div>' +
+          '<span class="font-medium text-gray-800 flex-shrink-0 mr-3">$' + itemTotal.toFixed(2) +
+            (recurLabel ? '<span class="text-xs text-[#d97706] font-medium ml-0.5">' + recurLabel + '</span>' : '') +
+          '</span>' +
+          '<button type="button" data-remove-idx="' + index + '" class="breakdown-remove flex-shrink-0 text-gray-300 hover:text-gray-500 transition ml-1" title="Remove">' +
+            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+          '</button>' +
+        '</div>';
+      });
+      breakdownDiv.innerHTML = html || '<p class="text-sm text-gray-500">No items in cart</p>';
+
+      // Attach remove handlers
+      breakdownDiv.querySelectorAll('.breakdown-remove').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(this.getAttribute('data-remove-idx'));
+          if (isNaN(idx)) return;
+          window.donationCart.items.splice(idx, 1);
+          saveCart();
+          try { updateModalTotal(); } catch(e) {}
+          renderBreakdown();
+          // If cart is empty, close the checkout
+          if (window.donationCart.items.length === 0) {
+            closeCheckoutModal();
+          }
+        });
+      });
+    }
+
+    if (toggleBtn && breakdownDiv) {
+      toggleBtn.addEventListener('click', function() {
+        var isHidden = breakdownDiv.classList.contains('hidden');
+        breakdownDiv.classList.toggle('hidden');
+        if (breakdownArrow) breakdownArrow.style.transform = isHidden ? 'rotate(180deg)' : '';
+        if (!isHidden) return;
+        renderBreakdown();
+      });
+    }
+
+    // Two-step mode: Mount payment element IMMEDIATELY — no waiting for email
+    mountPaymentElement();
+  } else {
+    // Three-step mode: show step 1, hide step 2
+    if (step1) step1.classList.remove('hidden');
+    if (step2) step2.classList.add('hidden');
+  }
 
   // Pre-check first upsell (opt-out strategy for higher conversions)
-  document.getElementById('upsell-checkbox-1').checked = false;
-  document.getElementById('upsell-checkbox-2').checked = false;
+  var upsell1 = document.getElementById('upsell-checkbox-1');
+  var upsell2 = document.getElementById('upsell-checkbox-2');
+  if (upsell1) upsell1.checked = false;
+  if (upsell2) upsell2.checked = false;
 
   // Update upsell card styling
-  updateUpsellCardStyles();
+  try { updateUpsellCardStyles(); } catch(e) {}
 
   // Initialize Google Places autocomplete after modal is visible
   setTimeout(function() {
@@ -1336,13 +1913,14 @@ function openCheckoutModal() {
   }, 100);
 
   // Update cart display with upsell included
-  updateModalCart();
+  try { updateModalCart(); } catch(e) {}
 }
 
 // Update upsell card visual styles based on checked state
 function updateUpsellCardStyles() {
   const checkbox1 = document.getElementById('upsell-checkbox-1');
   const checkbox2 = document.getElementById('upsell-checkbox-2');
+  if (!checkbox1 || !checkbox2) return;
   const card1 = checkbox1.closest('.upsell-card');
   const card2 = checkbox2.closest('.upsell-card');
 
@@ -1368,7 +1946,8 @@ function updateUpsellCardStyles() {
 }
 
 function closeCheckoutModal() {
-  document.getElementById('checkout-modal').classList.add('hidden');
+  var modal = document.getElementById('checkout-modal');
+  if (modal) modal.classList.add('hidden');
   document.body.style.overflow = '';
 }
 
@@ -1419,11 +1998,13 @@ function updateModalTotal() {
   document.getElementById('modal-subtotal').textContent = '$' + total.toFixed(2);
   const modalTotal = document.getElementById('modal-total');
   if (modalTotal) modalTotal.textContent = '$' + total.toFixed(2);
-  document.getElementById('payment-total').textContent = '$' + total.toFixed(2);
+
+  const paymentTotalEl = document.getElementById('payment-total');
+  if (paymentTotalEl) paymentTotalEl.textContent = '$' + total.toFixed(2);
 
   // Update step 2 total display
   const step2Total = document.getElementById('step2-total');
-  if (step2Total) step2Total.textContent = '$' + total.toFixed(2);
+  if (step2Total) step2Total.innerHTML = '$' + total.toFixed(2);
 
   // Determine payment type label
   let paymentTypeLabel = 'One-time donation';
@@ -1474,7 +2055,18 @@ function goToInfoStep() {
   document.getElementById('modal-step-1').classList.remove('hidden');
 }
 
-// Handle Payment
+// Handle Payment — Two distinct flows:
+//
+// ONE-TIME:
+//   1. elements.submit() — validate payment method
+//   2. POST /api/payments/create-intent — create PaymentIntent NOW
+//   3. stripe.confirmPayment() — charge the card
+//
+// RECURRING (SetupIntent → Subscription):
+//   1. stripe.confirmSetup() — confirm the SetupIntent (saves payment method)
+//   2. POST /api/payments/create-subscription — create Subscription with saved PM
+//   3. Subscription charges immediately with the saved payment method
+//
 async function handlePayment() {
   const payBtn = document.getElementById('pay-btn');
   const payText = document.getElementById('pay-btn-text');
@@ -1490,38 +2082,52 @@ async function handlePayment() {
   errorDiv.classList.add('hidden');
 
   try {
-    // Wait for payment element to be ready if still mounting
-    if (!window.donationCart.pendingPayment || !window.donationCart.stripeElements) {
-      // mountPaymentElement might still be running — wait up to 5 seconds
-      var waitStart = Date.now();
-      while ((!window.donationCart.pendingPayment || !window.donationCart.stripeElements) && (Date.now() - waitStart < 5000)) {
-        await new Promise(function(r) { setTimeout(r, 200); });
-      }
+    // CRITICAL: Sync ts-info fields to modal fields before payment (catch any missed input events)
+    ['firstName', 'lastName', 'email', 'phone'].forEach(function(f) {
+      var ts = document.getElementById('ts-info-' + f);
+      var modal = document.getElementById('modal-' + f);
+      if (ts && modal) modal.value = ts.value.trim();
+    });
+
+    // Validate required customer fields
+    var firstName = (document.getElementById('modal-firstName')?.value || '').trim();
+    var lastName = (document.getElementById('modal-lastName')?.value || '').trim();
+    var email = (document.getElementById('modal-email')?.value || '').trim();
+
+    if (!firstName || !lastName) {
+      throw new Error('Please enter your first and last name.');
+    }
+    if (!email || email.indexOf('@') < 1) {
+      throw new Error('Please enter a valid email address.');
     }
 
-    // Get stored payment data from mountPaymentElement
-    const data = window.donationCart.pendingPayment;
-    if (!data || !data.clientSecret) {
-      throw new Error('Payment session expired. Please go back and try again.');
+    // Validate billing address
+    var billingLine1 = (document.getElementById('modal-address')?.value || '').trim();
+    var billingCity = (document.getElementById('modal-city')?.value || '').trim();
+    var billingState = (document.getElementById('modal-state')?.value || '').trim();
+    var billingZip = (document.getElementById('modal-zip')?.value || '').trim();
+    if (!billingLine1 || !billingCity || !billingState || !billingZip) {
+      throw new Error('Please fill in your billing address.');
     }
 
+    // Ensure Payment Element is mounted
     if (!window.donationCart.stripeElements) {
       throw new Error('Payment form not loaded. Please refresh and try again.');
     }
 
     const customer = {
-      firstName: document.getElementById('modal-firstName').value,
-      lastName: document.getElementById('modal-lastName').value,
-      email: document.getElementById('modal-email').value,
-      phone: document.getElementById('modal-phone').value,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phone: (document.getElementById('modal-phone')?.value || '').trim(),
     };
 
     const billingAddress = {
-      line1: document.getElementById('modal-address').value,
-      city: document.getElementById('modal-city').value,
-      state: document.getElementById('modal-state').value,
-      postal_code: document.getElementById('modal-zip').value,
-      country: document.getElementById('modal-country').value,
+      line1: billingLine1,
+      city: billingCity,
+      state: billingState,
+      postal_code: billingZip,
+      country: (document.getElementById('modal-country')?.value || 'US').trim(),
     };
 
     let items = [...window.donationCart.items];
@@ -1530,9 +2136,596 @@ async function handlePayment() {
     const feeAmount = coverFees ? (total * 0.03) : 0;
     total = total + feeAmount;
 
-    // Confirm payment using latest Stripe Payment Element flow
-    const result = await window.donationCart.stripe.confirmPayment({
-      elements: window.donationCart.stripeElements,
+    var donationType = window.donationCart.pendingDonationType || 'single';
+    var isRecurring = (donationType === 'monthly' || donationType === 'weekly');
+
+    if (isRecurring) {
+      // ═══════════════════════════════════════════════════════════
+      // RECURRING FLOW (fully deferred):
+      //   1. elements.submit() — validate card
+      //   2. create-setup-intent — create SetupIntent + Customer
+      //   3. confirmSetup() — save the payment method
+      //   4. create-subscription — create real Subscription with saved PM
+      // ═══════════════════════════════════════════════════════════
+
+      // STEP 1: Validate payment method (elements.submit)
+      var submitResult = await window.donationCart.stripeElements.submit();
+      if (submitResult.error) {
+        throw new Error(submitResult.error.message);
+      }
+
+      // STEP 2: Create SetupIntent + Customer on server
+      payText.textContent = 'Securing payment...';
+
+      var setupRes = await fetch('/api/payments/create-setup-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer: customer, billingAddress: billingAddress }),
+      });
+
+      var setupData = await setupRes.json();
+      if (!setupRes.ok) {
+        throw new Error(setupData.error || 'Failed to initialize payment. Please try again.');
+      }
+
+      // STEP 3: Confirm the SetupIntent — saves the payment method
+      var setupResult2 = await window.donationCart.stripe.confirmSetup({
+        elements: window.donationCart.stripeElements,
+        clientSecret: setupData.clientSecret,
+        confirmParams: {
+          return_url: window.location.origin + '/donate/success',
+          payment_method_data: {
+            billing_details: {
+              name: customer.firstName + ' ' + customer.lastName,
+              email: customer.email,
+              phone: customer.phone,
+              address: billingAddress,
+            },
+          },
+        },
+        redirect: 'if_required',
+      });
+
+      if (setupResult2.error) {
+        throw new Error(setupResult2.error.message);
+      }
+
+      var setupIntent = setupResult2.setupIntent;
+      if (!setupIntent || !setupIntent.payment_method) {
+        throw new Error('Payment setup failed. Please try again.');
+      }
+
+      // STEP 4: Create the REAL subscription with the saved payment method
+      payText.textContent = 'Creating subscription...';
+
+      var subResponse = await fetch('/api/payments/create-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethodId: setupIntent.payment_method,
+          customerId: setupData.customerId,
+          amount: total,
+          items: items,
+          customer: customer,
+          billingAddress: billingAddress,
+          interval: donationType,
+          coverFees: coverFees,
+          feeAmount: feeAmount,
+          baseAmount: total - feeAmount,
+        }),
+      });
+
+      var subData = await subResponse.json();
+      if (!subResponse.ok) {
+        throw new Error(subData.error || 'Failed to create subscription. Please try again.');
+      }
+
+      // Store for success page
+      var successData = {
+        transaction_id: subData.paymentIntentId || setupIntent.id,
+        donation_id: subData.donationId || '',
+        total: total,
+        items: items.map(function(item) {
+          return {
+            id: item.id || item.slug,
+            name: item.name || item.campaign || 'Donation',
+            category: item.campaign || 'donation',
+            amount: item.amount,
+            quantity: item.quantity || 1
+          };
+        }),
+        cover_fees: coverFees && feeAmount > 0,
+        fee_amount: feeAmount,
+        is_subscription: true,
+        subscription_id: subData.subscriptionId || '',
+        is_jummah: subData.isJummah || donationType === 'weekly',
+        interval: subData.interval || donationType,
+        next_billing_date: subData.nextBillingDate || '',
+        donor_email: customer.email,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+
+      // Clear cart and redirect
+      window.donationCart.items = [];
+      localStorage.removeItem('donationCart');
+      window.location.href = '/donate/success?donation_id=' + (subData.donationId || '') + '&subscription_id=' + (subData.subscriptionId || '');
+
+    } else {
+      // ═══════════════════════════════════════════════════════════
+      // ONE-TIME FLOW: elements.submit → create-intent → confirmPayment
+      // ═══════════════════════════════════════════════════════════
+
+      // STEP 1: Validate payment method with Stripe
+      var submitResult = await window.donationCart.stripeElements.submit();
+      if (submitResult.error) {
+        throw new Error(submitResult.error.message);
+      }
+
+      // STEP 2: Create the PaymentIntent NOW (not earlier)
+      var response = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: total,
+          items: items,
+          customer: customer,
+          billingAddress: billingAddress,
+          type: 'single',
+          coverFees: coverFees,
+          feeAmount: feeAmount,
+          baseAmount: total - feeAmount,
+        }),
+      });
+
+      var data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create payment. Please try again.');
+      }
+
+      window.donationCart.pendingPayment = data;
+
+      // STEP 3: Confirm the payment
+      const result = await window.donationCart.stripe.confirmPayment({
+        elements: window.donationCart.stripeElements,
+        clientSecret: data.clientSecret,
+        confirmParams: {
+          return_url: window.location.origin + '/donate/success?donation_id=' + (data.donationId || '') + '&type=single',
+          payment_method_data: {
+            billing_details: {
+              name: customer.firstName + ' ' + customer.lastName,
+              email: customer.email,
+              phone: customer.phone,
+              address: billingAddress,
+            },
+          },
+        },
+        redirect: 'if_required',
+      });
+
+      if (result.error) throw new Error(result.error.message);
+
+      const paymentIntent = result.paymentIntent;
+      if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
+
+      if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
+        var successData = {
+          transaction_id: paymentIntent.id,
+          donation_id: data.donationId || '',
+          total: total,
+          items: items.map(function(item) {
+            return {
+              id: item.id || item.slug,
+              name: item.name || item.campaign || 'Donation',
+              category: item.campaign || 'donation',
+              amount: item.amount,
+              quantity: item.quantity || 1
+            };
+          }),
+          cover_fees: coverFees && feeAmount > 0,
+          fee_amount: feeAmount,
+          is_subscription: false,
+          subscription_id: '',
+          is_jummah: false,
+          interval: '',
+          next_billing_date: '',
+          donor_email: customer.email,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+
+        // Clear cart and redirect
+        window.donationCart.items = [];
+        localStorage.removeItem('donationCart');
+        window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
+      }
+    }
+
+  } catch (err) {
+    errorDiv.classList.remove('hidden');
+    document.getElementById('payment-error-text').textContent = err.message;
+  } finally {
+    payBtn.disabled = false;
+    payText.textContent = 'Complete Donation';
+    processing.classList.add('hidden');
+  }
+}
+
+// ==================== TWO-STEP CHECKOUT LOGIC ====================
+
+function openTwoStepCheckout() {
+  // Close side cart if open
+  if (window.donationCart.isOpen) {
+    closeCart();
+  }
+  var modal = document.getElementById('two-step-checkout');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Track begin_checkout in GA4
+  if (window.trackBeginCheckout) {
+    var total = window.donationCart.items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
+    window.trackBeginCheckout(window.donationCart.items, total);
+  }
+
+  updateTwoStepCart();
+
+  // Init Google Places for the 2-step address field
+  setTimeout(function() {
+    initTwoStepPlaces();
+  }, 200);
+}
+
+function closeTwoStepCheckout() {
+  var modal = document.getElementById('two-step-checkout');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Close button handler
+document.getElementById('close-two-step')?.addEventListener('click', closeTwoStepCheckout);
+
+// Mobile cart accordion toggle
+document.getElementById('ts-cart-toggle')?.addEventListener('click', function() {
+  var body = document.getElementById('ts-cart-mobile-body');
+  var chevron = document.getElementById('ts-cart-chevron');
+  if (body) {
+    body.classList.toggle('hidden');
+    if (chevron) chevron.classList.toggle('rotate-180');
+  }
+});
+
+// Upsell checkbox handlers
+document.getElementById('ts-upsell-prophetic')?.addEventListener('change', function() {
+  var upsellItem = { id: 'prophetic-qurbani', name: 'Prophetic Qurbani', amount: 50, type: 'single', quantity: 1, isUpsell: true };
+  if (this.checked) {
+    window.donationCart.items.push(Object.assign({}, upsellItem, { originalType: 'single' }));
+  } else {
+    window.donationCart.items = window.donationCart.items.filter(function(i) { return i.id !== 'prophetic-qurbani'; });
+  }
+  saveCart();
+  updateCartUI();
+  updateTwoStepCart();
+});
+
+document.getElementById('ts-upsell-feed')?.addEventListener('change', function() {
+  var upsellItem = { id: 'feed-family', name: 'Feed a Family', amount: 25, type: 'single', quantity: 1, isUpsell: true };
+  if (this.checked) {
+    window.donationCart.items.push(Object.assign({}, upsellItem, { originalType: 'single' }));
+  } else {
+    window.donationCart.items = window.donationCart.items.filter(function(i) { return i.id !== 'feed-family'; });
+  }
+  saveCart();
+  updateCartUI();
+  updateTwoStepCart();
+});
+
+// Recurring radio handlers
+document.querySelectorAll('input[name="ts-recurring"]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    var type = this.value;
+    window.donationCart.items.forEach(function(item) {
+      if (item.originalType === 'single' || !item.originalType) {
+        item.type = type;
+        item.recurringInterval = type;
+      }
+    });
+    saveCart();
+    updateCartUI();
+    updateTwoStepCart();
+    document.getElementById('ts-clear-recurring')?.classList.remove('hidden');
+  });
+});
+
+document.getElementById('ts-clear-recurring')?.addEventListener('click', function() {
+  document.querySelectorAll('input[name="ts-recurring"]').forEach(function(r) { r.checked = false; });
+  window.donationCart.items.forEach(function(item) {
+    if (item.originalType === 'single' || !item.originalType) {
+      item.type = 'single';
+      item.recurringInterval = 'single';
+    }
+  });
+  saveCart();
+  updateCartUI();
+  updateTwoStepCart();
+  this.classList.add('hidden');
+});
+
+// Cover fees checkbox
+document.getElementById('ts-cover-fees')?.addEventListener('change', function() {
+  window.donationCart.coverFees = this.checked;
+  updateTwoStepTotals();
+});
+
+// Update the two-step cart display
+function updateTwoStepCart() {
+  var items = window.donationCart.items;
+
+  // Desktop sidebar items
+  var cartContainer = document.getElementById('ts-cart-items');
+  var emptyCart = document.getElementById('ts-empty-cart');
+  var mobileItems = document.getElementById('ts-cart-mobile-items');
+  var recurringSection = document.getElementById('ts-recurring-section');
+  var countBadge = document.getElementById('ts-cart-count-badge');
+  var totalBadge = document.getElementById('ts-cart-total-badge');
+
+  if (items.length === 0) {
+    if (cartContainer) cartContainer.innerHTML = '';
+    if (emptyCart) emptyCart.classList.remove('hidden');
+    if (mobileItems) mobileItems.innerHTML = '<p class="text-sm text-gray-400">No items in cart</p>';
+    if (recurringSection) recurringSection.classList.add('hidden');
+  } else {
+    if (emptyCart) emptyCart.classList.add('hidden');
+
+    // Show recurring if there are convertible items
+    var hasConvertible = items.some(function(i) { return i.originalType === 'single' || !i.originalType; });
+    if (recurringSection) recurringSection.classList.toggle('hidden', !hasConvertible);
+
+    var itemsHtml = items.filter(function(i) { return !i.isUpsell; }).map(function(item, index) {
+      var itemType = item.recurringInterval || item.type || 'single';
+      var typeLabel = itemType === 'weekly' ? 'Jummah' : itemType === 'monthly' ? 'Monthly' : '';
+      var typeBadge = typeLabel ? '<span class="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded">' + typeLabel + '</span>' : '';
+
+      return '<div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">' +
+        '<div class="flex-1 min-w-0">' +
+          '<p class="text-sm font-medium text-gray-800 truncate">' + item.name + typeBadge + '</p>' +
+        '</div>' +
+        '<div class="flex items-center gap-2 ml-3">' +
+          '<button onclick="tsTwoStepUpdateQty(' + index + ', -1)" class="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-500 hover:bg-gray-200 text-xs">−</button>' +
+          '<span class="w-5 text-center text-sm">' + item.quantity + '</span>' +
+          '<button onclick="tsTwoStepUpdateQty(' + index + ', 1)" class="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-500 hover:bg-gray-200 text-xs">+</button>' +
+          '<span class="font-semibold text-gray-800 text-sm w-14 text-right">$' + (item.amount * item.quantity).toFixed(2) + '</span>' +
+          '<button onclick="tsTwoStepRemove(' + index + ')" class="text-gray-300 hover:text-red-400 transition ml-1">' +
+            '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    if (cartContainer) cartContainer.innerHTML = itemsHtml;
+    if (mobileItems) mobileItems.innerHTML = itemsHtml;
+  }
+
+  // Update count badge
+  var count = items.reduce(function(sum, i) { return sum + i.quantity; }, 0);
+  if (countBadge) countBadge.textContent = count;
+
+  // Sync upsell checkboxes
+  var hasProphetic = items.some(function(i) { return i.id === 'prophetic-qurbani'; });
+  var hasFeed = items.some(function(i) { return i.id === 'feed-family'; });
+  var propheticCb = document.getElementById('ts-upsell-prophetic');
+  var feedCb = document.getElementById('ts-upsell-feed');
+  if (propheticCb) propheticCb.checked = hasProphetic;
+  if (feedCb) feedCb.checked = hasFeed;
+
+  updateTwoStepTotals();
+}
+
+function updateTwoStepTotals() {
+  var items = window.donationCart.items;
+  var subtotal = items.reduce(function(sum, i) { return sum + (i.amount * i.quantity); }, 0);
+  var coverFees = window.donationCart.coverFees || false;
+  var feeAmount = coverFees ? Math.round(subtotal * 0.03 * 100) / 100 : 0;
+  var total = subtotal + feeAmount;
+
+  document.getElementById('ts-subtotal').textContent = '$' + subtotal.toFixed(2);
+  document.getElementById('ts-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('ts-cart-total-badge').textContent = '$' + total.toFixed(2);
+
+  var feeRow = document.getElementById('ts-fee-row');
+  if (feeRow) {
+    feeRow.classList.toggle('hidden', !coverFees);
+    document.getElementById('ts-fee-amount').textContent = '$' + feeAmount.toFixed(2);
+  }
+
+  var feeDesc = document.getElementById('ts-fee-description');
+  if (feeDesc) {
+    feeDesc.textContent = 'Add $' + (subtotal * 0.03).toFixed(2) + ' so 100% of your donation reaches those in need';
+  }
+
+  // Enable/disable pay button
+  var payBtn = document.getElementById('ts-pay-btn');
+  if (payBtn) payBtn.disabled = items.length === 0;
+}
+
+// Global functions for inline onclick handlers
+window.tsTwoStepUpdateQty = function(index, delta) {
+  var item = window.donationCart.items[index];
+  if (item) {
+    item.quantity = Math.max(1, item.quantity + delta);
+    saveCart();
+    updateCartUI();
+    updateTwoStepCart();
+  }
+};
+
+window.tsTwoStepRemove = function(index) {
+  window.donationCart.items.splice(index, 1);
+  saveCart();
+  updateCartUI();
+  updateTwoStepCart();
+  // Close checkout if cart is empty
+  if (window.donationCart.items.length === 0) {
+    closeTwoStepCheckout();
+  }
+};
+
+// Two-step Stripe mount
+var twoStepStripeElements = null;
+var twoStepPendingPayment = null;
+
+async function mountTwoStepPaymentElement() {
+  var container = document.getElementById('ts-card-element');
+  if (!container || !window.donationCart.stripe) return;
+
+  var items = window.donationCart.items.slice();
+  var total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
+  var hasWeekly = items.some(function(i) { return i.type === 'weekly' || i.recurringInterval === 'weekly'; });
+  var hasMonthly = items.some(function(i) { return i.type === 'monthly' || i.recurringInterval === 'monthly'; });
+  var donationType = hasWeekly ? 'weekly' : (hasMonthly ? 'monthly' : 'single');
+  var coverFees = window.donationCart.coverFees || false;
+  var feeAmount = coverFees ? Math.round(total * 0.03 * 100) / 100 : 0;
+  total = total + feeAmount;
+
+  var customer = {
+    firstName: document.getElementById('ts-firstName').value,
+    lastName: document.getElementById('ts-lastName').value,
+    email: document.getElementById('ts-email').value,
+    phone: document.getElementById('ts-phone').value,
+  };
+
+  var billingAddress = {
+    line1: document.getElementById('ts-address').value || '',
+    city: document.getElementById('ts-city').value || '',
+    state: document.getElementById('ts-state').value || '',
+    postal_code: document.getElementById('ts-zip').value || '',
+    country: document.getElementById('ts-country').value || 'US',
+  };
+
+  try {
+    var response = await fetch('/api/payments/create-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: total,
+        items: items,
+        customer: customer,
+        billingAddress: billingAddress,
+        type: donationType,
+        coverFees: coverFees,
+        feeAmount: feeAmount,
+        baseAmount: total - feeAmount,
+      }),
+    });
+
+    var data = await response.json();
+    if (!response.ok) {
+      document.getElementById('ts-card-errors').textContent = data.error || 'Failed to initialize payment';
+      return;
+    }
+
+    twoStepPendingPayment = data;
+
+    // Unmount previous if any
+    if (twoStepStripeElements) {
+      container.innerHTML = '';
+    }
+
+    var elements = window.donationCart.stripe.elements({
+      clientSecret: data.clientSecret,
+      appearance: {
+        theme: 'stripe',
+        variables: {
+          colorPrimary: '#01534d',
+          fontFamily: 'system-ui, sans-serif',
+          borderRadius: '12px',
+        },
+      },
+    });
+    twoStepStripeElements = elements;
+
+    var paymentElement = elements.create('payment', { layout: 'tabs' });
+    paymentElement.mount('#ts-card-element');
+
+    paymentElement.on('change', function(event) {
+      document.getElementById('ts-card-errors').textContent = event.error ? event.error.message : '';
+    });
+  } catch (err) {
+    document.getElementById('ts-card-errors').textContent = 'Failed to load payment form. Please try again.';
+    console.error('2-step Payment Element mount error:', err);
+  }
+}
+
+// Two-step payment handler
+document.getElementById('ts-pay-btn')?.addEventListener('click', async function() {
+  var payBtn = this;
+  var payText = document.getElementById('ts-pay-btn-text');
+  var spinner = document.getElementById('ts-pay-btn-spinner');
+  var errorDiv = document.getElementById('ts-payment-error');
+
+  // Validate required fields
+  var firstName = document.getElementById('ts-firstName').value.trim();
+  var lastName = document.getElementById('ts-lastName').value.trim();
+  var email = document.getElementById('ts-email').value.trim();
+  var address = document.getElementById('ts-address').value.trim();
+  var city = document.getElementById('ts-city').value.trim();
+  var state = document.getElementById('ts-state').value.trim();
+  var zip = document.getElementById('ts-zip').value.trim();
+
+  if (!firstName) { document.getElementById('ts-firstName').focus(); return; }
+  if (!lastName) { document.getElementById('ts-lastName').focus(); return; }
+  if (!email) { document.getElementById('ts-email').focus(); return; }
+  if (!address) { document.getElementById('ts-address').focus(); return; }
+  if (!city) { document.getElementById('ts-city').focus(); return; }
+  if (!state) { document.getElementById('ts-state').focus(); return; }
+  if (!zip) { document.getElementById('ts-zip').focus(); return; }
+
+  if (payBtn.disabled && payText.classList.contains('hidden')) return; // Already processing
+  payBtn.disabled = true;
+  payText.classList.add('hidden');
+  spinner.classList.remove('hidden');
+  errorDiv.classList.add('hidden');
+
+  try {
+    // If stripe elements not yet mounted, mount now
+    if (!twoStepStripeElements || !twoStepPendingPayment) {
+      await mountTwoStepPaymentElement();
+    }
+
+    if (!twoStepPendingPayment || !twoStepPendingPayment.clientSecret) {
+      throw new Error('Payment session expired. Please try again.');
+    }
+
+    if (!twoStepStripeElements) {
+      throw new Error('Payment form not loaded. Please refresh and try again.');
+    }
+
+    var customer = {
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phone: document.getElementById('ts-phone').value,
+    };
+
+    var billingAddress = {
+      line1: address,
+      city: city,
+      state: state,
+      postal_code: zip,
+      country: document.getElementById('ts-country').value,
+    };
+
+    var items = window.donationCart.items.slice();
+    var total = items.reduce(function(sum, item) { return sum + (item.amount * item.quantity); }, 0);
+    var coverFees = window.donationCart.coverFees || false;
+    var feeAmount = coverFees ? Math.round(total * 0.03 * 100) / 100 : 0;
+    total = total + feeAmount;
+
+    var data = twoStepPendingPayment;
+
+    var result = await window.donationCart.stripe.confirmPayment({
+      elements: twoStepStripeElements,
       confirmParams: {
         return_url: window.location.origin + '/donate/success?donation_id=' + (data.donationId || '') + '&type=' + (data.type || 'single'),
         payment_method_data: {
@@ -1549,11 +2742,10 @@ async function handlePayment() {
 
     if (result.error) throw new Error(result.error.message);
 
-    const paymentIntent = result.paymentIntent;
+    var paymentIntent = result.paymentIntent;
     if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
 
     if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
-      // Store purchase data for the success page (tracking + display)
       var successData = {
         transaction_id: paymentIntent.id,
         donation_id: data.donationId || '',
@@ -1579,22 +2771,60 @@ async function handlePayment() {
       };
       sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
 
-      // Clear cart before redirect
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
 
-      // Redirect to success page
       window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
     }
-
   } catch (err) {
     errorDiv.classList.remove('hidden');
-    document.getElementById('payment-error-text').textContent = err.message;
+    errorDiv.textContent = err.message;
   } finally {
     payBtn.disabled = false;
-    payText.textContent = 'Complete Donation';
-    processing.classList.add('hidden');
+    payText.classList.remove('hidden');
+    spinner.classList.add('hidden');
   }
+});
+
+// Google Places for two-step checkout
+function initTwoStepPlaces() {
+  var addressInput = document.getElementById('ts-address');
+  if (!addressInput || !window.google?.maps?.places) return;
+  if (addressInput._placesInit) return;
+  addressInput._placesInit = true;
+
+  var autocomplete = new window.google.maps.places.Autocomplete(addressInput, {
+    types: ['address'],
+    componentRestrictions: { country: ['us', 'ca', 'gb', 'au'] },
+  });
+
+  autocomplete.addListener('place_changed', function() {
+    var place = autocomplete.getPlace();
+    if (!place.address_components) return;
+
+    var streetNumber = '';
+    var route = '';
+
+    place.address_components.forEach(function(component) {
+      var types = component.types;
+      if (types.includes('street_number')) streetNumber = component.long_name;
+      if (types.includes('route')) route = component.long_name;
+      if (types.includes('locality')) document.getElementById('ts-city').value = component.long_name;
+      if (types.includes('administrative_area_level_1')) document.getElementById('ts-state').value = component.short_name;
+      if (types.includes('postal_code')) document.getElementById('ts-zip').value = component.long_name;
+      if (types.includes('country')) {
+        var countrySelect = document.getElementById('ts-country');
+        for (var i = 0; i < countrySelect.options.length; i++) {
+          if (countrySelect.options[i].value === component.short_name) {
+            countrySelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+    });
+
+    addressInput.value = (streetNumber + ' ' + route).trim();
+  });
 }
 
 // Fetch management link for subscription

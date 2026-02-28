@@ -3,7 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
 import TemplateColorEditor from '../../../components/admin/TemplateColorEditor.astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates, getRamadanPageTemplates } from '../../../lib/templates';
+import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates, getRamadanPageTemplates, getCheckoutTemplates } from '../../../lib/templates';
 
 export const prerender = false;
 
@@ -14,13 +14,14 @@ const appealsPageTemplates = await getAppealsPageTemplates();
 const orphanSponsorshipTemplates = await getOrphanSponsorshipTemplates();
 const homepageTemplates = await getHomepageTemplates();
 const ramadanPageTemplates = await getRamadanPageTemplates();
+const checkoutTemplates = await getCheckoutTemplates();
 
 // Fetch current settings
 let settings: any = null;
 try {
   const { data, error } = await supabaseAdmin
     .from('site_settings')
-    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template')
+    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template, checkout_template')
     .limit(1);
 
   if (data && data.length > 0) {
@@ -36,6 +37,7 @@ const currentAppealsPageTemplate = settings?.default_appeals_page_template || 'g
 const currentOrphanSponsorshipTemplate = settings?.orphan_sponsorship_template || 'orphan-sponsorship';
 const currentHomepageTemplate = settings?.homepage_template || 'pennybill';
 const currentRamadanPageTemplate = settings?.ramadan_page_template || 'pennyappeal';
+const currentCheckoutTemplate = settings?.checkout_template || 'three-step';
 
 // Default colors for each template
 const defaultColors: Record<string, any> = {
@@ -112,12 +114,36 @@ const defaultColors: Record<string, any> = {
     inactive_btn_bg: '#ffffff',
     toggle_active_color: '#c41e3a',
   },
+  'cw-donation': {
+    bg_color: '#ffffff',
+    text_color: '#1f2937',
+    text_muted_color: '#6b7280',
+    accent_color: '#d4a017',
+    accent_text_color: '#5a3e00',
+    border_color: '#e5e7eb',
+    active_bg_color: 'rgba(212,160,23,0.1)',
+    active_text_color: '#1f2937',
+    inactive_btn_bg: '#ffffff',
+    toggle_active_color: '#d4a017',
+  },
+  'home-donation': {
+    bg_color: '#ffffff',
+    text_color: '#1f2937',
+    text_muted_color: '#6b7280',
+    accent_color: '#d97706',
+    accent_text_color: '#ffffff',
+    border_color: '#e5e7eb',
+    active_bg_color: '#d97706',
+    active_text_color: '#ffffff',
+    inactive_btn_bg: '#ffffff',
+    toggle_active_color: '#d97706',
+  },
 };
 
 // Fetch template colors from database
 let templateColors: Record<string, any> = {};
 let customTemplates: any[] = [];
-const builtInTemplates = ['teal-yellow', 'dark-teal', 'white', 'compact', 'list-style', 'urgent-appeal'];
+const builtInTemplates = ['teal-yellow', 'dark-teal', 'white', 'compact', 'list-style', 'urgent-appeal', 'cw-donation', 'home-donation'];
 
 try {
   const { data } = await supabaseAdmin
@@ -255,6 +281,20 @@ const listStyleColors = getColors('list-style');
             ))}
           </select>
           <p class="text-xs text-gray-400 mt-1">Template used for 30 Days of Ramadan and similar pages</p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Checkout Template</label>
+          <select
+            name="checkout_template"
+            class="w-full max-w-md px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            {checkoutTemplates.map((template) => (
+              <option value={template.template_key} selected={currentCheckoutTemplate === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Controls the checkout flow when donors click donate buttons. 3-Step: Side Cart → Info → Payment. 1-Step: Direct single-page checkout.</p>
         </div>
         <div class="md:col-span-2 flex items-center gap-4">
           <button type="submit" class="px-6 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">
@@ -649,6 +689,156 @@ const listStyleColors = getColors('list-style');
                 </svg>
               </button>
               <button data-set-default data-template-type="default_donation_box_template" data-template-value="urgent-appeal" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CW Donation Template (Charity:Water Inspired) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'cw-donation' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini CW Donation Box Preview -->
+            <div class="bg-white rounded-lg overflow-hidden transform scale-90 origin-top shadow-sm">
+              <div class="h-[3px] bg-[#d4a017]"></div>
+              <div class="p-3">
+                <!-- Toggle -->
+                <div class="flex items-center justify-center gap-4 mb-3">
+                  <span class="px-3 py-1 bg-[#d4a017] text-[#5a3e00] text-xs font-bold rounded-full">MONTHLY 🌙</span>
+                  <span class="text-gray-400 text-xs font-medium">GIVE ONCE</span>
+                </div>
+                <!-- Monthly Amounts Grid -->
+                <div class="grid grid-cols-2 gap-1 mb-2">
+                  <button class="py-1.5 text-xs rounded border border-gray-200 text-gray-700">$10 <span class="text-[8px] text-gray-400">USD/mo</span></button>
+                  <button class="py-1.5 text-xs rounded border border-gray-200 text-gray-700">$20 <span class="text-[8px] text-gray-400">USD/mo</span></button>
+                  <button class="py-1.5 text-xs rounded border-2 border-[#d4a017] bg-[#d4a017]/10 text-gray-800 font-bold">$40 <span class="text-[8px] text-gray-500">USD/mo</span></button>
+                  <button class="py-1.5 text-xs rounded border border-gray-200 text-gray-700">$100 <span class="text-[8px] text-gray-400">USD/mo</span></button>
+                </div>
+                <!-- Impact -->
+                <p class="text-[9px] text-gray-500 mb-2">💛 Your monthly gift serves people all year long.</p>
+                <!-- CTA -->
+                <button class="w-full py-2 text-xs font-bold rounded-lg bg-[#d4a017] text-[#5a3e00] uppercase">
+                  JOIN TODAY
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">CW Donation</h3>
+            <p class="text-sm text-gray-500 mb-4">Charity:water-inspired design with monthly-first toggle, impact text, and monthly upsell for one-time donors.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-[#d4a017]/10 text-[#5a3e00] text-xs rounded">Monthly First</span>
+              <span class="px-2 py-1 bg-[#d4a017]/10 text-[#5a3e00] text-xs rounded">Upsell Flow</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Impact Text</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('cw-donation')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('cw-donation', 'CW Donation')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="cw-donation" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
+                Set Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Home Donation Box Template -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Live Preview -->
+          <div class="p-4 bg-gray-100 relative">
+            {currentDonationBoxTemplate === 'home-donation' && (
+              <span class="absolute top-2 right-2 px-2 py-1 bg-[#01534d] text-white text-xs font-medium rounded z-10">
+                Default
+              </span>
+            )}
+            <!-- Mini Home Donation Box Preview -->
+            <div class="bg-white rounded-2xl overflow-hidden transform scale-90 origin-top shadow-sm">
+              <!-- Mini matching banner -->
+              <div class="bg-gradient-to-r from-[#d97706] to-[#f59e0b] px-3 py-1.5 text-center">
+                <span class="text-white text-[9px] font-medium">2X MATCHING &bull; Double your impact!</span>
+              </div>
+              <div class="p-3">
+                <!-- Social proof -->
+                <div class="flex items-center gap-2 mb-2 p-1.5 bg-amber-50 rounded-lg border border-amber-100">
+                  <div class="flex -space-x-1">
+                    <div class="w-4 h-4 rounded-full bg-[#0096D6] text-white text-[6px] font-bold flex items-center justify-center ring-1 ring-white">S</div>
+                    <div class="w-4 h-4 rounded-full bg-[#0096D6] text-white text-[6px] font-bold flex items-center justify-center ring-1 ring-white">A</div>
+                  </div>
+                  <span class="text-[8px] text-amber-800"><strong>127</strong> donated today</span>
+                  <span class="ml-auto inline-flex items-center gap-0.5 text-emerald-600 text-[7px]">
+                    <span class="w-1 h-1 bg-emerald-500 rounded-full"></span>Live
+                  </span>
+                </div>
+                <!-- Amounts -->
+                <div class="grid grid-cols-2 gap-1 mb-2">
+                  <div class="py-1 px-1.5 rounded border border-neutral-200 text-[8px]">
+                    <div class="font-bold text-neutral-800">$45<span class="font-normal text-neutral-400">/mo</span></div>
+                    <div class="text-neutral-400">Sponsor Orphan</div>
+                  </div>
+                  <div class="py-1 px-1.5 rounded border border-neutral-200 text-[8px]">
+                    <div class="font-bold text-neutral-800">$100</div>
+                    <div class="text-neutral-400">Feed a family</div>
+                  </div>
+                </div>
+                <!-- Fund icons row -->
+                <div class="flex justify-center gap-2 mb-2">
+                  <div class="flex flex-col items-center">
+                    <div class="w-5 h-5 rounded-md bg-amber-50 border border-[#d97706] flex items-center justify-center">
+                      <svg class="w-3 h-3 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    </div>
+                    <span class="text-[6px] text-[#d97706] mt-0.5">Most Needed</span>
+                  </div>
+                  <div class="flex flex-col items-center">
+                    <div class="w-5 h-5 rounded-md bg-white border border-neutral-200 flex items-center justify-center">
+                      <svg class="w-3 h-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v1"></path></svg>
+                    </div>
+                    <span class="text-[6px] text-neutral-500 mt-0.5">Zakat</span>
+                  </div>
+                  <div class="flex flex-col items-center">
+                    <div class="w-5 h-5 rounded-md bg-white border border-neutral-200 flex items-center justify-center">
+                      <svg class="w-3 h-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"></path></svg>
+                    </div>
+                    <span class="text-[6px] text-neutral-500 mt-0.5">Orphans</span>
+                  </div>
+                </div>
+                <!-- CTA -->
+                <button class="w-full py-1.5 text-[9px] font-bold rounded-lg bg-[#d97706] text-white">
+                  Donate Now →
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div class="p-5">
+            <h3 class="font-semibold text-gray-800 mb-2">Home Donation Box</h3>
+            <p class="text-sm text-gray-500 mb-4">Original homepage widget with 2X matching banner, live social proof, fund selector, and impact labels.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <span class="px-2 py-1 bg-[#d97706]/10 text-[#b45309] text-xs rounded">Social Proof</span>
+              <span class="px-2 py-1 bg-[#d97706]/10 text-[#b45309] text-xs rounded">Fund Selector</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">Impact Labels</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openColorEditor('home-donation')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition">
+                Edit
+              </button>
+              <button onclick="duplicateTemplate('home-donation', 'Home Donation Box')" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition" title="Duplicate">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+              </button>
+              <button data-set-default data-template-type="default_donation_box_template" data-template-value="home-donation" class="px-3 py-2 text-[#01534d] hover:bg-[#01534d]/10 rounded-lg text-sm font-medium transition">
                 Set Default
               </button>
             </div>
@@ -1842,7 +2032,7 @@ const listStyleColors = getColors('list-style');
       const labelInput = form.querySelector(`[name="label_${i}"]`);
       if (amountInput && amountInput.value) {
         defaultAmounts.push({
-          amount: parseInt(amountInput.value),
+          amount: parseFloat(amountInput.value),
           label: labelInput ? labelInput.value : ''
         });
       }
@@ -1884,6 +2074,7 @@ const listStyleColors = getColors('list-style');
       orphan_sponsorship_template: formData.get('orphan_sponsorship_template'),
       homepage_template: formData.get('homepage_template'),
       ramadan_page_template: formData.get('ramadan_page_template'),
+      checkout_template: formData.get('checkout_template'),
     };
 
     try {

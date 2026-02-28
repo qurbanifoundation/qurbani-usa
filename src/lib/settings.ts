@@ -38,6 +38,16 @@ const defaultSettings = {
   // Header settings
   show_top_bar: true,
   header_transparent: false,
+
+  // Checkout settings
+  checkout_template: 'three-step' as string,
+
+  // Popup settings
+  show_ramadan_popup: true,
+  show_cart_reminder: true,
+
+  // Homepage donation box
+  donation_box_heading: '',
 };
 
 export type SiteSettings = typeof defaultSettings;

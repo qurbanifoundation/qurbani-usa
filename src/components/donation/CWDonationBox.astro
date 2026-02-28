@@ -1,0 +1,859 @@
+---
+/**
+ * CW DONATION BOX TEMPLATE
+ *
+ * Charity:water-inspired donation box with 3-state flow:
+ *   State 1: Monthly (default) — monthly amounts, "JOIN TODAY" CTA
+ *   State 2: Give Once — one-time amounts, "GIVE" CTA
+ *   State 3: Monthly Upsell — shown after clicking GIVE, nudges monthly conversion
+ *
+ * Design: Individual rounded pill buttons, soft shadows, clean typography
+ */
+
+import { generateImpactTexts, getDefaultMonthlyImpact } from '../../lib/donation-defaults';
+
+interface Props {
+  campaignSlug?: string;
+  campaignTitle?: string;
+  campaignImage?: string;
+  monthlyAmounts?: number[];
+  oneTimeAmounts?: number[];
+  impactTexts?: Record<string, Record<number, string>>;
+  monthlyImpactText?: string;
+  upsellBody?: string;
+  upsellSubText?: string;
+  upsellMonthlyRatio?: number;
+  showSpecialProject?: boolean;
+  specialProjectText?: string;
+  specialProjectAmount?: number;
+  showAlternatePayments?: boolean;
+  colors?: {
+    accentColor?: string;
+    accentTextColor?: string;
+  };
+  tabEmoji?: string;
+  buttonTextMonthly?: string;
+  buttonTextOneTime?: string;
+  donationBoxHeading?: string;
+  className?: string;
+}
+
+const {
+  campaignSlug = 'general',
+  campaignTitle = 'Donation',
+  campaignImage = '',
+  monthlyAmounts = [10, 20, 40, 100],
+  oneTimeAmounts = [50, 100, 150, 200],
+  impactTexts = {},
+  monthlyImpactText = 'Gives <strong>12 people</strong> clean water every year.',
+  upsellBody = "By making a monthly donation, you'll empower us to make long-term investments to bring clean water to more families around the world.",
+  upsellSubText = 'Please consider joining our monthly giving community. Monthly donors are our most impactful and committed supporters.',
+  upsellMonthlyRatio = 0.4,
+  showSpecialProject = false,
+  specialProjectText = 'Sponsor an entire water project',
+  specialProjectAmount = 10000,
+  showAlternatePayments = false,
+  colors = {},
+  tabEmoji = '',
+  buttonTextMonthly = 'JOIN TODAY',
+  buttonTextOneTime = 'GIVE',
+  donationBoxHeading = '',
+  className = '',
+} = Astro.props;
+
+const accentColor = colors.accentColor || '#e1861d';
+const accentTextColor = colors.accentTextColor || '#ffffff';
+const boxId = `cw-box-${Math.random().toString(36).substr(2, 9)}`;
+
+// Auto-detect emoji from campaign slug if not explicitly set
+function getEmojiForCampaign(slug: string): string {
+  const s = slug.toLowerCase();
+
+  // Home / general
+  if (s === 'general' || s === 'where-needed' || s === 'home') return '❤️';
+
+  // Water campaigns
+  if (s.includes('water') || s.includes('well')) return '💧';
+
+  // Country flags — emergency/relief
+  if (s.includes('sudan')) return '🇸🇩';
+  if (s.includes('gaza') || s.includes('palestin')) return '🇵🇸';
+  if (s.includes('syria')) return '🇸🇾';
+  if (s.includes('yemen')) return '🇾🇪';
+  if (s.includes('afghanistan') || s.includes('afghan')) return '🇦🇫';
+  if (s.includes('pakistan')) return '🇵🇰';
+  if (s.includes('somalia')) return '🇸🇴';
+  if (s.includes('bangladesh')) return '🇧🇩';
+  if (s.includes('turkey') || s.includes('turkiye')) return '🇹🇷';
+  if (s.includes('morocco')) return '🇲🇦';
+  if (s.includes('libya')) return '🇱🇾';
+  if (s.includes('lebanon')) return '🇱🇧';
+  if (s.includes('iraq')) return '🇮🇶';
+  if (s.includes('india')) return '🇮🇳';
+  if (s.includes('africa')) return '🌍';
+
+  // Zakat
+  if (s.includes('zakat')) return '🤲';
+
+  // Ramadan / fasting / iftar / fidya / kaffarah
+  if (s.includes('ramadan') || s.includes('fasting') || s.includes('iftar') || s.includes('fidya') || s.includes('kaffarah') || s.includes('fitr')) return '🌙';
+
+  // Orphan
+  if (s.includes('orphan')) return '👶';
+
+  // Food
+  if (s.includes('food') || s.includes('feed') || s.includes('meal') || s.includes('hunger')) return '🍽️';
+
+  // Education / school
+  if (s.includes('school') || s.includes('education') || s.includes('quran')) return '📚';
+
+  // Healthcare / medical
+  if (s.includes('medical') || s.includes('health') || s.includes('clinic') || s.includes('eye-care')) return '🏥';
+
+  // Qurbani
+  if (s.includes('qurbani') || s.includes('aqiqah') || s.includes('udhiyah')) return '🐑';
+
+  // Mosque
+  if (s.includes('mosque') || s.includes('masjid')) return '🕌';
+
+  // Sadaqah / charity
+  if (s.includes('sadaqah') || s.includes('sadaqa') || s.includes('jariyah')) return '🌱';
+
+  // Emergency (generic)
+  if (s.includes('emergency') || s.includes('crisis') || s.includes('relief') || s.includes('disaster')) return '🆘';
+
+  // Default — use 'heart' as marker for SVG rendering
+  return 'heart';
+}
+
+const resolvedEmoji = tabEmoji || getEmojiForCampaign(campaignSlug);
+const useHeartSvg = resolvedEmoji === 'heart';
+
+// Use provided impactTexts, or auto-generate from campaign slug (imported from lib/donation-defaults)
+const hasCustomImpactTexts = Object.keys(impactTexts).length > 0;
+const resolvedImpactTexts = hasCustomImpactTexts ? impactTexts : generateImpactTexts(campaignSlug);
+
+const resolvedMonthlyImpact = monthlyImpactText !== 'Gives <strong>12 people</strong> clean water every year.'
+  ? monthlyImpactText
+  : getDefaultMonthlyImpact(campaignSlug);
+
+// Pre-select 3rd monthly amount (index 2) as default
+const defaultMonthlyIndex = 2;
+const defaultMonthlyAmount = monthlyAmounts[defaultMonthlyIndex] || 40;
+
+// Pre-select 2nd one-time amount (index 1 = $100) as default
+const defaultOnetimeIndex = 1;
+const defaultOnetimeAmount = oneTimeAmounts[defaultOnetimeIndex] || 100;
+---
+
+{donationBoxHeading && (
+  <h2 class="text-2xl md:text-3xl font-bold text-white text-center mb-4 font-signika">{donationBoxHeading}</h2>
+)}
+<div
+  id={boxId}
+  class={`bg-white rounded-md overflow-hidden shadow-xl border border-gray-200 w-full ${className}`}
+  data-donation-box
+  data-template="cw-donation"
+>
+  <!-- Toggle header with background -->
+  <div class="px-5 pt-5 pb-4 sm:px-7 sm:pt-6 sm:pb-5" style="background-color: #F4F5F0;">
+    <!-- Form tabs (shown in States 1 & 2) -->
+    <div class="cw-form-header grid grid-cols-2 gap-3">
+      <button
+        type="button"
+        class="cw-toggle flex items-center justify-center gap-1.5 py-2.5 rounded text-[13px] font-bold uppercase tracking-wider transition-all border-2"
+        data-type="monthly"
+        style={`background-color: ${accentColor}; color: ${accentTextColor}; border-color: ${accentColor};`}
+      >
+        MONTHLY {useHeartSvg ? (
+          <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        ) : (
+          <span class="text-base">{resolvedEmoji}</span>
+        )}
+      </button>
+      <button
+        type="button"
+        class="cw-toggle flex items-center justify-center py-2.5 rounded text-[13px] font-bold uppercase tracking-wider transition-all text-gray-400 hover:text-gray-600 border-2 border-transparent"
+        data-type="single"
+      >
+        GIVE ONCE
+      </button>
+    </div>
+    <!-- Upsell header (shown in State 3, replaces tabs) -->
+    <div class="cw-upsell-header hidden">
+      <p class="text-center text-sm text-gray-500 py-1">
+        Giving <strong class="cw-upsell-amount text-gray-800 text-base">$50 USD</strong><span class="cw-upsell-period"></span>
+        <button type="button" class="cw-edit-link ml-1.5 text-[11px] font-bold text-gray-800 uppercase tracking-wide hover:text-gray-600 transition-colors" style="border-bottom: 1.5px solid currentColor;">EDIT</button>
+      </p>
+    </div>
+  </div>
+
+  <div class="px-5 pt-5 pb-5 sm:px-7 sm:pt-6 sm:pb-6">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FORM VIEW (States 1 & 2)                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="cw-form-view">
+
+      <!-- Monthly Amounts (State 1) -->
+      <div class="cw-monthly-grid">
+        <!-- Row 1: first 3 amounts -->
+        <div class="grid grid-cols-3 gap-2.5 mb-2.5">
+          {monthlyAmounts.slice(0, 3).map((amt, i) => (
+            <button
+              type="button"
+              class={`cw-amt-btn relative rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${i === defaultMonthlyIndex ? 'cw-amt-selected' : ''}`}
+              data-amount={amt}
+              data-freq="monthly"
+              style={i === defaultMonthlyIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+            >
+              <span class={`text-[17px] font-bold ${i === defaultMonthlyIndex ? '' : 'text-gray-400'}`}>${amt}</span>
+              <span class={`text-[11px] ml-0.5 font-medium ${i === defaultMonthlyIndex ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
+            </button>
+          ))}
+        </div>
+        <!-- Row 2: 4th amount + Other amount (2x wider) -->
+        <div class="grid grid-cols-3 gap-2.5">
+          {monthlyAmounts.slice(3).map((amt) => {
+            const isDefault = monthlyAmounts.indexOf(amt) === defaultMonthlyIndex;
+            return (
+              <button
+                type="button"
+                class={`cw-amt-btn relative rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
+                data-amount={amt}
+                data-freq="monthly"
+                style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+              >
+                <span class={`text-[17px] font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                <span class={`text-[11px] ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>USD/mo</span>
+              </button>
+            );
+          })}
+          <!-- Other amount: button and input share the same col-span-2 slot -->
+          <button
+            type="button"
+            class="cw-monthly-other-btn col-span-2 rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold text-[17px]"
+            style="background-color: #f4f5f0;"
+          >
+            Other
+          </button>
+          <div class="cw-monthly-custom-wrap col-span-2 hidden">
+            <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+              <input
+                type="number"
+                step="0.01"
+                min="1"
+                class="cw-monthly-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                placeholder="Other"
+              />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD/mo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- One-Time Amounts (State 2, hidden initially) -->
+      <div class="cw-onetime-grid hidden">
+        <!-- Row 1: first 3 amounts -->
+        <div class="grid grid-cols-3 gap-2.5 mb-2.5">
+          {oneTimeAmounts.slice(0, 3).map((amt, i) => (
+            <button
+              type="button"
+              class={`cw-amt-btn rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${i === defaultOnetimeIndex ? 'cw-amt-selected' : ''}`}
+              data-amount={amt}
+              data-freq="single"
+              style={i === defaultOnetimeIndex ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+            >
+              <span class={`text-[17px] font-bold ${i === defaultOnetimeIndex ? '' : 'text-gray-400'}`}>${amt}</span>
+              <span class={`text-[11px] ml-0.5 font-medium ${i === defaultOnetimeIndex ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
+            </button>
+          ))}
+        </div>
+        <!-- Row 2: remaining amounts + Other amount (2x wider) -->
+        <div class="grid grid-cols-3 gap-2.5">
+          {oneTimeAmounts.slice(3).map((amt) => {
+            const isOnetimeDefault = oneTimeAmounts.indexOf(amt) === defaultOnetimeIndex;
+            return (
+              <button
+                type="button"
+                class={`cw-amt-btn rounded py-3 px-3 text-center transition-all border border-[#e0e1dc] ${isOnetimeDefault ? 'cw-amt-selected' : ''}`}
+                data-amount={amt}
+                data-freq="single"
+                style={isOnetimeDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+              >
+                <span class={`text-[17px] font-bold ${isOnetimeDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                <span class={`text-[11px] ml-0.5 font-medium ${isOnetimeDefault ? 'opacity-70' : 'text-gray-400'}`}>USD</span>
+              </button>
+            );
+          })}
+          <!-- Other amount: button and input share the same col-span-2 slot -->
+          <button
+            type="button"
+            class="cw-other-btn col-span-2 rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold text-[17px]"
+            style="background-color: #f4f5f0;"
+          >
+            Other
+          </button>
+          <div class="cw-onetime-custom-wrap col-span-2 hidden">
+            <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+              <input
+                type="number"
+                step="0.01"
+                min="1"
+                class="cw-onetime-custom w-full pl-8 pr-14 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                placeholder="Other"
+              />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">USD</span>
+            </div>
+          </div>
+        </div>
+
+        {showSpecialProject && (
+          <button
+            type="button"
+            class="cw-special-btn w-full py-3 rounded border-2 border-gray-200 text-sm text-gray-600 font-medium mt-2.5 hover:border-gray-300 transition"
+            data-amount={specialProjectAmount}
+          >
+            {specialProjectText}
+          </button>
+        )}
+      </div>
+
+      <!-- Impact Line -->
+      <div class="cw-impact-line flex items-start gap-2 mt-5 mb-5">
+        <svg class="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill={accentColor} xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <p class="cw-impact-text text-[13px] text-gray-500 leading-relaxed"></p>
+      </div>
+
+      <!-- CTA Button -->
+      <button
+        type="button"
+        class="cw-donate-btn w-full py-4 rounded font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all hover:brightness-105 active:scale-[0.99]"
+        style={`background-color: ${accentColor}; color: ${accentTextColor};`}
+      >
+        {buttonTextMonthly}
+      </button>
+
+      {showAlternatePayments && (
+        <div class="cw-alt-payments hidden text-center mt-3">
+          <a href="/donate?method=check" class="text-xs text-gray-500 underline hover:text-gray-700">Give by check or stock</a>
+          <span class="text-xs text-gray-300 mx-1">&middot;</span>
+          <a href="/donate?method=crypto" class="text-xs text-gray-500 underline hover:text-gray-700">Donate crypto</a>
+        </div>
+      )}
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- UPSELL VIEW (State 3)                      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="cw-upsell-view hidden">
+      <!-- Title -->
+      <h3 class="text-xl font-bold text-gray-800 text-center mb-3" style="font-family: 'Signika', sans-serif;">
+        Would you consider something?
+      </h3>
+
+      <!-- Body text -->
+      <p class="cw-upsell-body text-sm text-gray-500 leading-relaxed mb-5 text-center"></p>
+
+      <!-- Monthly toggle card -->
+      <div class="rounded-lg p-4 mb-5 border border-gray-200" style="background-color: #f9f9f7;">
+        <div class="flex items-center gap-3">
+          <!-- Toggle switch (wider, matching charity:water style) -->
+          <button type="button" class="cw-upsell-toggle relative w-14 h-7 rounded-full bg-gray-300 transition-colors flex-shrink-0" role="switch" aria-checked="false">
+            <span class="cw-upsell-toggle-dot absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform flex items-center justify-center">
+              <svg class="cw-toggle-x w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+              <svg class="cw-toggle-check w-3.5 h-3.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </button>
+          <span class="cw-upsell-monthly-label text-sm font-semibold text-gray-700">
+            Give $20 per month instead
+          </span>
+        </div>
+        <p class="cw-upsell-subtext text-xs text-gray-400 mt-2.5 leading-relaxed"></p>
+      </div>
+
+      <!-- CTA Button -->
+      <button
+        type="button"
+        class="cw-upsell-btn w-full py-4 rounded font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all hover:brightness-105 active:scale-[0.99]"
+        style={`background-color: ${accentColor}; color: ${accentTextColor};`}
+      >
+        GIVE $50
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script define:vars={{
+  boxId,
+  campaignSlug,
+  campaignTitle,
+  campaignImage,
+  monthlyAmounts,
+  oneTimeAmounts,
+  impactTexts: resolvedImpactTexts,
+  monthlyImpactText: resolvedMonthlyImpact,
+  upsellBody,
+  upsellSubText,
+  upsellMonthlyRatio,
+  specialProjectAmount,
+  accentColor,
+  accentTextColor,
+  buttonTextMonthly,
+  buttonTextOneTime,
+  defaultMonthlyAmount,
+  defaultOnetimeAmount
+}}>
+  document.addEventListener('DOMContentLoaded', function() {
+    var box = document.getElementById(boxId);
+    if (!box) return;
+
+    var selectedAmount = defaultMonthlyAmount;
+    var donationType = 'monthly';
+    var upsellMonthlyActive = false;
+
+    // Elements
+    var toggleBtns = box.querySelectorAll('.cw-toggle');
+    var monthlyGrid = box.querySelector('.cw-monthly-grid');
+    var onetimeGrid = box.querySelector('.cw-onetime-grid');
+    var monthlyBtns = box.querySelectorAll('.cw-monthly-grid .cw-amt-btn');
+    var onetimeBtns = box.querySelectorAll('.cw-onetime-grid .cw-amt-btn');
+    var monthlyOtherBtn = box.querySelector('.cw-monthly-other-btn');
+    var monthlyCustomWrap = box.querySelector('.cw-monthly-custom-wrap');
+    var monthlyCustom = box.querySelector('.cw-monthly-custom');
+    var onetimeCustom = box.querySelector('.cw-onetime-custom');
+    var onetimeCustomWrap = box.querySelector('.cw-onetime-custom-wrap');
+    var otherBtn = box.querySelector('.cw-other-btn');
+    var specialBtn = box.querySelector('.cw-special-btn');
+    var impactText = box.querySelector('.cw-impact-text');
+    var donateBtn = box.querySelector('.cw-donate-btn');
+    var altPayments = box.querySelector('.cw-alt-payments');
+    var formHeader = box.querySelector('.cw-form-header');
+    var upsellHeader = box.querySelector('.cw-upsell-header');
+    var formView = box.querySelector('.cw-form-view');
+    var upsellView = box.querySelector('.cw-upsell-view');
+    var upsellAmountEl = box.querySelector('.cw-upsell-amount');
+    var upsellPeriodEl = box.querySelector('.cw-upsell-period');
+    var upsellBodyEl = box.querySelector('.cw-upsell-body');
+    var upsellSubtextEl = box.querySelector('.cw-upsell-subtext');
+    var upsellToggle = box.querySelector('.cw-upsell-toggle');
+    var upsellToggleDot = box.querySelector('.cw-upsell-toggle-dot');
+    var upsellMonthlyLabel = box.querySelector('.cw-upsell-monthly-label');
+    var upsellBtn = box.querySelector('.cw-upsell-btn');
+    var editLink = box.querySelector('.cw-edit-link');
+
+    // ═══════════════════════════════════════════
+    // TOGGLE: Monthly / Give Once
+    // ═══════════════════════════════════════════
+    toggleBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        donationType = this.dataset.type;
+        var isMonthly = donationType === 'monthly';
+
+        toggleBtns.forEach(function(b) {
+          if (b.dataset.type === donationType) {
+            b.style.backgroundColor = accentColor;
+            b.style.color = accentTextColor;
+            b.style.borderColor = accentColor;
+          } else {
+            b.style.backgroundColor = 'transparent';
+            b.style.color = '#9ca3af';
+            b.style.borderColor = 'transparent';
+          }
+        });
+
+        if (isMonthly) {
+          monthlyGrid.classList.remove('hidden');
+          onetimeGrid.classList.add('hidden');
+          if (altPayments) altPayments.classList.add('hidden');
+        } else {
+          monthlyGrid.classList.add('hidden');
+          onetimeGrid.classList.remove('hidden');
+          if (altPayments) altPayments.classList.remove('hidden');
+        }
+
+        clearAllAmountStyles();
+        if (monthlyCustom) monthlyCustom.value = '';
+        if (onetimeCustom) onetimeCustom.value = '';
+        if (monthlyCustomWrap) monthlyCustomWrap.classList.add('hidden');
+        if (monthlyOtherBtn) monthlyOtherBtn.classList.remove('hidden');
+        if (onetimeCustomWrap) onetimeCustomWrap.classList.add('hidden');
+        if (otherBtn) otherBtn.classList.remove('hidden');
+
+        // Pre-select default amount for the active tab
+        if (isMonthly) {
+          selectedAmount = defaultMonthlyAmount;
+          monthlyBtns.forEach(function(b) {
+            if (parseFloat(b.dataset.amount) === defaultMonthlyAmount) {
+              highlightMonthlyBtn(b);
+            }
+          });
+        } else {
+          selectedAmount = defaultOnetimeAmount;
+          onetimeBtns.forEach(function(b) {
+            if (parseFloat(b.dataset.amount) === defaultOnetimeAmount) {
+              highlightOnetimeBtn(b);
+            }
+          });
+        }
+
+        donateBtn.textContent = isMonthly ? buttonTextMonthly : buttonTextOneTime;
+        updateImpact();
+      });
+    });
+
+    // ═══════════════════════════════════════════
+    // AMOUNT SELECTION: Monthly
+    // ═══════════════════════════════════════════
+    monthlyBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        selectedAmount = parseFloat(this.dataset.amount);
+        if (monthlyCustom) monthlyCustom.value = '';
+        if (monthlyCustomWrap) monthlyCustomWrap.classList.add('hidden');
+        if (monthlyOtherBtn) monthlyOtherBtn.classList.remove('hidden');
+        highlightMonthlyBtn(this);
+        updateImpact();
+      });
+    });
+
+    // Monthly "Other amount" button
+    if (monthlyOtherBtn) {
+      monthlyOtherBtn.addEventListener('click', function() {
+        if (monthlyCustomWrap) monthlyCustomWrap.classList.remove('hidden');
+        monthlyOtherBtn.classList.add('hidden');
+        clearMonthlyBtnStyles();
+        selectedAmount = 0;
+        if (monthlyCustom) monthlyCustom.focus();
+      });
+    }
+
+    // Monthly custom input
+    if (monthlyCustom) {
+      monthlyCustom.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value) || 0;
+          clearMonthlyBtnStyles();
+          updateImpact();
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // AMOUNT SELECTION: One-Time
+    // ═══════════════════════════════════════════
+    onetimeBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        selectedAmount = parseFloat(this.dataset.amount);
+        if (onetimeCustom) onetimeCustom.value = '';
+        if (onetimeCustomWrap) onetimeCustomWrap.classList.add('hidden');
+        if (otherBtn) otherBtn.classList.remove('hidden');
+        highlightOnetimeBtn(this);
+        updateImpact();
+      });
+    });
+
+    // "Other amount" button → reveals input
+    if (otherBtn) {
+      otherBtn.addEventListener('click', function() {
+        if (onetimeCustomWrap) onetimeCustomWrap.classList.remove('hidden');
+        otherBtn.classList.add('hidden');
+        clearOnetimeBtnStyles();
+        selectedAmount = 0;
+        if (onetimeCustom) onetimeCustom.focus();
+      });
+    }
+
+    // One-time custom input
+    if (onetimeCustom) {
+      onetimeCustom.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value) || 0;
+          clearOnetimeBtnStyles();
+          updateImpact();
+        }
+      });
+    }
+
+    // Special project button
+    if (specialBtn) {
+      specialBtn.addEventListener('click', function() {
+        selectedAmount = parseFloat(this.dataset.amount);
+        clearOnetimeBtnStyles();
+        if (onetimeCustom) onetimeCustom.value = '';
+        specialBtn.style.borderColor = accentColor;
+        specialBtn.style.backgroundColor = accentColor;
+        specialBtn.style.color = accentTextColor;
+        updateImpact();
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // CTA BUTTON
+    // ═══════════════════════════════════════════
+    donateBtn.addEventListener('click', function() {
+      var amt = selectedAmount;
+      if (donationType === 'monthly' && monthlyCustom && monthlyCustom.value) {
+        amt = parseFloat(monthlyCustom.value) || amt;
+      }
+      if (donationType === 'single' && onetimeCustom && onetimeCustom.value) {
+        amt = parseFloat(onetimeCustom.value) || amt;
+      }
+
+      if (!amt || amt < 1) {
+        alert('Please select or enter a donation amount');
+        return;
+      }
+
+      if (donationType === 'monthly') {
+        addItemToCart(amt, 'monthly');
+        return;
+      }
+
+      // Skip upsell for amounts over $200 — go straight to cart
+      if (amt > 200) {
+        addItemToCart(amt, 'single');
+        return;
+      }
+
+      showUpsell(amt);
+    });
+
+    // ═══════════════════════════════════════════
+    // UPSELL VIEW (State 3)
+    // ═══════════════════════════════════════════
+    function showUpsell(amount) {
+      var suggestedMonthly = Math.round(amount * upsellMonthlyRatio);
+      if (suggestedMonthly < 5) suggestedMonthly = 5;
+
+      formView.classList.add('hidden');
+      upsellView.classList.remove('hidden');
+      formHeader.classList.add('hidden');
+      upsellHeader.classList.remove('hidden');
+
+      upsellAmountEl.textContent = '$' + amount + ' USD';
+
+      // Build dynamic upsell body using the selected amount's impact text
+      var impactPhrase = '';
+      if (impactTexts && impactTexts.single && impactTexts.single[amount]) {
+        // Strip HTML tags to get plain text (e.g. "Provide <strong>emergency food parcels</strong>" → "emergency food parcels")
+        var temp = document.createElement('div');
+        temp.innerHTML = impactTexts.single[amount];
+        impactPhrase = temp.textContent || temp.innerText || '';
+        // Lowercase the first letter for mid-sentence use
+        impactPhrase = impactPhrase.charAt(0).toLowerCase() + impactPhrase.slice(1);
+      }
+      if (impactPhrase) {
+        upsellBodyEl.textContent = "By making a monthly donation, you'll empower us to make long-term investments to " + impactPhrase + " for more families around the world.";
+      } else {
+        upsellBodyEl.textContent = upsellBody;
+      }
+      upsellSubtextEl.textContent = upsellSubText;
+      upsellMonthlyLabel.textContent = 'Give $' + suggestedMonthly + ' per month instead';
+      upsellBtn.textContent = buttonTextOneTime + ' $' + amount;
+
+      upsellView._oneTimeAmount = amount;
+      upsellView._monthlyAmount = suggestedMonthly;
+      upsellMonthlyActive = false;
+
+      upsellToggle.setAttribute('aria-checked', 'false');
+      upsellToggle.style.backgroundColor = '#d1d5db';
+      upsellToggleDot.style.transform = 'translateX(0)';
+      upsellToggleDot.style.backgroundColor = '#ffffff';
+      // Show X icon, hide checkmark when toggle is off
+      var toggleX = upsellToggleDot.querySelector('.cw-toggle-x');
+      var toggleCheck = upsellToggleDot.querySelector('.cw-toggle-check');
+      if (toggleX) toggleX.classList.remove('hidden');
+      if (toggleCheck) toggleCheck.classList.add('hidden');
+    }
+
+    // Edit link → back to State 2
+    if (editLink) {
+      editLink.addEventListener('click', function() {
+        upsellView.classList.add('hidden');
+        formView.classList.remove('hidden');
+        upsellHeader.classList.add('hidden');
+        formHeader.classList.remove('hidden');
+        donationType = 'single';
+        toggleBtns.forEach(function(b) {
+          if (b.dataset.type === 'single') {
+            b.style.backgroundColor = accentColor;
+            b.style.color = accentTextColor;
+            b.style.borderColor = accentColor;
+          } else {
+            b.style.backgroundColor = 'transparent';
+            b.style.color = '#9ca3af';
+            b.style.borderColor = 'transparent';
+          }
+        });
+        monthlyGrid.classList.add('hidden');
+        onetimeGrid.classList.remove('hidden');
+        if (altPayments) altPayments.classList.remove('hidden');
+        donateBtn.textContent = buttonTextOneTime;
+      });
+    }
+
+    // Upsell toggle switch
+    if (upsellToggle) {
+      upsellToggle.addEventListener('click', function() {
+        upsellMonthlyActive = !upsellMonthlyActive;
+        this.setAttribute('aria-checked', upsellMonthlyActive ? 'true' : 'false');
+        var toggleX = upsellToggleDot.querySelector('.cw-toggle-x');
+        var toggleCheck = upsellToggleDot.querySelector('.cw-toggle-check');
+
+        if (upsellMonthlyActive) {
+          this.style.backgroundColor = accentColor;
+          upsellToggleDot.style.transform = 'translateX(28px)';
+          upsellToggleDot.style.backgroundColor = accentColor;
+          if (toggleX) toggleX.classList.add('hidden');
+          if (toggleCheck) toggleCheck.classList.remove('hidden');
+          upsellBtn.textContent = buttonTextOneTime + ' $' + upsellView._monthlyAmount;
+          upsellAmountEl.textContent = '$' + upsellView._monthlyAmount + ' USD';
+          if (upsellPeriodEl) upsellPeriodEl.textContent = ' per month';
+        } else {
+          this.style.backgroundColor = '#d1d5db';
+          upsellToggleDot.style.transform = 'translateX(0)';
+          upsellToggleDot.style.backgroundColor = '#ffffff';
+          if (toggleX) toggleX.classList.remove('hidden');
+          if (toggleCheck) toggleCheck.classList.add('hidden');
+          upsellBtn.textContent = buttonTextOneTime + ' $' + upsellView._oneTimeAmount;
+          upsellAmountEl.textContent = '$' + upsellView._oneTimeAmount + ' USD';
+          if (upsellPeriodEl) upsellPeriodEl.textContent = '';
+        }
+      });
+    }
+
+    // Upsell CTA button
+    if (upsellBtn) {
+      upsellBtn.addEventListener('click', function() {
+        if (upsellMonthlyActive) {
+          addItemToCart(upsellView._monthlyAmount, 'monthly');
+        } else {
+          addItemToCart(upsellView._oneTimeAmount, 'single');
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════
+    function addItemToCart(amount, type) {
+      var itemId = campaignSlug + '-' + amount + '-' + type;
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: itemId,
+          name: campaignTitle,
+          label: '$' + amount + ' Donation',
+          amount: amount,
+          quantity: 1,
+          type: type,
+          recurringInterval: type === 'monthly' ? 'monthly' : undefined,
+          image: campaignImage,
+          campaign: campaignSlug
+        });
+      }
+    }
+
+    function updateImpact() {
+      if (!impactText) return;
+
+      if (donationType === 'monthly') {
+        // Check for amount-specific monthly impact texts
+        if (impactTexts && impactTexts.monthly && selectedAmount > 0) {
+          var monthlyTexts = impactTexts.monthly;
+          if (monthlyTexts[selectedAmount]) {
+            impactText.innerHTML = monthlyTexts[selectedAmount];
+            return;
+          }
+        }
+        impactText.innerHTML = monthlyImpactText || '';
+        return;
+      }
+
+      // One-time: check for amount-specific text
+      if (impactTexts && impactTexts.single && selectedAmount > 0) {
+        var singleTexts = impactTexts.single;
+        if (singleTexts[selectedAmount]) {
+          impactText.innerHTML = singleTexts[selectedAmount];
+          return;
+        }
+        // Find closest lower amount
+        var amounts = Object.keys(singleTexts).map(Number).sort(function(a, b) { return b - a; });
+        for (var i = 0; i < amounts.length; i++) {
+          if (selectedAmount >= amounts[i]) {
+            impactText.innerHTML = singleTexts[amounts[i]];
+            return;
+          }
+        }
+      }
+      impactText.innerHTML = monthlyImpactText || '';
+    }
+
+    function clearAllAmountStyles() {
+      clearMonthlyBtnStyles();
+      clearOnetimeBtnStyles();
+    }
+
+    function clearMonthlyBtnStyles() {
+      monthlyBtns.forEach(function(b) {
+        b.style.backgroundColor = '#f4f5f0';
+        b.style.color = '';
+        b.style.borderColor = '#e0e1dc';
+        b.classList.remove('cw-amt-selected');
+        var amtSpan = b.querySelector('span:first-child');
+        if (amtSpan) amtSpan.className = 'text-[17px] font-bold text-gray-400';
+        var suffSpan = b.querySelector('span:last-child');
+        if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium text-gray-400';
+      });
+    }
+
+    function highlightMonthlyBtn(btn) {
+      clearMonthlyBtnStyles();
+      btn.style.backgroundColor = accentColor;
+      btn.style.color = accentTextColor;
+      btn.style.borderColor = accentColor;
+      btn.classList.add('cw-amt-selected');
+      var amtSpan = btn.querySelector('span:first-child');
+      if (amtSpan) amtSpan.className = 'text-[17px] font-bold';
+      var suffSpan = btn.querySelector('span:last-child');
+      if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium opacity-70';
+    }
+
+    function clearOnetimeBtnStyles() {
+      onetimeBtns.forEach(function(b) {
+        b.style.backgroundColor = '#f4f5f0';
+        b.style.color = '';
+        b.style.borderColor = '#e0e1dc';
+        b.classList.remove('cw-amt-selected');
+        var amtSpan = b.querySelector('span:first-child');
+        if (amtSpan) amtSpan.className = 'text-[17px] font-bold text-gray-400';
+        var suffSpan = b.querySelector('span:last-child');
+        if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium text-gray-400';
+      });
+      if (specialBtn) {
+        specialBtn.style.borderColor = '#e0e1dc';
+        specialBtn.style.backgroundColor = '#f4f5f0';
+        specialBtn.style.color = '';
+      }
+    }
+
+    function highlightOnetimeBtn(btn) {
+      clearOnetimeBtnStyles();
+      btn.style.backgroundColor = accentColor;
+      btn.style.color = accentTextColor;
+      btn.style.borderColor = accentColor;
+      btn.classList.add('cw-amt-selected');
+      var amtSpan = btn.querySelector('span:first-child');
+      if (amtSpan) amtSpan.className = 'text-[17px] font-bold';
+      var suffSpan = btn.querySelector('span:last-child');
+      if (suffSpan) suffSpan.className = 'text-[11px] ml-0.5 font-medium opacity-70';
+    }
+
+    // ═══════════════════════════════════════════
+    // INITIAL STATE
+    // ═══════════════════════════════════════════
+    updateImpact();
+  });
+</script>

@@ -35,6 +35,8 @@ export const PUBLIC_API_ROUTES = [
   '/api/checkout',
   '/api/donate/checkout',
   '/api/payments/create-intent',
+  '/api/payments/create-setup-intent',
+  '/api/payments/create-subscription',
   '/api/metal-prices',
   '/api/campaigns/crisis-stats',
   '/api/ghl/track-cart',

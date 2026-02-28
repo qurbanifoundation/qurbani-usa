@@ -2,6 +2,7 @@
 import '../styles/global.css'
 import SEO from '../components/SEO.astro';
 import DonationCart from '../components/DonationCart.astro';
+import RamadanPopup from '../components/RamadanPopup.astro';
 import { getSettings } from '../lib/settings';
 
 interface Props {
@@ -201,7 +202,8 @@ const faviconType = adminFavicon
   </head>
   <body class="bg-stone-50 text-stone-900 antialiased">
     <slot />
-    <DonationCart />
+    <DonationCart checkoutTemplate={settings.checkout_template || 'three-step'} showCartReminder={settings.show_cart_reminder !== false} />
+    {settings.show_ramadan_popup !== false && <RamadanPopup />}
 
     <!-- Mobile auto-scroll to donation box on page load -->
     <script is:inline>

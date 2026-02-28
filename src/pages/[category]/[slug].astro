@@ -41,7 +41,11 @@ try {
     .single();
   campaign = data;
 } catch (e) {
-  // If not found by url_path, try by slug as fallback
+  // url_path lookup failed
+}
+
+// If not found by url_path, try by slug + category as fallback
+if (!campaign) {
   try {
     const { data } = await supabaseAdmin
       .from('campaigns')
@@ -139,6 +143,7 @@ const templateMap: Record<string, any> = {
   'green-with-yellow': GreenWithYellowTemplate,
   'emergency-appeal': EmergencyAppealTemplate,
   'orphan-sponsorship': OrphanSponsorshipTemplate,
+  'tilestack-sponsorship': TileStackSponsorshipTemplate,
   'tile-stack-sponsorship': TileStackSponsorshipTemplate,
   'aqiqah': AqiqahTemplate,
 };

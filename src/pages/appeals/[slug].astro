@@ -65,11 +65,8 @@ if (!campaign) {
   return Astro.redirect('/appeals');
 }
 
-// If campaign has a different url_path, redirect to the canonical URL
-const currentPath = `/appeals/${slug}`;
-if (campaign.url_path && campaign.url_path !== currentPath) {
-  return Astro.redirect(campaign.url_path, 301);
-}
+// Note: We no longer redirect to url_path here — appeals routes serve pages directly
+// so that /appeals/sponsor-an-orphan works alongside /orphans/sponsor-an-orphan
 
 // Transform database fields to match template props
 const campaignProps = {
@@ -90,6 +87,7 @@ const campaignProps = {
   category: campaign.category,
   is_zakat_eligible: campaign.is_zakat_eligible,
   impact_stats: campaign.impact_stats || [],
+  template_config: campaign.template_config || {},
 };
 
 // Determine which templates to use (campaign override > site default > fallback)

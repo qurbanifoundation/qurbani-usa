@@ -23,6 +23,8 @@ import Footer from '../components/Footer.astro';
 import ListStyleDonationBox from '../components/donation/ListStyleDonationBox.astro';
 import UrgentAppealDonationBox from '../components/donation/UrgentAppealDonationBox.astro';
 import TealYellowDonationBox from '../components/donation/TealYellowDonationBox.astro';
+import CWDonationBox from '../components/donation/CWDonationBox.astro';
+import HomeDonationBox from '../components/donation/HomeDonationBox.astro';
 import { supabaseAdmin } from '../lib/supabase';
 import { formatTextToHtml, formatLineBreaks } from '../lib/textFormatting';
 
@@ -45,16 +47,22 @@ interface Props {
     category?: string;
     is_zakat_eligible?: boolean;
     impact_stats?: Array<{ value: string; label: string }>;
+    template_config?: Record<string, any>;
   };
   donationBoxTemplate?: string;
 }
 
 const { campaign, donationBoxTemplate = 'urgent-appeal' } = Astro.props;
 
+// Extract CW donation box config from template_config
+const cwConfig = campaign.template_config?.cwDonation || {};
+
 // Detect donation box template type
 const isUrgentAppeal = donationBoxTemplate === 'urgent-appeal';
 const isListStyle = donationBoxTemplate === 'list-style';
 const isTealYellow = donationBoxTemplate === 'teal-yellow';
+const isCWDonation = donationBoxTemplate === 'cw-donation';
+const isHomeDonation = donationBoxTemplate === 'home-donation';
 
 // Default colors for urgent-appeal template
 const defaultUrgentColors = {
@@ -380,6 +388,23 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
                   donationOptions={donationOptions}
                   colors={urgentColors}
                 />
+              ) : isCWDonation ? (
+                <CWDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  monthlyAmounts={cwConfig.monthlyAmounts}
+                  oneTimeAmounts={cwConfig.oneTimeAmounts}
+                  impactTexts={cwConfig.impactTexts}
+                  monthlyImpactText={cwConfig.monthlyImpactText}
+                  upsellBody={cwConfig.upsellBody}
+                  upsellSubText={cwConfig.upsellSubText}
+                  buttonTextMonthly={cwConfig.buttonTextMonthly}
+                  buttonTextOneTime={cwConfig.buttonTextOneTime}
+                  donationBoxHeading={cwConfig.donationBoxHeading}
+                />
+              ) : isHomeDonation ? (
+                <HomeDonationBox campaignSlug={campaign.slug} campaignTitle={campaign.title} />
               ) : (
                 <!-- Default: Use TealYellowDonationBox component -->
                 <TealYellowDonationBox
@@ -494,7 +519,7 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
     // Amount buttons
     amountButtons.forEach(btn => {
       btn.addEventListener('click', function() {
-        selectedAmount = parseInt(this.dataset.amount);
+        selectedAmount = parseFloat(this.dataset.amount);
         selectedLabel = this.dataset.label || '';
 
         amountButtons.forEach(b => {
@@ -566,7 +591,7 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
     // Set initial selection (third button)
     if (amountButtons.length >= 3) {
       const thirdBtn = amountButtons[2];
-      selectedAmount = parseInt(thirdBtn.dataset.amount);
+      selectedAmount = parseFloat(thirdBtn.dataset.amount);
       selectedLabel = thirdBtn.dataset.label || '';
     }
   });

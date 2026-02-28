@@ -28,6 +28,7 @@ let campaign: any = null;
 let siteSettings: any = null;
 
 try {
+  // First try exact url_path match
   const { data } = await supabaseAdmin
     .from('campaigns')
     .select('*')
@@ -36,7 +37,11 @@ try {
     .single();
   campaign = data;
 } catch (e) {
-  // If not found by url_path, try by slug only
+  // url_path lookup failed
+}
+
+// If not found by url_path, try by slug only
+if (!campaign) {
   try {
     const { data } = await supabaseAdmin
       .from('campaigns')
@@ -45,8 +50,11 @@ try {
       .eq('is_active', true)
       .single();
 
-    // Only use this if the campaign doesn't have a category-based url_path
-    if (data && (!data.url_path || data.url_path === `/${slug}`)) {
+    // If found by slug, redirect to canonical url_path if it differs
+    if (data) {
+      if (data.url_path && data.url_path !== `/${slug}`) {
+        return Astro.redirect(data.url_path, 301);
+      }
       campaign = data;
     }
   } catch (e2) {
@@ -82,6 +90,7 @@ const templateMap: Record<string, any> = {
   'green-with-yellow': GreenWithYellowTemplate,
   'emergency-appeal': EmergencyAppealTemplate,
   'orphan-sponsorship': OrphanSponsorshipTemplate,
+  'tilestack-sponsorship': TileStackSponsorshipTemplate,
   'tile-stack-sponsorship': TileStackSponsorshipTemplate,
   'aqiqah': AqiqahTemplate,
 };

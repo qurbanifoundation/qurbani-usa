@@ -26,6 +26,7 @@ interface DonationReceiptData {
     postal_code?: string;
     country?: string;
   };
+  managementUrl?: string;
 }
 
 interface SubscriptionConfirmationData {
@@ -362,8 +363,18 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
       <p style="margin: 0; color: #1e40af; font-size: 14px;">
         <strong>🔄 Recurring Donation</strong><br>
         You will be automatically charged $${amount.toFixed(2)} ${donationType === 'weekly' ? 'every Friday' : 'each month'}.
-        To manage your subscription, please contact us at <a href="mailto:donorcare@qurbani.com" style="color: #1e40af;">donorcare@qurbani.com</a>
       </p>
+      ${data.managementUrl ? `
+      <div style="margin-top: 12px;">
+        <a href="${data.managementUrl}" style="display: inline-block; background-color: #1e40af; color: #ffffff; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+          Manage Your Subscription
+        </a>
+      </div>
+      ` : `
+      <p style="margin: 8px 0 0 0; color: #1e40af; font-size: 14px;">
+        To manage your subscription, contact us at <a href="mailto:donorcare@qurbani.com" style="color: #1e40af;">donorcare@qurbani.com</a>
+      </p>
+      `}
     </div>
     ` : ''}
 
@@ -392,7 +403,7 @@ ${items.map(i => `• ${i.name}: $${(i.amount * (i.quantity || 1)).toFixed(2)}`)
 Total: $${amount.toFixed(2)}
 Date: ${formattedDate}
 Transaction ID: ${transactionId}
-
+${donationType !== 'single' && data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
 This email serves as your official donation receipt for tax purposes.
 No goods or services were provided in exchange for this contribution.
 
@@ -458,10 +469,20 @@ export async function sendSubscriptionConfirmation(data: SubscriptionConfirmatio
       <ul style="margin: 0; padding: 0 0 0 20px; color: #374151; font-size: 14px; line-height: 1.8;">
         <li>You'll be charged <strong>$${amount.toFixed(2)}</strong> ${interval === 'weekly' ? 'every Friday' : 'on this date each month'}</li>
         <li>You'll receive a receipt email after each payment</li>
-        <li>You can cancel or modify anytime by contacting us</li>
+        <li>You can cancel or modify anytime using the link below</li>
         <li>100% of your donation goes to those in need</li>
       </ul>
     </div>
+
+    ${data.managementUrl ? `
+    <!-- Manage Subscription -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="${data.managementUrl}" style="display: inline-block; background-color: #1e40af; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+        Manage Your Subscription
+      </a>
+      <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 12px;">Update, pause, or cancel your recurring donation anytime</p>
+    </div>
+    ` : ''}
 
     <!-- Impact -->
     <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
@@ -497,8 +518,8 @@ Annual Impact: $${(amount * (interval === 'weekly' ? 52 : 12)).toFixed(2)}
 What happens next:
 • You'll be charged $${amount.toFixed(2)} ${interval === 'weekly' ? 'every Friday' : 'on this date each month'}
 • You'll receive a receipt email after each payment
-• You can cancel or modify anytime by contacting us
-
+• You can cancel or modify anytime using the link below
+${data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
 Thank you for your ongoing support!
 
 Qurbani Foundation

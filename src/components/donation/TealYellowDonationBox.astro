@@ -159,7 +159,7 @@ const boxId = `teal-yellow-box-${Math.random().toString(36).substr(2, 9)}`;
     // Amount selection
     amountButtons.forEach(btn => {
       btn.addEventListener('click', function() {
-        selectedAmount = parseInt(this.dataset.amount);
+        selectedAmount = parseFloat(this.dataset.amount);
         const option = donationOptions.find(o => o.amount === selectedAmount);
         selectedLabel = option ? option.label : '';
         customInput.value = selectedAmount;

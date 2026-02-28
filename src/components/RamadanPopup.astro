@@ -1,0 +1,223 @@
+---
+/**
+ * Ramadan Promotion Popup
+ * Smart-trigger upsell popup — shows once every 3 days to engaged users.
+ * Triggers after 8s on page AND user has scrolled ≥30% of the page.
+ * Uses localStorage with 3-day cooldown so returning visitors aren't pestered.
+ * Directs users to /ramadan-giving to schedule their 30-night Ramadan donations.
+ */
+---
+
+<!-- Popup Overlay -->
+<div id="ramadan-popup-overlay" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true" aria-label="Ramadan Giving Promotion">
+  <!-- Backdrop -->
+  <div id="ramadan-popup-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+
+  <!-- Card Container -->
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div id="ramadan-popup-card" class="relative w-full max-w-[440px] bg-white rounded-2xl shadow-2xl overflow-hidden opacity-0 scale-95 transition-all duration-300">
+
+      <!-- Close Button -->
+      <button id="ramadan-popup-close" class="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition text-white text-lg leading-none" aria-label="Close">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- Decorative Header -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="relative bg-gradient-to-br from-[#01534d] via-[#024a44] to-[#012820] px-6 pt-8 pb-10 text-center overflow-hidden">
+        <!-- Islamic geometric pattern overlay -->
+        <div class="absolute inset-0 opacity-[0.06]" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><path d=%22M30 0L60 30L30 60L0 30Z%22 fill=%22none%22 stroke=%22white%22 stroke-width=%221%22/><circle cx=%2230%22 cy=%2230%22 r=%2215%22 fill=%22none%22 stroke=%22white%22 stroke-width=%220.5%22/></svg>'); background-size: 60px 60px;"></div>
+        <!-- Subtle golden glow -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-[#fdc448]/10 rounded-full blur-3xl"></div>
+
+        <!-- Crescent & Stars -->
+        <div class="relative mb-3 flex items-center justify-center gap-3">
+          <svg class="w-5 h-5 text-[#fdc448]/70" fill="currentColor" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9"/></svg>
+          <svg class="w-10 h-10 text-[#fdc448]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a9.7 9.7 0 0 0-3.2.5 7.5 7.5 0 0 1 0 14.9A9.7 9.7 0 0 0 12 18a8 8 0 0 0 0-16z" transform="translate(0,3)"/></svg>
+          <svg class="w-5 h-5 text-[#fdc448]/70" fill="currentColor" viewBox="0 0 24 24"><polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9"/></svg>
+        </div>
+
+        <!-- Label -->
+        <span class="relative inline-block px-4 py-1 rounded-full text-[11px] font-bold tracking-[0.2em] uppercase text-[#fdc448] border border-[#fdc448]/30 mb-4" style="font-family: 'Lato', sans-serif;">
+          Ramadan 2026
+        </span>
+
+        <!-- Headline -->
+        <h2 class="relative text-white text-[22px] sm:text-[26px] font-bold leading-tight" style="font-family: 'Signika', sans-serif;">
+          Don't Miss a Single<br/>Night of Reward
+        </h2>
+      </div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- Body Content -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="px-6 py-5">
+        <p class="text-gray-600 text-[14px] sm:text-[15px] leading-relaxed text-center mb-5" style="font-family: 'Lato', sans-serif;">
+          Automate your giving across all 30 nights and earn rewards every single night of Ramadan — even while you sleep.
+        </p>
+
+        <!-- Benefits -->
+        <div class="space-y-3 mb-6">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#01534d]/10 flex items-center justify-center">
+              <svg class="w-4 h-4 text-[#01534d]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <p class="text-gray-800 text-[13px] font-semibold" style="font-family: 'Signika', sans-serif;">Schedule all 30 nights</p>
+              <p class="text-gray-500 text-[12px]" style="font-family: 'Lato', sans-serif;">Set it once — we handle the rest automatically</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#01534d]/10 flex items-center justify-center">
+              <svg class="w-4 h-4 text-[#01534d]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </div>
+            <div>
+              <p class="text-gray-800 text-[13px] font-semibold" style="font-family: 'Signika', sans-serif;">Never miss Laylatul Qadr</p>
+              <p class="text-gray-500 text-[12px]" style="font-family: 'Lato', sans-serif;">Your charity covers every blessed night</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#01534d]/10 flex items-center justify-center">
+              <svg class="w-4 h-4 text-[#01534d]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <div>
+              <p class="text-gray-800 text-[13px] font-semibold" style="font-family: 'Signika', sans-serif;">100% Tax-Deductible</p>
+              <p class="text-gray-500 text-[12px]" style="font-family: 'Lato', sans-serif;">Verified 501(c)(3) — instant receipts emailed</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Button -->
+        <a href="/ramadan-giving" id="ramadan-popup-cta" class="block w-full text-center py-3.5 px-6 rounded-xl font-bold text-[15px] text-[#1a1a1a] bg-[#fdc448] hover:bg-[#efb000] active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg" style="font-family: 'Signika', sans-serif;">
+          Schedule Your Ramadan Giving
+          <span class="inline-block ml-1 transition-transform group-hover:translate-x-1">→</span>
+        </a>
+
+        <!-- Dismiss -->
+        <button id="ramadan-popup-later" class="block w-full text-center mt-3 text-gray-400 hover:text-gray-600 text-[13px] transition" style="font-family: 'Lato', sans-serif;">
+          Maybe later
+        </button>
+      </div>
+
+      <!-- Trust Footer -->
+      <div class="bg-gray-50 border-t border-gray-100 px-6 py-2.5 text-center">
+        <p class="text-[11px] text-gray-400" style="font-family: 'Lato', sans-serif;">
+          Qurbani Foundation USA&nbsp;&nbsp;•&nbsp;&nbsp;501(c)(3)&nbsp;&nbsp;•&nbsp;&nbsp;Tax-Deductible
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function() {
+  var COOLDOWN_KEY = 'ramadan_popup_last_shown';
+  var COOLDOWN_DAYS = 3; // Don't show again for 3 days after dismiss
+  var MIN_TIME_ON_PAGE = 8000; // 8 seconds minimum before showing
+  var MIN_SCROLL_PERCENT = 30; // User must scroll 30% of the page
+
+  // Don't show on the ramadan-giving page itself
+  if (window.location.pathname.indexOf('/ramadan-giving') === 0) return;
+
+  // Check localStorage cooldown — don't show if dismissed within last 3 days
+  var lastShown = localStorage.getItem(COOLDOWN_KEY);
+  if (lastShown) {
+    var daysSince = (Date.now() - parseInt(lastShown, 10)) / (1000 * 60 * 60 * 24);
+    if (daysSince < COOLDOWN_DAYS) return;
+  }
+
+  // Also skip if already shown this page load (SPA nav guard)
+  if (sessionStorage.getItem('ramadan_popup_shown_this_session')) return;
+
+  var overlay = document.getElementById('ramadan-popup-overlay');
+  var backdrop = document.getElementById('ramadan-popup-backdrop');
+  var card = document.getElementById('ramadan-popup-card');
+  var closeBtn = document.getElementById('ramadan-popup-close');
+  var laterBtn = document.getElementById('ramadan-popup-later');
+  var ctaBtn = document.getElementById('ramadan-popup-cta');
+
+  if (!overlay || !backdrop || !card) return;
+
+  var hasShown = false;
+  var timeReady = false;
+  var scrollReady = false;
+
+  function showPopup() {
+    if (hasShown) return;
+    hasShown = true;
+    sessionStorage.setItem('ramadan_popup_shown_this_session', 'true');
+    overlay.classList.remove('hidden');
+    // Trigger reflow then animate in
+    void overlay.offsetWidth;
+    backdrop.classList.remove('opacity-0');
+    backdrop.classList.add('opacity-100');
+    card.classList.remove('opacity-0', 'scale-95');
+    card.classList.add('opacity-100', 'scale-100');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hidePopup() {
+    // Save dismiss timestamp — won't show again for 3 days
+    localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+    backdrop.classList.remove('opacity-100');
+    backdrop.classList.add('opacity-0');
+    card.classList.remove('opacity-100', 'scale-100');
+    card.classList.add('opacity-0', 'scale-95');
+    document.body.style.overflow = '';
+    setTimeout(function() {
+      overlay.classList.add('hidden');
+    }, 300);
+  }
+
+  function tryShow() {
+    if (timeReady && scrollReady && !hasShown) {
+      showPopup();
+    }
+  }
+
+  // Timer trigger — user has been on page for 8+ seconds
+  setTimeout(function() {
+    timeReady = true;
+    tryShow();
+  }, MIN_TIME_ON_PAGE);
+
+  // Scroll trigger — user has scrolled 30%+ of the page
+  function onScroll() {
+    if (scrollReady) return;
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    if (docHeight > 0 && (scrollTop / docHeight) * 100 >= MIN_SCROLL_PERCENT) {
+      scrollReady = true;
+      tryShow();
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Dismiss handlers
+  closeBtn.addEventListener('click', hidePopup);
+  laterBtn.addEventListener('click', hidePopup);
+
+  // Click backdrop to close
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay || e.target === backdrop || e.target.closest('#ramadan-popup-card') === null) {
+      hidePopup();
+    }
+  });
+
+  // Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+      hidePopup();
+    }
+  });
+
+  // CTA click — set cooldown so it won't show again, then navigate
+  ctaBtn.addEventListener('click', function() {
+    localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+    sessionStorage.setItem('ramadan_popup_shown_this_session', 'true');
+    document.body.style.overflow = '';
+  });
+})();
+</script>

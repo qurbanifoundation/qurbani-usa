@@ -21,6 +21,14 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    // Validate customer email is provided (required for GHL sync, receipts, admin notifications)
+    if (!customer?.email?.trim()) {
+      return new Response(JSON.stringify({ error: 'Email is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     // Server-side amount verification: items total must match submitted amount
     if (items && Array.isArray(items) && items.length > 0) {
       const itemsTotal = items.reduce((sum: number, item: any) => {
@@ -118,20 +126,29 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Build metadata for tracking - include item metadata (childName, notes, etc.)
+    // Stripe limits metadata values to 500 chars, so we build a compact summary
+    const itemsSummary = items?.map((i: any) => ({
+      c: i.campaign,
+      a: i.amount,
+      q: i.quantity,
+      n: i.name,
+    })) || [];
+    let itemsJson = JSON.stringify(itemsSummary);
+    // If still over 500 chars, truncate to just campaign + amount
+    if (itemsJson.length > 500) {
+      const minimal = items?.map((i: any) => ({ c: i.campaign, a: i.amount, q: i.quantity })) || [];
+      itemsJson = JSON.stringify(minimal);
+    }
+    // Final safety: truncate to 500 chars
+    if (itemsJson.length > 500) {
+      itemsJson = itemsJson.substring(0, 497) + '...';
+    }
     const metadata: Record<string, string> = {
       donation_type: type,
       covers_fees: coverFees ? 'true' : 'false',
       fee_amount: feeAmount.toString(),
       base_amount: (baseAmount || amount).toString(),
-      items: JSON.stringify(items?.map((i: any) => ({
-        campaign: i.campaign,
-        amount: i.amount,
-        quantity: i.quantity,
-        label: i.label,
-        name: i.name,
-        // Include item-specific metadata (Aqiqah child name, notes, etc.)
-        metadata: i.metadata || null,
-      })) || []),
+      items: itemsJson,
     };
 
     if (customer) {
@@ -140,18 +157,15 @@ export const POST: APIRoute = async ({ request }) => {
       metadata.customer_phone = customer.phone || '';
     }
 
-    // Handle recurring subscriptions (monthly or weekly/Jummah)
+    // Recurring donations (monthly/weekly) now use the SetupIntent → create-subscription flow
+    // See: /api/payments/create-setup-intent + /api/payments/create-subscription
+    // This endpoint only handles one-time (single) donations
     if (type === 'monthly' || type === 'weekly') {
-      return await createRecurringSubscription({
-        stripe,
-        stripeCustomerId,
-        amount,
-        currency,
-        items,
-        customer,
-        billingAddress,
-        metadata,
-        interval: type, // 'monthly' or 'weekly'
+      return new Response(JSON.stringify({
+        error: 'Recurring donations should use the SetupIntent flow. Use /api/payments/create-setup-intent instead.',
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -321,7 +335,15 @@ async function createRecurringSubscription({
       expand: ['latest_invoice.payment_intent'],
       metadata: {
         ...metadata,
-        donation_items: JSON.stringify(items || []),
+        donation_items: (() => {
+          const summary = (items || []).map((i: any) => ({ c: i.campaign, a: i.amount, q: i.quantity, n: i.name }));
+          let json = JSON.stringify(summary);
+          if (json.length > 500) {
+            const minimal = (items || []).map((i: any) => ({ c: i.campaign, a: i.amount, q: i.quantity }));
+            json = JSON.stringify(minimal);
+          }
+          return json.length > 500 ? json.substring(0, 497) + '...' : json;
+        })(),
         interval_type: interval,
         is_jummah: isWeekly ? 'true' : 'false',
       },

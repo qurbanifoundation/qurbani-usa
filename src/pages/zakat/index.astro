@@ -347,7 +347,7 @@ import Footer from '../../components/Footer.astro';
       btn.addEventListener('click', () => {
         amountBtns.forEach(b => updateButtonStyle(b, false));
         updateButtonStyle(btn, true);
-        selectedAmount = parseInt(btn.getAttribute('data-amount') || '500');
+        selectedAmount = parseFloat(btn.getAttribute('data-amount') || '500');
         if (customInput) customInput.value = '';
       });
     });
@@ -355,7 +355,7 @@ import Footer from '../../components/Footer.astro';
     customInput?.addEventListener('input', () => {
       if (customInput.value) {
         amountBtns.forEach(b => updateButtonStyle(b, false));
-        selectedAmount = parseInt(customInput.value) || 0;
+        selectedAmount = parseFloat(customInput.value) || 0;
       }
     });
 

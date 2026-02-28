@@ -22,6 +22,8 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import CWDonationBox from '../components/donation/CWDonationBox.astro';
+import HomeDonationBox from '../components/donation/HomeDonationBox.astro';
 import { supabaseAdmin } from '../lib/supabase';
 
 // Fetch campaigns for Emergency Appeals section
@@ -49,6 +51,51 @@ try {
 } catch (e) {
   console.error('[Homepage] Error fetching campaigns:', e);
 }
+
+// Fetch donation box template setting
+// Priority: page-level override > site default > fallback
+let donationBoxTemplate = 'pennybill-default';
+let homepageDonationBoxHeading = '';
+try {
+  // Check page-level override first (Home page)
+  const { data: homePage } = await supabaseAdmin
+    .from('pages')
+    .select('donation_box_template')
+    .eq('slug', '/home')
+    .single();
+
+  if (homePage?.donation_box_template) {
+    donationBoxTemplate = homePage.donation_box_template;
+  } else {
+    // Fall back to site default
+    const { data: dbSettings } = await supabaseAdmin
+      .from('site_settings')
+      .select('default_donation_box_template, donation_box_heading')
+      .eq('id', 'main')
+      .single();
+    if (dbSettings?.default_donation_box_template) {
+      donationBoxTemplate = dbSettings.default_donation_box_template;
+    }
+    if (dbSettings?.donation_box_heading) {
+      homepageDonationBoxHeading = dbSettings.donation_box_heading;
+    }
+  }
+  // If heading not set yet, try fetching it separately
+  if (!homepageDonationBoxHeading) {
+    const { data: headingSettings } = await supabaseAdmin
+      .from('site_settings')
+      .select('donation_box_heading')
+      .eq('id', 'main')
+      .single();
+    if (headingSettings?.donation_box_heading) {
+      homepageDonationBoxHeading = headingSettings.donation_box_heading;
+    }
+  }
+} catch (e) {
+  console.error('[Homepage] Error fetching donation box template setting:', e);
+}
+const isCWDonation = donationBoxTemplate === 'cw-donation';
+const isHomeDonation = donationBoxTemplate === 'home-donation';
 
 // Hero slides data
 const heroSlides = [
@@ -181,149 +228,38 @@ const heroSlides = [
 
             <!-- Right: Donation Widget (2 cols) -->
             <div class="lg:col-span-2" id="donate">
-              <div class="bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 relative">
-                <!-- Matching Banner -->
-                <div class="bg-gradient-to-r from-[#d97706] to-[#f59e0b] px-4 py-2 text-center">
-                  <div class="flex items-center justify-center gap-2 text-white text-sm font-medium">
-                    <svg class="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span>2X MATCHING</span>
-                    <span class="text-white/70">•</span>
-                    <span class="text-amber-100">Double your impact today!</span>
-                  </div>
-                </div>
-
-                <div class="p-6">
-                  <!-- Live Social Proof -->
-                  <div class="flex items-center gap-3 mb-5 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                    <div class="flex -space-x-2">
-                      <div class="w-8 h-8 rounded-full bg-[#0096D6] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white">S</div>
-                      <div class="w-8 h-8 rounded-full bg-[#0096D6] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white">A</div>
-                      <div class="w-8 h-8 rounded-full bg-[#0096D6] flex items-center justify-center text-white text-xs font-bold ring-2 ring-white">M</div>
-                    </div>
-                    <div class="text-sm">
-                      <span class="font-semibold text-amber-900"><span id="live-donors">127</span> people</span>
-                      <span class="text-amber-700"> donated today</span>
-                    </div>
-                    <div class="ml-auto">
-                      <span class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                        Live
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Amount Selection with Impact -->
-                  <div class="space-y-3 mb-5">
-                    <div class="grid grid-cols-2 gap-3">
-                      <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="45" data-monthly="true">
-                        <div class="absolute -top-2 -right-2 bg-[#d97706] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">POPULAR</div>
-                        <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$45<span class="text-sm font-normal text-neutral-500">/monthly</span></div>
-                        <div class="text-xs text-neutral-500 group-hover:text-amber-700">Sponsor One Orphan</div>
-                      </button>
-                      <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="100">
-                        <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$100</div>
-                        <div class="text-xs text-neutral-500 group-hover:text-amber-700">Feed a family for a month</div>
-                      </button>
-                      <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="250">
-                        <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$250</div>
-                        <div class="text-xs text-neutral-500 group-hover:text-amber-700">Build a water well</div>
-                      </button>
-                      <button class="amount-btn group relative py-4 px-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all text-left" data-amount="500">
-                        <div class="font-bold text-lg text-neutral-800 group-hover:text-[#d97706]">$500</div>
-                        <div class="text-xs text-neutral-500 group-hover:text-amber-700">Emergency shelter</div>
-                      </button>
-                    </div>
-
-                    <!-- Custom Amount with Currency -->
-                    <div class="relative">
-                      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 font-bold text-lg">$</span>
-                      <input
-                        type="number"
-                        id="custom-amount"
-                        placeholder="Other amount"
-                        class="w-full pl-10 pr-4 py-4 bg-neutral-50 border-2 border-neutral-200 rounded-xl focus:border-[#d97706] focus:bg-white focus:outline-none font-semibold text-neutral-700 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Fund Selection with Icons -->
-                  <div class="mb-5">
-                    <div class="grid grid-cols-3 gap-2 mb-3">
-                      <button class="fund-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-[#d97706] bg-amber-50 transition-all" data-fund="where-needed">
-                        <svg class="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-[#d97706]">Most Needed</span>
-                      </button>
-                      <button class="fund-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all" data-fund="zakat">
-                        <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-neutral-600">Zakat</span>
-                      </button>
-                      <button class="fund-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all" data-fund="orphans">
-                        <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-neutral-600">Orphans</span>
-                      </button>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                      <button class="fund-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all" data-fund="palestine">
-                        <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-neutral-600">Palestine</span>
-                      </button>
-                      <button class="fund-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all" data-fund="food">
-                        <svg class="w-5 h-5 text-neutral-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-neutral-600">Food Aid</span>
-                      </button>
-                      <button class="fund-btn flex flex-col items-center gap-1 p-3 rounded-xl border-2 border-neutral-200 hover:border-[#d97706] hover:bg-amber-50 transition-all" data-fund="water">
-                        <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-neutral-600">Water</span>
-                      </button>
-                    </div>
-                    <input type="hidden" id="fund-select" value="where-needed" />
-                  </div>
-
-                  <!-- Donate Button -->
-                  <button id="hero-donate-btn" class="w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-5 rounded-xl transition-colors duration-200 text-lg flex items-center justify-center gap-3">
-                    <span>Donate Now</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                    </svg>
-                  </button>
-
-                  <!-- Trust Badges -->
-                  <div class="flex items-center justify-center gap-6 mt-5 pt-4 border-t border-neutral-100">
-                    <div class="flex items-center gap-1.5 text-neutral-500">
-                      <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                      </svg>
-                      <span class="text-xs font-medium">SSL Secure</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 text-neutral-500">
-                      <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                      </svg>
-                      <span class="text-xs font-medium">501(c)(3)</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 text-neutral-500">
-                      <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                      </svg>
-                      <span class="text-xs font-medium">Top Rated</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {isCWDonation ? (
+                <CWDonationBox
+                  campaignSlug="where-needed"
+                  campaignTitle="Where Most Needed"
+                  campaignImage="/images/qurbani-foundation-zakat-hero.png"
+                  monthlyAmounts={[10, 20, 40, 100]}
+                  oneTimeAmounts={[50, 100, 150, 200]}
+                  impactTexts={{
+                    monthly: {
+                      10: 'Feed a child for a month',
+                      20: 'Provide clean water for a family',
+                      40: 'Support an orphan for a month',
+                      100: 'Transform an entire community'
+                    },
+                    single: {
+                      50: 'Provide emergency food parcels',
+                      100: 'Feed a family for a month',
+                      150: 'Build a water well share',
+                      200: 'Emergency shelter for a family'
+                    }
+                  }}
+                  monthlyImpactText="Your monthly gift serves people all year long."
+                  upsellBody="Make your gift go further by giving monthly. Monthly donors provide sustainable support that changes lives all year."
+                  upsellSubText="Monthly giving helps us plan ahead and reach more people in need."
+                  upsellMonthlyRatio={0.4}
+                  buttonTextMonthly="JOIN TODAY"
+                  buttonTextOneTime="GIVE"
+                  donationBoxHeading={homepageDonationBoxHeading}
+                />
+              ) : (
+                <HomeDonationBox campaignSlug="where-needed" campaignTitle="Where Most Needed" />
+              )}
             </div>
           </div>
         </div>
@@ -1203,148 +1139,6 @@ const heroSlides = [
       // Update every 30 seconds to catch new simulated donations
       setInterval(updateDonorDisplay, 30000);
     }
-
-    // ═══════════════════════════════════════════════════════════════
-    // Quick Donate functionality
-    // ═══════════════════════════════════════════════════════════════
-    const amountBtns = document.querySelectorAll('.amount-btn');
-    const fundBtns = document.querySelectorAll('.fund-btn');
-    const customAmount = document.getElementById('custom-amount') as HTMLInputElement;
-    const donateBtn = document.getElementById('hero-donate-btn');
-    const fundSelect = document.getElementById('fund-select') as HTMLInputElement;
-
-    let selectedAmount = 0; // No default selection
-    let selectedFund = 'where-needed';
-    let selectedImpact = ''; // No default selection
-    let isMonthlyItem = false; // Track if selected item is monthly (like orphan sponsorship)
-
-    const fundLabels: Record<string, string> = {
-      'where-needed': 'Where Most Needed',
-      'zakat': 'Zakat',
-      'orphans': 'Orphan Care',
-      'palestine': 'Palestine Emergency',
-      'food': 'Food Aid',
-      'water': 'Water Projects'
-    };
-
-    const impactLabels: Record<number, string> = {
-      100: 'Feed a family for a month',
-      45: 'Sponsor One Orphan',
-      250: 'Build a water well',
-      500: 'Emergency shelter'
-    };
-
-    // Amount button click
-    amountBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        amountBtns.forEach(b => {
-          b.classList.remove('border-[#d97706]', 'bg-amber-50');
-          b.classList.add('border-neutral-200');
-          const amountText = b.querySelector('div:first-child');
-          const impactText = b.querySelector('div:last-child');
-          if (amountText) {
-            amountText.classList.remove('text-[#d97706]');
-            amountText.classList.add('text-neutral-800');
-          }
-          if (impactText) {
-            impactText.classList.remove('text-amber-700');
-            impactText.classList.add('text-neutral-500');
-          }
-        });
-        btn.classList.add('border-[#d97706]', 'bg-amber-50');
-        btn.classList.remove('border-neutral-200');
-        const amountText = btn.querySelector('div:first-child');
-        const impactText = btn.querySelector('div:last-child');
-        if (amountText) {
-          amountText.classList.add('text-[#d97706]');
-          amountText.classList.remove('text-neutral-800');
-        }
-        if (impactText) {
-          impactText.classList.add('text-amber-700');
-          impactText.classList.remove('text-neutral-500');
-        }
-        selectedAmount = parseInt(btn.getAttribute('data-amount') || '100');
-        // Check if this is a monthly item (like orphan sponsorship)
-        isMonthlyItem = btn.getAttribute('data-monthly') === 'true';
-        // Get the impact text from the button
-        const impact = btn.querySelector('div:last-child');
-        if (impact) {
-          selectedImpact = impact.textContent || impactLabels[selectedAmount] || `$${selectedAmount} Donation`;
-        }
-        if (customAmount) customAmount.value = '';
-      });
-    });
-
-    // Custom amount input
-    customAmount?.addEventListener('input', () => {
-      if (customAmount.value) {
-        amountBtns.forEach(b => {
-          b.classList.remove('border-[#d97706]', 'bg-amber-50');
-          b.classList.add('border-neutral-200');
-        });
-        selectedAmount = parseInt(customAmount.value) || 0;
-        selectedImpact = `$${selectedAmount} Donation`; // Custom amount has generic label
-        isMonthlyItem = false; // Custom amounts are one-time by default
-      }
-    });
-
-    // Fund button click
-    fundBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        fundBtns.forEach(b => {
-          b.classList.remove('border-[#d97706]', 'bg-amber-50');
-          b.classList.add('border-neutral-200');
-          const icon = b.querySelector('svg');
-          const label = b.querySelector('span');
-          if (icon) {
-            icon.classList.remove('text-[#d97706]');
-            icon.classList.add('text-neutral-500');
-          }
-          if (label) {
-            label.classList.remove('text-[#d97706]');
-            label.classList.add('text-neutral-600');
-          }
-        });
-        btn.classList.add('border-[#d97706]', 'bg-amber-50');
-        btn.classList.remove('border-neutral-200');
-        const icon = btn.querySelector('svg');
-        const label = btn.querySelector('span');
-        if (icon) {
-          icon.classList.add('text-[#d97706]');
-          icon.classList.remove('text-neutral-500');
-        }
-        if (label) {
-          label.classList.add('text-[#d97706]');
-          label.classList.remove('text-neutral-600');
-        }
-        selectedFund = btn.getAttribute('data-fund') || 'where-needed';
-        if (fundSelect) fundSelect.value = selectedFund;
-      });
-    });
-
-    // Donate button click - adds to cart, some items are automatically monthly (like orphan sponsorship)
-    donateBtn?.addEventListener('click', () => {
-      if (selectedAmount > 0 && typeof (window as any).addToCart === 'function') {
-        const fundName = fundLabels[selectedFund] || 'Where Most Needed';
-
-        (window as any).addToCart({
-          id: `donation-${selectedFund}-${Date.now()}`,
-          type: isMonthlyItem ? 'monthly' : 'single',
-          name: selectedImpact, // Impact statement as main title (e.g., "Sponsor One Orphan")
-          label: isMonthlyItem ? `$${selectedAmount}/mo` : `$${selectedAmount}`,
-          amount: selectedAmount,
-          quantity: 1,
-          campaign: selectedFund,
-          description: fundName,
-          recurringInterval: isMonthlyItem ? 'monthly' : 'single'
-        });
-
-        // Increment the live donor count
-        if (typeof (window as any).incrementDonorCount === 'function') {
-          (window as any).incrementDonorCount();
-        }
-      }
-    });
 
     // ═══════════════════════════════════════════════════════════════
     // Smooth scroll for anchor links

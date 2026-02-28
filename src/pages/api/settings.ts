@@ -90,6 +90,13 @@ export const POST: APIRoute = async ({ request }) => {
     if ('showTopBar' in body) updateData.show_top_bar = body.showTopBar === true || body.showTopBar === 'on';
     if ('headerTransparent' in body) updateData.header_transparent = body.headerTransparent === true || body.headerTransparent === 'on';
 
+    // Popup settings (boolean)
+    if ('showRamadanPopup' in body) updateData.show_ramadan_popup = body.showRamadanPopup === true || body.showRamadanPopup === 'on';
+    if ('showCartReminder' in body) updateData.show_cart_reminder = body.showCartReminder === true || body.showCartReminder === 'on';
+
+    // Homepage donation box heading
+    if ('donationBoxHeading' in body) updateData.donation_box_heading = body.donationBoxHeading || '';
+
     const { data, error } = await supabaseAdmin
       .from('site_settings')
       .update(updateData)

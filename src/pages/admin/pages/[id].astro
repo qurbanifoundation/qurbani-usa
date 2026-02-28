@@ -1,6 +1,7 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { getDonationBoxTemplates } from '../../../lib/templates';
 
 export const prerender = false;
 
@@ -23,6 +24,9 @@ if (id && id !== 'new') {
     page = data;
   }
 }
+
+// Fetch donation box templates for the dropdown
+const donationBoxTemplates = await getDonationBoxTemplates();
 
 // Default content structure - uses page title if available
 function getDefaultContent(title: string = 'Page Title') {
@@ -161,6 +165,21 @@ if (page?.content) {
             <option value="contact" selected={page?.template === 'contact'}>Contact</option>
             <option value="legal" selected={page?.template === 'legal'}>Legal (Privacy, Terms)</option>
           </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
+          <select
+            id="donationBoxTemplate"
+            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+          >
+            <option value="" selected={!page?.donation_box_template}>Use Site Default</option>
+            {donationBoxTemplates.map((template) => (
+              <option value={template.template_key} selected={page?.donation_box_template === template.template_key}>
+                {template.template_label}
+              </option>
+            ))}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Override the default donation box for this page</p>
         </div>
       </div>
     </div>
@@ -382,8 +401,8 @@ if (page?.content) {
     // Add event listeners to section fields
     document.querySelectorAll('.section-field').forEach(field => {
       field.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-        const sectionItem = target.closest('.section-item') as HTMLElement;
+        const target = e.target;
+        const sectionItem = target.closest('.section-item');
         const index = parseInt(sectionItem?.dataset.index || '0');
         const fieldName = target.dataset.field || '';
         if (sections[index]) {
@@ -395,7 +414,7 @@ if (page?.content) {
     // Delete section buttons
     document.querySelectorAll('.delete-section').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
+        const target = e.currentTarget;
         const index = parseInt(target.dataset.index || '0');
         if (confirm('Delete this section?')) {
           sections.splice(index, 1);
@@ -430,8 +449,8 @@ if (page?.content) {
   // Add section type buttons
   document.querySelectorAll('.add-section-type').forEach(btn => {
     btn.addEventListener('click', () => {
-      const type = (btn as HTMLElement).dataset.type || 'content';
-      const newSection: any = {
+      const type = btn.dataset.type || 'content';
+      const newSection = {
         id: `section-${Date.now()}`,
         type
       };
@@ -465,7 +484,8 @@ if (page?.content) {
   const saveSpinner = document.getElementById('saveSpinner');
   const toast = document.getElementById('toast');
 
-  function showToast(message: string, isError = false) {
+  function showToast(message, isError) {
+    if (isError === undefined) isError = false;
     if (!toast) return;
     toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 ${isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`;
     toast.innerHTML = `
@@ -479,13 +499,14 @@ if (page?.content) {
   }
 
   saveBtn?.addEventListener('click', async () => {
-    const title = (document.getElementById('pageTitle') as HTMLInputElement)?.value;
-    const slugInput = (document.getElementById('pageSlug') as HTMLInputElement)?.value;
-    const status = (document.getElementById('pageStatus') as HTMLSelectElement)?.value;
-    const template = (document.getElementById('pageTemplate') as HTMLSelectElement)?.value;
-    const metaTitle = (document.getElementById('metaTitle') as HTMLInputElement)?.value;
-    const metaDescription = (document.getElementById('metaDescription') as HTMLTextAreaElement)?.value;
-    const featuredImage = (document.getElementById('featuredImage') as HTMLInputElement)?.value;
+    const title = document.getElementById('pageTitle')?.value;
+    const slugInput = document.getElementById('pageSlug')?.value;
+    const status = document.getElementById('pageStatus')?.value;
+    const template = document.getElementById('pageTemplate')?.value;
+    const donationBoxTemplate = document.getElementById('donationBoxTemplate')?.value;
+    const metaTitle = document.getElementById('metaTitle')?.value;
+    const metaDescription = document.getElementById('metaDescription')?.value;
+    const featuredImage = document.getElementById('featuredImage')?.value;
 
     if (!title || !slugInput) {
       showToast('Please fill in title and slug', true);
@@ -498,11 +519,12 @@ if (page?.content) {
     if (saveBtnText) saveBtnText.textContent = 'Saving...';
 
     try {
-      const data: any = {
+      const data = {
         title,
         slug,
         status,
         template,
+        donation_box_template: donationBoxTemplate || null,
         meta_title: metaTitle,
         meta_description: metaDescription,
         featured_image: featuredImage,
@@ -540,8 +562,8 @@ if (page?.content) {
   });
 
   // Featured image preview
-  const featuredImageInput = document.getElementById('featuredImage') as HTMLInputElement;
-  const featuredImagePreview = document.getElementById('featuredImagePreview') as HTMLImageElement;
+  const featuredImageInput = document.getElementById('featuredImage');
+  const featuredImagePreview = document.getElementById('featuredImagePreview');
   const featuredImagePlaceholder = document.getElementById('featuredImagePlaceholder');
 
   featuredImageInput?.addEventListener('input', () => {
@@ -556,9 +578,9 @@ if (page?.content) {
   });
 
   // Featured image upload
-  const featuredImageUpload = document.getElementById('featuredImageUpload') as HTMLInputElement;
+  const featuredImageUpload = document.getElementById('featuredImageUpload');
   featuredImageUpload?.addEventListener('change', async (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const formData = new FormData();
@@ -583,8 +605,8 @@ if (page?.content) {
   });
 
   // Auto-generate slug from title
-  const pageTitleInput = document.getElementById('pageTitle') as HTMLInputElement;
-  const pageSlugInput = document.getElementById('pageSlug') as HTMLInputElement;
+  const pageTitleInput = document.getElementById('pageTitle');
+  const pageSlugInput = document.getElementById('pageSlug');
 
   if (isNew) {
     pageTitleInput?.addEventListener('input', () => {

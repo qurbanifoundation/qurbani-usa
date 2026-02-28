@@ -28,6 +28,8 @@ import TealYellowDonationBox from '../components/donation/TealYellowDonationBox.
 import WhiteDonationBox from '../components/donation/WhiteDonationBox.astro';
 import ListStyleDonationBox from '../components/donation/ListStyleDonationBox.astro';
 import UrgentAppealDonationBox from '../components/donation/UrgentAppealDonationBox.astro';
+import CWDonationBox from '../components/donation/CWDonationBox.astro';
+import HomeDonationBox from '../components/donation/HomeDonationBox.astro';
 import { supabaseAdmin } from '../lib/supabase';
 import { formatTextToHtml, formatLineBreaks } from '../lib/textFormatting';
 
@@ -43,6 +45,7 @@ interface Props {
     content_sections?: Array<{ title?: string; content?: string; image?: string }>;
     donation_options?: Array<{ amount: number; label?: string }>;
     gallery_images?: string[];
+    template_config?: Record<string, any>;
   };
   donationBoxTemplate?: 'teal-yellow' | 'dark-teal' | 'white' | 'compact' | 'list-style' | string;
 }
@@ -52,6 +55,9 @@ const { campaign, donationBoxTemplate = 'teal-yellow' } = Astro.props;
 const contentSections = campaign.content_sections || [];
 const campaignDonationOptions = campaign.donation_options || [];
 const galleryImages = campaign.gallery_images || [];
+
+// Extract CW donation box config from template_config
+const cwConfig = campaign.template_config?.cwDonation || {};
 
 // Hardcoded fallback (used only if template has no defaults)
 const hardcodedDefaults = [
@@ -133,6 +139,18 @@ const defaultBoxColors: Record<string, any> = {
     toggleActiveColor: '#c41e3a',
     inactiveBtnBg: '#ffffff',
   },
+  'cw-donation': {
+    bgColor: '#ffffff',
+    textColor: '#1f2937',
+    textMutedColor: '#6b7280',
+    accentColor: '#e1861d',
+    accentTextColor: '#ffffff',
+    borderColor: '#e5e7eb',
+    activeBgColor: '#e1861d15',
+    activeTextColor: '#1f2937',
+    toggleActiveColor: '#e1861d',
+    inactiveBtnBg: 'transparent',
+  },
 };
 
 // Fetch colors from database for the selected template
@@ -200,6 +218,8 @@ const isCompact = donationBoxTemplate === 'compact';
 const isDarkTeal = donationBoxTemplate === 'dark-teal';
 const isListStyle = donationBoxTemplate === 'list-style';
 const isUrgentAppeal = donationBoxTemplate === 'urgent-appeal';
+const isCWDonation = donationBoxTemplate === 'cw-donation';
+const isHomeDonation = donationBoxTemplate === 'home-donation';
 
 // Get donation options: campaign-specific > template defaults > hardcoded fallback
 const templateDefaultAmounts = dbColors?.default_amounts || hardcodedDefaults;
@@ -291,7 +311,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
   </section>
 
   <!-- Fixed Donation Box - Desktop only (hidden until JS positions it) -->
-  <div id="fixed-donate-box" class="hidden lg:block fixed top-36 z-40 opacity-0" style={(isListStyle || isUrgentAppeal) ? "width: 420px;" : "width: 380px;"}>
+  <div id="fixed-donate-box" class="hidden lg:block fixed z-40 opacity-0" style={(isListStyle || isUrgentAppeal || isCWDonation || isHomeDonation) ? "width: 420px; top: 240px;" : "width: 380px; top: 240px;"}>
     {isListStyle ? (
       <div id="donate">
         <ListStyleDonationBox
@@ -345,6 +365,27 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
             customAmountPlaceholder: textSettings.customAmountPlaceholder,
           }}
         />
+      </div>
+    ) : isCWDonation ? (
+      <div id="donate">
+        <CWDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+          campaignImage={campaign.featured_image}
+          monthlyAmounts={cwConfig.monthlyAmounts}
+          oneTimeAmounts={cwConfig.oneTimeAmounts}
+          impactTexts={cwConfig.impactTexts}
+          monthlyImpactText={cwConfig.monthlyImpactText}
+          upsellBody={cwConfig.upsellBody}
+          upsellSubText={cwConfig.upsellSubText}
+          buttonTextMonthly={cwConfig.buttonTextMonthly}
+          buttonTextOneTime={cwConfig.buttonTextOneTime}
+          donationBoxHeading={cwConfig.donationBoxHeading}
+        />
+      </div>
+    ) : isHomeDonation ? (
+      <div id="donate">
+        <HomeDonationBox campaignSlug={campaign.slug} campaignTitle={campaign.title} />
       </div>
     ) : (
     <div
@@ -547,6 +588,27 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                     customAmountPlaceholder: textSettings.customAmountPlaceholder,
                   }}
                 />
+              </div>
+            ) : isCWDonation ? (
+              <div class="lg:hidden" data-mobile-donate>
+                <CWDonationBox
+                  campaignSlug={campaign.slug}
+                  campaignTitle={campaign.title}
+                  campaignImage={campaign.featured_image}
+                  monthlyAmounts={cwConfig.monthlyAmounts}
+                  oneTimeAmounts={cwConfig.oneTimeAmounts}
+                  impactTexts={cwConfig.impactTexts}
+                  monthlyImpactText={cwConfig.monthlyImpactText}
+                  upsellBody={cwConfig.upsellBody}
+                  upsellSubText={cwConfig.upsellSubText}
+                  buttonTextMonthly={cwConfig.buttonTextMonthly}
+                  buttonTextOneTime={cwConfig.buttonTextOneTime}
+                  donationBoxHeading={cwConfig.donationBoxHeading}
+                />
+              </div>
+            ) : isHomeDonation ? (
+              <div class="lg:hidden" data-mobile-donate>
+                <HomeDonationBox campaignSlug={campaign.slug} campaignTitle={campaign.title} />
               </div>
             ) : (
               <div
@@ -779,8 +841,10 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
       fixedDonateBox.style.left = placeholderRect.left + 'px';
       fixedDonateBox.style.width = placeholderRect.width + 'px';
 
-      // Vertical position - aligned with "Back to Appeals" link
-      const normalTop = 144;
+      // Vertical position - align donation box slightly above the campaign title
+      const heroTitle = document.querySelector('#hero-container h1');
+      const titleTop = heroTitle ? heroTitle.getBoundingClientRect().top : 0;
+      const normalTop = Math.max(titleTop - 60, 144);
       const contentBottomInViewport = contentRect.bottom;
       const maxBoxBottom = contentBottomInViewport - 40; // Box bottom should not go past this
       const calculatedTop = maxBoxBottom - boxHeight;
@@ -815,7 +879,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
         const inactiveBg = b.dataset.inactiveBg || 'transparent';
         const inactiveText = b.dataset.inactiveText || '#ffffff';
 
-        if (parseInt(b.dataset.amount) === amount) {
+        if (parseFloat(b.dataset.amount) === amount) {
           b.style.borderColor = activeBorder;
           b.style.backgroundColor = activeBg;
           b.style.color = activeText;
@@ -837,7 +901,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
         const inactiveBg = b.dataset.inactiveBg || 'transparent';
         const inactiveText = b.dataset.inactiveText || '#ffffff';
 
-        if (parseInt(b.dataset.amount) === amount) {
+        if (parseFloat(b.dataset.amount) === amount) {
           b.style.borderColor = activeBorder;
           b.style.backgroundColor = activeBg;
           b.style.color = activeText;
@@ -885,14 +949,14 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
     // Main amount buttons
     amountButtons.forEach(btn => {
       btn.addEventListener('click', function() {
-        syncAmountSelection(parseInt(this.dataset.amount), 'main');
+        syncAmountSelection(parseFloat(this.dataset.amount), 'main');
       });
     });
 
     // Mobile amount buttons
     mobileAmountButtons.forEach(btn => {
       btn.addEventListener('click', function() {
-        syncAmountSelection(parseInt(this.dataset.amount), 'mobile');
+        syncAmountSelection(parseFloat(this.dataset.amount), 'mobile');
       });
     });
 
@@ -1029,7 +1093,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
     // Set initial selection
     if (amountButtons.length > 0) {
       const firstBtn = amountButtons[0];
-      syncAmountSelection(parseInt(firstBtn.dataset.amount), 'init');
+      syncAmountSelection(parseFloat(firstBtn.dataset.amount), 'init');
     }
   });
 </script>

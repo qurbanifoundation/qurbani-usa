@@ -208,7 +208,7 @@ const {
           (btn as HTMLElement).style.backgroundColor = 'white';
           (btn as HTMLElement).style.color = '#01534d';
           (btn as HTMLElement).style.borderColor = 'white';
-          selectedAmount = parseInt(btn.getAttribute('data-amount') || '100');
+          selectedAmount = parseFloat(btn.getAttribute('data-amount') || '100');
           if (customInput) customInput.value = '';
         });
       });
@@ -222,7 +222,7 @@ const {
             (b as HTMLElement).style.color = 'white';
             (b as HTMLElement).style.borderColor = 'rgba(255,255,255,0.5)';
           });
-          selectedAmount = parseInt(customInput.value) || 0;
+          selectedAmount = parseFloat(customInput.value) || 0;
         }
       });
 

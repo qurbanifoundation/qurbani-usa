@@ -825,7 +825,6 @@ export async function moveDonationThroughPipeline(email: string, targetStage: st
       body: JSON.stringify({
         pipelineStageId: stageId,
         pipelineId: cachedPipelineId,
-        locationId,
       }),
     }, { action: `pipeline_move_${targetStage}`, email });
 
@@ -874,7 +873,6 @@ async function moveOpportunityToRefunded(contactId: string) {
         body: JSON.stringify({
           status: 'lost',
           pipelineId: cachedPipelineId,
-          locationId,
         }),
       });
       console.log('GHL opportunity closed (refunded):', opp.id);

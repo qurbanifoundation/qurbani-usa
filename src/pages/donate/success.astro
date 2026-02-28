@@ -11,28 +11,44 @@ const paymentIntentId = Astro.url.searchParams.get('payment_intent') || '';
 const donationId = Astro.url.searchParams.get('donation_id') || '';
 
 // Try to fetch donation details server-side (for 3D Secure redirects where sessionStorage is empty)
-let serverDonation: { amount: string; campaign_name: string; donor_email: string; stripe_payment_intent_id: string; is_recurring: boolean; } | null = null;
+let serverDonation: { amount: string; campaign_name: string; donor_email: string; stripe_payment_intent_id: string; is_recurring: boolean; items: any; } | null = null;
 let serverSubscription: { id: string; amount: string; interval: string; next_billing_date: string; management_token: string; } | null = null;
 
 if (donationId || paymentIntentId) {
   try {
     // Fetch donation by ID or payment intent
     const query = donationId
-      ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring').eq('id', donationId).single()
-      : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring').eq('stripe_payment_intent_id', paymentIntentId).single();
+      ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items').eq('id', donationId).single()
+      : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items').eq('stripe_payment_intent_id', paymentIntentId).single();
 
     const { data } = await query;
     if (data) {
       serverDonation = data;
 
       // If recurring, fetch subscription details
-      if (data.is_recurring && donationId) {
-        const { data: sub } = await supabaseAdmin
-          .from('donation_subscriptions')
-          .select('id, amount, interval, next_billing_date, management_token')
-          .eq('donation_id', donationId)
-          .eq('status', 'active')
-          .single();
+      if (data.is_recurring) {
+        // Try by donation_id first, then by donor_email
+        let sub = null;
+        if (donationId) {
+          const { data: subData } = await supabaseAdmin
+            .from('donation_subscriptions')
+            .select('id, amount, interval, next_billing_date, management_token')
+            .eq('donation_id', donationId)
+            .eq('status', 'active')
+            .single();
+          sub = subData;
+        }
+        if (!sub && data.donor_email) {
+          const { data: subData } = await supabaseAdmin
+            .from('donation_subscriptions')
+            .select('id, amount, interval, next_billing_date, management_token')
+            .eq('donor_email', data.donor_email)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+          sub = subData;
+        }
         if (sub) serverSubscription = sub;
       }
     }
@@ -40,12 +56,29 @@ if (donationId || paymentIntentId) {
     console.error('Error fetching donation for success page:', e);
   }
 }
+
+// Parse items from server donation for display
+let serverItems: { name: string; amount: number; quantity: number }[] = [];
+if (serverDonation?.items) {
+  try {
+    const raw = typeof serverDonation.items === 'string' ? JSON.parse(serverDonation.items) : serverDonation.items;
+    if (Array.isArray(raw)) {
+      serverItems = raw.map((item: any) => ({
+        name: item.name || 'Donation',
+        amount: parseFloat(item.amount || item.price || 0),
+        quantity: item.quantity || 1,
+      }));
+    }
+  } catch {}
+}
 ---
 
 <Layout title="Thank You for Your Donation - Qurbani Foundation">
+  <!-- Orange header bar behind transparent navbar -->
+  <div class="bg-[#D97706] h-24 sm:h-28 w-full absolute top-0 left-0 right-0 z-0"></div>
   <Navbar />
 
-  <main class="min-h-[60vh] flex items-center justify-center py-12 sm:py-20 bg-gradient-to-b from-stone-100 to-stone-50">
+  <main class="min-h-screen pt-36 sm:pt-40 pb-12 sm:pb-20 bg-gradient-to-b from-stone-100 to-stone-50">
     <div class="max-w-lg mx-auto px-4 w-full">
 
       <!-- Success Card -->
@@ -78,17 +111,24 @@ if (donationId || paymentIntentId) {
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-stone-500 uppercase tracking-wide">Donation Amount</span>
               <span id="success-amount" class="text-2xl font-bold text-emerald-700" style="font-family: 'Signika', sans-serif;">
-                {serverDonation ? `$${parseFloat(serverDonation.amount).toFixed(2)}` : 'Loading...'}
+                {serverDonation ? `$${parseFloat(serverDonation.amount).toFixed(2)}` : ''}
               </span>
             </div>
             <div class="h-px bg-stone-200 mb-3"></div>
             <div id="success-items-list" class="space-y-2 text-sm text-stone-600">
-              {serverDonation && (
+              {serverItems.length > 0 ? (
+                serverItems.map((item) => (
+                  <div class="flex justify-between">
+                    <span>{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ''}</span>
+                    <span class="font-medium text-stone-800">${(item.amount * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))
+              ) : serverDonation ? (
                 <div class="flex justify-between">
                   <span>{serverDonation.campaign_name || 'Donation'}</span>
                   <span class="font-medium text-stone-800">${parseFloat(serverDonation.amount).toFixed(2)}</span>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -121,15 +161,13 @@ if (donationId || paymentIntentId) {
                 </div>
               </div>
             </div>
-            {serverSubscription && (
-              <a href={`/manage-subscription/${serverSubscription.id}_${serverSubscription.management_token}`} id="manage-subscription-link" class="mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-amber-700 bg-white border border-amber-200 rounded-xl py-2.5 px-4 hover:bg-amber-50 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                Manage Your Subscription
-              </a>
-            )}
+            <a href={serverSubscription ? `/manage-subscription/${serverSubscription.id}_${serverSubscription.management_token}` : '#'} id="manage-subscription-link" class={`${serverSubscription ? '' : 'hidden'} mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-amber-700 bg-white border border-amber-200 rounded-xl py-2.5 px-4 hover:bg-amber-50 transition`}>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Manage Your Subscription
+            </a>
           </div>
 
           <!-- Trust signals -->
@@ -250,18 +288,31 @@ if (donationId || paymentIntentId) {
           if (dateEl) dateEl.textContent = nextDate.toLocaleDateString('en-US', dateOpts);
         }
 
-        // Fetch management link
+        // Fetch management link (with retry since webhook may not have created subscription yet)
         if (purchaseData.donor_email) {
-          fetch('/api/subscriptions/manage?email=' + encodeURIComponent(purchaseData.donor_email))
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (data.subscriptions && data.subscriptions.length > 0) {
-                var sub = data.subscriptions[0];
-                var linkEl = document.getElementById('manage-subscription-link');
-                if (linkEl) linkEl.href = '/manage-subscription/' + sub.id + '_' + sub.management_token;
-              }
-            })
-            .catch(function() {});
+          function fetchManageLink(retries) {
+            fetch('/api/subscriptions/manage?email=' + encodeURIComponent(purchaseData.donor_email))
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                if (data.subscriptions && data.subscriptions.length > 0) {
+                  var sub = data.subscriptions[0];
+                  var linkEl = document.getElementById('manage-subscription-link');
+                  if (linkEl) {
+                    linkEl.href = '/manage-subscription/' + sub.id + '_' + sub.management_token;
+                    linkEl.classList.remove('hidden');
+                  }
+                } else if (retries > 0) {
+                  // Subscription may not exist yet (webhook delay), retry
+                  setTimeout(function() { fetchManageLink(retries - 1); }, 2000);
+                }
+              })
+              .catch(function() {
+                if (retries > 0) {
+                  setTimeout(function() { fetchManageLink(retries - 1); }, 2000);
+                }
+              });
+          }
+          fetchManageLink(3);
         }
       }
     }

@@ -18,7 +18,7 @@ import { supabaseAdmin } from './supabase';
 
 export interface TemplateOption {
   id: number;
-  template_type: 'page' | 'donation_box';
+  template_type: 'page' | 'donation_box' | 'checkout';
   template_key: string;
   template_label: string;
   description: string | null;
@@ -70,6 +70,30 @@ export async function getDonationBoxTemplates(): Promise<TemplateOption[]> {
       { id: 3, template_type: 'donation_box', template_key: 'white', template_label: 'White', description: null, is_active: true, sort_order: 3 },
       { id: 4, template_type: 'donation_box', template_key: 'list-style', template_label: 'List Style', description: null, is_active: true, sort_order: 4 },
       { id: 5, template_type: 'donation_box', template_key: 'urgent-appeal', template_label: 'Urgent Appeal', description: null, is_active: true, sort_order: 5 },
+      { id: 6, template_type: 'donation_box', template_key: 'cw-donation', template_label: 'CW Donation', description: 'charity:water-inspired with monthly upsell', is_active: true, sort_order: 6 },
+      { id: 7, template_type: 'donation_box', template_key: 'home-donation', template_label: 'Home Donation Box', description: 'Original homepage widget with matching banner, social proof, and fund selector', is_active: true, sort_order: 7 },
+    ];
+  }
+
+  return data || [];
+}
+
+/**
+ * Fetch checkout template options from database
+ */
+export async function getCheckoutTemplates(): Promise<TemplateOption[]> {
+  const { data, error } = await supabaseAdmin
+    .from('template_options')
+    .select('*')
+    .eq('template_type', 'checkout')
+    .eq('is_active', true)
+    .order('sort_order');
+
+  if (error || !data || data.length === 0) {
+    console.error('Error fetching checkout templates:', error);
+    return [
+      { id: 1, template_type: 'checkout', template_key: 'three-step', template_label: '3-Step Checkout', description: 'Side Cart → Information → Payment (current default)', is_active: true, sort_order: 1 },
+      { id: 2, template_type: 'checkout', template_key: 'two-step', template_label: '1-Step Checkout', description: 'Direct single-page checkout with info + payment combined', is_active: true, sort_order: 2 },
     ];
   }
 

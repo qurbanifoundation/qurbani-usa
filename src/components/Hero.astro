@@ -191,6 +191,7 @@ if (slides.length === 0) {
             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">$</span>
             <input
               type="number"
+              step="0.01"
               id="custom-amount"
               placeholder="Other amount"
               class="w-full pl-10 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:border-[#ef7c01] focus:outline-none text-lg font-semibold"
@@ -357,7 +358,7 @@ if (slides.length === 0) {
           e.preventDefault();
           buttons.forEach(b => updateButtonStyle(b, false));
           updateButtonStyle(btn, true);
-          selectedAmount = parseInt(btn.getAttribute('data-amount') || '720');
+          selectedAmount = parseFloat(btn.getAttribute('data-amount') || '720');
           if (customInput) customInput.value = '';
         });
       });
@@ -370,7 +371,7 @@ if (slides.length === 0) {
       if (customInput.value) {
         amountBtns.forEach(b => updateButtonStyle(b, false));
         amountBtnsMonthly.forEach(b => updateButtonStyle(b, false));
-        selectedAmount = parseInt(customInput.value) || 0;
+        selectedAmount = parseFloat(customInput.value) || 0;
       }
     });
 
