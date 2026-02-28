@@ -979,7 +979,6 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
     const nextBtns = document.querySelectorAll('.carousel-next');
     const slideCounter = document.querySelector('.carousel-current');
     let currentSlide = 0;
-    let autoplayInterval: ReturnType<typeof setInterval>;
 
     const goToSlide = (index: number) => {
       // Background images
@@ -1046,43 +1045,19 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
       goToSlide((currentSlide - 1 + slides.length) % slides.length);
     };
 
-    const startAutoplay = () => {
-      autoplayInterval = setInterval(nextSlide, 10000);
-    };
-
-    const stopAutoplay = () => {
-      clearInterval(autoplayInterval);
-    };
-
     // Dot navigation
     dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        stopAutoplay();
-        goToSlide(index);
-        startAutoplay();
-      });
+      dot.addEventListener('click', () => goToSlide(index));
     });
 
-    // Arrow navigation (multiple buttons supported)
+    // Arrow navigation
     prevBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        stopAutoplay();
-        prevSlide();
-        startAutoplay();
-      });
+      btn.addEventListener('click', () => prevSlide());
     });
 
     nextBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        stopAutoplay();
-        nextSlide();
-        startAutoplay();
-      });
+      btn.addEventListener('click', () => nextSlide());
     });
-
-    if (slides.length > 1) {
-      startAutoplay();
-    }
 
     // ═══════════════════════════════════════════════════════════════
     // Animated Statistics
