@@ -2134,6 +2134,7 @@ function captureAbandonedCheckout() {
 
   var firstName = (document.getElementById('modal-firstName')?.value || document.getElementById('ts-info-firstName')?.value || '').trim();
   var lastName = (document.getElementById('modal-lastName')?.value || document.getElementById('ts-info-lastName')?.value || '').trim();
+  var phone = (document.getElementById('modal-phone')?.value || document.getElementById('ts-info-phone')?.value || '').trim();
   var country = (document.getElementById('modal-country')?.value || 'US');
 
   var items = window.donationCart.items || [];
@@ -2147,6 +2148,7 @@ function captureAbandonedCheckout() {
     email: email,
     first_name: firstName || undefined,
     last_name: lastName || undefined,
+    phone: phone || undefined,
     amount: total || undefined,
     currency: 'USD',
     campaign_type: window.donationCart.pendingDonationType || 'single',

@@ -245,6 +245,7 @@ const showPagination = totalPages > 1;
                 <td class="px-4 py-3">
                   <div class="text-sm font-medium text-gray-800">{c.first_name} {c.last_name || ''}</div>
                   <div class="text-xs text-gray-500">{c.email}</div>
+                  {c.phone && <div class="text-xs text-gray-400">{c.phone}</div>}
                 </td>
                 <td class="px-4 py-3">
                   <div class="text-sm text-gray-700">{c.campaign_slug || '-'}</div>

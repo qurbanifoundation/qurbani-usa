@@ -44,6 +44,7 @@ interface CaptureRequestBody {
   email: string;
   first_name?: string;
   last_name?: string;
+  phone?: string;
   amount?: number;
   currency?: string;
   campaign_type?: string;
@@ -98,6 +99,7 @@ export const POST: APIRoute = async ({ request }) => {
         .update({
           first_name: body.first_name || undefined,
           last_name: body.last_name || undefined,
+          phone: body.phone || undefined,
           amount: body.amount || undefined,
           currency: body.currency || undefined,
           campaign_type: body.campaign_type || undefined,
@@ -132,6 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
         email,
         first_name: body.first_name || null,
         last_name: body.last_name || null,
+        phone: body.phone || null,
         amount: body.amount || null,
         currency: body.currency || 'USD',
         campaign_type: body.campaign_type || null,

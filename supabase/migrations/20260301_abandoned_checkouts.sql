@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS abandoned_checkouts (
   email TEXT NOT NULL,
   first_name TEXT,
   last_name TEXT,
+  phone TEXT,
   status TEXT NOT NULL DEFAULT 'started',
   checkout_started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_activity_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
