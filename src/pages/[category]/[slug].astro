@@ -13,6 +13,7 @@ import EmergencyAppealTemplate from '../../templates/EmergencyAppealTemplate.ast
 import OrphanSponsorshipTemplate from '../../templates/OrphanSponsorshipTemplate.astro';
 import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTemplate.astro';
 import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
+import ZakatCalculatorTemplate from '../../templates/ZakatCalculatorTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -146,6 +147,7 @@ const templateMap: Record<string, any> = {
   'tilestack-sponsorship': TileStackSponsorshipTemplate,
   'tile-stack-sponsorship': TileStackSponsorshipTemplate,
   'aqiqah': AqiqahTemplate,
+  'zakat-calculator': ZakatCalculatorTemplate,
 };
 
 const TemplateComponent = templateMap[templateKey] || GreenWithYellowTemplate;

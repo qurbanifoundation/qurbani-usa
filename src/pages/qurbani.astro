@@ -9,8 +9,11 @@
 
 import QurbaniTemplate from '../templates/QurbaniTemplate.astro';
 import DonationCart from '../components/DonationCart.astro';
+import { getSettings } from '../lib/settings';
 
 export const prerender = false;
+
+const settings = await getSettings();
 
 // Campaign data for the Qurbani page
 const campaign = {
@@ -27,4 +30,4 @@ const campaign = {
 ---
 
 <QurbaniTemplate campaign={campaign} />
-<DonationCart />
+<DonationCart showSidecartMonthly={settings.show_sidecart_monthly !== false} showSidecartJummah={settings.show_sidecart_jummah !== false} />

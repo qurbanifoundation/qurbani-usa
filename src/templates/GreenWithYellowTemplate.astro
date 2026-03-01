@@ -32,11 +32,14 @@ import CWDonationBox from '../components/donation/CWDonationBox.astro';
 import HomeDonationBox from '../components/donation/HomeDonationBox.astro';
 import { supabaseAdmin } from '../lib/supabase';
 import { formatTextToHtml, formatLineBreaks } from '../lib/textFormatting';
+import { DEFAULT_PAGE_CONTENT } from '../lib/page-content-defaults';
 
 interface Props {
   campaign: {
     title: string;
+    hero_title?: string;
     subtitle?: string;
+    subtitle2?: string;
     slug: string;
     featured_image?: string;
     description?: string;
@@ -45,6 +48,7 @@ interface Props {
     content_sections?: Array<{ title?: string; content?: string; image?: string }>;
     donation_options?: Array<{ amount: number; label?: string }>;
     gallery_images?: string[];
+    impact_stats?: Array<{ value: string; label: string }> | Record<string, string>;
     template_config?: Record<string, any>;
   };
   donationBoxTemplate?: 'teal-yellow' | 'dark-teal' | 'white' | 'compact' | 'list-style' | string;
@@ -56,8 +60,43 @@ const contentSections = campaign.content_sections || [];
 const campaignDonationOptions = campaign.donation_options || [];
 const galleryImages = campaign.gallery_images || [];
 
+// Parse impact stats (array, object, or fallback defaults)
+const rawImpactStats = campaign.impact_stats;
+let impactStats: { value: string; label: string }[] = [];
+if (Array.isArray(rawImpactStats) && rawImpactStats.length > 0) {
+  impactStats = rawImpactStats;
+} else if (rawImpactStats && typeof rawImpactStats === 'object' && !Array.isArray(rawImpactStats)) {
+  impactStats = Object.entries(rawImpactStats).map(([key, value]) => ({
+    value: String(value),
+    label: key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+  }));
+}
+// Crisis Snapshot shows only real campaign-specific crisis stats — no fallbacks
+
 // Extract CW donation box config from template_config
 const cwConfig = campaign.template_config?.cwDonation || {};
+
+// Extract editable page content with fallback to defaults
+const savedPC = campaign.template_config?.pageContent || {};
+const pageContent = {
+  theCrisis: { ...DEFAULT_PAGE_CONTENT.theCrisis, ...savedPC.theCrisis },
+  howDonationHelps: {
+    heading: savedPC.howDonationHelps?.heading || DEFAULT_PAGE_CONTENT.howDonationHelps.heading,
+    items: savedPC.howDonationHelps?.items || DEFAULT_PAGE_CONTENT.howDonationHelps.items,
+  },
+  midCta: { ...DEFAULT_PAGE_CONTENT.midCta, ...savedPC.midCta },
+  chooseYourImpact: { ...DEFAULT_PAGE_CONTENT.chooseYourImpact, ...savedPC.chooseYourImpact },
+  whyMonthly: {
+    ...DEFAULT_PAGE_CONTENT.whyMonthly,
+    ...savedPC.whyMonthly,
+    benefits: savedPC.whyMonthly?.benefits || DEFAULT_PAGE_CONTENT.whyMonthly.benefits,
+  },
+  faq: {
+    heading: savedPC.faq?.heading || DEFAULT_PAGE_CONTENT.faq.heading,
+    items: savedPC.faq?.items || DEFAULT_PAGE_CONTENT.faq.items,
+  },
+  finalCta: { ...DEFAULT_PAGE_CONTENT.finalCta, ...savedPC.finalCta },
+};
 
 // Hardcoded fallback (used only if template has no defaults)
 const hardcodedDefaults = [
@@ -235,7 +274,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
   <main class="min-h-screen">
     <!-- Hero Section with Donation Box -->
-    <section class="relative min-h-[85vh] overflow-hidden">
+    <section class="relative min-h-[60vh] lg:min-h-[80vh] overflow-hidden">
       <!-- Background -->
       <div class="absolute inset-0">
         {campaign.featured_image ? (
@@ -252,10 +291,10 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
       </div>
 
       <!-- Hero Content Grid -->
-      <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 min-h-[85vh] flex flex-col" id="hero-container">
+      <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 min-h-[60vh] lg:min-h-[80vh] flex flex-col" id="hero-container">
 
         <!-- Top: Back link and Badge (stays at top) -->
-        <div class="pt-28 lg:pt-32">
+        <div class="pt-24 lg:pt-28">
           <a href="/appeals" class="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm transition group">
             <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -276,26 +315,34 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
             <!-- Left: Text Content (3 cols) - vertically centered -->
             <div class="lg:col-span-3 text-left">
               <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
-                {campaign.title}
+                {campaign.hero_title || campaign.title}
               </h1>
 
               {campaign.subtitle && (
-                <div class="text-xl md:text-2xl text-white/90 max-w-2xl mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatLineBreaks(campaign.subtitle)}></div>
+                <div class="text-xl md:text-2xl text-white/90 max-w-2xl leading-relaxed" style={`font-family: 'Lato', sans-serif; margin-bottom: ${campaign.subtitle2 ? '0.5rem' : '2rem'};`} set:html={formatLineBreaks(campaign.subtitle)}></div>
               )}
 
-              <!-- Trust badges in hero -->
-              <div class="flex items-center gap-6 text-white/70 text-sm">
-                <div class="flex items-center gap-2">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
-                  </svg>
+              {campaign.subtitle2 && (
+                <div class="text-lg md:text-xl text-white/80 max-w-2xl mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatLineBreaks(campaign.subtitle2)}></div>
+              )}
+
+              <!-- Micro Trust Row -->
+              <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-white/60 text-[12px] tracking-wide">
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
                   <span>Secure Payment</span>
                 </div>
-                <div class="flex items-center gap-2">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                  </svg>
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                   <span>100% Donation Policy</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                  <span>501(c)(3) Registered</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"></path></svg>
+                  <span>Delivering Aid in 50+ Countries</span>
                 </div>
               </div>
             </div>
@@ -529,12 +576,12 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
   </div>
 
     <!-- Main Content -->
-    <section class="py-16 md:py-24 bg-white" id="content-section">
+    <section class="py-10 md:py-14 bg-white" id="content-section">
       <div class="max-w-[1750px] mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-16">
 
           <!-- Left: Content -->
-          <div class="lg:col-span-3 space-y-16">
+          <div class="lg:col-span-3 space-y-8">
 
             <!-- Mobile Donation Box -->
             {isListStyle ? (
@@ -682,60 +729,281 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
               </div>
             )}
 
-            <!-- Main Description -->
-            {campaign.description && (
-              <div class="prose prose-lg lg:prose-xl max-w-none">
-                <div class="text-gray-700 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(campaign.description)}></div>
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- 1. CRISIS SNAPSHOT (Stats from Crisis Statistics editor) -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            {impactStats.length > 0 && (
+              <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+                <div class="bg-[#F4F5F0] px-5 py-3 sm:px-7 sm:py-4 border-b border-[#e0e1dc]">
+                  <h2 class="text-lg md:text-xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                    Crisis Snapshot
+                  </h2>
+                </div>
+                <div class={`grid grid-cols-2 ${impactStats.length === 5 ? 'md:grid-cols-5' : impactStats.length >= 4 ? 'md:grid-cols-4' : impactStats.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                  {impactStats.slice(0, 5).map((stat: { value: string; label: string }, idx: number) => (
+                    <div class={`text-center py-6 px-3 ${idx > 0 ? 'border-l border-[#e0e1dc]' : ''}`}>
+                      <p class="text-2xl md:text-3xl font-extrabold text-[#d97706] mb-1" style="font-family: 'Signika', sans-serif;">{stat.value}</p>
+                      <p class="text-gray-500 text-[11px] uppercase tracking-widest font-semibold">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            <!-- Impact Stats Bar -->
-            <div class="bg-gradient-to-r from-[#01534d] to-[#255764] rounded-2xl p-8 text-white">
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                <div>
-                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">3.57M</p>
-                  <p class="text-white/70 text-sm">Deaths per year</p>
-                </div>
-                <div>
-                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">2.2M</p>
-                  <p class="text-white/70 text-sm">Children affected</p>
-                </div>
-                <div>
-                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">1 in 3</p>
-                  <p class="text-white/70 text-sm">Without clean water</p>
-                </div>
-                <div>
-                  <p class="text-3xl md:text-4xl font-bold mb-1" style="font-family: 'Signika', sans-serif;">$300</p>
-                  <p class="text-white/70 text-sm">Can save lives</p>
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- 2. THE CRISIS (Short card — 3-4 lines, emotional)       -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+              <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                  {pageContent.theCrisis.heading}
+                </h2>
+              </div>
+              <div class="px-5 py-5 sm:px-7 sm:py-6">
+                {contentSections.length > 0 && contentSections[0]?.image && (
+                  <img src={contentSections[0].image}
+                    alt={pageContent.theCrisis.heading}
+                    class="w-full h-48 md:h-56 object-cover rounded mb-5" />
+                )}
+                <div class="text-[15px] text-gray-600 leading-[1.8]" style="font-family: 'Lato', sans-serif;"
+                  set:html={formatTextToHtml(
+                    pageContent.theCrisis.content
+                      || (contentSections.length > 0 && contentSections[0]?.content ? contentSections[0].content : '')
+                      || campaign.description
+                      || 'Families are facing an urgent humanitarian crisis. Without food, clean water, or medical care, millions are at risk — and the situation is getting worse every day. Your support can provide immediate relief to those who need it most.'
+                  )}>
                 </div>
               </div>
             </div>
 
-            <!-- Content Sections -->
-            {contentSections.length > 0 && (
-              <div class="space-y-12">
-                <h2 class="text-3xl md:text-4xl font-bold text-[#255764]" style="font-family: 'Signika', sans-serif;">
-                  How Your Donation Helps
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- 3. HOW YOUR DONATION HELPS (Bullet card — scannable)   -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+              <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                  {pageContent.howDonationHelps.heading}
                 </h2>
-
-                <div class="grid gap-8">
-                  {contentSections.map((section: any, idx: number) => (
-                    <div class={`flex flex-col ${idx % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-6 items-start p-6 bg-[#f8f9fa] rounded-2xl hover:shadow-lg transition`}>
-                      {section.image && (
-                        <div class="w-full md:w-1/3 flex-shrink-0">
-                          <img src={section.image} alt={section.title} class="w-full h-48 object-cover rounded-xl" />
+              </div>
+              <div class="px-5 py-5 sm:px-7 sm:py-6">
+                {contentSections.length > 1 && contentSections[1]?.image && (
+                  <img src={contentSections[1].image}
+                    alt={pageContent.howDonationHelps.heading}
+                    class="w-full h-48 md:h-56 object-cover rounded mb-5" />
+                )}
+                {pageContent.howDonationHelps.items.length > 0 ? (
+                  <div class="space-y-3">
+                    {pageContent.howDonationHelps.items.map((item: { amount: string; label: string }) => (
+                      <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-[#d97706]/10 flex items-center justify-center mt-0.5">
+                          <svg class="w-3.5 h-3.5 text-[#d97706]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                      )}
-                      <div class="flex-1">
-                        {section.title && (
-                          <h3 class="text-xl font-bold text-[#255764] mb-3" style="font-family: 'Signika', sans-serif;">
-                            {section.title}
-                          </h3>
-                        )}
-                        {section.content && (
-                          <div class="text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(section.content)}></div>
-                        )}
+                        <p class="text-[15px] text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                          <span class="font-semibold text-gray-800">{item.amount}</span> — {item.label}
+                        </p>
                       </div>
+                    ))}
+                  </div>
+                ) : contentSections.length > 1 && contentSections[1]?.content ? (
+                  <div class="text-[15px] text-gray-600 leading-[1.8] donation-help-bullets" style="font-family: 'Lato', sans-serif;"
+                    set:html={formatTextToHtml(contentSections[1].content)}>
+                  </div>
+                ) : (
+                  <div class="space-y-3">
+                    {(activeOptions.length > 0 ? activeOptions.slice(0, 5) : hardcodedDefaults).map((opt: { amount: number; label?: string }) => (
+                      <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-6 h-6 rounded-full bg-[#d97706]/10 flex items-center justify-center mt-0.5">
+                          <svg class="w-3.5 h-3.5 text-[#d97706]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <p class="text-[15px] text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                          <span class="font-semibold text-gray-800">${opt.amount}</span> — {opt.label || 'Support our cause'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- MID-PAGE CTA (Conversion booster)                       -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <div class="bg-gradient-to-r from-[#d97706] to-[#b45309] rounded-md shadow-xl overflow-hidden px-5 py-5 sm:px-7 sm:py-6 text-center">
+              <h3 class="text-xl md:text-2xl font-bold text-white mb-2 leading-tight" style="font-family: 'Signika', sans-serif;">
+                {pageContent.midCta.heading}
+              </h3>
+              <p class="text-white/70 text-[14px] mb-5" style="font-family: 'Lato', sans-serif;">
+                {pageContent.midCta.subtext}
+              </p>
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="#donate"
+                  class="mid-cta-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#d97706] font-extrabold px-8 py-3 rounded text-[14px] uppercase tracking-[0.08em] hover:bg-gray-50 transition-all active:scale-[0.98]"
+                  style="font-family: 'Signika', sans-serif;">
+                  {pageContent.midCta.primaryButtonText}
+                </a>
+                <a href="#donate"
+                  class="mid-cta-monthly-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent border-2 border-white/30 text-white font-bold px-8 py-3 rounded text-[13px] uppercase tracking-wider hover:border-white/60 transition-all"
+                  style="font-family: 'Signika', sans-serif;">
+                  {pageContent.midCta.secondaryButtonText}
+                </a>
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- 4. CHOOSE YOUR IMPACT (Donation Tiers)                  -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            {activeOptions.length > 0 && (
+              <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden" id="donation-tiers">
+                <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                  <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                    {pageContent.chooseYourImpact.heading}
+                  </h2>
+                  <p class="text-[13px] text-gray-500 mt-1">{pageContent.chooseYourImpact.subtext}</p>
+                </div>
+
+                <!-- Single / Monthly toggle (Monthly default) -->
+                <div class="px-5 pt-4 sm:px-7">
+                  <div class="inline-flex bg-[#f4f5f0] rounded border border-[#e0e1dc] p-0.5">
+                    <button type="button"
+                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all"
+                      data-tier-type="single"
+                      style="color: #9ca3af;">
+                      {pageContent.chooseYourImpact.singleTabText}
+                    </button>
+                    <button type="button"
+                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all"
+                      data-tier-type="monthly"
+                      style="background-color: #d97706; color: #ffffff;">
+                      {pageContent.chooseYourImpact.monthlyTabText}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tier rows -->
+                <div class="px-5 sm:px-7 py-4 space-y-2.5">
+                  {activeOptions.map((opt: any) => (
+                    <button type="button"
+                      class="tier-row w-full flex items-center gap-3 bg-[#f4f5f0] border border-[#e0e1dc] rounded px-4 py-3.5 hover:border-[#d97706] hover:bg-[#d97706]/5 transition-all group cursor-pointer text-left"
+                      data-tier-amount={opt.amount}
+                      data-tier-label={opt.label || `$${opt.amount} Donation`}>
+                      <div class="flex-shrink-0 min-w-[70px] md:min-w-[80px]">
+                        <span class="font-bold text-[17px] text-gray-800" style="font-family: 'Signika', sans-serif;">
+                          ${opt.amount.toLocaleString()}
+                        </span>
+                      </div>
+                      <div class="w-px h-8 bg-[#e0e1dc] flex-shrink-0"></div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[14px] text-gray-600 leading-snug">{opt.label || 'Support our cause'}</p>
+                        <p class="tier-monthly-hint text-[11px] text-gray-400 mt-0.5" style="display: none;">Just ${Math.ceil(opt.amount / 12)}/month</p>
+                      </div>
+                      <div class="flex-shrink-0">
+                        <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#d97706] text-white group-hover:scale-110 group-hover:shadow-md transition-all">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                          </svg>
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+
+                  <!-- Custom amount -->
+                  <div class="flex items-center gap-3 bg-[#f4f5f0] border border-[#e0e1dc] rounded px-4 py-3">
+                    <div class="flex-shrink-0 min-w-[70px] md:min-w-[80px]">
+                      <span class="font-bold text-[14px] text-gray-400 uppercase tracking-wider">Other</span>
+                    </div>
+                    <div class="w-px h-8 bg-[#e0e1dc] flex-shrink-0"></div>
+                    <div class="flex-1">
+                      <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[15px]">$</span>
+                        <input type="number" id="tier-custom-amount" min="1" placeholder="Enter amount"
+                          class="w-full pl-8 pr-3 py-2 bg-white rounded border border-[#e0e1dc] focus:border-[#d97706] focus:outline-none font-bold text-[15px] text-gray-800 placeholder-gray-400" />
+                      </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                      <button type="button" id="tier-custom-add-btn"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#d97706] text-white hover:scale-110 hover:shadow-md transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- 5. WHY MONTHLY MATTERS                                  -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+              <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                  {pageContent.whyMonthly.heading}
+                </h2>
+              </div>
+              <div class="px-5 py-5 sm:px-7 sm:py-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {pageContent.whyMonthly.benefits.map((benefit: string) => (
+                    <div class="flex items-center gap-3 bg-[#f4f5f0] rounded px-4 py-3">
+                      <div class="flex-shrink-0 w-7 h-7 rounded-full bg-[#d97706]/10 flex items-center justify-center">
+                        <svg class="w-3.5 h-3.5 text-[#d97706]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                      <p class="text-[14px] font-semibold text-gray-800">{benefit}</p>
+                    </div>
+                  ))}
+                </div>
+                <p class="text-[13px] text-gray-400 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                  {pageContent.whyMonthly.footerText}
+                </p>
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- 6. TRANSPARENCY / FAQ (Expandable)                      -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+              <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                  {pageContent.faq.heading}
+                </h2>
+              </div>
+              <div class="divide-y divide-[#e0e1dc]">
+                {pageContent.faq.items.map((faqItem: { question: string; answer: string }) => (
+                  <div class="faq-item">
+                    <button type="button" class="faq-toggle w-full flex items-center justify-between px-5 sm:px-7 py-4 text-left hover:bg-[#f4f5f0]/50 transition-colors">
+                      <span class="text-[15px] font-semibold text-gray-800 pr-4">{faqItem.question}</span>
+                      <svg class="faq-chevron w-5 h-5 text-gray-400 flex-shrink-0 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content hidden px-5 sm:px-7 pb-4">
+                      <p class="text-[14px] text-gray-500 leading-relaxed">{faqItem.answer}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- Additional Content Sections (3rd+ content sections)     -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            {contentSections.length > 2 && (
+              <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+                <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                  <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                    More About This Appeal
+                  </h2>
+                </div>
+                <div class="px-5 py-5 sm:px-7 sm:py-6 space-y-6">
+                  {contentSections.slice(2).map((section: any, idx: number) => (
+                    <div class={idx > 0 ? 'pt-6 border-t border-[#e0e1dc]' : ''}>
+                      {section.image && (
+                        <img src={section.image} alt={section.title || ''} class="w-full h-44 object-cover rounded mb-4" />
+                      )}
+                      {section.title && (
+                        <h3 class="text-lg font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">{section.title}</h3>
+                      )}
+                      {section.content && (
+                        <div class="text-[15px] text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(section.content)}></div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -744,16 +1012,20 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
             <!-- Gallery -->
             {galleryImages.length > 0 && (
-              <div class="space-y-8">
-                <h2 class="text-3xl md:text-4xl font-bold text-[#255764]" style="font-family: 'Signika', sans-serif;">
-                  Your Donations in Action
-                </h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {galleryImages.map((img: string) => (
-                    <div class="aspect-square rounded-xl overflow-hidden group cursor-pointer">
-                      <img src={img} alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    </div>
-                  ))}
+              <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+                <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
+                  <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
+                    Your Donations in Action
+                  </h2>
+                </div>
+                <div class="px-5 py-5 sm:px-7 sm:py-6">
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {galleryImages.map((img: string) => (
+                      <div class="aspect-square rounded overflow-hidden group cursor-pointer">
+                        <img src={img} alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -766,28 +1038,43 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
       </div>
     </section>
 
-    <!-- Bottom CTA -->
-    <section class="py-20 bg-gradient-to-br from-[#ef7c01] to-[#fdc448] relative overflow-hidden">
-      <div class="absolute inset-0 opacity-10">
-        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"40\" height=\"40\" viewBox=\"0 0 40 40\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23000\" fill-opacity=\"0.3\"%3E%3Cpath d=\"M20 20c0-11.046-8.954-20-20-20v20h20z\"/%3E%3C/g%3E%3C/svg%3E');"></div>
-      </div>
-      <div class="relative max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-3xl md:text-5xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
-          Be the Change Today
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 7. FINAL CTA                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section class="relative py-14 md:py-16 overflow-hidden" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);">
+      <!-- Subtle pattern -->
+      <div class="absolute inset-0 opacity-[0.03]" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;%23fff&quot;%3E%3Ccircle cx=&quot;30&quot; cy=&quot;30&quot; r=&quot;1.5&quot;/%3E%3C/g%3E%3C/svg%3E');"></div>
+
+      <div class="relative max-w-3xl mx-auto px-6 text-center">
+        <!-- Accent line -->
+        <div class="w-12 h-1 bg-[#d97706] mx-auto mb-6 rounded-full"></div>
+
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight" style="font-family: 'Signika', sans-serif;">
+          {pageContent.finalCta.heading}
         </h2>
-        <p class="text-xl text-white/90 mb-10 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
-          Your generosity can transform lives and bring hope to families in need. Every donation makes a difference.
+        <p class="text-base text-white/60 mb-8 max-w-xl mx-auto leading-relaxed" style="font-family: 'Lato', sans-serif;">
+          {pageContent.finalCta.subtext}
         </p>
-        <a
-          href="#donate"
-          class="inline-flex items-center gap-3 bg-white text-[#ef7c01] font-bold px-12 py-5 rounded-xl hover:bg-gray-100 transition-all hover:scale-105 text-lg"
-          style="box-shadow: 4px 6px 0 rgba(0,0,0,0.15); font-family: 'Signika', sans-serif;"
-        >
-          Donate Now
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-          </svg>
-        </a>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="#donate"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#d97706] text-white font-extrabold px-10 py-4 rounded text-[15px] uppercase tracking-[0.1em] hover:brightness-110 transition-all active:scale-[0.99]"
+            style="font-family: 'Signika', sans-serif;">
+            {pageContent.finalCta.primaryButtonText}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+          </a>
+          <a href="#donate"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent border-2 border-white/20 text-white/80 font-bold px-10 py-4 rounded text-[14px] uppercase tracking-wider hover:border-white/40 hover:text-white transition-all"
+            style="font-family: 'Signika', sans-serif;"
+            onclick="document.querySelectorAll('.tier-type-btn')[1]?.click();">
+            {pageContent.finalCta.secondaryButtonText}
+          </a>
+        </div>
+
+        <!-- Trust line -->
+        <p class="text-white/30 text-xs mt-6 uppercase tracking-wider">
+          Secure Payment &bull; 100% Donation Policy &bull; Tax Deductible
+        </p>
       </div>
     </section>
   </main>
@@ -853,12 +1140,16 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
       const calculatedTop = maxBoxBottom - boxHeight;
 
       if (calculatedTop < normalTop) {
-        // Content is ending - move box up so it stays within content
-        // This will eventually push it off screen as we scroll into footer
         fixedDonateBox.style.top = calculatedTop + 'px';
       } else {
-        // Normal fixed position at top
         fixedDonateBox.style.top = normalTop + 'px';
+      }
+
+      // Swap the donation box heading color when it crosses from hero (dark) to content (white)
+      const isOverWhiteBg = contentRect.top < 160;
+      var boxHeading = fixedDonateBox.querySelector('[data-box-heading]');
+      if (boxHeading) {
+        boxHeading.style.color = isOverWhiteBg ? '#1f2937' : '#ffffff';
       }
     }
 
@@ -1098,5 +1389,183 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
       const firstBtn = amountButtons[0];
       syncAmountSelection(parseFloat(firstBtn.dataset.amount), 'init');
     }
+
+    // ══════════════════════════════════════════════════════
+    // DONATION TIER LIST LOGIC
+    // ══════════════════════════════════════════════════════
+    var tierDonationType = 'monthly';
+
+    // Tier type toggle (Single / Monthly)
+    var tierTypeButtons = document.querySelectorAll('.tier-type-btn');
+    var monthlyHints = document.querySelectorAll('.tier-monthly-hint');
+
+    tierTypeButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        tierDonationType = this.dataset.tierType;
+        tierTypeButtons.forEach(function(b) {
+          if (b.dataset.tierType === tierDonationType) {
+            b.style.backgroundColor = '#d97706';
+            b.style.color = '#ffffff';
+          } else {
+            b.style.backgroundColor = 'transparent';
+            b.style.color = '#9ca3af';
+          }
+        });
+        // Show monthly hints only on single tab
+        monthlyHints.forEach(function(hint) {
+          hint.style.display = tierDonationType === 'single' ? 'block' : 'none';
+        });
+      });
+    });
+
+    // Tier row click → add to cart
+    var tierRows = document.querySelectorAll('.tier-row');
+    tierRows.forEach(function(row) {
+      row.addEventListener('click', function() {
+        var amount = parseFloat(this.dataset.tierAmount);
+        var label = this.dataset.tierLabel;
+        if (!amount || amount < 1) return;
+
+        var itemId = campaignData.slug + '-' + amount + '-' + tierDonationType;
+
+        window.addToCart({
+          id: itemId,
+          name: campaignData.title,
+          label: label,
+          amount: amount,
+          quantity: 1,
+          type: tierDonationType,
+          image: campaignData.image,
+          campaign: campaignData.slug
+        });
+
+        // Brief visual feedback
+        var el = this;
+        el.style.backgroundColor = 'rgba(1, 83, 77, 0.08)';
+        setTimeout(function() { el.style.backgroundColor = ''; }, 400);
+      });
+    });
+
+    // Custom amount in tier list
+    var tierCustomInput = document.getElementById('tier-custom-amount');
+    var tierCustomAddBtn = document.getElementById('tier-custom-add-btn');
+
+    if (tierCustomAddBtn && tierCustomInput) {
+      tierCustomAddBtn.addEventListener('click', function() {
+        var amount = parseFloat(tierCustomInput.value);
+        if (!amount || amount < 1) {
+          tierCustomInput.style.borderColor = '#ef4444';
+          setTimeout(function() { tierCustomInput.style.borderColor = '#e5e7eb'; }, 1500);
+          return;
+        }
+        var itemId = campaignData.slug + '-' + amount + '-' + tierDonationType;
+        window.addToCart({
+          id: itemId,
+          name: campaignData.title,
+          label: 'Custom Amount',
+          amount: amount,
+          quantity: 1,
+          type: tierDonationType,
+          image: campaignData.image,
+          campaign: campaignData.slug
+        });
+        tierCustomInput.value = '';
+      });
+
+      tierCustomInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          tierCustomAddBtn.click();
+        }
+      });
+    }
+
+    // ══════════════════════════════════════════════════════
+    // FAQ ACCORDION LOGIC
+    // ══════════════════════════════════════════════════════
+    var faqToggles = document.querySelectorAll('.faq-toggle');
+    faqToggles.forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        var item = this.closest('.faq-item');
+        var content = item.querySelector('.faq-content');
+        var chevron = this.querySelector('.faq-chevron');
+        var isOpen = !content.classList.contains('hidden');
+
+        // Close all other FAQs (accordion behavior)
+        faqToggles.forEach(function(otherToggle) {
+          var otherItem = otherToggle.closest('.faq-item');
+          var otherContent = otherItem.querySelector('.faq-content');
+          var otherChevron = otherToggle.querySelector('.faq-chevron');
+          if (otherItem !== item) {
+            otherContent.classList.add('hidden');
+            otherChevron.style.transform = 'rotate(0deg)';
+          }
+        });
+
+        // Toggle current FAQ
+        if (isOpen) {
+          content.classList.add('hidden');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          content.classList.remove('hidden');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+
+    // ══════════════════════════════════════════════════════
+    // CTA SCROLL & INTERACTION LOGIC
+    // ══════════════════════════════════════════════════════
+    var ctaButtons = document.querySelectorAll('a[href="#donate"]');
+    ctaButtons.forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var heroSection = document.getElementById('hero-container');
+        if (heroSection) {
+          heroSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Mid-CTA monthly button → scroll + switch to monthly
+    var midCtaMonthly = document.querySelector('.mid-cta-monthly-btn');
+    if (midCtaMonthly) {
+      midCtaMonthly.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Switch donation box to monthly
+        var monthlyTypeBtn = document.querySelector('.donation-type-btn[data-type="monthly"]');
+        if (monthlyTypeBtn) monthlyTypeBtn.click();
+        var heroSection = document.getElementById('hero-container');
+        if (heroSection) {
+          heroSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
   });
 </script>
+
+<style is:global>
+  /* Bullet list styling for CMS content in donation help section */
+  .donation-help-bullets ul,
+  .donation-help-bullets ol {
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+  }
+  .donation-help-bullets li {
+    position: relative;
+    padding-left: 1.75rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.7;
+  }
+  .donation-help-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 8px;
+    height: 8px;
+    background: #d97706;
+    border-radius: 50%;
+  }
+</style>

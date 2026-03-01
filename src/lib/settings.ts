@@ -46,6 +46,10 @@ const defaultSettings = {
   show_ramadan_popup: true,
   show_cart_reminder: true,
 
+  // Sidecart recurring upsell options
+  show_sidecart_monthly: true,
+  show_sidecart_jummah: true,
+
   // Homepage donation box
   donation_box_heading: '',
 };

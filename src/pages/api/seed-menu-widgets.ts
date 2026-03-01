@@ -103,7 +103,7 @@ const zakatWidgets = [
       description: 'Zakat is an obligatory form of charity for Muslims who meet the necessary criteria of wealth (nisab). It purifies your wealth and helps those in need.',
       stats: [
         { value: '2.5%', label: 'Of qualifying wealth', color: '#0096D6', href: '/zakat-calculator' },
-        { value: '$5,500', label: 'Approx. Nisab threshold', color: '#eab308', href: '/zakat-calculator' },
+        { value: 'Live', label: 'Silver Nisab threshold', color: '#eab308', href: '/zakat-calculator' },
       ],
       button: {
         label: 'Calculate Your Zakat Now',

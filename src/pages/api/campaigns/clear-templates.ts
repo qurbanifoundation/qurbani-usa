@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearNavbarCache } from '../../../lib/menus';
+import { clearSettingsCache } from '../../../lib/settings';
 
 export const prerender = false;
 
@@ -40,6 +42,10 @@ export const POST: APIRoute = async () => {
       .select('id');
 
     if (error) throw error;
+
+    // Clear caches so template changes appear immediately
+    clearNavbarCache();
+    clearSettingsCache();
 
     return new Response(JSON.stringify({
       success: true,

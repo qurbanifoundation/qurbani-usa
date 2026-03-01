@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../lib/supabase';
 import { defaultHomepageContent } from '../../lib/homepage';
+import { clearSettingsCache } from '../../lib/settings';
+import { clearNavbarCache } from '../../lib/menus';
 
 export const prerender = false;
 
@@ -63,6 +65,10 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    // Clear caches so homepage changes appear immediately
+    clearSettingsCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,

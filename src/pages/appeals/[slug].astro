@@ -8,6 +8,7 @@ import EmergencyAppealTemplate from '../../templates/EmergencyAppealTemplate.ast
 import OrphanSponsorshipTemplate from '../../templates/OrphanSponsorshipTemplate.astro';
 import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTemplate.astro';
 import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
+import ZakatCalculatorTemplate from '../../templates/ZakatCalculatorTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -72,7 +73,9 @@ if (!campaign) {
 const campaignProps = {
   id: campaign.id,
   title: campaign.name || campaign.title,
-  subtitle: campaign.description,
+  hero_title: campaign.hero_title || '',
+  subtitle: campaign.subtitle || campaign.description,
+  subtitle2: campaign.subtitle2 || '',
   slug: campaign.slug,
   featured_image: campaign.featured_image || campaign.hero_image_url || campaign.image_url,
   description: campaign.long_description || campaign.description,
@@ -98,7 +101,9 @@ const pageTemplate = campaign.page_template || (isOrphanSponsorship ? orphanTemp
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
 ---
 
-{pageTemplate === 'aqiqah' ? (
+{pageTemplate === 'zakat-calculator' ? (
+  <ZakatCalculatorTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'aqiqah' ? (
   <AqiqahTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : pageTemplate === 'tilestack-sponsorship' ? (
   <TileStackSponsorshipTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />

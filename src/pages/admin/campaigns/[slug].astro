@@ -3,6 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { getPageTemplates, getDonationBoxTemplates } from '../../../lib/templates';
 import { generateImpactTexts, getDefaultMonthlyImpact, DEFAULT_UPSELL_BODY, DEFAULT_UPSELL_SUBTEXT, DEFAULT_BUTTON_MONTHLY, DEFAULT_BUTTON_ONETIME } from '../../../lib/donation-defaults';
+import { DEFAULT_PAGE_CONTENT } from '../../../lib/page-content-defaults';
 
 export const prerender = false;
 
@@ -121,321 +122,602 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       <form id="campaignForm" class="space-y-6">
         <input type="hidden" name="id" value={campaign.id} />
 
-        <!-- Basic Information -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-6">Basic Information</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Title *</label>
-              <input
-                type="text"
-                name="title"
-                required
-                value={campaign.title || campaign.name || ''}
-                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
-              />
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- CAMPAIGN TITLE & STATUS (collapsible, folded by default) -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Campaign Title & Status</h2>
+                <p class="text-sm text-gray-400">Title, URL slug, active/featured status</p>
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">URL Path</label>
-              <div class="flex items-center gap-1 flex-wrap">
-                <span class="text-gray-500 text-sm">/</span>
-                <select
-                  name="url_category"
-                  id="url-category"
-                  class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-sm bg-white"
-                >
-                  <option value="">appeals</option>
-                  {categories.map(cat => (
-                    <option value={cat.slug} selected={existingCategoryPrefix === cat.slug}>{cat.slug}</option>
-                  ))}
-                </select>
-                <span class="text-gray-500 text-sm">/</span>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Title *</label>
                 <input
                   type="text"
-                  name="slug"
-                  id="campaign-slug"
-                  value={campaign.slug}
-                  placeholder="campaign-slug"
-                  class="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] font-mono text-sm"
+                  name="title"
+                  required
+                  value={campaign.title || campaign.name || ''}
+                  class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
                 />
               </div>
-              <p class="text-xs text-gray-400 mt-1">
-                Preview: <code id="url-preview" class="bg-gray-100 px-1.5 py-0.5 rounded font-mono">{existingUrlPath || `/appeals/${campaign.slug}`}</code>
-              </p>
-              <p class="text-xs text-gray-400 mt-0.5">Select "appeals" for default path, or choose a category for category-based URL.</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2">
-                  <input type="checkbox" name="is_active" checked={campaign.is_active} class="w-4 h-4 text-[#01534d] rounded" />
-                  <span class="text-sm">Active</span>
-                </label>
-                <label class="flex items-center gap-2">
-                  <input type="checkbox" name="is_featured" checked={campaign.is_featured} class="w-4 h-4 text-[#01534d] rounded" />
-                  <span class="text-sm">Featured</span>
-                </label>
-                <label class="flex items-center gap-2">
-                  <input type="checkbox" name="show_on_homepage" checked={campaign.show_on_homepage} class="w-4 h-4 text-[#01534d] rounded" />
-                  <span class="text-sm">Homepage</span>
-                </label>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <div class="flex items-center gap-4">
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" name="is_active" checked={campaign.is_active} class="w-4 h-4 text-[#01534d] rounded" />
+                    <span class="text-sm">Active</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" name="is_featured" checked={campaign.is_featured} class="w-4 h-4 text-[#01534d] rounded" />
+                    <span class="text-sm">Featured</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input type="checkbox" name="show_on_homepage" checked={campaign.show_on_homepage} class="w-4 h-4 text-[#01534d] rounded" />
+                    <span class="text-sm">Homepage</span>
+                  </label>
+                </div>
               </div>
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Subtitle / Short Description</label>
-              <input
-                type="text"
-                name="subtitle"
-                value={campaign.subtitle || ''}
-                placeholder="Brief description shown on cards and hero"
-                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
-              />
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">URL Path</label>
+                <div class="flex items-center gap-1 flex-wrap">
+                  <span class="text-gray-500 text-sm">/</span>
+                  <select
+                    name="url_category"
+                    id="url-category"
+                    class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-sm bg-white"
+                  >
+                    <option value="">appeals</option>
+                    {categories.map(cat => (
+                      <option value={cat.slug} selected={existingCategoryPrefix === cat.slug}>{cat.slug}</option>
+                    ))}
+                  </select>
+                  <span class="text-gray-500 text-sm">/</span>
+                  <input
+                    type="text"
+                    name="slug"
+                    id="campaign-slug"
+                    value={campaign.slug}
+                    placeholder="campaign-slug"
+                    class="flex-1 min-w-[200px] px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] font-mono text-sm"
+                  />
+                </div>
+                <p class="text-xs text-gray-400 mt-1">
+                  Preview: <code id="url-preview" class="bg-gray-100 px-1.5 py-0.5 rounded font-mono">{existingUrlPath || `/appeals/${campaign.slug}`}</code>
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Featured Image -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-gray-800">Featured Image (Hero)</h2>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                id="customSearchQuery"
-                placeholder="Custom search (e.g., syria relief)"
-                class="w-48 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- ALL SECTIONS — COLLAPSIBLE, FOLDED BY DEFAULT  -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <!-- 1. HERO IMAGE -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">1</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Hero Image</h2>
+                <p class="text-sm text-gray-400">Background image — first thing visitors see</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              {(campaign.featured_image || campaign.hero_image_url || campaign.image_url) && (
+                <img src={campaign.featured_image || campaign.hero_image_url || campaign.image_url} alt="" class="w-16 h-10 object-cover rounded border border-gray-200" />
+              )}
+              <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="flex items-center justify-end gap-2 mb-4">
+              <input type="text" id="customSearchQuery" placeholder="Custom search (e.g., syria relief)" class="w-48 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
               <button type="button" id="fetchStockBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 Fetch Stock Images
               </button>
             </div>
-          </div>
-          {/* Use same fallback chain as front-end: featured_image || hero_image_url || image_url */}
-          <div id="featuredImagePreview" class={(campaign.featured_image || campaign.hero_image_url || campaign.image_url) ? 'mb-4' : 'hidden mb-4'}>
-            <img id="featuredImg" src={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} alt="" class="w-full max-h-48 object-cover rounded-lg" />
-          </div>
-          <input type="hidden" name="featured_image" id="featured_image" value={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} />
-          <div class="flex gap-3 flex-wrap">
-            <button type="button" onclick="openMediaModal('featured')" class="px-4 py-2 bg-[#01534d] text-white rounded-lg text-sm hover:bg-[#01433f]">
-              Choose from Gallery
-            </button>
-            <input type="url" id="featuredImageUrl" placeholder="Or paste image URL" class="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-            <button type="button" onclick="setFeaturedFromUrl()" class="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Use URL</button>
-          </div>
-          <!-- Stock Images Preview (shown after fetch) -->
-          <div id="stockImagesPreview" class="hidden mt-4 border-t border-gray-200 pt-4">
-            <p class="text-sm font-medium text-gray-700 mb-3">Select a stock image:</p>
-            <div id="stockImagesGrid" class="grid grid-cols-4 gap-3"></div>
-          </div>
-        </div>
-
-        <!-- Main Description -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-6">Main Description</h2>
-          <textarea
-            name="description"
-            rows="8"
-            placeholder="Main campaign description. Just type plain text - formatting is automatic."
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
-          >{campaign.description || ''}</textarea>
-          <p class="text-xs text-gray-400 mt-2">Just type plain text. Use blank lines for paragraph breaks. Use *asterisks* for bold.</p>
-        </div>
-
-        <!-- Crisis Stats / Impact Stats -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-lg font-bold text-gray-800">Crisis Statistics</h2>
-              <p class="text-sm text-gray-500">Stats shown in "The Scale of the Crisis" section</p>
+            <div id="featuredImagePreview" class={(campaign.featured_image || campaign.hero_image_url || campaign.image_url) ? 'mb-4' : 'hidden mb-4'}>
+              <img id="featuredImg" src={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} alt="" class="w-full max-h-48 object-cover rounded-lg" />
             </div>
-            <button type="button" id="fetchCrisisStatsBtn" class="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 flex items-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-              Fetch Crisis Stats
-            </button>
+            <input type="hidden" name="featured_image" id="featured_image" value={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} />
+            <div class="flex gap-3 flex-wrap">
+              <button type="button" onclick="openMediaModal('featured')" class="px-4 py-2 bg-[#01534d] text-white rounded-lg text-sm hover:bg-[#01433f]">Choose from Gallery</button>
+              <input type="url" id="featuredImageUrl" placeholder="Or paste image URL" class="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              <button type="button" onclick="setFeaturedFromUrl()" class="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Use URL</button>
+            </div>
+            <div id="stockImagesPreview" class="hidden mt-4 border-t border-gray-200 pt-4">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-medium text-gray-700">Select a stock image:</p>
+                <p id="stockSearchInfo" class="text-xs text-gray-400"></p>
+              </div>
+              <div id="stockImagesGrid" class="grid grid-cols-4 gap-3"></div>
+              <div class="flex items-center justify-center gap-3 mt-4">
+                <button type="button" id="stockLoadMoreBtn" class="hidden px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 transition flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  Load More Images
+                </button>
+              </div>
+            </div>
           </div>
-          <div id="crisisStats" class="space-y-3">
-            <!-- Stats added via JS -->
-          </div>
-          <button type="button" onclick="addCrisisStat()" class="mt-4 text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </div>
+
+        <!-- 2. HERO TEXT -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">2</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Hero Text</h2>
+                <p class="text-sm text-gray-400">Headline, subtext, description, trust indicators</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
-            Add stat manually
           </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="space-y-5">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Hero Headline</label>
+                <input type="text" name="hero_title" value={campaign.hero_title || ''} placeholder="Leave empty to use Campaign Title above" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-lg font-semibold" />
+                <p class="text-xs text-gray-400 mt-1">The large heading on the hero banner. If empty, the Campaign Title is used.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Hero Subtext</label>
+                <textarea name="subtitle" rows="2" placeholder="Short emotional text under the headline (1-2 lines)" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]">{campaign.subtitle || ''}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Displayed below the headline. Keep it emotional and brief.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Hero Subtext 2</label>
+                <textarea name="subtitle2" rows="2" placeholder="Optional second line of subtext (e.g., a call-to-action or urgency line)" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]">{campaign.subtitle2 || ''}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Optional. If filled, appears as a second line below the first subtext.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Description</label>
+                <textarea name="description" rows="4" placeholder="Full description of the campaign (shown in the About section below the hero)" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]">{campaign.description || ''}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Main campaign description used in the "About This Appeal" section.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Micro Trust Row</label>
+                <div class="bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-500">
+                  🔒 Secure Payment &nbsp;·&nbsp; ✔ 100% Donation Policy &nbsp;·&nbsp; ⭐ 501(c)(3) Registered &nbsp;·&nbsp; 🌍 Delivering Aid in 50+ Countries
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Shown automatically on all campaign pages.</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Content Sections -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-lg font-bold text-gray-800">Content Sections</h2>
-              <p class="text-sm text-gray-500">Add additional sections with titles, text, and images</p>
+        <!-- 3. DONATION BOX SETTINGS (moved up from 9) -->
+        <div id="cwDonationSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">3</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Donation Box Settings</h2>
+                <p class="text-sm text-gray-400">Frequency tabs, amounts, impact texts, upsell copy</p>
+              </div>
             </div>
-            <button type="button" onclick="addContentSection()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
-              + Add Section
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <!-- Frequency Tabs Selector -->
+            <div class="mb-8">
+              <div class="mb-4">
+                <h3 class="font-semibold text-gray-700">Donation Frequency Tabs</h3>
+                <p class="text-xs text-gray-400">Check frequencies to enable them as tabs. First checked = default tab. Drag to reorder.</p>
+              </div>
+              <div id="cwFrequencyList" class="space-y-3"></div>
+            </div>
+            <!-- General Settings -->
+            <div class="space-y-4">
+              <h3 class="font-semibold text-gray-700 mb-2">General Settings</h3>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Donation Box Heading</label>
+                <input type="text" id="cwDonationBoxHeading" placeholder="e.g. Be the Reason They Smile Every Month" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                <p class="text-xs text-gray-400 mt-1">Heading displayed above the donation box. Leave blank for no heading.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tab Icon / Emoji</label>
+                <input type="text" id="cwTabEmoji" placeholder="e.g., 🤲 💧 🌙 ❤️ (auto-detects if blank)" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                <p class="text-xs text-gray-400 mt-1">Icon shown on the recurring tabs and impact line</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Body Text</label>
+                <textarea id="cwUpsellBody" rows="3" placeholder="By making a monthly donation, you'll empower us to make long-term investments..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
+                <p class="text-xs text-gray-400 mt-1">Shown on the upsell page after one-time "GIVE" is clicked</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Sub Text</label>
+                <textarea id="cwUpsellSubText" rows="2" placeholder="Please consider joining our monthly giving community..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
+                <p class="text-xs text-gray-400 mt-1">Shown below the monthly toggle on the upsell page</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. DONATION OPTIONS -->
+        <div id="legacyDonationOptions" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">4</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Donation Options</h2>
+                <p class="text-sm text-gray-400">Preset amounts for "Choose Your Impact" &amp; donation box</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="flex items-center justify-end mb-4">
+              <button type="button" onclick="addDonationOption()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Option</button>
+            </div>
+            <div id="donationOptions" class="space-y-3">
+              <!-- Options added via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. CRISIS STATISTICS -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">5</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Crisis Statistics</h2>
+                <p class="text-sm text-gray-400">Stats shown in the "Crisis Snapshot" box below the hero</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="flex items-center justify-end mb-4">
+              <button type="button" id="fetchCrisisStatsBtn" class="px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Fetch Crisis Stats
+              </button>
+            </div>
+            <div id="crisisStats" class="space-y-3">
+              <!-- Stats added via JS -->
+            </div>
+            <button type="button" onclick="addCrisisStat()" class="mt-4 text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              Add stat manually
             </button>
           </div>
-          <div id="contentSections" class="space-y-4">
-            <!-- Sections added via JS -->
+        </div>
+
+        <!-- 6. PAGE CONTENT -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">6</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Page Content</h2>
+                <p class="text-sm text-gray-400">The Crisis, How Your Donation Helps, Mid CTA, Choose Your Impact, Why Monthly, FAQ, Final CTA</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6 space-y-6">
+
+            <!-- The Crisis -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">The Crisis</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcCrisisHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                  <textarea id="pcCrisisContent" rows="4" placeholder="Describe the crisis/cause..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
+                  <p class="text-xs text-gray-400 mt-1">If blank, falls back to campaign description</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- How Your Donation Helps -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">How Your Donation Helps</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcDonationHelpsHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Impact Items</label>
+                  <div id="pcDonationHelpsList" class="space-y-2"></div>
+                  <button type="button" onclick="addPCDonationHelp()" class="mt-2 text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add item
+                  </button>
+                  <p class="text-xs text-gray-400 mt-1">If empty, auto-populates from Donation Options (Section 4)</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mid-Page CTA -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">Mid-Page CTA</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcMidCtaHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Subtext</label>
+                  <input type="text" id="pcMidCtaSubtext" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Primary Button</label>
+                    <input type="text" id="pcMidCtaPrimary" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Button</label>
+                    <input type="text" id="pcMidCtaSecondary" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Choose Your Impact -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">Choose Your Impact</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcImpactHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Subtext</label>
+                  <input type="text" id="pcImpactSubtext" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Single Tab Label</label>
+                    <input type="text" id="pcImpactSingleTab" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Tab Label</label>
+                    <input type="text" id="pcImpactMonthlyTab" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Why Monthly -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">Why Monthly</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcWhyMonthlyHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Benefits</label>
+                  <div id="pcBenefitsList" class="space-y-2"></div>
+                  <button type="button" onclick="addPCBenefit()" class="mt-2 text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add benefit
+                  </button>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Footer Text</label>
+                  <input type="text" id="pcWhyMonthlyFooter" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+              </div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">FAQ</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcFaqHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Q&A Items</label>
+                  <div id="pcFaqList" class="space-y-3"></div>
+                  <button type="button" onclick="addPCFaq()" class="mt-2 text-sm text-[#01534d] hover:text-[#013d39] font-medium flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add FAQ item
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Final CTA -->
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-700 mb-3">Final CTA</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                  <input type="text" id="pcFinalCtaHeading" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Subtext</label>
+                  <input type="text" id="pcFinalCtaSubtext" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Primary Button</label>
+                    <input type="text" id="pcFinalCtaPrimary" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Button</label>
+                    <input type="text" id="pcFinalCtaSecondary" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="flex justify-end">
+              <button type="button" id="pcResetBtn" class="px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 border border-orange-200 rounded-lg font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reset all to defaults
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Gallery Images -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-lg font-bold text-gray-800">Gallery Images</h2>
-              <p class="text-sm text-gray-500">Images shown in "Your Donations in Action" section</p>
+        <!-- 7. EXTRA CONTENT SECTIONS -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">7</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Extra Content Sections</h2>
+                <p class="text-sm text-gray-400">Additional content cards shown below the main sections (optional)</p>
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <input
-                type="text"
-                id="gallerySearchQuery"
-                placeholder="Custom search"
-                class="w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="flex items-center justify-end mb-4">
+              <button type="button" onclick="addContentSection()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Section</button>
+            </div>
+            <div id="contentSections" class="space-y-4">
+              <!-- Sections added via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. GALLERY IMAGES -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">8</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Gallery Images</h2>
+                <p class="text-sm text-gray-400">Images shown in "Your Donations in Action" section</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="flex items-center justify-end gap-2 mb-4 flex-wrap">
+              <input type="text" id="gallerySearchQuery" placeholder="Custom search" class="w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
               <button type="button" onclick="fetchStockForGallery()" class="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 Fetch Stock
               </button>
-              <button type="button" onclick="openMediaModal('gallery')" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
-                + Add Images
+              <button type="button" id="galleryLoadMoreBtn" onclick="fetchStockForGallery(true)" class="hidden px-3 py-1.5 bg-purple-100 text-purple-700 text-sm rounded-lg hover:bg-purple-200 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                More Stock
               </button>
+              <button type="button" onclick="openMediaModal('gallery')" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">+ Add Images</button>
             </div>
-          </div>
-          <div id="galleryImages" class="grid grid-cols-4 md:grid-cols-6 gap-3">
-            <!-- Images added via JS -->
-          </div>
-          <p id="noGalleryText" class="text-gray-400 text-sm text-center py-4">No gallery images yet</p>
-        </div>
-
-        <!-- Donation Options (for non-CW templates) -->
-        <div id="legacyDonationOptions" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-lg font-bold text-gray-800">Donation Options</h2>
-              <p class="text-sm text-gray-500">Preset amounts shown in donation box</p>
+            <div id="galleryImages" class="grid grid-cols-4 md:grid-cols-6 gap-3">
+              <!-- Images added via JS -->
             </div>
-            <button type="button" onclick="addDonationOption()" class="px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
-              + Add Option
-            </button>
-          </div>
-          <div id="donationOptions" class="space-y-3">
-            <!-- Options added via JS -->
+            <p id="noGalleryText" class="text-gray-400 text-sm text-center py-4">No gallery images yet</p>
           </div>
         </div>
 
-        <!-- SEO Settings -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-6">SEO Settings</h2>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
-              <input type="text" name="meta_title" value={campaign.meta_title || ''} placeholder="Leave blank to use campaign title" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+        <!-- 9. SEO SETTINGS -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">9</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">SEO Settings</h2>
+                <p class="text-sm text-gray-400">Meta title &amp; description for search engines</p>
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-              <textarea name="meta_description" rows="2" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]">{campaign.meta_description || ''}</textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- Template Settings -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-2">Template Settings</h2>
-          <p class="text-sm text-gray-500 mb-6">Override the default templates for this campaign</p>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Type</label>
-              <select
-                name="template_type"
-                id="template_type"
-                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
-              >
-                <option value="standard" selected={!campaign.template_type || campaign.template_type === 'standard'}>Standard Campaign</option>
-                <option value="tiered-donation" selected={campaign.template_type === 'tiered-donation'}>Tiered Donation (Fidya, Food Packs)</option>
-                <option value="calculator" selected={campaign.template_type === 'calculator'}>Calculator (Zakat)</option>
-                <option value="ramadan-giving" selected={campaign.template_type === 'ramadan-giving'}>Ramadan Giving Wizard</option>
-                <option value="automated-giving" selected={campaign.template_type === 'automated-giving'}>Automated Giving</option>
-              </select>
-              <p class="text-xs text-gray-400 mt-1">Determines the page layout and functionality</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Page Template</label>
-              <select
-                name="page_template"
-                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
-              >
-                <option value="" selected={!campaign.page_template}>Use Default</option>
-                {pageTemplates.map((template) => (
-                  <option value={template.template_key} selected={campaign.page_template === template.template_key}>
-                    {template.template_label}
-                  </option>
-                ))}
-              </select>
-              <p class="text-xs text-gray-400 mt-1">Controls the overall page layout and style</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
-              <select
-                name="donation_box_template"
-                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
-              >
-                <option value="" selected={!campaign.donation_box_template}>Use Default</option>
-                {donationBoxTemplates.map((template) => (
-                  <option value={template.template_key} selected={campaign.donation_box_template === template.template_key}>
-                    {template.template_label}
-                  </option>
-                ))}
-              </select>
-              <p class="text-xs text-gray-400 mt-1">Controls the donation box appearance</p>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
+                <input type="text" name="meta_title" value={campaign.meta_title || ''} placeholder="Leave blank to use campaign title" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+                <textarea name="meta_description" rows="2" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]">{campaign.meta_description || ''}</textarea>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- CW Donation Box Settings -->
-        <div id="cwDonationSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 class="text-lg font-bold text-gray-800 mb-2">Donation Box Settings</h2>
-          <p class="text-sm text-gray-500 mb-6">Configure amounts, impact texts, and labels for the CW Donation Box</p>
-
-          <!-- Frequency Tabs Selector -->
-          <div class="mb-8">
-            <div class="mb-4">
-              <h3 class="font-semibold text-gray-700">Donation Frequency Tabs</h3>
-              <p class="text-xs text-gray-400">Check frequencies to enable them as tabs. First checked = default tab. Drag to reorder.</p>
+        <!-- 10. TEMPLATE SETTINGS -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-400 text-sm font-mono">10</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Template Settings</h2>
+                <p class="text-sm text-gray-400">Campaign type, page template, donation box template</p>
+              </div>
             </div>
-            <div id="cwFrequencyList" class="space-y-3"></div>
-          </div>
-
-          <!-- General Settings -->
-          <div class="space-y-4">
-            <h3 class="font-semibold text-gray-700 mb-2">General Settings</h3>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Donation Box Heading</label>
-              <input type="text" id="cwDonationBoxHeading" placeholder="e.g. Be the Reason They Smile Every Month" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-              <p class="text-xs text-gray-400 mt-1">Heading displayed above the donation box. Leave blank for no heading.</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Tab Icon / Emoji</label>
-              <input type="text" id="cwTabEmoji" placeholder="e.g., 🤲 💧 🌙 ❤️ (auto-detects if blank)" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />
-              <p class="text-xs text-gray-400 mt-1">Icon shown on the recurring tabs and impact line</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Body Text</label>
-              <textarea id="cwUpsellBody" rows="3" placeholder="By making a monthly donation, you'll empower us to make long-term investments..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
-              <p class="text-xs text-gray-400 mt-1">Shown on the upsell page after one-time "GIVE" is clicked</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Upsell Sub Text</label>
-              <textarea id="cwUpsellSubText" rows="2" placeholder="Please consider joining our monthly giving community..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]"></textarea>
-              <p class="text-xs text-gray-400 mt-1">Shown below the monthly toggle on the upsell page</p>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Type</label>
+                <select name="template_type" id="template_type" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white">
+                  <option value="standard" selected={!campaign.template_type || campaign.template_type === 'standard'}>Standard Campaign</option>
+                  <option value="tiered-donation" selected={campaign.template_type === 'tiered-donation'}>Tiered Donation (Fidya, Food Packs)</option>
+                  <option value="calculator" selected={campaign.template_type === 'calculator'}>Calculator (Zakat)</option>
+                  <option value="ramadan-giving" selected={campaign.template_type === 'ramadan-giving'}>Ramadan Giving Wizard</option>
+                  <option value="automated-giving" selected={campaign.template_type === 'automated-giving'}>Automated Giving</option>
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Determines the page layout and functionality</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Page Template</label>
+                <select name="page_template" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white">
+                  <option value="" selected={!campaign.page_template}>Use Default</option>
+                  {pageTemplates.map((template) => (
+                    <option value={template.template_key} selected={campaign.page_template === template.template_key}>{template.template_label}</option>
+                  ))}
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Controls the overall page layout and style</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
+                <select name="donation_box_template" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white">
+                  <option value="" selected={!campaign.donation_box_template}>Use Default</option>
+                  {donationBoxTemplates.map((template) => (
+                    <option value={template.template_key} selected={campaign.donation_box_template === template.template_key}>{template.template_label}</option>
+                  ))}
+                </select>
+                <p class="text-xs text-gray-400 mt-1">Controls the donation box appearance</p>
+              </div>
             </div>
           </div>
         </div>
@@ -450,6 +732,12 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
             <button type="submit" class="px-6 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#01433f]">Save Changes</button>
           </div>
         </div>
+
+        <!-- Floating Save Button -->
+        <button type="submit" id="floatingSaveBtn" class="fixed bottom-6 right-6 z-50 px-5 py-3 bg-[#01534d] text-white rounded-full font-medium shadow-lg hover:bg-[#01433f] hover:shadow-xl transition-all flex items-center gap-2 group" style="display: none;">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <span>Save Changes</span>
+        </button>
       </form>
     ) : null}
   </div>
@@ -513,6 +801,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
   campaignTitle: campaign?.title || campaign?.name || '',
   campaignCategory: campaign?.category || '',
   campaignCountry: campaign?.country || '',
+  campaignDescription: campaign?.description || '',
   existingOptions: campaign?.donation_options || [],
   existingSections: campaign?.content_sections || [],
   existingGallery: campaign?.gallery_images || [],
@@ -523,7 +812,8 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
   defaultUpsellBody: DEFAULT_UPSELL_BODY,
   defaultUpsellSubText: DEFAULT_UPSELL_SUBTEXT,
   defaultButtonMonthly: DEFAULT_BUTTON_MONTHLY,
-  defaultButtonOneTime: DEFAULT_BUTTON_ONETIME
+  defaultButtonOneTime: DEFAULT_BUTTON_ONETIME,
+  defaultPageContent: DEFAULT_PAGE_CONTENT
 }}>
   let mediaTarget = 'featured';
   let galleryImages = [...existingGallery];
@@ -532,13 +822,22 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
   let sectionIndex = 0;
   let optionIndex = 0;
   let statIndex = 0;
+  let pcBenefitIndex = 0;
+  let pcFaqIndex = 0;
+  let pcDonationHelpIndex = 0;
 
   // Initialize on load
   document.addEventListener('DOMContentLoaded', function() {
     // Stock Images Button Handler
-    const fetchStockBtn = document.getElementById('fetchStockBtn');
+    var fetchStockBtn = document.getElementById('fetchStockBtn');
     if (fetchStockBtn) {
-      fetchStockBtn.addEventListener('click', fetchStockImages);
+      fetchStockBtn.addEventListener('click', function() { fetchStockImages(false); });
+    }
+
+    // Stock Images Load More Handler
+    var stockLoadMoreBtn = document.getElementById('stockLoadMoreBtn');
+    if (stockLoadMoreBtn) {
+      stockLoadMoreBtn.addEventListener('click', function() { fetchStockImages(true); });
     }
 
     // Crisis Stats Button Handler
@@ -546,6 +845,28 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     if (fetchCrisisStatsBtn) {
       fetchCrisisStatsBtn.addEventListener('click', fetchCrisisStats);
     }
+
+    // Floating Save Button — show when scrolled down
+    var floatingBtn = document.getElementById('floatingSaveBtn');
+    if (floatingBtn) {
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+          floatingBtn.style.display = 'flex';
+        } else {
+          floatingBtn.style.display = 'none';
+        }
+      });
+    }
+
+    // Collapsible sections toggle
+    document.querySelectorAll('.admin-collapse-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var body = btn.nextElementSibling;
+        var chevron = btn.querySelector('.admin-collapse-chevron');
+        if (body) body.classList.toggle('hidden');
+        if (chevron) chevron.classList.toggle('rotate-180');
+      });
+    });
 
     // Load existing donation options
     if (existingOptions.length > 0) {
@@ -556,10 +877,12 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       addDonationOption(250, 'Medical supplies');
     }
 
-    // Load existing content sections
-    existingSections.forEach(section => {
-      addContentSection(section.title, section.content, section.image);
-    });
+    // Load existing content sections (extra sections beyond The Crisis / How Your Donation Helps)
+    if (existingSections.length > 0) {
+      existingSections.forEach(section => {
+        addContentSection(section.title, section.content, section.image);
+      });
+    }
 
     // Load existing crisis stats
     if (crisisStats.length > 0) {
@@ -568,6 +891,18 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
     // Load existing gallery
     renderGallery();
+
+    // Load page content fields
+    initPageContent();
+
+    // Page Content Reset Handler
+    var pcResetBtn = document.getElementById('pcResetBtn');
+    if (pcResetBtn) {
+      pcResetBtn.addEventListener('click', function() {
+        initPageContent(true);
+        showToast('Page content reset to defaults');
+      });
+    }
 
     // Media modal click handlers
     document.querySelectorAll('.media-item').forEach(item => {
@@ -860,6 +1195,205 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       if (value && label) stats.push({ value, label });
     });
     return stats;
+  }
+
+  // ═══════════════════════════════════════
+  // PAGE CONTENT (Section 9)
+  // ═══════════════════════════════════════
+
+  function initPageContent(useDefaults) {
+    var saved = useDefaults ? {} : (existingTemplateConfig.pageContent || {});
+    var d = defaultPageContent;
+
+    // The Crisis
+    document.getElementById('pcCrisisHeading').value = (saved.theCrisis && saved.theCrisis.heading) || d.theCrisis.heading;
+    // Auto-populate crisis content from campaign description if nothing is saved
+    var crisisContent = (saved.theCrisis && saved.theCrisis.content) || '';
+    if (!crisisContent && !useDefaults) {
+      crisisContent = campaignDescription || '';
+    }
+    document.getElementById('pcCrisisContent').value = crisisContent;
+
+    // How Your Donation Helps
+    document.getElementById('pcDonationHelpsHeading').value = (saved.howDonationHelps && saved.howDonationHelps.heading) || d.howDonationHelps.heading;
+    document.getElementById('pcDonationHelpsList').innerHTML = '';
+    pcDonationHelpIndex = 0;
+    var helpItems = (saved.howDonationHelps && saved.howDonationHelps.items && saved.howDonationHelps.items.length > 0)
+      ? saved.howDonationHelps.items
+      : [];
+    // If no saved items and not resetting, auto-populate from donation options
+    if (helpItems.length === 0 && !useDefaults && existingOptions.length > 0) {
+      existingOptions.forEach(function(opt) {
+        if (opt.amount && opt.label) helpItems.push({ amount: '$' + opt.amount, label: opt.label });
+      });
+    }
+    helpItems.forEach(function(item) { addPCDonationHelp(item.amount, item.label); });
+
+    // Mid CTA
+    document.getElementById('pcMidCtaHeading').value = (saved.midCta && saved.midCta.heading) || d.midCta.heading;
+    document.getElementById('pcMidCtaSubtext').value = (saved.midCta && saved.midCta.subtext) || d.midCta.subtext;
+    document.getElementById('pcMidCtaPrimary').value = (saved.midCta && saved.midCta.primaryButtonText) || d.midCta.primaryButtonText;
+    document.getElementById('pcMidCtaSecondary').value = (saved.midCta && saved.midCta.secondaryButtonText) || d.midCta.secondaryButtonText;
+
+    // Choose Your Impact
+    document.getElementById('pcImpactHeading').value = (saved.chooseYourImpact && saved.chooseYourImpact.heading) || d.chooseYourImpact.heading;
+    document.getElementById('pcImpactSubtext').value = (saved.chooseYourImpact && saved.chooseYourImpact.subtext) || d.chooseYourImpact.subtext;
+    document.getElementById('pcImpactSingleTab').value = (saved.chooseYourImpact && saved.chooseYourImpact.singleTabText) || d.chooseYourImpact.singleTabText;
+    document.getElementById('pcImpactMonthlyTab').value = (saved.chooseYourImpact && saved.chooseYourImpact.monthlyTabText) || d.chooseYourImpact.monthlyTabText;
+
+    // Why Monthly
+    document.getElementById('pcWhyMonthlyHeading').value = (saved.whyMonthly && saved.whyMonthly.heading) || d.whyMonthly.heading;
+    document.getElementById('pcWhyMonthlyFooter').value = (saved.whyMonthly && saved.whyMonthly.footerText) || d.whyMonthly.footerText;
+
+    // Benefits list
+    document.getElementById('pcBenefitsList').innerHTML = '';
+    pcBenefitIndex = 0;
+    var benefits = (saved.whyMonthly && saved.whyMonthly.benefits) || d.whyMonthly.benefits;
+    benefits.forEach(function(b) { addPCBenefit(b); });
+
+    // FAQ
+    document.getElementById('pcFaqHeading').value = (saved.faq && saved.faq.heading) || d.faq.heading;
+
+    // FAQ items list
+    document.getElementById('pcFaqList').innerHTML = '';
+    pcFaqIndex = 0;
+    var faqItems = (saved.faq && saved.faq.items) || d.faq.items;
+    faqItems.forEach(function(item) { addPCFaq(item.question, item.answer); });
+
+    // Final CTA
+    document.getElementById('pcFinalCtaHeading').value = (saved.finalCta && saved.finalCta.heading) || d.finalCta.heading;
+    document.getElementById('pcFinalCtaSubtext').value = (saved.finalCta && saved.finalCta.subtext) || d.finalCta.subtext;
+    document.getElementById('pcFinalCtaPrimary').value = (saved.finalCta && saved.finalCta.primaryButtonText) || d.finalCta.primaryButtonText;
+    document.getElementById('pcFinalCtaSecondary').value = (saved.finalCta && saved.finalCta.secondaryButtonText) || d.finalCta.secondaryButtonText;
+  }
+
+  window.addPCBenefit = function(text) {
+    text = text || '';
+    var container = document.getElementById('pcBenefitsList');
+    var idx = pcBenefitIndex++;
+
+    var div = document.createElement('div');
+    div.id = 'pcBenefit-' + idx;
+    div.className = 'flex gap-2 items-center';
+    div.innerHTML = '<input type="text" value="' + text.replace(/"/g, '&quot;') + '" placeholder="Benefit text" class="pc-benefit flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />' +
+      '<button type="button" onclick="removePCBenefit(' + idx + ')" class="p-2 text-red-500 hover:bg-red-50 rounded">' +
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+      '</button>';
+    container.appendChild(div);
+  };
+
+  window.removePCBenefit = function(idx) {
+    var el = document.getElementById('pcBenefit-' + idx);
+    if (el) el.remove();
+  };
+
+  window.addPCDonationHelp = function(amount, label) {
+    amount = amount || '';
+    label = label || '';
+    var container = document.getElementById('pcDonationHelpsList');
+    var idx = pcDonationHelpIndex++;
+
+    var div = document.createElement('div');
+    div.id = 'pcDonHelp-' + idx;
+    div.className = 'flex gap-2 items-center';
+    div.innerHTML = '<input type="text" value="' + String(amount).replace(/"/g, '&quot;') + '" placeholder="$35" class="pc-dh-amount w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#01534d]" />' +
+      '<span class="text-gray-400">—</span>' +
+      '<input type="text" value="' + String(label).replace(/"/g, '&quot;') + '" placeholder="Emergency food" class="pc-dh-label flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]" />' +
+      '<button type="button" onclick="removePCDonationHelp(' + idx + ')" class="p-2 text-red-500 hover:bg-red-50 rounded">' +
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+      '</button>';
+    container.appendChild(div);
+  };
+
+  window.removePCDonationHelp = function(idx) {
+    var el = document.getElementById('pcDonHelp-' + idx);
+    if (el) el.remove();
+  };
+
+  window.addPCFaq = function(question, answer) {
+    question = question || '';
+    answer = answer || '';
+    var container = document.getElementById('pcFaqList');
+    var idx = pcFaqIndex++;
+
+    var div = document.createElement('div');
+    div.id = 'pcFaq-' + idx;
+    div.className = 'border border-gray-100 rounded-lg p-3 bg-gray-50';
+    div.innerHTML = '<div class="flex items-start gap-2">' +
+      '<div class="flex-1 space-y-2">' +
+      '<input type="text" value="' + question.replace(/"/g, '&quot;') + '" placeholder="Question" class="pc-faq-q w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#01534d]" />' +
+      '<textarea placeholder="Answer" rows="2" class="pc-faq-a w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]">' + answer.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>' +
+      '</div>' +
+      '<button type="button" onclick="removePCFaq(' + idx + ')" class="p-2 text-red-500 hover:bg-red-50 rounded flex-shrink-0">' +
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+      '</button>' +
+      '</div>';
+    container.appendChild(div);
+  };
+
+  window.removePCFaq = function(idx) {
+    var el = document.getElementById('pcFaq-' + idx);
+    if (el) el.remove();
+  };
+
+  function getPageContent() {
+    var benefits = [];
+    document.querySelectorAll('#pcBenefitsList .pc-benefit').forEach(function(input) {
+      var val = input.value.trim();
+      if (val) benefits.push(val);
+    });
+
+    var faqItems = [];
+    document.querySelectorAll('#pcFaqList > div').forEach(function(div) {
+      var q = div.querySelector('.pc-faq-q').value.trim();
+      var a = div.querySelector('.pc-faq-a').value.trim();
+      if (q && a) faqItems.push({ question: q, answer: a });
+    });
+
+    var donationHelpItems = [];
+    document.querySelectorAll('#pcDonationHelpsList > div').forEach(function(div) {
+      var amt = div.querySelector('.pc-dh-amount').value.trim();
+      var lbl = div.querySelector('.pc-dh-label').value.trim();
+      if (amt && lbl) donationHelpItems.push({ amount: amt, label: lbl });
+    });
+
+    return {
+      theCrisis: {
+        heading: document.getElementById('pcCrisisHeading').value.trim(),
+        content: document.getElementById('pcCrisisContent').value.trim()
+      },
+      howDonationHelps: {
+        heading: document.getElementById('pcDonationHelpsHeading').value.trim(),
+        items: donationHelpItems
+      },
+      midCta: {
+        heading: document.getElementById('pcMidCtaHeading').value.trim(),
+        subtext: document.getElementById('pcMidCtaSubtext').value.trim(),
+        primaryButtonText: document.getElementById('pcMidCtaPrimary').value.trim(),
+        secondaryButtonText: document.getElementById('pcMidCtaSecondary').value.trim()
+      },
+      chooseYourImpact: {
+        heading: document.getElementById('pcImpactHeading').value.trim(),
+        subtext: document.getElementById('pcImpactSubtext').value.trim(),
+        singleTabText: document.getElementById('pcImpactSingleTab').value.trim(),
+        monthlyTabText: document.getElementById('pcImpactMonthlyTab').value.trim()
+      },
+      whyMonthly: {
+        heading: document.getElementById('pcWhyMonthlyHeading').value.trim(),
+        benefits: benefits,
+        footerText: document.getElementById('pcWhyMonthlyFooter').value.trim()
+      },
+      faq: {
+        heading: document.getElementById('pcFaqHeading').value.trim(),
+        items: faqItems
+      },
+      finalCta: {
+        heading: document.getElementById('pcFinalCtaHeading').value.trim(),
+        subtext: document.getElementById('pcFinalCtaSubtext').value.trim(),
+        primaryButtonText: document.getElementById('pcFinalCtaPrimary').value.trim(),
+        secondaryButtonText: document.getElementById('pcFinalCtaSecondary').value.trim()
+      }
+    };
   }
 
   // Donation Options
@@ -1287,74 +1821,101 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     }
   };
 
-  // Fetch Stock Images
-  async function fetchStockImages() {
-    const btn = document.getElementById('fetchStockBtn');
-    const title = document.querySelector('input[name="title"]').value;
-    const customQuery = document.getElementById('customSearchQuery').value.trim();
+  // Stock image pagination tracking
+  var stockCurrentPage = 1;
+  var stockLastQuery = '';
+  var galleryStockPage = 1;
+  var galleryLastQuery = '';
+
+  // Fetch Stock Images (with pagination)
+  async function fetchStockImages(loadMore) {
+    var btn = document.getElementById('fetchStockBtn');
+    var title = document.querySelector('input[name="title"]').value;
+    var customQuery = document.getElementById('customSearchQuery').value.trim();
 
     // Use custom query if provided, otherwise use campaign title
-    const searchTitle = customQuery || title;
+    var searchTitle = customQuery || title;
 
     if (!searchTitle) {
       showToast('Please enter a campaign title or custom search query', 'error');
       return;
     }
 
+    // If this is a new search (different query), reset page to 1
+    if (!loadMore || searchTitle !== stockLastQuery) {
+      stockCurrentPage = 1;
+      stockLastQuery = searchTitle;
+    } else {
+      stockCurrentPage++;
+    }
+
     // Show loading state
     btn.disabled = true;
-    btn.innerHTML = `
-      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      Searching...
-    `;
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Searching...';
+
+    var loadMoreBtn = document.getElementById('stockLoadMoreBtn');
+    if (loadMoreBtn && loadMore) {
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Loading...';
+    }
 
     try {
-      const res = await fetch('/api/images/stock', {
+      var res = await fetch('/api/images/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: searchTitle,
           category: campaignCategory,
           country: campaignCountry,
-          count: 8
+          count: 8,
+          page: stockCurrentPage
         })
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to fetch images');
+        var errData = await res.json();
+        throw new Error(errData.error || 'Failed to fetch images');
       }
 
-      const data = await res.json();
+      var data = await res.json();
 
       // Show the preview section
-      const previewSection = document.getElementById('stockImagesPreview');
-      const grid = document.getElementById('stockImagesGrid');
+      var previewSection = document.getElementById('stockImagesPreview');
+      var grid = document.getElementById('stockImagesGrid');
+      var searchInfo = document.getElementById('stockSearchInfo');
 
       previewSection.classList.remove('hidden');
 
-      // Render images
-      grid.innerHTML = data.images.map((img, idx) => `
-        <div class="relative group cursor-pointer stock-img-option" data-url="${img.url}">
-          <img src="${img.thumbnail}" alt="Stock image ${idx + 1}" class="w-full aspect-video object-cover rounded-lg border-2 border-transparent group-hover:border-purple-500 transition" />
-          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition flex items-center justify-center">
-            <span class="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-purple-600 px-2 py-1 rounded">Select</span>
-          </div>
-        </div>
-      `).join('');
+      // Update search info
+      if (searchInfo) {
+        searchInfo.textContent = 'Search: "' + (data.query || searchTitle) + '" \u2022 Page ' + stockCurrentPage;
+      }
+
+      // Build image HTML
+      var imagesHtml = data.images.map(function(img, idx) {
+        return '<div class="relative group cursor-pointer stock-img-option" data-url="' + img.url + '">' +
+          '<img src="' + img.thumbnail + '" alt="Stock image ' + (idx + 1) + '" class="w-full aspect-video object-cover rounded-lg border-2 border-transparent group-hover:border-purple-500 transition" />' +
+          '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition flex items-center justify-center">' +
+          '<span class="opacity-0 group-hover:opacity-100 text-white text-xs font-medium bg-purple-600 px-2 py-1 rounded">Select</span>' +
+          '</div></div>';
+      }).join('');
+
+      // If loading more, append; otherwise replace
+      if (loadMore && stockCurrentPage > 1) {
+        grid.innerHTML = grid.innerHTML + imagesHtml;
+      } else {
+        grid.innerHTML = imagesHtml;
+      }
 
       // Add click handlers to each image
-      grid.querySelectorAll('.stock-img-option').forEach(el => {
+      grid.querySelectorAll('.stock-img-option').forEach(function(el) {
         el.addEventListener('click', function() {
-          const url = this.dataset.url;
+          var url = this.dataset.url;
           selectFeaturedImage(url);
           showToast('Stock image selected!');
 
           // Highlight selected
-          grid.querySelectorAll('.stock-img-option img').forEach(img => {
+          grid.querySelectorAll('.stock-img-option img').forEach(function(img) {
             img.classList.remove('border-green-500', 'border-2');
             img.classList.add('border-transparent');
           });
@@ -1363,62 +1924,95 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
         });
       });
 
-      showToast(`Found ${data.images.length} images for: ${data.keywords.join(', ')}`);
+      // Show/hide Load More button
+      if (loadMoreBtn) {
+        if (data.images.length >= 8) {
+          loadMoreBtn.classList.remove('hidden');
+        } else {
+          loadMoreBtn.classList.add('hidden');
+        }
+      }
+
+      showToast('Found ' + data.images.length + ' images for: ' + (data.query || searchTitle) + (stockCurrentPage > 1 ? ' (page ' + stockCurrentPage + ')' : ''));
 
     } catch (error) {
       showToast(error.message, 'error');
+      // Reset page on error
+      if (stockCurrentPage > 1) stockCurrentPage--;
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        Fetch Stock Images
-      `;
+      btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Fetch Stock Images';
+      if (loadMoreBtn) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Load More Images';
+      }
     }
   }
 
-  // Also add stock images to gallery
-  window.fetchStockForGallery = async function() {
-    const title = document.querySelector('input[name="title"]').value;
-    const customQuery = document.getElementById('gallerySearchQuery').value.trim();
+  // Also add stock images to gallery (with pagination)
+  window.fetchStockForGallery = async function(loadMore) {
+    var title = document.querySelector('input[name="title"]').value;
+    var customQuery = document.getElementById('gallerySearchQuery').value.trim();
 
     // Use custom query if provided, otherwise use campaign title
-    const searchTitle = customQuery || title;
+    var searchTitle = customQuery || title;
 
     if (!searchTitle) {
       showToast('Please enter a campaign title or custom search query', 'error');
       return;
     }
 
+    // If this is a new search (different query), reset page to 1
+    if (!loadMore || searchTitle !== galleryLastQuery) {
+      galleryStockPage = 1;
+      galleryLastQuery = searchTitle;
+    } else {
+      galleryStockPage++;
+    }
+
     try {
-      const res = await fetch('/api/images/stock', {
+      var res = await fetch('/api/images/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: searchTitle,
           category: campaignCategory,
           country: campaignCountry,
-          count: 4
+          count: 4,
+          page: galleryStockPage
         })
       });
 
       if (!res.ok) throw new Error('Failed to fetch images');
 
-      const data = await res.json();
+      var data = await res.json();
+      var added = 0;
 
-      // Add to gallery
-      data.images.forEach(img => {
+      // Add to gallery (skip duplicates)
+      data.images.forEach(function(img) {
         if (!galleryImages.includes(img.url)) {
           galleryImages.push(img.url);
+          added++;
         }
       });
 
       renderGallery();
-      showToast(`Added ${data.images.length} stock images to gallery`);
+
+      // Show/hide Load More button
+      var loadMoreBtn = document.getElementById('galleryLoadMoreBtn');
+      if (loadMoreBtn) {
+        if (data.images.length >= 4) {
+          loadMoreBtn.classList.remove('hidden');
+        } else {
+          loadMoreBtn.classList.add('hidden');
+        }
+      }
+
+      showToast('Added ' + added + ' stock images to gallery' + (galleryStockPage > 1 ? ' (page ' + galleryStockPage + ')' : ''));
 
     } catch (error) {
       showToast(error.message, 'error');
+      if (galleryStockPage > 1) galleryStockPage--;
     }
   };
 
@@ -1471,8 +2065,10 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       id: formData.get('id'),
       name: formData.get('title'),
       title: formData.get('title'),
+      hero_title: formData.get('hero_title') || null,
       slug: slug,
       subtitle: formData.get('subtitle') || null,
+      subtitle2: formData.get('subtitle2') || null,
       description: formData.get('description') || null,
       featured_image: formData.get('featured_image') || null,
       gallery_images: galleryImages,
@@ -1499,6 +2095,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     } else {
       delete templateConfig.cwDonation;
     }
+    templateConfig.pageContent = getPageContent();
     data.template_config = templateConfig;
 
     try {

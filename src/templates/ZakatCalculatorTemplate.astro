@@ -1,0 +1,1203 @@
+---
+/**
+ * ZAKAT CALCULATOR TEMPLATE
+ *
+ * A high-converting, modern fintech-style Zakat Calculator.
+ * Completely different design from the standalone /zakat-calculator page.
+ *
+ * Key design differences from standalone calculator:
+ * - Step-based wizard flow (3 steps) with animated progress
+ * - Full-width centered layout (no 2-col sidebar)
+ * - Large results card with animated number counter
+ * - Nisab selector toggle (Gold vs Silver)
+ * - Category toggles (select which asset types you have)
+ * - Impact visualization showing what Zakat funds
+ * - Social proof counter
+ * - Built-in donation flow (adds to cart directly)
+ *
+ * Usage: Select "Zakat Calculator" from page template dropdown in campaign admin
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    title: string;
+    hero_title?: string;
+    subtitle?: string;
+    subtitle2?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: Array<{ title?: string; content?: string; image?: string }>;
+    donation_options?: Array<{ amount: number; label?: string }>;
+    gallery_images?: string[];
+    impact_stats?: Array<{ value: string; label: string }> | Record<string, string>;
+    template_config?: Record<string, any>;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign } = Astro.props;
+
+const calcConfig = campaign.template_config?.zakatCalc || {};
+
+const heroTitle = campaign.hero_title || calcConfig.heroTitle || 'Zakat Calculator 2026';
+const heroSubtitle = campaign.subtitle || calcConfig.heroSubtitle || 'Know exactly what you owe. Pay it in one click.';
+
+const faqItems = calcConfig.faqItems || [
+  { question: 'What is Zakat?', answer: 'Zakat is the third pillar of Islam — an obligatory act of worship requiring Muslims to give 2.5% of their qualifying wealth annually. It purifies your wealth and supports those in need.' },
+  { question: 'What is Nisab?', answer: 'Nisab is the minimum wealth threshold that makes Zakat obligatory. It\'s equivalent to 87.48g of gold or 612.36g of silver. If your net assets exceed either threshold, Zakat is due.' },
+  { question: 'Should I use the Gold or Silver Nisab?', answer: 'Most scholars recommend using the Silver Nisab as it\'s the lower threshold, meaning more people qualify to give and more recipients benefit. You may choose either standard based on your school of thought.' },
+  { question: 'Is Zakat due on my home or car?', answer: 'No. Your primary residence, personal vehicle, clothing, and household furniture are exempt. Only investment properties, rental income saved, and assets held for trade are Zakatable.' },
+  { question: 'When should I pay Zakat?', answer: 'Zakat is due once your wealth has been above the Nisab for one full lunar year (hawl). Many Muslims choose to pay during Ramadan to earn extra reward.' },
+  { question: 'Does 100% of my Zakat reach those in need?', answer: 'Yes. Qurbani Foundation USA maintains a strict 100% Zakat policy — every dollar goes directly to eligible recipients with zero administrative deductions.' },
+];
+
+const ctaHeading = calcConfig.ctaHeading || 'Your Zakat Changes Lives';
+const ctaSubtext = calcConfig.ctaSubtext || 'Every dollar of your Zakat provides food, clean water, medical care, and education to families who need it most.';
+
+const nisabGoldGrams = 87.48;
+const nisabSilverGrams = 612.36;
+
+const serializedConfig = JSON.stringify({
+  nisabGoldGrams,
+  nisabSilverGrams,
+  campaignSlug: campaign.slug,
+});
+
+// Impact items to show when Zakat is calculated
+const impactItems = calcConfig.impactItems || [
+  { icon: '🍽️', title: 'Feed Families', desc: 'Provide nutritious meals' },
+  { icon: '💧', title: 'Clean Water', desc: 'Access to safe drinking water' },
+  { icon: '📚', title: 'Education', desc: 'Support children\'s learning' },
+  { icon: '🏥', title: 'Healthcare', desc: 'Medical care for the vulnerable' },
+];
+---
+
+<Layout
+  title={campaign.meta_title || `${heroTitle} | Qurbani USA`}
+  description={campaign.meta_description || heroSubtitle}
+>
+  <Navbar />
+
+  <style>
+    /* ===== WIZARD STYLES ===== */
+    .zw-step { display: none; }
+    .zw-step.active { display: block; animation: zwFadeIn 0.35s ease-out; }
+    @keyframes zwFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Progress steps */
+    .zw-progress-step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #9ca3af;
+      transition: all 0.3s;
+    }
+    .zw-progress-step.active { color: #024139; }
+    .zw-progress-step.done { color: #059669; }
+    .zw-progress-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      background: #e5e7eb;
+      color: #9ca3af;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .zw-progress-step.active .zw-progress-dot {
+      background: #024139;
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(2, 65, 57, 0.15);
+    }
+    .zw-progress-step.done .zw-progress-dot {
+      background: #059669;
+      color: #fff;
+    }
+    .zw-progress-line {
+      flex: 1;
+      height: 2px;
+      background: #e5e7eb;
+      margin: 0 0.25rem;
+      transition: background 0.3s;
+    }
+    .zw-progress-line.done { background: #059669; }
+
+    /* Category toggle cards */
+    .zw-cat-card {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    /* Mobile: single-column list with horizontal card layout */
+    @media (max-width: 640px) {
+      .zw-cat-card {
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+      }
+      /* Hide the centered vertical layout, show horizontal row layout */
+      .zw-cat-card .zw-card-vertical { display: none !important; }
+      .zw-cat-card .zw-card-horizontal { display: flex !important; }
+    }
+    /* Desktop: hide horizontal layout, show centered vertical */
+    @media (min-width: 641px) {
+      .zw-cat-card .zw-card-horizontal { display: none !important; }
+    }
+    .zw-cat-card:hover { border-color: #024139; background: #f0fdf4; }
+    .zw-cat-card.selected {
+      border-color: #024139;
+      background: #ecfdf5;
+      box-shadow: 0 0 0 3px rgba(2, 65, 57, 0.1);
+    }
+    .zw-cat-card.selected .zw-cat-check {
+      background: #024139;
+      border-color: #024139;
+    }
+    .zw-cat-card.selected .zw-cat-check svg { display: block; }
+    .zw-cat-check {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #d1d5db;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .zw-cat-check svg { display: none; width: 14px; height: 14px; color: #fff; }
+
+    /* Input fields */
+    .zw-input {
+      width: 100%;
+      padding: 0.875rem 0.875rem 0.875rem 2.25rem;
+      font-size: 1.0625rem;
+      background-color: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.75rem;
+      outline: none;
+      color: #1f2937;
+      transition: all 0.2s;
+    }
+    .zw-input:focus {
+      border-color: #024139;
+      box-shadow: 0 0 0 3px rgba(2, 65, 57, 0.1);
+    }
+    .zw-input::placeholder { color: #d1d5db; }
+    .zw-input::-webkit-inner-spin-button,
+    .zw-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .zw-input[type=number] { -moz-appearance: textfield; }
+    .zw-input-wrap {
+      position: relative;
+    }
+    .zw-input-wrap .zw-prefix {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 1rem;
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    /* Tooltip */
+    .zw-tip { position: relative; display: inline-flex; cursor: help; }
+    .zw-tip:hover .zw-tip-text { visibility: visible; opacity: 1; }
+    .zw-tip-text {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 400;
+      width: 200px;
+      text-align: center;
+      z-index: 100;
+      transition: all 0.15s;
+      line-height: 1.4;
+    }
+    .zw-tip-text::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1e293b;
+    }
+
+    /* Results card */
+    .zw-result-card {
+      background: linear-gradient(135deg, #024139 0%, #01201c 50%, #0a3d2e 100%);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      color: #fff;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .zw-result-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(225,134,29,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Nisab toggle */
+    .zw-nisab-toggle {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 0.75rem;
+      padding: 4px;
+      gap: 4px;
+    }
+    .zw-nisab-btn {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      border-radius: 0.625rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+    }
+    .zw-nisab-btn.active {
+      background: #fff;
+      color: #024139;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* FAQ */
+    .zw-faq-item { border-bottom: 1px solid #f3f4f6; }
+    .zw-faq-item:last-child { border-bottom: none; }
+    .zw-faq-q {
+      padding: 1.125rem 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: #1f2937;
+      transition: color 0.2s;
+    }
+    .zw-faq-q:hover { color: #024139; }
+    .zw-faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      font-size: 0.875rem;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+    .zw-faq-item.open .zw-faq-a { max-height: 300px; padding-bottom: 1rem; }
+    .zw-faq-item .zw-faq-arrow { transition: transform 0.2s; flex-shrink: 0; }
+    .zw-faq-item.open .zw-faq-arrow { transform: rotate(180deg); }
+
+    /* Social proof ticker */
+    @keyframes zwPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .zw-pulse { animation: zwPulse 2s ease-in-out infinite; }
+
+    /* Hide no-print in print */
+    @media print { .no-print { display: none !important; } }
+  </style>
+
+  <!-- ===== HERO ===== -->
+  <section class="pt-32 pb-8 bg-gradient-to-r from-[#01201c] to-[#022e27] no-print">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="bg-yellow-400 text-[#024139] text-xs font-bold px-2 py-1 rounded">2026</span>
+            <span class="bg-[#024139] text-white text-xs font-medium px-2 py-1 rounded">100% Zakat Policy</span>
+          </div>
+          <h1 class="text-2xl md:text-3xl font-bold text-white" style="font-family: 'Signika', sans-serif;">
+            {heroTitle}
+          </h1>
+        </div>
+        <div class="bg-white/10 rounded-xl px-4 py-3 relative">
+          <div id="zw-live-dot" class="hidden absolute -top-1.5 -left-1.5 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="w-1 h-1 bg-white rounded-full animate-pulse"></span>
+            LIVE
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-center">
+              <p class="text-xs text-white/60">Gold Nisab</p>
+              <p class="text-lg font-bold text-yellow-300" id="zw-nisab-gold-display">—</p>
+            </div>
+            <div class="w-px h-10 bg-white/20"></div>
+            <div class="text-center">
+              <p class="text-xs text-white/60">Silver Nisab</p>
+              <p class="text-lg font-bold text-gray-300" id="zw-nisab-silver-display">—</p>
+            </div>
+          </div>
+          <p class="text-xs text-white/50 text-center mt-2" id="zw-price-date"></p>
+        </div>
+      </div>
+      <p class="text-white/90 mt-2" style="font-size:18px;line-height:1.6;max-width:650px">Calculate your Zakat in minutes using live Nisab values and Shariah-compliant methodology. 100% of your Zakat is distributed to eligible recipients.</p>
+    </div>
+  </section>
+
+  <!-- ===== CALCULATOR WIZARD ===== -->
+  <section class="py-10 md:py-14 bg-[#f8f9fa] min-h-[50vh]">
+    <div class="max-w-3xl mx-auto px-4">
+
+      <!-- Step Progress Bar -->
+      <div class="flex items-center mb-10 px-2" id="zw-progress" style="scroll-margin-top: 90px;">
+        <div class="zw-progress-step active" data-step="1" onclick="clickStep(1)" style="cursor:pointer">
+          <div class="zw-progress-dot">1</div>
+          <span class="hidden sm:inline">Select Assets</span>
+        </div>
+        <div class="zw-progress-line" id="zw-line-1"></div>
+        <div class="zw-progress-step" data-step="2" onclick="clickStep(2)" style="cursor:pointer">
+          <div class="zw-progress-dot">2</div>
+          <span class="hidden sm:inline">Enter Values</span>
+        </div>
+        <div class="zw-progress-line" id="zw-line-2"></div>
+        <div class="zw-progress-step" data-step="3" onclick="clickStep(3)" style="cursor:pointer">
+          <div class="zw-progress-dot">3</div>
+          <span class="hidden sm:inline">Your Zakat</span>
+        </div>
+      </div>
+
+      <!-- ===== STEP 1: SELECT ASSET CATEGORIES ===== -->
+      <div class="zw-step active" id="zw-step-1">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">Calculate Your Zakat Accurately</h2>
+          <p class="text-gray-500">Based on 2.5% of qualifying assets. Shariah-compliant methodology.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          <!-- Cash -->
+          <div class="zw-cat-card selected" data-cat="cash" onclick="toggleCategory(this)">
+            <!-- Desktop: centered vertical card -->
+            <div class="zw-card-vertical flex flex-col items-center text-center gap-2 py-2">
+              <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+              <div><p class="font-semibold text-gray-900 text-sm">Cash & Savings</p><p class="text-xs text-gray-500 mt-0.5">Bank accounts, cash on hand</p></div>
+              <div class="zw-cat-check mt-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+            </div>
+            <!-- Mobile: horizontal row -->
+            <div class="zw-card-horizontal items-center gap-3" style="display:none">
+              <div class="zw-cat-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+              <div class="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-4.5 h-4.5 text-green-600" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+              <div class="flex-1"><p class="font-semibold text-gray-900 text-sm">Cash & Savings</p><p class="text-xs text-gray-400">Bank accounts, cash on hand</p></div>
+            </div>
+          </div>
+
+          <!-- Gold & Silver -->
+          <div class="zw-cat-card" data-cat="metals" onclick="toggleCategory(this)">
+            <div class="zw-card-vertical flex flex-col items-center text-center gap-2 py-2">
+              <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"></path></svg></div>
+              <div><p class="font-semibold text-gray-900 text-sm">Gold & Silver</p><p class="text-xs text-gray-500 mt-0.5">Jewelry, coins, bars</p></div>
+              <div class="zw-cat-check mt-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+            </div>
+            <div class="zw-card-horizontal items-center gap-3" style="display:none">
+              <div class="zw-cat-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+              <div class="w-9 h-9 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg style="width:18px;height:18px" class="text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"></path></svg></div>
+              <div class="flex-1"><p class="font-semibold text-gray-900 text-sm">Gold & Silver</p><p class="text-xs text-gray-400">Jewelry, coins, bars</p></div>
+            </div>
+          </div>
+
+          <!-- Investments -->
+          <div class="zw-cat-card" data-cat="investments" onclick="toggleCategory(this)">
+            <div class="zw-card-vertical flex flex-col items-center text-center gap-2 py-2">
+              <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+              <div><p class="font-semibold text-gray-900 text-sm">Investments</p><p class="text-xs text-gray-500 mt-0.5">Stocks, crypto, 401k, bonds</p></div>
+              <div class="zw-cat-check mt-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+            </div>
+            <div class="zw-card-horizontal items-center gap-3" style="display:none">
+              <div class="zw-cat-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+              <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg style="width:18px;height:18px" class="text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+              <div class="flex-1"><p class="font-semibold text-gray-900 text-sm">Investments</p><p class="text-xs text-gray-400">Stocks, crypto, 401k, bonds</p></div>
+            </div>
+          </div>
+
+          <!-- Business -->
+          <div class="zw-cat-card" data-cat="business" onclick="toggleCategory(this)">
+            <div class="zw-card-vertical flex flex-col items-center text-center gap-2 py-2">
+              <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+              <div><p class="font-semibold text-gray-900 text-sm">Business Assets</p><p class="text-xs text-gray-500 mt-0.5">Cash, inventory, receivables</p></div>
+              <div class="zw-cat-check mt-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+            </div>
+            <div class="zw-card-horizontal items-center gap-3" style="display:none">
+              <div class="zw-cat-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+              <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg style="width:18px;height:18px" class="text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+              <div class="flex-1"><p class="font-semibold text-gray-900 text-sm">Business Assets</p><p class="text-xs text-gray-400">Cash, inventory, receivables</p></div>
+            </div>
+          </div>
+
+          <!-- Property -->
+          <div class="zw-cat-card" data-cat="property" onclick="toggleCategory(this)">
+            <div class="zw-card-vertical flex flex-col items-center text-center gap-2 py-2">
+              <div class="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></div>
+              <div><p class="font-semibold text-gray-900 text-sm">Property</p><p class="text-xs text-gray-500 mt-0.5">Investment property, rental income</p></div>
+              <div class="zw-cat-check mt-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+            </div>
+            <div class="zw-card-horizontal items-center gap-3" style="display:none">
+              <div class="zw-cat-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+              <div class="w-9 h-9 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg style="width:18px;height:18px" class="text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></div>
+              <div class="flex-1"><p class="font-semibold text-gray-900 text-sm">Property</p><p class="text-xs text-gray-400">Investment property, rental income</p></div>
+            </div>
+          </div>
+
+          <!-- Money Owed -->
+          <div class="zw-cat-card" data-cat="owed" onclick="toggleCategory(this)">
+            <div class="zw-card-vertical flex flex-col items-center text-center gap-2 py-2">
+              <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+              <div><p class="font-semibold text-gray-900 text-sm">Money Owed to You</p><p class="text-xs text-gray-500 mt-0.5">Loans given, expected refunds</p></div>
+              <div class="zw-cat-check mt-1"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+            </div>
+            <div class="zw-card-horizontal items-center gap-3" style="display:none">
+              <div class="zw-cat-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+              <div class="w-9 h-9 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0"><svg style="width:18px;height:18px" class="text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+              <div class="flex-1"><p class="font-semibold text-gray-900 text-sm">Money Owed to You</p><p class="text-xs text-gray-400">Loans given, expected refunds</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-end">
+          <button type="button" onclick="goToStep(2)" class="bg-[#024139] hover:bg-[#01302b] text-white font-bold px-8 py-3.5 rounded-xl transition-all text-sm flex items-center gap-2 shadow-lg hover:shadow-xl">
+            Continue
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== STEP 2: ENTER VALUES ===== -->
+      <div class="zw-step" id="zw-step-2">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">Enter your values</h2>
+          <p class="text-gray-500">Fill in the fields below for your selected asset types</p>
+        </div>
+
+        <div class="space-y-5" id="zw-fields-container">
+          <!-- Dynamically populated based on Step 1 selections -->
+        </div>
+
+        <div class="mt-8 flex justify-between">
+          <button type="button" onclick="goToStep(1)" class="text-gray-500 hover:text-gray-800 font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
+            Back
+          </button>
+          <button type="button" onclick="goToStep(3)" class="bg-[#024139] hover:bg-[#01302b] text-white font-bold px-8 py-3.5 rounded-xl transition-all text-sm flex items-center gap-2 shadow-lg hover:shadow-xl">
+            Calculate My Zakat
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== STEP 3: RESULTS ===== -->
+      <div class="zw-step" id="zw-step-3">
+
+        <!-- Results Card -->
+        <div class="zw-result-card relative z-10 mb-6">
+          <!-- Status message -->
+          <p class="text-sm text-white/50 mb-2" id="zw-status">Calculating...</p>
+
+          <!-- Big amount -->
+          <p class="text-5xl md:text-6xl font-bold mb-1" style="font-family: 'Signika', sans-serif; color: #fbbf24;" id="zw-big-amount">$0.00</p>
+          <p class="text-sm text-white/40 mb-6">Zakat Due (2.5% of net zakatable wealth)</p>
+
+          <!-- Breakdown grid -->
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white/10 rounded-xl p-3">
+              <p class="text-xs text-white/40 mb-1">Total Assets</p>
+              <p class="text-lg font-bold text-green-400" id="zw-r-assets">$0</p>
+            </div>
+            <div class="bg-white/10 rounded-xl p-3">
+              <p class="text-xs text-white/40 mb-1">Liabilities</p>
+              <p class="text-lg font-bold text-red-400" id="zw-r-liabilities">$0</p>
+            </div>
+            <div class="bg-white/10 rounded-xl p-3">
+              <p class="text-xs text-white/40 mb-1">Net Wealth</p>
+              <p class="text-lg font-bold text-white" id="zw-r-net">$0</p>
+            </div>
+          </div>
+
+          <!-- Nisab toggle -->
+          <div class="max-w-xs mx-auto mb-6">
+            <p class="text-xs text-white/40 mb-2">Nisab Standard</p>
+            <div class="zw-nisab-toggle">
+              <button type="button" class="zw-nisab-btn" data-nisab="gold" onclick="switchNisab('gold')">
+                🥇 Gold <span id="zw-nisab-gold-val" class="text-[11px] opacity-60"></span>
+              </button>
+              <button type="button" class="zw-nisab-btn active" data-nisab="silver" onclick="switchNisab('silver')">
+                🥈 Silver <span id="zw-nisab-silver-val" class="text-[11px] opacity-60"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Round up & Pay -->
+          <div id="zw-pay-area" class="hidden">
+            <!-- Round up option -->
+            <div id="zw-roundup-wrap" class="hidden mb-4">
+              <label class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 rounded-xl p-3 cursor-pointer transition">
+                <input type="checkbox" id="zw-roundup-check" class="rounded border-white/30 bg-white/10 text-yellow-400 focus:ring-yellow-400 w-4 h-4" />
+                <span class="text-sm text-white/80">Round up to <strong class="text-yellow-300" id="zw-roundup-val">$0</strong></span>
+              </label>
+            </div>
+
+            <button type="button" id="zw-pay-btn" class="w-full bg-[#B32629] hover:bg-[#8f1e20] text-white font-bold py-4 rounded-xl transition-all text-lg cursor-pointer shadow-xl hover:shadow-2xl">
+              Pay Your Zakat Now
+            </button>
+            <p class="text-xs text-white/30 mt-2">100% goes directly to those in need</p>
+          </div>
+        </div>
+
+        <!-- Impact cards -->
+        <div id="zw-impact-area" class="hidden mb-6">
+          <p class="text-center text-sm font-semibold text-gray-700 mb-3">Your Zakat can provide:</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {impactItems.map((item: { icon: string; title: string; desc: string }) => (
+              <div class="bg-white rounded-xl p-4 text-center border border-gray-100 shadow-sm">
+                <span class="text-2xl mb-2 block">{item.icon}</span>
+                <p class="font-semibold text-gray-900 text-sm">{item.title}</p>
+                <p class="text-xs text-gray-500">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Action row -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+          <button type="button" onclick="goToStep(2)" class="flex-1 text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 font-semibold px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm border border-gray-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
+            Edit Values
+          </button>
+          <button type="button" id="zw-print-btn" class="flex-1 text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 font-semibold px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm border border-gray-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Print Results
+          </button>
+          <button type="button" id="zw-email-toggle" class="flex-1 text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 font-semibold px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm border border-gray-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            Email Results
+          </button>
+        </div>
+
+        <!-- Email form (hidden by default) -->
+        <div id="zw-email-form-wrap" class="hidden mb-6 bg-white rounded-2xl border border-gray-200 p-6">
+          <h3 class="font-bold text-gray-900 mb-4 text-sm">Save & email your calculation</h3>
+          <form id="zw-email-form" class="space-y-3">
+            <input type="email" id="zw-email" placeholder="Email address" required class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm focus:outline-none focus:border-[#024139]" />
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" id="zw-firstname" placeholder="First name" class="px-4 py-3 rounded-xl border-2 border-gray-200 text-sm focus:outline-none focus:border-[#024139]" />
+              <input type="text" id="zw-lastname" placeholder="Last name" class="px-4 py-3 rounded-xl border-2 border-gray-200 text-sm focus:outline-none focus:border-[#024139]" />
+            </div>
+            <input type="tel" id="zw-phone" placeholder="Phone (optional)" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm focus:outline-none focus:border-[#024139]" />
+            <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+              <input type="checkbox" id="zw-reminder" class="rounded border-gray-300 text-[#024139] focus:ring-[#024139]" />
+              Remind me when Nisab changes
+            </label>
+            <button type="submit" class="w-full bg-[#024139] hover:bg-[#01302b] text-white font-bold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
+              <span>Send My Results</span>
+              <svg class="w-4 h-4 hidden animate-spin" id="zw-spinner" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+            <p id="zw-email-msg" class="hidden text-center text-xs"></p>
+          </form>
+        </div>
+
+        <!-- Start over -->
+        <div class="text-center">
+          <button type="button" onclick="resetAll()" class="text-sm text-gray-400 hover:text-gray-600 transition">
+            ↻ Start over with a new calculation
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA SECTION ===== -->
+  <section class="py-14 bg-gradient-to-br from-[#024139] to-[#01201c] no-print">
+    <div class="max-w-3xl mx-auto px-4 text-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-white mb-3" style="font-family: 'Signika', sans-serif;">
+        {ctaHeading}
+      </h2>
+      <p class="text-white/60 mb-8 max-w-xl mx-auto leading-relaxed">
+        {ctaSubtext}
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/zakat" class="inline-flex items-center justify-center gap-2 bg-[#B32629] hover:bg-[#8f1e20] text-white font-bold px-8 py-3.5 rounded-xl transition shadow-lg text-sm">
+          Pay Zakat Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+        </a>
+        <a href="/zakat-eligibility" class="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-8 py-3.5 rounded-xl transition border border-white/20 text-sm">
+          Learn About Zakat Eligibility
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ SECTION ===== -->
+  <section class="py-14 bg-white no-print">
+    <div class="max-w-2xl mx-auto px-4">
+      <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+        Common Questions About Zakat
+      </h2>
+      <div class="bg-gray-50 rounded-2xl px-6 md:px-8">
+        {faqItems.map((item: { question: string; answer: string }, i: number) => (
+          <div class={`zw-faq-item ${i === 0 ? 'open' : ''}`}>
+            <div class="zw-faq-q" onclick="this.parentElement.classList.toggle('open')">
+              <span>{item.question}</span>
+              <svg class="w-5 h-5 text-gray-400 zw-faq-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+            <div class="zw-faq-a">{item.answer}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<!-- ===== CALCULATOR JAVASCRIPT ===== -->
+<script is:inline define:vars={{ serializedConfig }}>
+  const cfg = JSON.parse(serializedConfig);
+
+  // Metal prices (fallbacks updated Feb 28, 2026)
+  let goldPerGram = 166.00;
+  let silverPerGram = 3.04;
+  let nisabGold = goldPerGram * cfg.nisabGoldGrams;
+  let nisabSilver = silverPerGram * cfg.nisabSilverGrams;
+  let activeNisab = 'silver'; // default
+
+  const fmt = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtShort = (n) => '$' + Math.round(n).toLocaleString('en-US');
+
+  // Field definitions per category — using inline color values (Tailwind purges dynamic classes from JS)
+  const fieldDefs = {
+    cash: {
+      title: 'Cash & Savings',
+      headerBg: '#f0fdf4', headerBorder: '#bbf7d0', dotColor: '#22c55e', subtotalColor: '#16a34a',
+      fields: [
+        { label: 'Cash on Hand', tip: 'Physical cash at home or in your wallet', cat: 'cash' },
+        { label: 'Checking', tip: 'Balance in your checking/current bank accounts', cat: 'cash' },
+        { label: 'Savings', tip: 'Balance in your savings accounts', cat: 'cash' },
+        { label: 'Other Deposits', tip: 'CDs, money market accounts, other deposits', cat: 'cash' },
+      ]
+    },
+    metals: {
+      title: 'Gold & Silver',
+      headerBg: '#fefce8', headerBorder: '#fde68a', dotColor: '#eab308', subtotalColor: '#ca8a04',
+      isGrams: true,
+      fields: [
+        { label: 'Gold (grams)', tip: 'Total weight of gold jewelry, coins, or bars', cat: 'gold-grams' },
+        { label: 'Silver (grams)', tip: 'Total weight of silver jewelry, coins, or bars', cat: 'silver-grams' },
+      ]
+    },
+    investments: {
+      title: 'Investments',
+      headerBg: '#eff6ff', headerBorder: '#bfdbfe', dotColor: '#3b82f6', subtotalColor: '#2563eb',
+      fields: [
+        { label: 'Stocks / Shares', tip: 'Current market value of stocks, mutual funds, ETFs', cat: 'investments' },
+        { label: 'Cryptocurrency', tip: 'Current value of Bitcoin, Ethereum, and other crypto', cat: 'investments' },
+        { label: '401k / IRA', tip: 'Retirement accounts — consult a scholar as opinions vary', cat: 'investments' },
+        { label: 'Other Investments', tip: 'Bonds, commodities, or any other investment assets', cat: 'investments' },
+      ]
+    },
+    business: {
+      title: 'Business Assets',
+      headerBg: '#faf5ff', headerBorder: '#e9d5ff', dotColor: '#a855f7', subtotalColor: '#9333ea',
+      fields: [
+        { label: 'Business Cash', tip: 'Cash held in business accounts', cat: 'business' },
+        { label: 'Inventory', tip: 'Value of goods held for sale', cat: 'business' },
+        { label: 'Receivables', tip: 'Money owed to your business that you expect to collect', cat: 'business' },
+      ]
+    },
+    property: {
+      title: 'Property (Investment Only)',
+      headerBg: '#f0fdfa', headerBorder: '#99f6e4', dotColor: '#14b8a6', subtotalColor: '#0d9488',
+      fields: [
+        { label: 'Rental Income Saved', tip: 'Accumulated rental income not yet spent', cat: 'property' },
+        { label: 'Investment Property Equity', tip: 'Value of property bought for investment (not your home)', cat: 'property' },
+      ]
+    },
+    owed: {
+      title: 'Money Owed to You',
+      headerBg: '#fff7ed', headerBorder: '#fed7aa', dotColor: '#f97316', subtotalColor: '#ea580c',
+      fields: [
+        { label: 'Loans Given to Others', tip: "Money you've lent that you expect to be repaid", cat: 'owed' },
+        { label: 'Refunds Expected', tip: 'Tax refunds, deposits, or other expected money', cat: 'owed' },
+      ]
+    }
+  };
+
+  const liabilityFields = [
+    { label: 'Money You Owe', tip: 'Personal loans, credit card debt, money borrowed', cat: 'liability' },
+    { label: 'Bills & Outgoings Due', tip: 'Rent, taxes, bills, or other payments due immediately', cat: 'liability' },
+  ];
+
+  // ===== CATEGORY TOGGLE =====
+  window.toggleCategory = function(el) {
+    el.classList.toggle('selected');
+  };
+
+  // ===== STEP NAVIGATION =====
+  let currentStep = 1;
+  let highestStepVisited = 1;
+
+  // Allow clicking on progress steps to go back (or forward to already-visited steps)
+  window.clickStep = function(step) {
+    if (step <= highestStepVisited) {
+      goToStep(step);
+    }
+  };
+
+  window.goToStep = function(step) {
+    if (step === 2) buildStep2Fields();
+    if (step === 3) calculateAndShowResults();
+
+    // Hide all steps, show target
+    document.querySelectorAll('.zw-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('zw-step-' + step).classList.add('active');
+
+    // Update progress
+    document.querySelectorAll('.zw-progress-step').forEach(s => {
+      const sNum = parseInt(s.dataset.step);
+      s.classList.remove('active', 'done');
+      if (sNum === step) s.classList.add('active');
+      else if (sNum < step) s.classList.add('done');
+    });
+    document.querySelectorAll('.zw-progress-line').forEach((line, i) => {
+      line.classList.toggle('done', i + 1 < step);
+    });
+
+    currentStep = step;
+    if (step > highestStepVisited) highestStepVisited = step;
+    // Scroll to the progress bar so the form fields are visible, not the hero
+    const progressBar = document.getElementById('zw-progress');
+    if (progressBar) {
+      setTimeout(() => {
+        progressBar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // ===== BUILD STEP 2 FIELDS =====
+  // Tooltip SVG icon (orange circle-question)
+  const tipIcon = '<svg style="width:16px;height:16px;color:#E1861D;flex-shrink:0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>';
+
+  function makeField(field, fieldId, existVal, isGrams, inputClass) {
+    const prefix = isGrams
+      ? '<svg style="width:16px;height:16px;color:#9ca3af" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
+      : '$';
+    return `<div>
+      <div style="font-size:0.875rem;font-weight:500;color:#333;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.35rem">
+        ${field.label}
+        <span class="zw-tip-trigger" style="position:relative;display:inline-flex;cursor:help" data-tip="${field.tip.replace(/"/g, '&quot;')}">${tipIcon}<span class="zw-tip-popup" style="visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:8px 12px;border-radius:8px;font-size:11px;font-weight:400;width:200px;text-align:center;z-index:100;transition:all 0.15s;line-height:1.4;pointer-events:none">${field.tip}<span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1e293b"></span></span></span>
+      </div>
+      <div style="position:relative">
+        <span style="position:absolute;left:0.625rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.875rem;pointer-events:none">${prefix}</span>
+        <input type="number" min="0" step="0.01"
+          class="zw-input ${inputClass}"
+          data-cat="${field.cat}" data-field-id="${fieldId}"
+          placeholder="${isGrams ? '0' : '00.00'}"
+          value="${existVal}"
+          style="width:100%;padding:0.75rem 0.75rem 0.75rem 1.75rem;font-size:1rem;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:0.5rem;outline:none;color:#333" />
+      </div>
+    </div>`;
+  }
+
+  function buildStep2Fields() {
+    const container = document.getElementById('zw-fields-container');
+    const selectedCats = Array.from(document.querySelectorAll('.zw-cat-card.selected')).map(c => c.dataset.cat);
+
+    // Preserve existing values
+    const existingValues = {};
+    container.querySelectorAll('.zw-input').forEach(inp => {
+      if (inp.value) existingValues[inp.dataset.fieldId] = inp.value;
+    });
+
+    // Section icon SVGs
+    const sectionIcons = {
+      cash: '<svg style="width:14px;height:14px;color:#16a34a" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
+      metals: '<svg style="width:14px;height:14px;color:#ca8a04" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.358 9.358 0 000 1H6a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"></path></svg>',
+      investments: '<svg style="width:14px;height:14px;color:#2563eb" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>',
+      business: '<svg style="width:14px;height:14px;color:#9333ea" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
+      property: '<svg style="width:14px;height:14px;color:#0d9488" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>',
+      owed: '<svg style="width:14px;height:14px;color:#ea580c" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+    };
+
+    // Icon BG colors
+    const iconBgColors = {
+      cash: '#dcfce7', metals: '#fef9c3', investments: '#dbeafe',
+      business: '#f3e8ff', property: '#ccfbf1', owed: '#ffedd5',
+    };
+
+    // Grid cols per category (cash & investments = 4, rest = 2 or 3)
+    const gridCols = {
+      cash: 4, metals: 2, investments: 4, business: 3, property: 2, owed: 2,
+    };
+
+    let html = '';
+
+    // ===== ASSETS CARD =====
+    html += `<div style="background:#fff;border-radius:0.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden">`;
+
+    // Dark header bar
+    html += `<div style="background:#024139;color:#fff;padding:0.75rem 1rem;display:flex;align-items:center;justify-content:space-between">
+      <h2 style="font-weight:700;display:flex;align-items:center;gap:0.5rem;font-size:0.9375rem">
+        <svg style="width:20px;height:20px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Assets
+      </h2>
+      <span style="font-size:1.125rem;font-weight:700" id="zw-total-assets-header">$0.00</span>
+    </div>`;
+
+    // Body with sections
+    html += `<div style="padding:1rem 1rem 0.5rem">`;
+
+    selectedCats.forEach(catKey => {
+      const def = fieldDefs[catKey];
+      if (!def) return;
+      const cols = gridCols[catKey] || 2;
+      const subtitle = def.isGrams ? '<span style="font-size:0.75rem;font-weight:400;color:#9ca3af;margin-left:0.25rem">(in grams)</span>' : '';
+
+      // Section title
+      html += `<div style="margin-bottom:0.75rem">
+        <h3 style="font-size:0.875rem;font-weight:700;color:#1f2937;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem">
+          <span style="width:24px;height:24px;background:${iconBgColors[catKey]};border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${sectionIcons[catKey]}
+          </span>
+          ${def.title}${subtitle}
+        </h3>
+        <div style="display:grid;grid-template-columns:repeat(${Math.min(cols, 2)}, 1fr);gap:0.75rem">`;
+
+      // For desktop: override to proper columns
+      html += `<style>.zw-grid-${catKey}{grid-template-columns:repeat(${cols},1fr)!important}@media(max-width:640px){.zw-grid-${catKey}{grid-template-columns:repeat(2,1fr)!important}}</style>`;
+      // Replace the grid div with the class
+      html = html.replace(
+        `style="display:grid;grid-template-columns:repeat(${Math.min(cols, 2)}, 1fr);gap:0.75rem">`,
+        `class="zw-grid-${catKey}" style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:0.75rem">`
+      );
+
+      def.fields.forEach((field, i) => {
+        const fieldId = catKey + '-' + i;
+        const existVal = existingValues[fieldId] || '';
+        html += makeField(field, fieldId, existVal, def.isGrams, 'zw-asset-input');
+      });
+
+      html += `</div></div>`;  // close grid + section
+
+      // Divider between sections (except last)
+      html += `<div style="border-top:1px solid #f3f4f6;margin:0.75rem 0"></div>`;
+    });
+
+    html += `</div></div>`; // close body + assets card
+
+    // ===== LIABILITIES CARD =====
+    html += `<div style="background:#fff;border-radius:0.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;margin-top:1rem">`;
+
+    // Red header bar
+    html += `<div style="background:#B32629;color:#fff;padding:0.75rem 1rem;display:flex;align-items:center;justify-content:space-between">
+      <h2 style="font-weight:700;display:flex;align-items:center;gap:0.5rem;font-size:0.9375rem">
+        <svg style="width:20px;height:20px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Liabilities (Deductions)
+      </h2>
+      <span style="font-size:1.125rem;font-weight:700" id="zw-sub-liabilities">-$0.00</span>
+    </div>`;
+
+    html += `<div style="padding:1rem">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem">`;
+
+    liabilityFields.forEach((field, i) => {
+      const fieldId = 'liability-' + i;
+      const existVal = existingValues[fieldId] || '';
+      html += makeField(field, fieldId, existVal, false, 'zw-liability-input');
+    });
+
+    html += `</div></div></div>`; // close grid + body + liabilities card
+
+    container.innerHTML = html;
+
+    // Tooltip hover listeners (since Astro scoped styles don't apply to dynamic HTML)
+    container.querySelectorAll('.zw-tip-trigger').forEach(trigger => {
+      const popup = trigger.querySelector('.zw-tip-popup');
+      if (!popup) return;
+      trigger.addEventListener('mouseenter', () => {
+        popup.style.visibility = 'visible';
+        popup.style.opacity = '1';
+      });
+      trigger.addEventListener('mouseleave', () => {
+        popup.style.visibility = 'hidden';
+        popup.style.opacity = '0';
+      });
+    });
+
+    // Focus styles on inputs
+    container.querySelectorAll('.zw-input').forEach(inp => {
+      inp.addEventListener('focus', function() {
+        this.style.backgroundColor = '#fff';
+        this.style.borderColor = '#024139';
+        this.style.boxShadow = '0 0 0 2px rgba(2,65,57,0.2)';
+      });
+      inp.addEventListener('blur', function() {
+        this.style.backgroundColor = '#f5f5f5';
+        this.style.borderColor = '#e5e5e5';
+        this.style.boxShadow = 'none';
+      });
+      inp.addEventListener('input', updateSubtotals);
+    });
+    updateSubtotals();
+  }
+
+  function updateSubtotals() {
+    // Calculate grand total of all assets
+    let grandTotal = 0;
+    document.querySelectorAll('.zw-asset-input').forEach(inp => {
+      const cat = inp.dataset.cat;
+      const val = parseFloat(inp.value) || 0;
+      let usd = val;
+      if (cat === 'gold-grams') usd = val * goldPerGram;
+      else if (cat === 'silver-grams') usd = val * silverPerGram;
+      grandTotal += usd;
+    });
+
+    // Update assets header total
+    const assetsHeader = document.getElementById('zw-total-assets-header');
+    if (assetsHeader) assetsHeader.textContent = fmt(grandTotal);
+
+    // Calculate liabilities total
+    let totalLiab = 0;
+    document.querySelectorAll('.zw-liability-input').forEach(inp => {
+      totalLiab += parseFloat(inp.value) || 0;
+    });
+    const liabEl = document.getElementById('zw-sub-liabilities');
+    if (liabEl) liabEl.textContent = '-' + fmt(totalLiab);
+  }
+
+  // ===== CALCULATE & SHOW RESULTS =====
+  function calculateAndShowResults() {
+    let totalAssets = 0;
+    document.querySelectorAll('.zw-asset-input').forEach(inp => {
+      const cat = inp.dataset.cat;
+      const val = parseFloat(inp.value) || 0;
+      if (cat === 'gold-grams') totalAssets += val * goldPerGram;
+      else if (cat === 'silver-grams') totalAssets += val * silverPerGram;
+      else totalAssets += val;
+    });
+
+    let totalLiabilities = 0;
+    document.querySelectorAll('.zw-liability-input').forEach(inp => {
+      totalLiabilities += parseFloat(inp.value) || 0;
+    });
+
+    const netWealth = totalAssets - totalLiabilities;
+    const selectedNisab = activeNisab === 'gold' ? nisabGold : nisabSilver;
+
+    let zakatAmount = 0;
+    let status = '';
+
+    if (netWealth <= 0) {
+      status = 'Your net wealth is zero or negative — no Zakat is due';
+    } else if (netWealth < selectedNisab) {
+      status = 'Below Nisab threshold — Zakat is not yet obligatory';
+    } else {
+      zakatAmount = netWealth * 0.025;
+      status = 'Zakat is obligatory on your wealth';
+    }
+
+    // Update UI
+    document.getElementById('zw-big-amount').textContent = fmt(zakatAmount);
+    document.getElementById('zw-status').textContent = status;
+    document.getElementById('zw-r-assets').textContent = fmtShort(totalAssets);
+    document.getElementById('zw-r-liabilities').textContent = '-' + fmtShort(totalLiabilities);
+    document.getElementById('zw-r-net').textContent = fmtShort(netWealth);
+
+    // Nisab values in toggle
+    document.getElementById('zw-nisab-gold-val').textContent = fmtShort(nisabGold);
+    document.getElementById('zw-nisab-silver-val').textContent = fmtShort(nisabSilver);
+
+    // Show/hide pay area and impact
+    const payArea = document.getElementById('zw-pay-area');
+    const impactArea = document.getElementById('zw-impact-area');
+    if (zakatAmount > 0) {
+      payArea.classList.remove('hidden');
+      impactArea.classList.remove('hidden');
+
+      // Round up
+      const roundedUp = Math.ceil(zakatAmount / 10) * 10;
+      const roundupWrap = document.getElementById('zw-roundup-wrap');
+      if (roundedUp > zakatAmount && roundedUp - zakatAmount >= 1) {
+        roundupWrap.classList.remove('hidden');
+        document.getElementById('zw-roundup-val').textContent = fmtShort(roundedUp);
+      } else {
+        roundupWrap.classList.add('hidden');
+      }
+    } else {
+      payArea.classList.add('hidden');
+      impactArea.classList.add('hidden');
+    }
+  }
+
+  // ===== NISAB TOGGLE =====
+  window.switchNisab = function(type) {
+    activeNisab = type;
+    document.querySelectorAll('.zw-nisab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.nisab === type);
+    });
+    calculateAndShowResults();
+  };
+
+  // ===== RESET =====
+  window.resetAll = function() {
+    // Unselect all except cash
+    document.querySelectorAll('.zw-cat-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.cat === 'cash');
+    });
+    // Clear all fields
+    document.querySelectorAll('.zw-input').forEach(inp => inp.value = '');
+    // Go to step 1
+    goToStep(1);
+  };
+
+  // ===== PAY BUTTON =====
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('zw-pay-btn')?.addEventListener('click', () => {
+      const amtText = document.getElementById('zw-big-amount')?.textContent || '$0.00';
+      let amount = parseFloat(amtText.replace(/[$,]/g, ''));
+
+      const roundupCheck = document.getElementById('zw-roundup-check');
+      if (roundupCheck && roundupCheck.checked) {
+        amount = Math.ceil(amount / 10) * 10;
+      }
+
+      if (amount <= 0) { alert('Please calculate your Zakat first'); return; }
+
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: 'zakat-' + Date.now(),
+          name: 'Zakat',
+          description: 'Zakat Obligation',
+          amount: amount,
+          quantity: 1,
+          type: 'single',
+          campaignSlug: cfg.campaignSlug || 'zakat',
+          image: null,
+        });
+      } else {
+        window.location.href = '/donate?cause=zakat&amount=' + amount;
+      }
+    });
+
+    // Print
+    document.getElementById('zw-print-btn')?.addEventListener('click', () => {
+      const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const g = (id) => document.getElementById(id)?.textContent || '';
+      const html = `<html><head><title>Zakat Calculation</title><style>body{font-family:Arial,sans-serif;max-width:550px;margin:40px auto;padding:0 20px}h1{color:#024139;margin-bottom:5px}.date{color:#666;margin-bottom:30px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}.label{color:#666}.value{font-weight:bold}.total{font-size:40px;color:#024139;text-align:center;margin:30px 0}.status{text-align:center;color:#666;font-style:italic;margin:10px 0}.footer{margin-top:40px;text-align:center;color:#999;font-size:12px}</style></head><body><h1>Zakat Calculation</h1><p class="date">${date}</p><div class="row"><span class="label">Total Assets</span><span class="value">${g('zw-r-assets')}</span></div><div class="row"><span class="label">Liabilities</span><span class="value">${g('zw-r-liabilities')}</span></div><div class="row"><span class="label">Net Wealth</span><span class="value">${g('zw-r-net')}</span></div><div class="row"><span class="label">Nisab (${activeNisab})</span><span class="value">${fmtShort(activeNisab === 'gold' ? nisabGold : nisabSilver)}</span></div><p class="status">${g('zw-status')}</p><p class="total">${g('zw-big-amount')}</p><p class="footer">Calculated using Qurbani Foundation USA Zakat Calculator<br>www.qurbani.com</p></body></html>`;
+      const w = window.open('', '_blank');
+      if (w) { w.document.write(html); w.document.close(); w.print(); }
+    });
+
+    // Email toggle
+    document.getElementById('zw-email-toggle')?.addEventListener('click', () => {
+      document.getElementById('zw-email-form-wrap').classList.toggle('hidden');
+    });
+
+    // Email form
+    document.getElementById('zw-email-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('zw-email')?.value;
+      const firstName = document.getElementById('zw-firstname')?.value;
+      const lastName = document.getElementById('zw-lastname')?.value;
+      const phone = document.getElementById('zw-phone')?.value;
+      const wantsReminder = document.getElementById('zw-reminder')?.checked;
+      const zakatAmount = parseFloat((document.getElementById('zw-big-amount')?.textContent || '0').replace(/[$,]/g, ''));
+      const totalAssets = parseFloat((document.getElementById('zw-r-assets')?.textContent || '0').replace(/[$,]/g, ''));
+
+      const spinner = document.getElementById('zw-spinner');
+      const msgEl = document.getElementById('zw-email-msg');
+      if (spinner) spinner.classList.remove('hidden');
+      if (msgEl) msgEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/ghl/track-zakat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, firstName, lastName, phone, zakatAmount, totalAssets, wantsReminder }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          if (msgEl) { msgEl.textContent = '✓ Results saved & emailed!'; msgEl.className = 'text-center text-xs text-green-600 font-medium'; msgEl.classList.remove('hidden'); }
+        } else {
+          if (msgEl) { msgEl.textContent = result.error || 'Failed. Please try again.'; msgEl.className = 'text-center text-xs text-red-600'; msgEl.classList.remove('hidden'); }
+        }
+      } catch (err) {
+        if (msgEl) { msgEl.textContent = 'Network error.'; msgEl.className = 'text-center text-xs text-red-600'; msgEl.classList.remove('hidden'); }
+      } finally {
+        if (spinner) spinner.classList.add('hidden');
+      }
+    });
+
+    // Fetch live prices
+    fetchMetalPrices();
+  });
+
+  // ===== FETCH METAL PRICES =====
+  async function fetchMetalPrices() {
+    try {
+      const res = await fetch('/api/metal-prices');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success) return;
+
+      goldPerGram = data.gold;
+      silverPerGram = data.silver;
+      nisabGold = goldPerGram * cfg.nisabGoldGrams;
+      nisabSilver = silverPerGram * cfg.nisabSilverGrams;
+
+      document.getElementById('zw-nisab-gold-display').textContent = fmtShort(nisabGold);
+      document.getElementById('zw-nisab-silver-display').textContent = fmtShort(nisabSilver);
+
+      if (!data.fallback) {
+        const dot = document.getElementById('zw-live-dot');
+        if (dot) dot.classList.remove('hidden');
+      }
+
+      const d = data.timestamp ? new Date(data.timestamp) : new Date();
+      const dateEl = document.getElementById('zw-price-date');
+      if (dateEl) dateEl.textContent = 'Prices as of ' + d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (e) {
+      // Use fallback prices — already set
+      document.getElementById('zw-nisab-gold-display').textContent = fmtShort(nisabGold);
+      document.getElementById('zw-nisab-silver-display').textContent = fmtShort(nisabSilver);
+    }
+  }
+</script>

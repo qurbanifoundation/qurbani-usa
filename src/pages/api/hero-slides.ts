@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../lib/supabase';
+import { clearSettingsCache } from '../../lib/settings';
+import { clearNavbarCache } from '../../lib/menus';
 
 export const prerender = false;
 
@@ -61,6 +63,10 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    // Clear caches so slide changes appear immediately
+    clearSettingsCache();
+    clearNavbarCache();
+
     return new Response(JSON.stringify({ success: true, slide: result.data }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -89,6 +95,10 @@ export const DELETE: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Clear caches so slide deletion is reflected immediately
+    clearSettingsCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

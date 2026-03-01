@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../lib/supabase';
 import { clearSettingsCache } from '../../lib/settings';
+import { clearNavbarCache } from '../../lib/menus';
 
 // Required for Cloudflare adapter
 export const prerender = false;
@@ -94,6 +95,10 @@ export const POST: APIRoute = async ({ request }) => {
     if ('showRamadanPopup' in body) updateData.show_ramadan_popup = body.showRamadanPopup === true || body.showRamadanPopup === 'on';
     if ('showCartReminder' in body) updateData.show_cart_reminder = body.showCartReminder === true || body.showCartReminder === 'on';
 
+    // Sidecart recurring upsell settings (boolean)
+    if ('showSidecartMonthly' in body) updateData.show_sidecart_monthly = body.showSidecartMonthly === true || body.showSidecartMonthly === 'on';
+    if ('showSidecartJummah' in body) updateData.show_sidecart_jummah = body.showSidecartJummah === true || body.showSidecartJummah === 'on';
+
     // Homepage donation box heading
     if ('donationBoxHeading' in body) updateData.donation_box_heading = body.donationBoxHeading || '';
 
@@ -112,8 +117,9 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Clear settings cache so changes appear immediately
+    // Clear all caches so changes appear immediately
     clearSettingsCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify({ success: true, settings: data }), {
       status: 200,

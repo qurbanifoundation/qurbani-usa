@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearSettingsCache } from '../../../lib/settings';
 
 export const prerender = false;
 
@@ -96,6 +97,9 @@ export const PUT: APIRoute = async ({ request }) => {
       });
     }
 
+    // Clear settings cache so color changes appear immediately
+    clearSettingsCache();
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -140,6 +144,9 @@ export const DELETE: APIRoute = async ({ url }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Clear settings cache so deletion is reflected immediately
+    clearSettingsCache();
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

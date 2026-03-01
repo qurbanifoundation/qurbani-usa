@@ -202,7 +202,7 @@ const faviconType = adminFavicon
   </head>
   <body class="bg-stone-50 text-stone-900 antialiased">
     <slot />
-    <DonationCart checkoutTemplate={settings.checkout_template || 'three-step'} showCartReminder={settings.show_cart_reminder !== false} />
+    <DonationCart checkoutTemplate={settings.checkout_template || 'three-step'} showCartReminder={settings.show_cart_reminder !== false} showSidecartMonthly={settings.show_sidecart_monthly !== false} showSidecartJummah={settings.show_sidecart_jummah !== false} />
     {settings.show_ramadan_popup !== false && <RamadanPopup />}
 
     <!-- Mobile auto-scroll to donation box on page load -->

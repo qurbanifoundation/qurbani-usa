@@ -6,11 +6,11 @@
 
 import type { APIRoute } from 'astro';
 
-// Fallback prices (updated February 2026)
+// Fallback prices (updated February 28, 2026)
 // These are reasonable estimates and will be used when API is rate limited
 const FALLBACK_PRICES = {
-  gold: 93.00,    // USD per gram (~$2,900/oz)
-  silver: 1.05,   // USD per gram (~$32.50/oz)
+  gold: 166.00,   // USD per gram (~$5,165/oz)
+  silver: 3.04,   // USD per gram (~$94.50/oz)
 };
 
 // In-memory cache with longer duration

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearSettingsCache } from '../../../lib/settings';
 
 export const prerender = false;
 
@@ -25,6 +26,9 @@ export const POST: APIRoute = async ({ request }) => {
       .eq('id', 1);
 
     if (error) throw error;
+
+    // Clear settings cache so changes appear immediately
+    clearSettingsCache();
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

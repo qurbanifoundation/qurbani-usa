@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearNavbarCache } from '../../../lib/menus';
 
 export const prerender = false;
 
@@ -182,6 +183,9 @@ export const POST: APIRoute = async () => {
       .update({ slug: '/' })
       .or('slug.eq.,slug.is.null')
       .eq('title', 'Home');
+
+    // Clear navbar cache so page changes appear immediately
+    clearNavbarCache();
 
     return new Response(JSON.stringify({
       success: true,

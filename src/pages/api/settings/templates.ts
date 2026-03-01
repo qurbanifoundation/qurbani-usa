@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { clearSettingsCache } from '../../../lib/settings';
+import { clearNavbarCache } from '../../../lib/menus';
 
 export const prerender = false;
 
@@ -79,6 +81,10 @@ export const PUT: APIRoute = async ({ request }) => {
         });
       }
     }
+
+    // Clear caches so template changes appear immediately
+    clearSettingsCache();
+    clearNavbarCache();
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

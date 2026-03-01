@@ -243,6 +243,38 @@ const campaignTemplates = [
               class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
             />
           </label>
+
+          <div class="border-t border-gray-200 pt-4 mt-4">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sidecart Recurring Upsells</p>
+          </div>
+
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+            <div>
+              <span class="font-medium text-gray-800">🔄 Sidecart — Make it Monthly</span>
+              <p class="text-sm text-gray-500">Show the "Make it Monthly" checkbox in the sidecart, allowing donors to convert one-time donations into monthly recurring.</p>
+            </div>
+            <input
+              type="checkbox"
+              name="showSidecartMonthly"
+              id="showSidecartMonthly"
+              checked={settings.show_sidecart_monthly !== false}
+              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
+            />
+          </label>
+
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+            <div>
+              <span class="font-medium text-gray-800">🕌 Sidecart — Every Jummah (Weekly)</span>
+              <p class="text-sm text-gray-500">Show the "Every Jummah" checkbox in the sidecart, allowing donors to convert one-time donations into weekly Friday recurring.</p>
+            </div>
+            <input
+              type="checkbox"
+              name="showSidecartJummah"
+              id="showSidecartJummah"
+              checked={settings.show_sidecart_jummah !== false}
+              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
+            />
+          </label>
         </div>
       </div>
 
@@ -396,6 +428,8 @@ const campaignTemplates = [
     // Handle checkboxes explicitly (unchecked ones aren't in FormData)
     settingsData.showRamadanPopup = (document.getElementById('showRamadanPopup') as HTMLInputElement)?.checked ?? true;
     settingsData.showCartReminder = (document.getElementById('showCartReminder') as HTMLInputElement)?.checked ?? true;
+    settingsData.showSidecartMonthly = (document.getElementById('showSidecartMonthly') as HTMLInputElement)?.checked ?? true;
+    settingsData.showSidecartJummah = (document.getElementById('showSidecartJummah') as HTMLInputElement)?.checked ?? true;
 
     try {
       const res = await fetch('/api/settings', {

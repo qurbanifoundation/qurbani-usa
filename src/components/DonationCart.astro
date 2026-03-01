@@ -5,9 +5,11 @@ import { supabaseAdmin } from '../lib/supabase';
 interface Props {
   checkoutTemplate?: string;
   showCartReminder?: boolean;
+  showSidecartMonthly?: boolean;
+  showSidecartJummah?: boolean;
 }
 
-const { checkoutTemplate = 'three-step', showCartReminder = true } = Astro.props;
+const { checkoutTemplate = 'three-step', showCartReminder = true, showSidecartMonthly = true, showSidecartJummah = true } = Astro.props;
 
 // Google Places API key
 const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
@@ -223,25 +225,27 @@ try {
     <!-- Make it Monthly + Checkout Section -->
     <div id="cart-footer">
       <!-- Make a Bigger Impact Section -->
+      {(showSidecartMonthly || showSidecartJummah) && (
       <div id="recurring-options" class="mb-5 hidden">
-        <!-- Handwritten-style header with arrow pointing to Jummah -->
+        <!-- Handwritten-style header -->
         <div class="relative mb-1">
-          <p class="text-gray-500 text-[18px] sm:text-[24px] text-center pr-8 whitespace-nowrap" style="font-family: 'Caveat', cursive;">Make a bigger impact with every Friday gift</p>
-          <!-- Clear curved arrow pointing down -->
+          <p class="text-gray-500 text-[18px] sm:text-[24px] text-center whitespace-nowrap" style={`font-family: 'Caveat', cursive;${showSidecartJummah ? ' padding-right: 2rem;' : ''}`}>
+            {showSidecartJummah ? 'Make a bigger impact with every Friday gift' : 'Make a bigger impact with recurring giving'}
+          </p>
+          {showSidecartJummah && (
+          <!-- Clear curved arrow pointing down to Jummah -->
           <svg class="absolute right-0 top-3 w-10 h-14 text-[#d97706]" viewBox="0 0 40 56" fill="none">
-            <!-- Curved line ending before the arrowhead -->
             <path d="M4 4 C18 8, 26 20, 26 34" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-            <!-- Arrow head - left line -->
             <line x1="18" y1="42" x2="26" y2="52" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <!-- Arrow head - right line -->
             <line x1="34" y1="42" x2="26" y2="52" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <!-- Connecting curve to arrowhead -->
             <path d="M26 34 L26 52" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
           </svg>
+          )}
         </div>
 
-        <!-- Two checkboxes side by side: Monthly (left), Jummah (right) -->
-        <div class="grid grid-cols-2 gap-2">
+        <!-- Recurring option checkboxes -->
+        <div class={`grid gap-2 ${showSidecartMonthly && showSidecartJummah ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {showSidecartMonthly && (
           <!-- Monthly -->
           <label class="cursor-pointer">
             <div class="recurring-option p-3 bg-gray-50 hover:bg-amber-50 rounded-xl transition border border-gray-200 hover:border-[#d97706] h-full">
@@ -254,7 +258,9 @@ try {
               </div>
             </div>
           </label>
+          )}
 
+          {showSidecartJummah && (
           <!-- Every Jummah (Friday) -->
           <label class="cursor-pointer">
             <div class="recurring-option p-3 bg-gray-50 hover:bg-amber-50 rounded-xl transition border border-gray-200 hover:border-[#d97706] h-full">
@@ -267,8 +273,10 @@ try {
               </div>
             </div>
           </label>
+          )}
         </div>
       </div>
+      )}
 
       <!-- Total -->
       <div class="flex justify-between items-center mb-3">
@@ -1880,6 +1888,7 @@ function openCheckoutModal() {
           if (isNaN(idx)) return;
           window.donationCart.items.splice(idx, 1);
           saveCart();
+          try { updateCartUI(); } catch(e) {}
           try { updateModalTotal(); } catch(e) {}
           renderBreakdown();
           // If cart is empty, close the checkout
@@ -1890,11 +1899,15 @@ function openCheckoutModal() {
       });
     }
 
-    if (toggleBtn && breakdownDiv) {
+    if (toggleBtn && breakdownDiv && !toggleBtn._listenerAttached) {
+      toggleBtn._listenerAttached = true;
       toggleBtn.addEventListener('click', function() {
-        var isHidden = breakdownDiv.classList.contains('hidden');
-        breakdownDiv.classList.toggle('hidden');
-        if (breakdownArrow) breakdownArrow.style.transform = isHidden ? 'rotate(180deg)' : '';
+        var bd = document.getElementById('donation-breakdown');
+        var ba = document.getElementById('breakdown-arrow');
+        if (!bd) return;
+        var isHidden = bd.classList.contains('hidden');
+        bd.classList.toggle('hidden');
+        if (ba) ba.style.transform = isHidden ? 'rotate(180deg)' : '';
         if (!isHidden) return;
         renderBreakdown();
       });
@@ -1961,6 +1974,8 @@ function closeCheckoutModal() {
   var modal = document.getElementById('checkout-modal');
   if (modal) modal.classList.add('hidden');
   document.body.style.overflow = '';
+  // Sync side cart with current cart state (items may have been removed during checkout)
+  try { updateCartUI(); } catch(e) {}
 }
 
 function updateModalCart() {

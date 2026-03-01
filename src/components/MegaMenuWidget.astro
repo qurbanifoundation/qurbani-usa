@@ -25,7 +25,7 @@ const isInteractive = config.interactive === true;
 {/* Link List Widget */}
 {widget_type === 'link-list' && (
   <div class="widget-link-list">
-    {title && <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{title}</p>}
+    {title && <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">{title}</p>}
     <nav class="space-y-0">
       {(config.links || []).map((link: any, index: number) => {
         // Determine hover color based on menu context

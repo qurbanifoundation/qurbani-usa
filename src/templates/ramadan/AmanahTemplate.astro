@@ -2449,7 +2449,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
     </section>
   </div>
 
-  <!-- STEP 5: Enter Your Details -->
+  <!-- STEP 5: Enter Your Information -->
   <div class="step" id="step-5">
     <section class="step-content">
       <div class="content-wrapper">
@@ -2464,7 +2464,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
         </div>
         <div class="step-card">
           <div class="step-card-title">
-            <span class="step-heading">Enter Your Details</span>
+            <span class="step-heading">Enter Your Information</span>
           </div>
           <p class="step-subtitle" style="text-align: center;">We'll send your receipt and updates here</p>
 
@@ -2488,39 +2488,6 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
           <div class="form-row">
             <label class="form-label" for="phone">Phone Number</label>
             <input type="tel" id="phone" class="form-input" placeholder="(555) 123-4567">
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="address">Address</label>
-            <div class="address-autocomplete">
-              <input type="text" id="address" class="form-input" placeholder="Start typing your address..." autocomplete="off">
-              <svg class="address-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              </svg>
-            </div>
-          </div>
-
-          <div class="form-row-half">
-            <div class="form-row">
-              <label class="form-label" for="city">City</label>
-              <input type="text" id="city" class="form-input" placeholder="City">
-            </div>
-            <div class="form-row">
-              <label class="form-label" for="state">State</label>
-              <input type="text" id="state" class="form-input" placeholder="State">
-            </div>
-          </div>
-
-          <div class="form-row-half">
-            <div class="form-row">
-              <label class="form-label" for="zip">Zip Code</label>
-              <input type="text" id="zip" class="form-input" placeholder="12345">
-            </div>
-            <div class="form-row">
-              <label class="form-label" for="country">Country</label>
-              <input type="text" id="country" class="form-input" placeholder="United States" value="United States">
-            </div>
           </div>
 
           <!-- Validation Error -->
@@ -2586,7 +2553,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
               <span class="cover-fees-checkmark"></span>
               <div class="cover-fees-text">
                 <span class="cover-fees-title">Cover Transaction Fees <span class="fee-badge">+3%</span></span>
-                <span class="cover-fees-desc">Add <span id="fee-amount-display">$0.00</span> so 100% of your donation reaches those in need.</span>
+                <span class="cover-fees-desc">Add <span id="fee-amount-display">$0</span> so 100% of your donation reaches those in need.</span>
               </div>
             </label>
           </div>
@@ -2604,6 +2571,47 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
               <div class="stripe-placeholder">
                 <div class="stripe-placeholder-row"></div>
                 <div class="stripe-placeholder-row short"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Billing Address (below credit card) -->
+          <div class="form-section">
+            <div class="section-header">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <span>Billing Address</span>
+            </div>
+            <div class="form-row">
+              <label class="form-label" for="address">Address</label>
+              <div class="address-autocomplete">
+                <input type="text" id="address" class="form-input" placeholder="Start typing your address..." autocomplete="off">
+                <svg class="address-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="form-row-half">
+              <div class="form-row">
+                <label class="form-label" for="city">City</label>
+                <input type="text" id="city" class="form-input" placeholder="City">
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="state">State</label>
+                <input type="text" id="state" class="form-input" placeholder="State">
+              </div>
+            </div>
+            <div class="form-row-half">
+              <div class="form-row">
+                <label class="form-label" for="zip">Zip Code</label>
+                <input type="text" id="zip" class="form-input" placeholder="12345">
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="country">Country</label>
+                <input type="text" id="country" class="form-input" placeholder="United States" value="United States">
               </div>
             </div>
           </div>
@@ -2897,13 +2905,11 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
         el.classList.toggle('active', i + 1 === step);
       });
       if (step === 4) updateReview();
-      if (step === 5) {
-        // Initialize Google Places for address autocomplete
-        setTimeout(() => initGooglePlaces(), 100);
-      }
       if (step === 6) {
         updatePaymentSummary();
         initializeStripe();
+        // Initialize Google Places for billing address autocomplete
+        setTimeout(() => initGooglePlaces(), 100);
       }
       // Scroll to the step content area (just below the hero)
       const stepContent = document.querySelector('.step.active .step-content');
@@ -3114,62 +3120,75 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
     let coverFeesEnabled = false;
 
     function updatePaymentSummary() {
-      const baseTotal = state.amountPerNight * state.nightsCount;
-      const amplifyTotal = calculateTotalWithAmplify();
-      const amplifyAmount = amplifyTotal - baseTotal;
+      var baseTotal = state.amountPerNight * state.nightsCount;
+      var amplifyTotal = calculateTotalWithAmplify();
+      var amplifyAmount = amplifyTotal - baseTotal;
 
-      const nightsSummary = document.getElementById('payment-nights-summary');
-      const amplifyRow = document.getElementById('payment-amplify-row');
-      const amplifyAmountEl = document.getElementById('payment-amplify-amount');
-      const feesRow = document.getElementById('payment-fees-row');
-      const feesAmountEl = document.getElementById('payment-fees-amount');
-      const totalSummary = document.getElementById('payment-total-summary');
-      const feeDisplay = document.getElementById('fee-amount-display');
+      var nightsSummary = document.getElementById('payment-nights-summary');
+      var amplifyRow = document.getElementById('payment-amplify-row');
+      var amplifyAmountEl = document.getElementById('payment-amplify-amount');
+      var feesRow = document.getElementById('payment-fees-row');
+      var feesAmountEl = document.getElementById('payment-fees-amount');
+      var totalSummary = document.getElementById('payment-total-summary');
+      var feeDisplay = document.getElementById('fee-amount-display');
 
       if (nightsSummary) {
-        nightsSummary.textContent = `${state.nightsCount} nights × $${state.amountPerNight}`;
+        nightsSummary.textContent = state.nightsCount + ' nights × $' + state.amountPerNight;
       }
 
       // Show amplify row if there's any amplification
       if (amplifyRow && amplifyAmountEl) {
         if (amplifyAmount > 0) {
           amplifyRow.style.display = 'flex';
-          amplifyAmountEl.textContent = `+$${amplifyAmount}`;
+          amplifyAmountEl.textContent = '+$' + amplifyAmount;
         } else {
           amplifyRow.style.display = 'none';
         }
       }
 
-      // Calculate fees (3%)
-      const feeAmount = Math.round(amplifyTotal * 0.03 * 100) / 100;
+      // Calculate fees (3%) — always show the real fee regardless of checkbox state
+      var feeAmount = Math.round(amplifyTotal * 3) / 100;
+      var feeStr = '$' + feeAmount.toFixed(2);
+
+      // Always update the description text with the fee amount
       if (feeDisplay) {
-        feeDisplay.textContent = `$${feeAmount.toFixed(2)}`;
+        feeDisplay.textContent = feeStr;
       }
 
-      // Show/hide fees row based on checkbox
+      // Show/hide fees row in summary based on checkbox
       if (feesRow && feesAmountEl) {
         if (coverFeesEnabled) {
           feesRow.style.display = 'flex';
-          feesAmountEl.textContent = `+$${feeAmount.toFixed(2)}`;
+          feesAmountEl.textContent = '+' + feeStr;
         } else {
           feesRow.style.display = 'none';
         }
       }
 
       // Calculate final total
-      const finalTotal = coverFeesEnabled ? amplifyTotal + feeAmount : amplifyTotal;
+      var finalTotal = coverFeesEnabled ? amplifyTotal + feeAmount : amplifyTotal;
       if (totalSummary) {
-        totalSummary.textContent = `$${finalTotal.toFixed(2)}`;
+        totalSummary.textContent = '$' + finalTotal.toFixed(2);
       }
     }
 
     // Update cover fees
     window.updateCoverFees = function() {
-      coverFeesEnabled = document.getElementById('cover-fees-checkbox').checked;
+      var cb = document.getElementById('cover-fees-checkbox');
+      coverFeesEnabled = cb ? cb.checked : false;
       updatePaymentSummary();
+
+      // Update Stripe Elements amount in deferred mode so Stripe knows the new total
+      if (elements) {
+        try {
+          var amplifyTotal = calculateTotalWithAmplify();
+          var fee = coverFeesEnabled ? Math.round(amplifyTotal * 0.03 * 100) / 100 : 0;
+          elements.update({ amount: Math.round((amplifyTotal + fee) * 100) });
+        } catch(e) { /* Stripe update is non-critical */ }
+      }
     };
 
-    // Initialize Stripe
+    // Initialize Stripe — deferred mode (no PaymentIntent created until submit)
     async function initializeStripe() {
       // Don't re-initialize if already done
       if (stripe && elements) return;
@@ -3191,59 +3210,17 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
 
         stripe = window.Stripe(settings.stripe_publishable_key);
 
-        // Get customer info
-        const customer = {
-          email: document.getElementById('email')?.value || '',
-          firstName: document.getElementById('first-name')?.value || '',
-          lastName: document.getElementById('last-name')?.value || '',
-          phone: document.getElementById('phone')?.value || '',
-        };
-
-        const billingAddress = {
-          line1: document.getElementById('address')?.value || '',
-          city: document.getElementById('city')?.value || '',
-          state: document.getElementById('state')?.value || '',
-          postal_code: document.getElementById('zip')?.value || '',
-          country: 'US',
-        };
-
-        // Create payment intent
+        // Calculate total for deferred mode (Stripe needs amount to show relevant payment methods)
         const baseTotal = calculateTotalWithAmplify();
         const feeAmount = coverFeesEnabled ? Math.round(baseTotal * 0.03 * 100) / 100 : 0;
         const total = baseTotal + feeAmount;
 
-        const response = await fetch('/api/payments/create-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: total,
-            currency: 'usd',
-            type: 'single',
-            items: [{
-              name: `Ramadan 30 Days - ${state.nightsCount} Nights`,
-              amount: baseTotal,
-              campaign: 'ramadan-30-days',
-            }],
-            coverFees: coverFeesEnabled,
-            feeAmount: feeAmount,
-            customer,
-            billingAddress,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-          showPaymentError(data.error);
-          return;
-        }
-
-        clientSecret = data.clientSecret;
-        donationId = data.donationId;
-
-        // Create Stripe Elements
+        // Mount with deferred mode — NO API calls, card fields appear instantly
+        // PaymentIntent will be created at submit time in processPayment()
         elements = stripe.elements({
-          clientSecret,
+          mode: 'payment',
+          amount: Math.round(total * 100),
+          currency: 'usd',
           appearance: {
             theme: 'stripe',
             variables: {
@@ -3257,9 +3234,18 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
           },
         });
 
-        // Create and mount Payment Element
+        // Create and mount Payment Element — no billing details collected by Stripe
+        // (we collect billing address ourselves below the card)
         paymentElement = elements.create('payment', {
           layout: 'tabs',
+          fields: {
+            billingDetails: {
+              address: {
+                country: 'never',
+                postalCode: 'never',
+              }
+            }
+          }
         });
 
         const container = document.getElementById('stripe-payment-element');
@@ -3300,7 +3286,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
       }
     }
 
-    // Process payment
+    // Process payment — deferred mode: validate card → create PaymentIntent → confirm
     window.processPayment = async function() {
       if (!stripe || !elements) {
         showPaymentError('Payment system not ready. Please wait a moment and try again.');
@@ -3329,9 +3315,72 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
       hidePaymentError();
 
       try {
-        // Confirm payment
+        // Step 1: Validate card details via Stripe Elements
+        const { error: submitError } = await elements.submit();
+        if (submitError) {
+          showPaymentError(submitError.message);
+          submitBtn.disabled = false;
+          btnText.style.display = 'inline';
+          btnSpinner.style.display = 'none';
+          return;
+        }
+
+        // Step 2: Collect billing info and create PaymentIntent NOW (not before)
+        const customer = {
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          phone: document.getElementById('phone')?.value || '',
+        };
+
+        const billingAddress = {
+          line1: document.getElementById('address')?.value || '',
+          city: document.getElementById('city')?.value || '',
+          state: document.getElementById('state')?.value || '',
+          postal_code: document.getElementById('zip')?.value || '',
+          country: 'US',
+        };
+
+        const baseTotal = calculateTotalWithAmplify();
+        const feeAmount = coverFeesEnabled ? Math.round(baseTotal * 0.03 * 100) / 100 : 0;
+        const total = baseTotal + feeAmount;
+
+        const response = await fetch('/api/payments/create-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: total,
+            currency: 'usd',
+            type: 'single',
+            items: [{
+              name: `Ramadan 30 Days - ${state.nightsCount} Nights`,
+              amount: baseTotal,
+              campaign: 'ramadan-30-days',
+            }],
+            coverFees: coverFeesEnabled,
+            feeAmount: feeAmount,
+            customer,
+            billingAddress,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          showPaymentError(data.error);
+          submitBtn.disabled = false;
+          btnText.style.display = 'inline';
+          btnSpinner.style.display = 'none';
+          return;
+        }
+
+        clientSecret = data.clientSecret;
+        donationId = data.donationId;
+
+        // Step 3: Confirm payment with the clientSecret from the server
         const { error, paymentIntent } = await stripe.confirmPayment({
           elements,
+          clientSecret,
           confirmParams: {
             return_url: `${window.location.origin}/ramadan/success?donation_id=${donationId}`,
             payment_method_data: {
@@ -3339,13 +3388,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
                 name: `${firstName} ${lastName}`,
                 email: email,
                 phone: document.getElementById('phone')?.value || '',
-                address: {
-                  line1: document.getElementById('address')?.value || '',
-                  city: document.getElementById('city')?.value || '',
-                  state: document.getElementById('state')?.value || '',
-                  postal_code: document.getElementById('zip')?.value || '',
-                  country: 'US',
-                },
+                address: billingAddress,
               },
             },
           },
