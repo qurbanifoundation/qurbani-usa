@@ -49,6 +49,9 @@ export const PUBLIC_API_ROUTES = [
   '/api/donor/lookup',
   '/api/images/stock',
   '/api/automated-donations/',
+  '/api/abandoned-checkout/capture',
+  '/api/abandoned-checkout/heartbeat',
+  '/api/abandoned-checkout/unsubscribe',
 ];
 
 // Routes where GET is public but all other methods require admin auth

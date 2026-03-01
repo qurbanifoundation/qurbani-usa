@@ -23,7 +23,7 @@ const STRIPE_INTERVALS: Record<string, string> = {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount } = body;
+    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken } = body;
 
     // Validate amount
     if (!amount || amount < 1) {
@@ -167,6 +167,11 @@ export const POST: APIRoute = async ({ request }) => {
       metadata.customer_email = customer.email;
       metadata.customer_name = `${customer.firstName} ${customer.lastName}`;
       metadata.customer_phone = customer.phone || '';
+    }
+
+    // Abandoned checkout recovery token
+    if (resumeToken) {
+      metadata.resume_token = resumeToken;
     }
 
     // Recurring donations (monthly/weekly/yearly/daily) now use the SetupIntent → create-subscription flow

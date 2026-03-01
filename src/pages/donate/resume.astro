@@ -1,0 +1,117 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+const token = Astro.url.searchParams.get('token') || '';
+
+let checkout: {
+  email: string;
+  first_name: string | null;
+  amount: number | null;
+  campaign_slug: string | null;
+  campaign_type: string | null;
+  resume_url: string | null;
+} | null = null;
+let errorMessage = '';
+let redirectUrl = '/';
+
+if (!token) {
+  errorMessage = 'Invalid or missing resume token.';
+} else {
+  const { data, error } = await supabaseAdmin
+    .from('abandoned_checkouts')
+    .select('email, first_name, amount, campaign_slug, campaign_type, resume_url, status')
+    .eq('resume_token', token)
+    .single();
+
+  if (error || !data) {
+    errorMessage = 'This checkout link has expired or is no longer valid.';
+  } else if (data.status === 'recovered') {
+    errorMessage = 'This donation has already been completed. Thank you for your generosity!';
+  } else if (data.status === 'expired') {
+    errorMessage = 'This checkout link has expired. Please start a new donation.';
+  } else {
+    checkout = data;
+
+    // Build redirect URL — go to the campaign page if available, otherwise home
+    if (data.campaign_slug) {
+      redirectUrl = `/appeals/${data.campaign_slug}`;
+    } else if (data.campaign_type === 'zakat') {
+      redirectUrl = '/zakat';
+    } else {
+      redirectUrl = '/';
+    }
+
+    // Update last_activity_at to keep the checkout alive
+    await supabaseAdmin
+      .from('abandoned_checkouts')
+      .update({ last_activity_at: new Date().toISOString() })
+      .eq('resume_token', token);
+  }
+}
+---
+
+<Layout title="Resume Your Donation | Qurbani Foundation">
+  <Navbar />
+
+  <main class="min-h-[60vh] flex items-center justify-center bg-gray-50 py-16">
+    <div class="max-w-lg mx-auto px-4 text-center">
+
+      {errorMessage ? (
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+          <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-800 mb-2 font-heading">Link Expired</h1>
+          <p class="text-gray-600 mb-6">{errorMessage}</p>
+          <a href="/" class="inline-block bg-[#c9a84c] hover:bg-[#b8973f] text-white font-semibold px-6 py-3 rounded-lg transition-colors">
+            Browse Campaigns
+          </a>
+        </div>
+      ) : (
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+          <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-800 mb-2 font-heading">
+            Welcome Back{checkout?.first_name ? `, ${checkout.first_name}` : ''}!
+          </h1>
+          <p class="text-gray-600 mb-4">
+            Your donation is waiting for you. Complete your checkout to make an impact.
+          </p>
+          {checkout?.amount && (
+            <p class="text-lg font-semibold text-[#01534d] mb-6">
+              Amount: ${Number(checkout.amount).toFixed(2)}
+            </p>
+          )}
+          <p class="text-sm text-gray-500 mb-6">Redirecting you in a moment...</p>
+          <a href={redirectUrl} id="resume-link" class="inline-block bg-[#c9a84c] hover:bg-[#b8973f] text-white font-semibold px-8 py-3 rounded-lg transition-colors text-lg">
+            Complete Your Donation
+          </a>
+        </div>
+      )}
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script define:vars={{ token, redirectUrl, hasCheckout: !!checkout }}>
+  if (hasCheckout && token) {
+    // Store resume token so the checkout form can include it in payment requests
+    localStorage.setItem('qurbani_resume_token', token);
+
+    // Auto-redirect after 2 seconds
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 2000);
+  }
+</script>

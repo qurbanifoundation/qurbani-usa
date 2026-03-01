@@ -18,6 +18,7 @@ import {
   sendSubscriptionCancelledEmail,
   sendRefundEmail,
 } from '../../../lib/donor-emails';
+import { syncCheckoutToGHL } from '../../../lib/abandoned-checkout-ghl';
 import Stripe from 'stripe';
 
 export const prerender = false;
@@ -408,6 +409,12 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     // Non-critical — don't let GA4 errors break payment processing
     console.error('GA4 Measurement Protocol error:', ga4Error);
   }
+
+  // Detect and mark recovered abandoned checkouts
+  await detectAndMarkRecovery(
+    paymentIntent.metadata?.resume_token,
+    donation?.donor_email || paymentIntent.receipt_email,
+  ).catch(err => console.error('Recovery detection error:', err));
 }
 
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
@@ -861,6 +868,14 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
     }
   }
 
+  // Detect and mark recovered abandoned checkouts (for first recurring payment)
+  if (invoice.billing_reason === 'subscription_cycle' || invoice.billing_reason === 'subscription_create') {
+    await detectAndMarkRecovery(
+      undefined, // recurring invoices don't carry resume_token — match by email
+      subscriptionRecord.donor_email,
+    ).catch(err => console.error('Recovery detection error (recurring):', err));
+  }
+
   console.log('Created donation record for recurring payment:', donation?.id);
 }
 
@@ -1034,4 +1049,91 @@ async function handleDisputeClosed(dispute: Stripe.Dispute) {
   });
 
   console.log('Dispute closed notification sent');
+}
+
+// ============================================
+// ABANDONED CHECKOUT RECOVERY DETECTION
+// ============================================
+
+/**
+ * Detects if a successful payment corresponds to an abandoned checkout
+ * and marks it as recovered. Non-blocking — errors are caught by caller.
+ *
+ * Match priority:
+ *   1. By resume_token (from Stripe metadata) — exact match
+ *   2. By email within 7 days of checkout_started_at — fallback
+ */
+async function detectAndMarkRecovery(
+  resumeToken: string | undefined,
+  email: string | undefined | null,
+): Promise<void> {
+  if (!resumeToken && !email) return;
+
+  let checkoutId: string | null = null;
+  let checkoutData: Record<string, unknown> | null = null;
+
+  // Strategy 1: Match by resume_token (preferred)
+  if (resumeToken) {
+    const { data } = await supabaseAdmin
+      .from('abandoned_checkouts')
+      .select('*')
+      .eq('resume_token', resumeToken)
+      .in('status', ['started', 'abandoned'])
+      .single();
+
+    if (data) {
+      checkoutId = data.id;
+      checkoutData = data;
+      console.log(`[Recovery] Matched by resume_token: ${checkoutId}`);
+    }
+  }
+
+  // Strategy 2: Match by email within 7 days (fallback)
+  if (!checkoutId && email) {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabaseAdmin
+      .from('abandoned_checkouts')
+      .select('*')
+      .eq('email', email)
+      .in('status', ['started', 'abandoned'])
+      .gte('checkout_started_at', sevenDaysAgo)
+      .order('checkout_started_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (data) {
+      checkoutId = data.id;
+      checkoutData = data;
+      console.log(`[Recovery] Matched by email fallback: ${checkoutId}`);
+    }
+  }
+
+  if (!checkoutId || !checkoutData) return;
+
+  // Mark as recovered
+  const now = new Date().toISOString();
+  await supabaseAdmin
+    .from('abandoned_checkouts')
+    .update({
+      status: 'recovered',
+      recovered_at: now,
+    })
+    .eq('id', checkoutId);
+
+  console.log(`[Recovery] Marked checkout ${checkoutId} as recovered`);
+
+  // Sync to GHL — move to "Recovered" pipeline stage
+  await syncCheckoutToGHL({
+    email: checkoutData.email as string,
+    firstName: checkoutData.first_name as string,
+    lastName: checkoutData.last_name as string,
+    status: 'recovered',
+    amount: checkoutData.amount as number,
+    currency: (checkoutData.currency as string) || 'USD',
+    campaignType: checkoutData.campaign_type as string,
+    campaignSlug: checkoutData.campaign_slug as string,
+    resumeUrl: checkoutData.resume_url as string,
+    recoveryStep: checkoutData.recovery_step_last_sent as number,
+    checkoutId: checkoutId,
+  }).catch(err => console.error('[Recovery] GHL sync error:', err));
 }

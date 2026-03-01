@@ -1202,8 +1202,15 @@ document.addEventListener('DOMContentLoaded', function() {
     closeCheckoutModal();
     window.donationCart.items = [];
     localStorage.removeItem('donationCart');
+    localStorage.removeItem('qurbani_resume_token');
     updateCartUI();
   });
+
+  // ---- Abandoned Checkout Capture ----
+  var modalEmailField = document.getElementById('modal-email');
+  if (modalEmailField) {
+    modalEmailField.addEventListener('blur', function() { captureAbandonedCheckout(); });
+  }
 
   // Upsell checkboxes - update total and visual styles
   document.getElementById('upsell-checkbox-1').addEventListener('change', function() {
@@ -1648,6 +1655,9 @@ function openCheckoutModal() {
   // Check if we're in two-step mode
   var isTwoStep = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) === 'two-step';
 
+  // Start heartbeat for abandonment detection
+  if (localStorage.getItem('qurbani_resume_token')) startCheckoutHeartbeat();
+
   // Track begin_checkout in GA4
   if (window.trackBeginCheckout) {
     const total = window.donationCart.items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
@@ -1801,6 +1811,12 @@ function openCheckoutModal() {
           });
         }
       });
+
+      // Abandoned checkout capture on two-step email blur
+      var tsEmailField = document.getElementById('ts-info-email');
+      if (tsEmailField) {
+        tsEmailField.addEventListener('blur', function() { captureAbandonedCheckout(); });
+      }
 
       // Re-attach pay button handler
       document.getElementById('pay-btn')?.addEventListener('click', handlePayment);
@@ -1974,6 +1990,7 @@ function closeCheckoutModal() {
   var modal = document.getElementById('checkout-modal');
   if (modal) modal.classList.add('hidden');
   document.body.style.overflow = '';
+  stopCheckoutHeartbeat();
   // Sync side cart with current cart state (items may have been removed during checkout)
   try { updateCartUI(); } catch(e) {}
 }
@@ -2088,6 +2105,74 @@ function goToInfoStep() {
   document.getElementById('modal-step-1').classList.remove('hidden');
 }
 
+// ==================== ABANDONED CHECKOUT CAPTURE ====================
+
+// Heartbeat: keep last_activity_at fresh while checkout is open
+var _checkoutHeartbeatInterval = null;
+function startCheckoutHeartbeat() {
+  if (_checkoutHeartbeatInterval) return;
+  _checkoutHeartbeatInterval = setInterval(function() {
+    var token = localStorage.getItem('qurbani_resume_token');
+    if (!token) return;
+    try {
+      navigator.sendBeacon('/api/abandoned-checkout/heartbeat', JSON.stringify({ resume_token: token }));
+    } catch(e) { /* silent */ }
+  }, 5 * 60 * 1000); // every 5 minutes
+}
+function stopCheckoutHeartbeat() {
+  if (_checkoutHeartbeatInterval) { clearInterval(_checkoutHeartbeatInterval); _checkoutHeartbeatInterval = null; }
+}
+
+// Capture donor data on email blur — called silently, never blocks checkout
+function captureAbandonedCheckout() {
+  var email = (document.getElementById('modal-email')?.value || document.getElementById('ts-info-email')?.value || '').trim().toLowerCase();
+  if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) return;
+
+  // Debounce: don't re-fire if we already captured this exact email
+  if (window.donationCart._lastCapturedEmail === email) return;
+  window.donationCart._lastCapturedEmail = email;
+
+  var firstName = (document.getElementById('modal-firstName')?.value || document.getElementById('ts-info-firstName')?.value || '').trim();
+  var lastName = (document.getElementById('modal-lastName')?.value || document.getElementById('ts-info-lastName')?.value || '').trim();
+  var country = (document.getElementById('modal-country')?.value || 'US');
+
+  var items = window.donationCart.items || [];
+  var total = items.reduce(function(sum, item) { return sum + (item.amount * (item.quantity || 1)); }, 0);
+  var primaryItem = items[0] || {};
+
+  // Read UTMs from URL
+  var params = new URLSearchParams(window.location.search);
+
+  var payload = {
+    email: email,
+    first_name: firstName || undefined,
+    last_name: lastName || undefined,
+    amount: total || undefined,
+    currency: 'USD',
+    campaign_type: window.donationCart.pendingDonationType || 'single',
+    campaign_slug: primaryItem.campaign || primaryItem.slug || 'general',
+    country: country,
+    utm_source: params.get('utm_source') || undefined,
+    utm_medium: params.get('utm_medium') || undefined,
+    utm_campaign: params.get('utm_campaign') || undefined,
+    utm_term: params.get('utm_term') || undefined,
+  };
+
+  fetch('/api/abandoned-checkout/capture', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.resume_token) {
+      localStorage.setItem('qurbani_resume_token', data.resume_token);
+      startCheckoutHeartbeat();
+    }
+  })
+  .catch(function() { /* silent — never disrupt checkout */ });
+}
+
 // Handle Payment — Two distinct flows:
 //
 // ONE-TIME:
@@ -2193,7 +2278,7 @@ async function handlePayment() {
       var setupRes = await fetch('/api/payments/create-setup-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer: customer, billingAddress: billingAddress }),
+        body: JSON.stringify({ customer: customer, billingAddress: billingAddress, resumeToken: localStorage.getItem('qurbani_resume_token') || undefined }),
       });
 
       var setupData = await setupRes.json();
@@ -2282,6 +2367,8 @@ async function handlePayment() {
       // Clear cart and redirect
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
+      localStorage.removeItem('qurbani_resume_token');
+      stopCheckoutHeartbeat();
       window.location.href = '/donate/success?donation_id=' + (subData.donationId || '') + '&subscription_id=' + (subData.subscriptionId || '');
 
     } else {
@@ -2308,6 +2395,7 @@ async function handlePayment() {
           coverFees: coverFees,
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
+          resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
         }),
       });
 
@@ -2370,6 +2458,8 @@ async function handlePayment() {
         // Clear cart and redirect
         window.donationCart.items = [];
         localStorage.removeItem('donationCart');
+        localStorage.removeItem('qurbani_resume_token');
+        stopCheckoutHeartbeat();
         window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
       }
     }

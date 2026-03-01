@@ -1,0 +1,300 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Get query params for filtering
+const url = new URL(Astro.request.url);
+const statusFilter = url.searchParams.get('status') || 'all';
+const dateRange = url.searchParams.get('range') || '30d';
+const page = parseInt(url.searchParams.get('page') || '1');
+const perPage = 25;
+
+// Date range filter
+let dateThreshold: Date | null = null;
+if (dateRange === '7d') dateThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+else if (dateRange === '30d') dateThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+else if (dateRange === '90d') dateThreshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+// Build query
+let query = supabaseAdmin
+  .from('abandoned_checkouts')
+  .select('*', { count: 'exact' })
+  .order('checkout_started_at', { ascending: false });
+
+if (statusFilter !== 'all') {
+  query = query.eq('status', statusFilter);
+}
+if (dateThreshold) {
+  query = query.gte('checkout_started_at', dateThreshold.toISOString());
+}
+
+// Pagination
+const { data: checkouts, count, error } = await query
+  .range((page - 1) * perPage, page * perPage - 1);
+
+const totalPages = Math.ceil((count || 0) / perPage);
+
+// Get stats (within the date range)
+let statsQuery = supabaseAdmin
+  .from('abandoned_checkouts')
+  .select('status, amount, recovered_at');
+
+if (dateThreshold) {
+  statsQuery = statsQuery.gte('checkout_started_at', dateThreshold.toISOString());
+}
+
+const { data: statsData } = await statsQuery;
+
+const stats = {
+  total: statsData?.length || 0,
+  started: statsData?.filter(d => d.status === 'started').length || 0,
+  abandoned: statsData?.filter(d => d.status === 'abandoned').length || 0,
+  recovered: statsData?.filter(d => d.status === 'recovered').length || 0,
+  expired: statsData?.filter(d => d.status === 'expired').length || 0,
+  recoveryRate: 0,
+  revenueRecovered: 0,
+  revenueAbandoned: 0,
+};
+
+const abandonedPlusRecovered = stats.abandoned + stats.recovered;
+stats.recoveryRate = abandonedPlusRecovered > 0
+  ? Math.round((stats.recovered / abandonedPlusRecovered) * 100)
+  : 0;
+
+stats.revenueRecovered = statsData
+  ?.filter(d => d.status === 'recovered' && d.amount)
+  .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0;
+
+stats.revenueAbandoned = statsData
+  ?.filter(d => d.status === 'abandoned' && d.amount)
+  .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0;
+
+// Campaign breakdown for recovered revenue
+const campaignBreakdown: Record<string, { count: number; revenue: number }> = {};
+statsData?.filter(d => d.status === 'recovered').forEach(d => {
+  const key = (d as any).campaign_type || 'general';
+  if (!campaignBreakdown[key]) campaignBreakdown[key] = { count: 0, revenue: 0 };
+  campaignBreakdown[key].count++;
+  campaignBreakdown[key].revenue += parseFloat(d.amount) || 0;
+});
+
+// Format date helper (Eastern Time)
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'America/New_York',
+  });
+}
+
+function formatAmount(amount: number | string | null) {
+  if (!amount) return '-';
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'started': return 'bg-blue-100 text-blue-800';
+    case 'abandoned': return 'bg-amber-100 text-amber-800';
+    case 'recovered': return 'bg-green-100 text-green-800';
+    case 'expired': return 'bg-gray-100 text-gray-600';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+function getRecoveryStepLabel(step: number) {
+  if (!step || step === 0) return '-';
+  return `${step}/5`;
+}
+
+// Pre-compute pagination (Astro JSX can't handle < in expressions)
+const paginationPages: number[] = [];
+for (let i = 0; i < Math.min(totalPages, 5); i++) {
+  const p = page <= 3 ? i + 1 : page + i - 2;
+  if (p >= 1 && p <= totalPages) paginationPages.push(p);
+}
+const showPrevPage = page > 1;
+const showNextPage = page < totalPages;
+const showPagination = totalPages > 1;
+---
+
+<AdminLayout title="Cart Recovery" activeNav="cart-recovery">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <p class="text-sm text-gray-500 font-medium">Total Checkouts</p>
+      <p class="text-2xl font-bold text-gray-800 mt-1">{stats.total}</p>
+      <p class="text-xs text-gray-400 mt-1">{stats.started} in progress</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-amber-100">
+      <p class="text-sm text-amber-600 font-medium">Abandoned</p>
+      <p class="text-2xl font-bold text-amber-700 mt-1">{stats.abandoned}</p>
+      <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueAbandoned)} at risk</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-green-100">
+      <p class="text-sm text-green-600 font-medium">Recovered</p>
+      <p class="text-2xl font-bold text-green-700 mt-1">{stats.recovered}</p>
+      <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueRecovered)} recovered</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-emerald-100">
+      <p class="text-sm text-emerald-600 font-medium">Recovery Rate</p>
+      <p class="text-2xl font-bold text-emerald-700 mt-1">{stats.recoveryRate}%</p>
+      <p class="text-xs text-gray-400 mt-1">of abandoned checkouts</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <p class="text-sm text-gray-500 font-medium">Expired</p>
+      <p class="text-2xl font-bold text-gray-600 mt-1">{stats.expired}</p>
+      <p class="text-xs text-gray-400 mt-1">closed/unsubscribed</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-2">
+      <label class="text-sm font-medium text-gray-600">Status:</label>
+      <div class="flex gap-1">
+        {['all', 'started', 'abandoned', 'recovered', 'expired'].map((s) => (
+          <a
+            href={`?status=${s}&range=${dateRange}&page=1`}
+            class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              statusFilter === s
+                ? 'bg-[#01534d] text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 ml-auto">
+      <label class="text-sm font-medium text-gray-600">Range:</label>
+      <div class="flex gap-1">
+        {['7d', '30d', '90d', 'all'].map((r) => (
+          <a
+            href={`?status=${statusFilter}&range=${r}&page=1`}
+            class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              dateRange === r
+                ? 'bg-[#01534d] text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {r === 'all' ? 'All Time' : r}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <a
+      href={`/api/admin/abandoned-checkouts-csv?status=${statusFilter}&range=${dateRange}`}
+      class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center gap-1"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      Export CSV
+    </a>
+  </div>
+
+  <!-- Campaign Breakdown (only if there are recovered checkouts) -->
+  {Object.keys(campaignBreakdown).length > 0 && (
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">Recovery by Campaign Type</h3>
+      <div class="flex flex-wrap gap-3">
+        {Object.entries(campaignBreakdown).sort((a, b) => b[1].revenue - a[1].revenue).map(([type, data]) => (
+          <div class="bg-green-50 rounded-lg px-4 py-2 border border-green-100">
+            <span class="text-sm font-medium text-green-800 capitalize">{type}</span>
+            <span class="text-sm text-green-600 ml-2">{data.count} recovered</span>
+            <span class="text-sm font-semibold text-green-700 ml-1">({formatAmount(data.revenue)})</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Data Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {error ? (
+      <div class="p-8 text-center text-red-600">Error loading data: {error.message}</div>
+    ) : !checkouts || checkouts.length === 0 ? (
+      <div class="p-8 text-center text-gray-500">No abandoned checkouts found for this filter.</div>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Donor</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Campaign</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+              <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+              <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Emails</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Abandoned</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Recovered</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {checkouts.map((c: any) => (
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{formatDate(c.checkout_started_at)}</td>
+                <td class="px-4 py-3">
+                  <div class="text-sm font-medium text-gray-800">{c.first_name} {c.last_name || ''}</div>
+                  <div class="text-xs text-gray-500">{c.email}</div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="text-sm text-gray-700">{c.campaign_slug || '-'}</div>
+                  <div class="text-xs text-gray-400 capitalize">{c.campaign_type || ''}</div>
+                </td>
+                <td class="px-4 py-3 text-sm font-medium text-gray-800 text-right whitespace-nowrap">{formatAmount(c.amount)}</td>
+                <td class="px-4 py-3 text-center">
+                  <span class={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(c.status)}`}>
+                    {c.status}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-center text-gray-600">{getRecoveryStepLabel(c.recovery_step_last_sent)}</td>
+                <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{formatDate(c.abandoned_at)}</td>
+                <td class="px-4 py-3 text-sm whitespace-nowrap">
+                  {c.recovered_at ? (
+                    <span class="text-green-600 font-medium">{formatDate(c.recovered_at)}</span>
+                  ) : (
+                    <span class="text-gray-400">-</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <!-- Pagination -->
+    {showPagination && (
+      <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+        <p class="text-sm text-gray-600">
+          Showing {(page - 1) * perPage + 1}-{Math.min(page * perPage, count || 0)} of {count} results
+        </p>
+        <div class="flex gap-1">
+          {page > 1 && (
+            <a href={`?status=${statusFilter}&range=${dateRange}&page=${page - 1}`} class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50">Prev</a>
+          )}
+          {paginationPages.map((p) => (
+              <a
+                href={`?status=${statusFilter}&range=${dateRange}&page=${p}`}
+                class={`px-3 py-1.5 rounded text-sm ${p === page ? 'bg-[#01534d] text-white' : 'bg-white border hover:bg-gray-50'}`}
+              >
+                {p}
+              </a>
+          ))}
+          {showNextPage && (
+            <a href={`?status=${statusFilter}&range=${dateRange}&page=${page + 1}`} class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50">Next</a>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+</AdminLayout>

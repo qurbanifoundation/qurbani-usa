@@ -20,7 +20,7 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { customer, billingAddress } = body;
+    const { customer, billingAddress, resumeToken } = body;
 
     // Validate customer email
     if (!customer?.email?.trim()) {
@@ -92,6 +92,7 @@ export const POST: APIRoute = async ({ request }) => {
       metadata: {
         customer_email: customer.email,
         customer_name: `${customer.firstName} ${customer.lastName}`,
+        ...(resumeToken ? { resume_token: resumeToken } : {}),
       },
     });
 
