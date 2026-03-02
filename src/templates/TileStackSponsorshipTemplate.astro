@@ -729,12 +729,22 @@ const benefits = [
         };
         updateUI();
 
-        // Auto-scroll to quantity section if this was the first selection and no qty yet
-        if (wasFirstSelection && selectedQty === 0) {
-          setTimeout(() => scrollToSection(quantitySection, true), 300);
-        }
+        // Always auto-scroll to quantity section after selecting a country
+        setTimeout(() => scrollToSection(quantitySection, true), 300);
       });
     });
+
+    // Pulse the sponsor button to draw attention
+    const pulseButton = () => {
+      if (sponsorBtn) {
+        sponsorBtn.classList.add('animate-pulse-glow');
+        setTimeout(() => sponsorBtn.classList.remove('animate-pulse-glow'), 2000);
+      }
+      if (mobileSponsorBtn) {
+        mobileSponsorBtn.classList.add('animate-pulse-glow');
+        setTimeout(() => mobileSponsorBtn.classList.remove('animate-pulse-glow'), 2000);
+      }
+    };
 
     // Quantity tile selection
     qtyTiles.forEach(tile => {
@@ -752,6 +762,14 @@ const benefits = [
 
         selectedQty = parseInt(tile.dataset.qty || '2');
         updateUI();
+
+        // If selection is complete, scroll to the sponsor button and pulse it
+        if (isSelectionComplete()) {
+          setTimeout(() => {
+            scrollToSection(sponsorBtn?.closest('.bg-white.rounded-2xl') || sponsorBtn, false);
+            pulseButton();
+          }, 300);
+        }
       });
     });
 
@@ -1237,5 +1255,18 @@ const benefits = [
   /* Highlight ring for sections */
   .ring-4 {
     transition: all 0.3s ease;
+  }
+
+  /* Pulse glow animation for sponsor button after selection */
+  @keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.7); transform: scale(1); }
+    25% { box-shadow: 0 0 20px 8px rgba(217, 119, 6, 0.4); transform: scale(1.03); }
+    50% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.2); transform: scale(1); }
+    75% { box-shadow: 0 0 20px 8px rgba(217, 119, 6, 0.4); transform: scale(1.03); }
+    100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); transform: scale(1); }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out;
   }
 </style>
