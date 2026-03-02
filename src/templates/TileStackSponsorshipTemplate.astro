@@ -149,7 +149,7 @@ const benefits = [
                 {countries.map((country, i) => (
                   <button
                     type="button"
-                    class="country-btn relative p-4 rounded-xl border-2 transition-all hover:shadow-md border-gray-200 hover:border-gray-300"
+                    class="country-btn relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md border-gray-200 hover:border-gray-300"
                     data-country={country.id}
                     data-multiplier={country.priceMultiplier}
                   >
@@ -180,7 +180,7 @@ const benefits = [
                 {quantityTiles.map((tile, i) => (
                   <button
                     type="button"
-                    class="qty-tile relative p-4 rounded-xl border-2 transition-all hover:shadow-lg hover:-translate-y-1 border-gray-200 hover:border-gray-300"
+                    class="qty-tile relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 border-gray-200 hover:border-gray-300"
                     data-qty={tile.qty}
                     data-monthly={tile.monthly}
                   >
@@ -459,16 +459,18 @@ const benefits = [
       campaign: 'orphan-sponsorship'
     });
   }
+  // Make effectiveBasePrice available to the next script
+  window.__effectiveBasePrice = effectiveBasePrice;
 </script>
 
-<script>
+<script is:inline>
   document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const countryBtns = document.querySelectorAll('.country-btn');
     const qtyTiles = document.querySelectorAll('.qty-tile');
-    const customToggle = document.getElementById('custom-toggle') as HTMLInputElement;
+    const customToggle = document.getElementById('custom-toggle');
     const customQtyInput = document.getElementById('custom-qty-input');
-    const customQty = document.getElementById('custom-qty') as HTMLInputElement;
+    const customQty = document.getElementById('custom-qty');
     const customDecrease = document.getElementById('custom-decrease');
     const customIncrease = document.getElementById('custom-increase');
     const customTotal = document.getElementById('custom-total');
@@ -488,9 +490,9 @@ const benefits = [
     const mobileBtnText = document.getElementById('mobile-btn-text');
 
     // State - nothing pre-selected
-    let selectedCountry: { id: string; name: string; flag: string; multiplier: number } | null = null;
+    let selectedCountry = null;
     let selectedQty = 0;
-    let basePrice = effectiveBasePrice || 45;
+    let basePrice = window.__effectiveBasePrice || 45;
     let isMonthly = true;
     let isCustom = false;
     const summaryQtyLabel = document.getElementById('summary-qty-label');
@@ -508,7 +510,7 @@ const benefits = [
     const mobileArrow = document.getElementById('mobile-btn-arrow');
 
     // Scroll to element with offset for mobile sticky bar
-    const scrollToSection = (element: HTMLElement | null, highlight = true) => {
+    const scrollToSection = (element, highlight = true) => {
       if (!element) return;
 
       const offset = 100; // Account for header
@@ -717,7 +719,7 @@ const benefits = [
         btn.classList.remove('border-gray-200');
         btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
 
-        const el = btn as HTMLElement;
+        const el = btn;
         const wasFirstSelection = selectedCountry === null;
         selectedCountry = {
           id: el.dataset.country || 'pakistan',
@@ -748,7 +750,7 @@ const benefits = [
         tile.classList.remove('border-gray-200');
         tile.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
 
-        selectedQty = parseInt((tile as HTMLElement).dataset.qty || '2');
+        selectedQty = parseInt(tile.dataset.qty || '2');
         updateUI();
       });
     });
@@ -811,21 +813,21 @@ const benefits = [
     });
 
     // Sponsor button - Add to cart
-    const handleSponsor = (e: Event) => {
+    const handleSponsor = (e) => {
       // Check if selection is complete
       if (!isSelectionComplete() || !selectedCountry) {
         return;
       }
 
-      const btn = e.currentTarget as HTMLButtonElement;
+      const btn = e.currentTarget;
       const monthlyTotal = selectedQty * basePrice * selectedCountry.multiplier;
       const amount = isMonthly ? monthlyTotal : monthlyTotal * 12;
       const frequency = isMonthly ? 'monthly' : 'yearly';
       const childText = selectedQty === 1 ? 'Child' : 'Children';
 
       // Use the global addToCart function
-      if (typeof (window as any).addToCart === 'function') {
-        (window as any).addToCart({
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
           id: `orphan-sponsorship-${selectedCountry.id}-${selectedQty}-${frequency}-${Date.now()}`,
           type: 'orphan-sponsorship',
           name: `Orphan Sponsorship (${selectedCountry.name})`,
@@ -841,8 +843,8 @@ const benefits = [
       }
 
       // Add to recent sponsors feed
-      if (typeof (window as any).addRealSponsor === 'function') {
-        (window as any).addRealSponsor('Your Donation', selectedCountry.name, selectedQty);
+      if (typeof window.addRealSponsor === 'function') {
+        window.addRealSponsor('Your Donation', selectedCountry.name, selectedQty);
       }
 
       // Show success feedback on button
@@ -946,22 +948,8 @@ const benefits = [
       { name: 'Zainab Q.', location: 'Maryland' },
     ];
 
-    interface Sponsor {
-      name: string;
-      location: string;
-      qty: number;
-      timestamp: number;
-      isReal?: boolean;
-    }
-
-    interface StoredData {
-      sponsors: Sponsor[];
-      scheduledFakes: number[]; // timestamps when fake sponsors should appear
-      lastRealDonation: number; // when last real donation happened
-    }
-
     // Get stored data or initialize
-    const getStoredData = (): StoredData => {
+    const getStoredData = () => {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -985,14 +973,14 @@ const benefits = [
     };
 
     // Save to localStorage
-    const saveData = (data: StoredData) => {
+    const saveData = (data) => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch (e) {}
     };
 
     // Get a random name not in current list
-    const getNewSponsor = (currentNames: string[]): Sponsor => {
+    const getNewSponsor = (currentNames) => {
       const available = namePool.filter(n => !currentNames.includes(n.name));
       const pick = available.length > 0
         ? available[Math.floor(Math.random() * available.length)]
@@ -1006,7 +994,7 @@ const benefits = [
     };
 
     // Sort sponsors by timestamp (newest first)
-    const sortSponsors = (sponsors: Sponsor[]) => {
+    const sortSponsors = (sponsors) => {
       return sponsors.sort((a, b) => b.timestamp - a.timestamp);
     };
 
@@ -1056,7 +1044,7 @@ const benefits = [
     saveData({ sponsors: displayedSponsors, scheduledFakes, lastRealDonation });
 
     // Format time ago
-    const formatTimeAgo = (timestamp: number) => {
+    const formatTimeAgo = (timestamp) => {
       const seconds = Math.floor((Date.now() - timestamp) / 1000);
       if (seconds < 60) return 'Just now';
       const minutes = Math.floor(seconds / 60);
@@ -1111,7 +1099,7 @@ const benefits = [
     };
 
     // Add real sponsor when someone donates
-    const addRealSponsor = (name: string, location: string, qty: number) => {
+    const addRealSponsor = (name, location, qty) => {
       // Add new real sponsor
       displayedSponsors.unshift({
         name,
@@ -1150,7 +1138,7 @@ const benefits = [
     };
 
     // Expose for external use
-    (window as any).addRealSponsor = addRealSponsor;
+    window.addRealSponsor = addRealSponsor;
 
     // Initialize
     renderSponsors();
