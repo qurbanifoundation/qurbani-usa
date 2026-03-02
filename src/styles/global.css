@@ -55,16 +55,3 @@ html {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
 }
-
-/* Donation box buttons — pointer cursor + hover brightness */
-[data-donation-box] button {
-  cursor: pointer;
-}
-[data-donation-box] button:hover {
-  filter: brightness(1.08);
-}
-[data-donation-box] .cw-donate-btn:hover,
-[data-donation-box] .cw-upsell-btn:hover,
-[data-donation-box] #donate-btn:hover {
-  filter: brightness(1.12);
-}
