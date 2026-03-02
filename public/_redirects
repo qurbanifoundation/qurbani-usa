@@ -39,6 +39,7 @@
 /kaffara/             /kaffarah 301
 
 # Orphan sponsorship (don't catch /orphans/ category routes)
+/appeals/sponsor-an-orphan  /orphans/sponsor-an-orphan 301
 /orphan-sponsorship* /orphans/sponsor-an-orphan 301
 /sponsor-orphan*     /orphans/sponsor-an-orphan 301
 /child-sponsorship*  /orphans/sponsor-an-orphan 301
