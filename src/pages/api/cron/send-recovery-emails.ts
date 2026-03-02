@@ -82,9 +82,11 @@ export const GET: APIRoute = async ({ request }) => {
       }
 
       // Check if enough time has elapsed for the next step
-      const abandonedAt = new Date(checkout.abandoned_at).getTime();
+      // Use last_activity_at (when donor actually stopped) for more accurate timing
+      // Falls back to abandoned_at if last_activity_at isn't available
+      const inactiveAt = new Date(checkout.last_activity_at || checkout.abandoned_at).getTime();
       const schedule = RECOVERY_SCHEDULE[nextStep - 1];
-      const sendAfter = abandonedAt + schedule.delayMs;
+      const sendAfter = inactiveAt + schedule.delayMs;
 
       if (now < sendAfter) {
         skipped++;
