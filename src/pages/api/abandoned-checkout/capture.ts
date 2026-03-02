@@ -58,6 +58,10 @@ interface CaptureRequestBody {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Derive base URL from the request origin (works on both dev and production)
+    const requestUrl = new URL(request.url);
+    const siteBaseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+
     // Parse body — support both JSON and sendBeacon text
     let body: CaptureRequestBody;
     const contentType = request.headers.get('Content-Type') || '';
@@ -126,7 +130,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Create new abandoned checkout record
     const resume_token = crypto.randomUUID();
-    const resume_url = `https://www.qurbani.com/donate/resume?token=${resume_token}`;
+    const resume_url = `${siteBaseUrl}/donate/resume?token=${resume_token}`;
 
     const { data: created, error: insertError } = await supabaseAdmin
       .from('abandoned_checkouts')

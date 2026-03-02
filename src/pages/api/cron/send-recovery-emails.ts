@@ -37,6 +37,10 @@ const MIN_EMAIL_GAP_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 export const GET: APIRoute = async ({ request }) => {
   try {
+    // Derive base URL from the request origin (works on both dev and production)
+    const requestUrl = new URL(request.url);
+    const siteBaseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+
     // Verify cron secret
     const authHeader = request.headers.get('Authorization');
     if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
@@ -103,7 +107,7 @@ export const GET: APIRoute = async ({ request }) => {
       }
 
       // Build URLs
-      const unsubscribeUrl = `https://www.qurbani.com/api/abandoned-checkout/unsubscribe?token=${checkout.resume_token}`;
+      const unsubscribeUrl = `${siteBaseUrl}/api/abandoned-checkout/unsubscribe?token=${checkout.resume_token}`;
 
       // Send the recovery email
       const result = await sendRecoveryEmail(nextStep, {
