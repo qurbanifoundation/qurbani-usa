@@ -48,9 +48,10 @@ import Footer from '../../components/Footer.astro';
           Provide essential food supplies for the entire blessed month
         </p>
 
-        <div class="inline-block bg-white/20 backdrop-blur-sm text-white text-xl font-bold px-6 py-3 rounded-full border border-white/30">
+        <button id="hero-give-btn" class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-xl font-bold px-6 py-3 rounded-full border border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300 cursor-pointer">
           From $50 per pack
-        </div>
+          <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        </button>
       </div>
     </div>
 
@@ -292,10 +293,10 @@ import Footer from '../../components/Footer.astro';
                 class="w-full bg-[#ca8a04] hover:bg-[#a16207] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
                 style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(202, 138, 4, 0.3);"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
                 </svg>
-                Add Food Packs to Cart
+                Give Food Pack Now
               </button>
 
               <p class="text-center text-xs text-gray-500 mt-4">
@@ -386,21 +387,33 @@ import Footer from '../../components/Footer.astro';
 
     <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
       <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
-        Nourish a Family This Ramadan
+        Make This Ramadan Count
       </h2>
       <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-        Your food pack ensures a family has everything they need to observe Ramadan with peace of mind and focus on their worship.
+        Your generosity can transform lives. Help us provide food, support, and hope to those in need during this blessed month.
       </p>
-      <a
-        href="/ramadan"
-        class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#ca8a04] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
-        style="font-family: 'Signika', sans-serif;"
-      >
-        Explore All Ramadan Giving
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-        </svg>
-      </a>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/zakat"
+          class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#ca8a04] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Give Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+        <a
+          href="/zakat/calculator"
+          class="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 border-2 border-white/30"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Calculate Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -409,6 +422,13 @@ import Footer from '../../components/Footer.astro';
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // Hero button scroll to donation box
+    const heroBtn = document.getElementById('hero-give-btn');
+    const donationBox = document.querySelector('[data-mobile-donate]');
+    heroBtn?.addEventListener('click', () => {
+      donationBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
     const packButtons = document.querySelectorAll('.food-pack-btn');
     const quantityInput = document.getElementById('food-pack-quantity') as HTMLInputElement;
     const decreaseBtn = document.getElementById('food-pack-decrease');

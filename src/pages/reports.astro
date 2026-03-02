@@ -1,7 +1,7 @@
 ---
 /**
  * Annual Reports Page
- * Downloadable reports and financial transparency
+ * Reports and financial transparency
  */
 export const prerender = false;
 
@@ -16,7 +16,6 @@ const annualReports = [
     title: "Annual Report 2025",
     description: "Our most impactful year yet - serving over 3 million beneficiaries across 53 countries.",
     image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop",
-    downloadUrl: "#",
     highlights: ["$45M raised", "3.2M beneficiaries", "53 countries"]
   },
   {
@@ -24,7 +23,6 @@ const annualReports = [
     title: "Annual Report 2024",
     description: "Expanding our reach with new programs in emergency relief and sustainable development.",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
-    downloadUrl: "#",
     highlights: ["$38M raised", "2.8M beneficiaries", "48 countries"]
   },
   {
@@ -32,7 +30,6 @@ const annualReports = [
     title: "Annual Report 2023",
     description: "Post-pandemic recovery efforts and renewed focus on long-term community development.",
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
-    downloadUrl: "#",
     highlights: ["$32M raised", "2.4M beneficiaries", "45 countries"]
   },
   {
@@ -40,18 +37,17 @@ const annualReports = [
     title: "Annual Report 2022",
     description: "Continued humanitarian response to global crises with expanded healthcare programs.",
     image: "https://images.unsplash.com/photo-1543286386-713bdd548da4?w=600&h=400&fit=crop",
-    downloadUrl: "#",
     highlights: ["$28M raised", "2.1M beneficiaries", "42 countries"]
   }
 ];
 
 const financialDocuments = [
-  { name: "Form 990 (2025)", type: "Tax Filing", downloadUrl: "#" },
-  { name: "Audited Financial Statements 2025", type: "Audit Report", downloadUrl: "#" },
-  { name: "Form 990 (2024)", type: "Tax Filing", downloadUrl: "#" },
-  { name: "Audited Financial Statements 2024", type: "Audit Report", downloadUrl: "#" },
-  { name: "Form 990 (2023)", type: "Tax Filing", downloadUrl: "#" },
-  { name: "Audited Financial Statements 2023", type: "Audit Report", downloadUrl: "#" }
+  { name: "Form 990 (2025)", type: "Tax Filing" },
+  { name: "Audited Financial Statements 2025", type: "Audit Report" },
+  { name: "Form 990 (2024)", type: "Tax Filing" },
+  { name: "Audited Financial Statements 2024", type: "Audit Report" },
+  { name: "Form 990 (2023)", type: "Tax Filing" },
+  { name: "Audited Financial Statements 2023", type: "Audit Report" }
 ];
 ---
 
@@ -79,7 +75,7 @@ const financialDocuments = [
             Annual Reports
           </h1>
           <p class="text-xl text-gray-200 leading-relaxed" style="font-family: 'Lato', sans-serif;">
-            Full transparency in how we utilize your donations. Review our detailed annual reports and financial statements.
+            We believe in full transparency. Explore how your donations create lasting impact.
           </p>
         </div>
       </div>
@@ -138,7 +134,7 @@ const financialDocuments = [
             YEARLY IMPACT
           </span>
           <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
-            Download Our Annual Reports
+            Our Annual Reports
           </h2>
           <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
             Comprehensive overviews of our programs, impact metrics, and financial statements.
@@ -165,23 +161,13 @@ const financialDocuments = [
                 <p class="text-gray-600 mb-4 leading-relaxed" style="font-family: 'Lato', sans-serif;">
                   {report.description}
                 </p>
-                <div class="flex flex-wrap gap-3 mb-6">
+                <div class="flex flex-wrap gap-3">
                   {report.highlights.map((highlight) => (
                     <span class="bg-[#255764]/10 text-[#255764] px-3 py-1 rounded-full text-sm font-medium" style="font-family: 'Lato', sans-serif;">
                       {highlight}
                     </span>
                   ))}
                 </div>
-                <a
-                  href={report.downloadUrl}
-                  class="inline-flex items-center gap-2 bg-[#255764] hover:bg-[#1a4a55] text-white font-bold px-6 py-3 rounded-lg transition"
-                  style="font-family: 'Signika', sans-serif;"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  Download PDF
-                </a>
               </div>
             </div>
           ))}
@@ -201,7 +187,7 @@ const financialDocuments = [
               Tax Filings & Audit Reports
             </h2>
             <p class="text-gray-600 text-lg leading-relaxed mb-8" style="font-family: 'Lato', sans-serif;">
-              Access our IRS Form 990 filings and independently audited financial statements. We believe in complete financial transparency.
+              Our IRS Form 990 filings and independently audited financial statements. We believe in complete financial transparency.
             </p>
 
             <div class="bg-stone-50 rounded-2xl p-8">
@@ -240,34 +226,61 @@ const financialDocuments = [
             </div>
           </div>
 
-          <div>
+          <div class="space-y-6">
+            <!-- Our Commitment -->
             <div class="bg-stone-50 rounded-2xl p-8">
-              <h3 class="text-xl font-bold text-[#333] mb-6" style="font-family: 'Signika', sans-serif;">
-                Available Documents
+              <h3 class="text-xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
+                Our Financial Commitment
               </h3>
               <div class="space-y-4">
-                {financialDocuments.map((doc) => (
-                  <a
-                    href={doc.downloadUrl}
-                    class="flex items-center justify-between p-4 bg-white rounded-xl hover:shadow-md transition group"
-                  >
-                    <div class="flex items-center gap-4">
-                      <div class="w-12 h-12 bg-[#255764]/10 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-[#255764]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                      </div>
-                      <div>
-                        <p class="font-bold text-[#333]" style="font-family: 'Signika', sans-serif;">{doc.name}</p>
-                        <p class="text-sm text-gray-500" style="font-family: 'Lato', sans-serif;">{doc.type}</p>
-                      </div>
-                    </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-[#D97706] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                  </a>
-                ))}
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-[#255764] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                  </div>
+                  <div>
+                    <p class="font-bold text-[#333] text-sm" style="font-family: 'Signika', sans-serif;">100% Zakat Guarantee</p>
+                    <p class="text-gray-500 text-sm" style="font-family: 'Lato', sans-serif;">Every cent of your Zakat reaches those in need — zero administrative deductions.</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-[#D97706] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                  </div>
+                  <div>
+                    <p class="font-bold text-[#333] text-sm" style="font-family: 'Signika', sans-serif;">Independently Audited</p>
+                    <p class="text-gray-500 text-sm" style="font-family: 'Lato', sans-serif;">Annual audits conducted by certified independent CPA firms.</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-[#255764] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                  </div>
+                  <div>
+                    <p class="font-bold text-[#333] text-sm" style="font-family: 'Signika', sans-serif;">Shariah Compliant</p>
+                    <p class="text-gray-500 text-sm" style="font-family: 'Lato', sans-serif;">All programs reviewed by qualified Islamic scholars for compliance.</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-[#D97706] rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                  </div>
+                  <div>
+                    <p class="font-bold text-[#333] text-sm" style="font-family: 'Signika', sans-serif;">Tax-Deductible</p>
+                    <p class="text-gray-500 text-sm" style="font-family: 'Lato', sans-serif;">501(c)(3) nonprofit — EIN: 38-4109146. All donations are tax-deductible.</p>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <!-- Contact for Documents -->
+            <div class="bg-[#255764]/5 rounded-2xl p-6 border border-[#255764]/10">
+              <p class="text-sm text-gray-600 mb-3" style="font-family: 'Lato', sans-serif;">
+                Need copies of our Form 990 filings or audited financial statements? We're happy to provide them.
+              </p>
+              <a href="/contact" class="inline-flex items-center gap-2 text-[#255764] hover:text-[#D97706] font-semibold text-sm transition" style="font-family: 'Signika', sans-serif;">
+                Request Financial Documents
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </a>
             </div>
           </div>
         </div>

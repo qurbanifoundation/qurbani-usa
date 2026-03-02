@@ -3,8 +3,6 @@
  * Fidya Page
  * Explains Fidya and provides donation options ($10/day)
  */
-export const prerender = false;
-
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
@@ -48,9 +46,10 @@ import Footer from '../components/Footer.astro';
           Feed the hungry for each fast you cannot keep
         </p>
 
-        <div class="inline-block bg-white/20 backdrop-blur-sm text-white text-xl font-bold px-6 py-3 rounded-full border border-white/30">
+        <button id="hero-give-btn" class="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xl font-bold px-8 py-4 rounded-full border border-white/30 transition-all hover:scale-105 cursor-pointer">
           $10 per day
-        </div>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        </button>
       </div>
     </div>
 
@@ -176,9 +175,9 @@ import Footer from '../components/Footer.astro';
                 style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 </svg>
-                Add Fidya to Cart
+                Give Fidya Now
               </button>
 
               <p class="text-center text-xs text-gray-500 mt-4">
@@ -193,7 +192,7 @@ import Footer from '../components/Footer.astro';
             <div class="space-y-2">
               <a href="/kaffarah" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
                 <span class="text-sm font-medium text-gray-700">Kaffarah</span>
-                <span class="text-xs text-gray-500">$300</span>
+                <span class="text-xs text-gray-500">$180</span>
               </a>
               <a href="/zakat-ul-fitr" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
                 <span class="text-sm font-medium text-gray-700">Zakat ul-Fitr</span>
@@ -253,16 +252,28 @@ import Footer from '../components/Footer.astro';
       <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
         Your Fidya ensures that those who are fasting are fed. Make a difference in someone's Ramadan today.
       </p>
-      <a
-        href="/ramadan"
-        class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#16a34a] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
-        style="font-family: 'Signika', sans-serif;"
-      >
-        Explore All Ramadan Giving
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-        </svg>
-      </a>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/zakat"
+          class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#16a34a] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Give Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+        <a
+          href="/zakat/calculator"
+          class="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 border-2 border-white/30"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Calculate Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -331,6 +342,13 @@ import Footer from '../components/Footer.astro';
           frequency: 'single'
         });
       }
+    });
+
+    // Hero button: scroll to donation box
+    const heroBtn = document.getElementById('hero-give-btn');
+    const donationBox = document.querySelector('[data-mobile-donate]');
+    heroBtn?.addEventListener('click', () => {
+      donationBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
     // Initialize

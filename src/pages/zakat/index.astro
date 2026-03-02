@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
+import CWDonationBox from '../../components/donation/CWDonationBox.astro';
 ---
 
 <Layout title="Pay Your Zakat | Qurbani USA - 100% Zakat Policy">
@@ -57,65 +58,55 @@ import Footer from '../../components/Footer.astro';
           </div>
 
           <!-- Donation Box -->
-          <div class="bg-white rounded-xl p-6 md:p-8 shadow-2xl" style="font-family: 'Signika', sans-serif;">
-            <div class="text-center mb-6">
-              <p class="text-[#0096D6] italic text-sm" style="font-family: 'Playfair Display', serif;">Give Zakat</p>
-              <h2 class="text-2xl font-bold text-gray-800">Pay Your Zakat Now</h2>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3 mb-6">
-              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="100">
-                <span class="block text-gray-800">$100</span>
-              </button>
-              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="250">
-                <span class="block text-gray-800">$250</span>
-              </button>
-              <button class="zakat-amount-btn py-4 border-2 border-[#0096D6] bg-[#0096D6]/10 rounded-lg font-bold text-lg" data-amount="500">
-                <span class="block text-[#0096D6]">$500</span>
-              </button>
-              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="1000">
-                <span class="block text-gray-800">$1,000</span>
-              </button>
-              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="2500">
-                <span class="block text-gray-800">$2,500</span>
-              </button>
-              <button class="zakat-amount-btn py-4 border-2 border-gray-200 rounded-lg font-bold text-lg hover:border-[#0096D6] transition" data-amount="5000">
-                <span class="block text-gray-800">$5,000</span>
-              </button>
-            </div>
-
-            <div class="mb-6">
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">$</span>
-                <input
-                  type="number"
-                  id="zakat-custom-amount"
-                  placeholder="Enter your Zakat amount"
-                  class="w-full pl-10 pr-4 py-4 border-2 border-gray-200 rounded-lg focus:border-[#0096D6] focus:outline-none text-lg font-semibold"
-                  min="1"
-                />
-              </div>
-            </div>
-
-            <button id="zakat-donate-btn" class="w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-4 rounded-lg transition text-lg flex items-center justify-center gap-2 uppercase tracking-wide">
-              <span>Pay Zakat Now</span>
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-              </svg>
-            </button>
-
-            <div class="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-              </svg>
-              <span>Secure payment powered by Stripe</span>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-gray-100 text-center">
-              <a href="/zakat-calculator" class="text-[#0096D6] hover:underline text-sm font-medium">
-                Not sure how much? Use our Zakat Calculator
-              </a>
-            </div>
+          <div>
+            <CWDonationBox
+              campaignSlug="zakat"
+              campaignTitle="Zakat 2026"
+              donationBoxHeading="Pay Your Zakat"
+              tabEmoji="🤲"
+              skipUpsell={true}
+              frequencies={[
+                {
+                  key: 'single',
+                  label: 'GIVE ONCE',
+                  type: 'single',
+                  stripeInterval: null,
+                  suffix: 'USD',
+                  buttonText: 'GIVE',
+                  amounts: [100, 250, 500, 1000, 2500, 5000, 10000],
+                  impactTexts: {
+                    100: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    250: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    500: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    1000: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    2500: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    5000: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    10000: '100% Zakat Policy • Shariah Compliant • Tax Deductible'
+                  },
+                  defaultAmountIndex: 1,
+                  fallbackImpactText: ''
+                },
+                {
+                  key: 'yearly',
+                  label: 'YEARLY',
+                  type: 'recurring',
+                  stripeInterval: 'year',
+                  suffix: 'USD/yr',
+                  buttonText: 'GIVE YEARLY',
+                  amounts: [100, 250, 500, 1000, 2500, 5000, 10000],
+                  impactTexts: {
+                    100: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    250: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    500: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    1000: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    2500: '100% Zakat Policy • Shariah Compliant • Tax Deductible',
+                    5000: '100% Zakat Policy • Shariah Compliant • Tax Deductible'
+                  },
+                  defaultAmountIndex: 1,
+                  fallbackImpactText: 'Your yearly gift makes a lasting impact'
+                }
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -260,7 +251,7 @@ import Footer from '../../components/Footer.astro';
             <h3 class="text-2xl md:text-3xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Not Sure How Much Zakat You Owe?</h3>
             <p class="text-blue-100" style="font-family: 'Lato', sans-serif;">Use our easy Zakat Calculator to determine your obligation in minutes.</p>
           </div>
-          <a href="/zakat-calculator" class="bg-white text-[#0096D6] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+          <a href="/zakat/calculator" class="bg-white text-[#0096D6] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
             Calculate Your Zakat
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -316,61 +307,3 @@ import Footer from '../../components/Footer.astro';
   <Footer />
 </Layout>
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const amountBtns = document.querySelectorAll('.zakat-amount-btn');
-    const customInput = document.getElementById('zakat-custom-amount') as HTMLInputElement;
-    const donateBtn = document.getElementById('zakat-donate-btn');
-
-    let selectedAmount = 0; // No default selection
-
-    function updateButtonStyle(btn: Element, isSelected: boolean) {
-      const span = btn.querySelector('span');
-      if (isSelected) {
-        btn.classList.remove('border-gray-200');
-        btn.classList.add('border-[#0096D6]', 'bg-[#0096D6]/10');
-        if (span) {
-          span.classList.remove('text-gray-800');
-          span.classList.add('text-[#0096D6]');
-        }
-      } else {
-        btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10');
-        btn.classList.add('border-gray-200');
-        if (span) {
-          span.classList.remove('text-[#0096D6]');
-          span.classList.add('text-gray-800');
-        }
-      }
-    }
-
-    amountBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        amountBtns.forEach(b => updateButtonStyle(b, false));
-        updateButtonStyle(btn, true);
-        selectedAmount = parseFloat(btn.getAttribute('data-amount') || '500');
-        if (customInput) customInput.value = '';
-      });
-    });
-
-    customInput?.addEventListener('input', () => {
-      if (customInput.value) {
-        amountBtns.forEach(b => updateButtonStyle(b, false));
-        selectedAmount = parseFloat(customInput.value) || 0;
-      }
-    });
-
-    donateBtn?.addEventListener('click', () => {
-      if (selectedAmount > 0 && typeof (window as any).addToCart === 'function') {
-        (window as any).addToCart({
-          id: `zakat-${Date.now()}`,
-          type: 'donation',
-          name: 'Zakat',
-          amount: selectedAmount,
-          quantity: 1,
-          description: 'Zakat Donation - 100% Policy',
-          frequency: 'single'
-        });
-      }
-    });
-  });
-</script>

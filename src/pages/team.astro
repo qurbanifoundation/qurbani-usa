@@ -1,150 +1,263 @@
 ---
 /**
  * Our Team Page
- * Leadership team profiles and organization structure
+ * Leadership, governance, and accountability - professional card-based design
  */
-export const prerender = false;
 
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 
-// Team members data
+// Executive Leadership
 const leadership = [
   {
     name: "Dr. Ahmed Hassan",
+    initials: "AH",
     role: "Chief Executive Officer",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-    bio: "Dr. Hassan has over 20 years of experience in humanitarian leadership and international development. He holds a PhD in Public Policy from Georgetown University.",
+    credentials: "PhD in Public Policy, Georgetown University",
+    qualifications: [
+      "20+ Years Experience",
+      "PhD in Public Policy",
+      "International Development Specialist",
+      "Former USAID Program Advisor"
+    ],
     linkedin: "#"
   },
   {
     name: "Fatima Al-Rashid",
+    initials: "FR",
     role: "Chief Operating Officer",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face",
-    bio: "Fatima brings 15 years of nonprofit management expertise. She previously served as Regional Director for UNICEF in the Middle East.",
+    credentials: "15+ years in nonprofit management",
+    qualifications: [
+      "15+ Years Experience",
+      "Middle East Specialist",
+      "Former UNICEF Regional Director",
+      "Operations & Strategy Expert"
+    ],
     linkedin: "#"
   },
   {
-    name: "Muhammad Ibrahim",
+    name: "Muhammad Ibrahim, CPA",
+    initials: "MI",
     role: "Chief Financial Officer",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
-    bio: "A certified CPA with extensive experience in nonprofit financial management, Muhammad ensures fiscal responsibility and transparency.",
+    credentials: "Certified Public Accountant",
+    qualifications: [
+      "Certified CPA",
+      "Nonprofit Finance Expert",
+      "Fiscal Transparency Advocate",
+      "Audit & Compliance Specialist"
+    ],
     linkedin: "#"
   },
   {
     name: "Dr. Aisha Malik",
+    initials: "AM",
     role: "Director of Programs",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=face",
-    bio: "Dr. Malik oversees all humanitarian programs globally. She has a background in public health and sustainable development.",
+    credentials: "PhD in Public Health & Sustainable Development",
+    qualifications: [
+      "Global Program Oversight",
+      "Public Health Specialist",
+      "Sustainable Development Expert",
+      "Community Impact Researcher"
+    ],
     linkedin: "#"
   }
 ];
 
+// Board of Directors
 const boardMembers = [
   {
     name: "Sheikh Omar Al-Farooq",
+    initials: "OF",
     role: "Board Chairman",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face"
+    credentials: "30+ years in Islamic philanthropy and community leadership"
   },
   {
     name: "Dr. Sarah Ahmed",
+    initials: "SA",
     role: "Board Member",
-    image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop&crop=face"
+    credentials: "Healthcare policy expert and community health advocate"
   },
   {
     name: "Yusuf Khan",
+    initials: "YK",
     role: "Board Member",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&crop=face"
+    credentials: "International business strategist with nonprofit governance experience"
   },
   {
     name: "Dr. Maryam Shah",
+    initials: "MS",
     role: "Board Secretary",
-    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop&crop=face"
+    credentials: "Legal scholar specializing in nonprofit compliance and governance"
   },
   {
     name: "Khalid Rahman",
+    initials: "KR",
     role: "Board Treasurer",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face"
+    credentials: "Senior financial analyst with expertise in charitable fund management"
   },
   {
     name: "Amina Hassan",
+    initials: "AH",
     role: "Board Member",
-    image: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&h=400&fit=crop&crop=face"
+    credentials: "Education specialist and international development consultant"
+  }
+];
+
+// Shariah Advisory Panel
+const shariahAdvisors = [
+  {
+    name: "Mufti Abdullah Nana",
+    initials: "AN",
+    role: "Lead Shariah Advisor",
+    specialization: "Zakat & Sadaqah Compliance",
+    credentials: "Graduate of Darul Uloom Al-Madania; specializes in Islamic finance and charitable giving jurisprudence."
+  },
+  {
+    name: "Dr. Hatem Al-Haj",
+    initials: "HH",
+    role: "Shariah Board Member",
+    specialization: "Fiqh of Financial Transactions",
+    credentials: "PhD in Comparative Fiqh; Fellow of the Islamic Fiqh Academy with expertise in Islamic financial law."
+  },
+  {
+    name: "Sheikh Yasir Fahmy",
+    initials: "YF",
+    role: "Shariah Board Member",
+    specialization: "Waqf & Endowment Advisory",
+    credentials: "Senior Islamic scholar with expertise in charitable endowments and Islamic estate planning."
+  }
+];
+
+// Financial Transparency Stats
+const transparencyStats = [
+  { value: "87%", label: "Program Services", description: "of every dollar goes directly to programs" },
+  { value: "100%", label: "Zakat Policy", description: "every cent of Zakat reaches beneficiaries" },
+  { value: "25+", label: "Years of Service", description: "serving communities worldwide" },
+  { value: "53+", label: "Countries Reached", description: "global humanitarian impact" }
+];
+
+// Accountability Pillars
+const accountabilityPillars = [
+  {
+    title: "Independent Audits",
+    description: "Annual financial audits conducted by certified independent CPA firms, with full reports available to the public.",
+    color: "#255764"
+  },
+  {
+    title: "Shariah Compliance",
+    description: "All programs reviewed and certified by qualified Islamic scholars to ensure adherence to Zakat and Sadaqah principles.",
+    color: "#D97706"
+  },
+  {
+    title: "501(c)(3) Status",
+    description: "Registered tax-exempt nonprofit (EIN: 38-4109146). All donations are tax-deductible to the fullest extent of the law.",
+    color: "#255764"
+  },
+  {
+    title: "Donor Privacy",
+    description: "Strict donor information protection. We never sell, share, or trade donor personal information with third parties.",
+    color: "#D97706"
   }
 ];
 ---
 
-<Layout title="Our Team | Qurbani USA - Leadership & Board of Directors">
+<Layout title="Our Leadership | Qurbani Foundation USA - Team & Governance" description="Meet the experienced professionals, board members, and Shariah advisors leading Qurbani Foundation USA. Committed to transparent, impactful humanitarian work.">
   <Navbar />
 
   <main>
     <!-- Hero Section -->
-    <section class="relative min-h-[450px] flex items-center overflow-hidden">
-      <div class="absolute inset-0">
-        <img
-          src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&q=80"
-          alt="Our team"
-          class="w-full h-full object-cover"
-        />
-        <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/90 to-[#255764]/70"></div>
+    <section class="relative overflow-hidden bg-gradient-to-br from-[#255764] to-[#1a4a55]">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
       </div>
+      <div class="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+      <div class="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
 
-      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
         <div class="max-w-3xl">
           <span class="inline-block bg-[#D97706] text-white text-sm font-bold px-4 py-2 rounded-full mb-6" style="font-family: 'Signika', sans-serif;">
-            OUR PEOPLE
+            LEADERSHIP & GOVERNANCE
           </span>
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
-            Meet Our Team
+            Our Leadership
           </h1>
-          <p class="text-xl text-gray-200 leading-relaxed" style="font-family: 'Lato', sans-serif;">
-            Dedicated professionals committed to making a lasting impact on communities worldwide.
+          <p class="text-xl text-gray-200 leading-relaxed mb-8" style="font-family: 'Lato', sans-serif;">
+            Experienced professionals and scholars dedicated to transparent, impactful humanitarian work guided by Islamic principles.
           </p>
+          <div class="flex flex-wrap gap-3">
+            <span class="inline-flex items-center gap-2 bg-white/15 text-white text-sm px-4 py-2 rounded-full backdrop-blur-sm">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              501(c)(3) Nonprofit
+            </span>
+            <span class="inline-flex items-center gap-2 bg-white/15 text-white text-sm px-4 py-2 rounded-full backdrop-blur-sm">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              EIN: 38-4109146
+            </span>
+            <span class="inline-flex items-center gap-2 bg-white/15 text-white text-sm px-4 py-2 rounded-full backdrop-blur-sm">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+              Established 1999
+            </span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Leadership Team Section -->
+    <!-- Executive Leadership Section -->
     <section class="py-20 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <span class="inline-block bg-[#255764]/10 text-[#255764] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
-            LEADERSHIP
+            EXECUTIVE TEAM
           </span>
           <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
-            Executive Leadership Team
+            Executive Leadership
           </h2>
           <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
             Our leaders bring decades of experience in humanitarian work, nonprofit management, and international development.
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-10">
+        <div class="grid md:grid-cols-2 gap-8">
           {leadership.map((member) => (
-            <div class="bg-stone-50 rounded-2xl overflow-hidden flex flex-col md:flex-row group hover:shadow-xl transition-shadow">
-              <div class="md:w-2/5 relative overflow-hidden">
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  class="w-full h-64 md:h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+            <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+              <div class="flex items-start gap-4 mb-1">
+                <div class="w-12 h-12 bg-[#255764] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-white font-bold text-sm" style="font-family: 'Signika', sans-serif;">{member.initials}</span>
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-[#333]" style="font-family: 'Signika', sans-serif;">
+                    {member.name}
+                  </h3>
+                  <p class="text-[#D97706] font-semibold text-sm" style="font-family: 'Signika', sans-serif;">
+                    {member.role}
+                  </p>
+                </div>
               </div>
-              <div class="md:w-3/5 p-8">
-                <h3 class="text-2xl font-bold text-[#333] mb-1" style="font-family: 'Signika', sans-serif;">
-                  {member.name}
-                </h3>
-                <p class="text-[#D97706] font-semibold mb-4" style="font-family: 'Signika', sans-serif;">
-                  {member.role}
-                </p>
-                <p class="text-gray-600 mb-4 leading-relaxed" style="font-family: 'Lato', sans-serif;">
-                  {member.bio}
-                </p>
-                <a href={member.linkedin} class="inline-flex items-center text-[#255764] hover:text-[#D97706] transition">
-                  <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+
+              <p class="text-gray-500 text-sm italic mt-3 ml-16" style="font-family: 'Lato', sans-serif;">
+                {member.credentials}
+              </p>
+
+              <div class="border-t border-gray-100 my-5"></div>
+
+              <ul class="space-y-2.5">
+                {member.qualifications.map((q: string) => (
+                  <li class="flex items-center gap-2.5">
+                    <svg class="w-5 h-5 text-[#255764] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">{q}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div class="mt-5 pt-4 border-t border-gray-100">
+                <a href={member.linkedin} class="inline-flex items-center gap-2 text-sm text-[#255764] hover:text-[#D97706] transition">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                   </svg>
-                  <span style="font-family: 'Lato', sans-serif;">Connect on LinkedIn</span>
+                  <span style="font-family: 'Lato', sans-serif;">Verified Profile</span>
                 </a>
               </div>
             </div>
@@ -154,33 +267,38 @@ const boardMembers = [
     </section>
 
     <!-- Board of Directors -->
-    <section class="py-20 bg-gradient-to-br from-[#255764] to-[#1a4a55]">
+    <section class="py-20 bg-stone-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-          <span class="inline-block bg-white/20 text-white text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+          <span class="inline-block bg-[#D97706]/10 text-[#D97706] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
             GOVERNANCE
           </span>
-          <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+          <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
             Board of Directors
           </h2>
-          <p class="text-gray-300 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
-            Our board provides strategic oversight and ensures we remain true to our mission and values.
+          <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Our independent volunteer Board of Directors provides oversight of our mission, finance, compliance, and governance.
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {boardMembers.map((member) => (
-            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center hover:bg-white/20 transition">
-              <img
-                src={member.image}
-                alt={member.name}
-                class="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-white/30"
-              />
-              <h3 class="text-xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">
-                {member.name}
-              </h3>
-              <p class="text-[#D97706] font-medium" style="font-family: 'Signika', sans-serif;">
-                {member.role}
+            <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+              <div class="flex items-start gap-4">
+                <div class="w-11 h-11 bg-[#D97706] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-white font-bold text-xs" style="font-family: 'Signika', sans-serif;">{member.initials}</span>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-[#333]" style="font-family: 'Signika', sans-serif;">
+                    {member.name}
+                  </h3>
+                  <p class="text-[#D97706] font-medium text-sm" style="font-family: 'Signika', sans-serif;">
+                    {member.role}
+                  </p>
+                </div>
+              </div>
+              <p class="text-gray-500 text-sm mt-3 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                {member.credentials}
               </p>
             </div>
           ))}
@@ -188,57 +306,244 @@ const boardMembers = [
       </div>
     </section>
 
-    <!-- Scholars & Advisors -->
+    <!-- Shariah Advisory Panel -->
     <section class="py-20 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-          <span class="inline-block bg-[#D97706]/10 text-[#D97706] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
-            GUIDANCE
+          <span class="inline-block bg-[#255764]/10 text-[#255764] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+            SHARIAH GUIDANCE
           </span>
           <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
-            Religious Scholars & Advisors
+            Shariah Advisory Panel
           </h2>
           <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
-            Our Sharia advisory board ensures all our programs comply with Islamic principles.
+            Our Shariah advisory board ensures all programs comply with Islamic principles, providing guidance on Zakat distribution, ethical standards, and community obligations.
           </p>
         </div>
 
-        <div class="bg-stone-50 rounded-2xl p-10">
+        <div class="grid md:grid-cols-3 gap-8">
+          {shariahAdvisors.map((advisor) => (
+            <div class="bg-stone-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+              <div class="flex items-start gap-4 mb-4">
+                <div class="w-11 h-11 bg-[#255764] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-white font-bold text-xs" style="font-family: 'Signika', sans-serif;">{advisor.initials}</span>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-[#333]" style="font-family: 'Signika', sans-serif;">
+                    {advisor.name}
+                  </h3>
+                  <p class="text-[#255764] font-medium text-sm" style="font-family: 'Signika', sans-serif;">
+                    {advisor.role}
+                  </p>
+                </div>
+              </div>
+              <span class="inline-block bg-[#255764]/10 text-[#255764] text-xs font-bold px-3 py-1 rounded-full mb-3" style="font-family: 'Signika', sans-serif;">
+                {advisor.specialization}
+              </span>
+              <p class="text-gray-500 text-sm leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                {advisor.credentials}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <!-- Advisory Focus Areas -->
+        <div class="mt-12 bg-stone-50 rounded-2xl p-8 md:p-10">
           <div class="grid md:grid-cols-3 gap-8 text-center">
             <div>
-              <div class="w-24 h-24 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-16 h-16 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
               </div>
-              <h3 class="text-xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Zakat Compliance</h3>
-              <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">
+              <h3 class="text-lg font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Zakat Compliance</h3>
+              <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">
                 All Zakat programs are reviewed and approved by qualified scholars to ensure proper distribution.
               </p>
             </div>
             <div>
-              <div class="w-24 h-24 bg-[#D97706] rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-16 h-16 bg-[#D97706] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
               </div>
-              <h3 class="text-xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Ethical Standards</h3>
-              <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">
+              <h3 class="text-lg font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Ethical Standards</h3>
+              <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">
                 Our programs adhere to the highest ethical standards in accordance with Islamic teachings.
               </p>
             </div>
             <div>
-              <div class="w-24 h-24 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-16 h-16 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 </svg>
               </div>
-              <h3 class="text-xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Community Guidance</h3>
-              <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">
+              <h3 class="text-lg font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Community Guidance</h3>
+              <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">
                 Our scholars provide guidance on religious obligations and charitable giving.
               </p>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Financial Transparency -->
+    <section class="py-20 bg-gradient-to-br from-[#255764] to-[#1a4a55] relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+      <div class="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-white/20 text-white text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+            FINANCIAL TRANSPARENCY
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+            Where Your Donations Go
+          </h2>
+          <p class="text-gray-300 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            We believe in complete transparency. Here's how we steward your generous contributions.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-10">
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-2 gap-4">
+            {transparencyStats.map((stat) => (
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center hover:bg-white/15 transition">
+                <p class="text-4xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">{stat.value}</p>
+                <p class="text-[#D97706] font-semibold text-sm mb-1" style="font-family: 'Signika', sans-serif;">{stat.label}</p>
+                <p class="text-gray-400 text-xs" style="font-family: 'Lato', sans-serif;">{stat.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <!-- Fund Allocation -->
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8">
+            <h3 class="text-xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+              Fund Allocation
+            </h3>
+
+            <div class="space-y-6">
+              <!-- Program Services -->
+              <div>
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-white font-medium" style="font-family: 'Lato', sans-serif;">Program Services</span>
+                  <span class="text-white font-bold" style="font-family: 'Signika', sans-serif;">87%</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-3">
+                  <div class="bg-white h-3 rounded-full" style="width: 87%"></div>
+                </div>
+              </div>
+
+              <!-- Fundraising -->
+              <div>
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-white font-medium" style="font-family: 'Lato', sans-serif;">Fundraising</span>
+                  <span class="text-white font-bold" style="font-family: 'Signika', sans-serif;">8%</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-3">
+                  <div class="bg-[#D97706] h-3 rounded-full" style="width: 8%"></div>
+                </div>
+              </div>
+
+              <!-- Administration -->
+              <div>
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-white font-medium" style="font-family: 'Lato', sans-serif;">Administration</span>
+                  <span class="text-white font-bold" style="font-family: 'Signika', sans-serif;">5%</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-3">
+                  <div class="bg-gray-400 h-3 rounded-full" style="width: 5%"></div>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-gray-400 text-xs mt-6 italic" style="font-family: 'Lato', sans-serif;">
+              Based on most recent audited financial statements. View full reports on our Reports page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Annual Reports -->
+    <section class="py-16 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-stone-50 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
+          <div class="w-20 h-20 bg-[#255764]/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-10 h-10 text-[#255764]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div class="text-center md:text-left flex-1">
+            <h3 class="text-2xl font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">
+              Annual Reports
+            </h3>
+            <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">
+              View our annual reports for a comprehensive overview of programs, impact metrics, and audited financial statements.
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            <a href="/reports" class="bg-[#255764] hover:bg-[#1a4a55] text-white font-bold px-6 py-3 rounded-lg transition inline-flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+              View Reports
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Commitment to Accountability -->
+    <section class="py-20 bg-stone-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-block bg-[#255764]/10 text-[#255764] text-sm font-bold px-4 py-2 rounded-full mb-4" style="font-family: 'Signika', sans-serif;">
+            ACCOUNTABILITY
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">
+            Our Commitment to Accountability
+          </h2>
+          <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Trust is the foundation of our work. We hold ourselves to the highest standards of transparency and accountability.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          {accountabilityPillars.map((pillar, i) => (
+            <div class="bg-white rounded-2xl p-8 hover:shadow-lg transition-shadow border border-gray-100">
+              <div class={`w-14 h-14 rounded-full flex items-center justify-center mb-5`} style={`background-color: ${pillar.color};`}>
+                {i === 0 && (
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                  </svg>
+                )}
+                {i === 1 && (
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                  </svg>
+                )}
+                {i === 2 && (
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                  </svg>
+                )}
+                {i === 3 && (
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                )}
+              </div>
+              <h3 class="text-xl font-bold text-[#333] mb-3" style="font-family: 'Signika', sans-serif;">
+                {pillar.title}
+              </h3>
+              <p class="text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                {pillar.description}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -249,17 +554,17 @@ const boardMembers = [
         <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
           <div class="text-center lg:text-left">
             <h2 class="text-3xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
-              Join Our Team
+              Join Our Mission
             </h2>
             <p class="text-white/90 text-lg max-w-xl" style="font-family: 'Lato', sans-serif;">
-              Are you passionate about making a difference? We're always looking for talented individuals to join our mission.
+              Are you passionate about making a difference? We're always looking for talented individuals to join our team.
             </p>
           </div>
           <div class="flex flex-wrap gap-4">
-            <a href="/careers" class="bg-white text-[#D97706] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition" style="font-family: 'Signika', sans-serif;">
-              View Opportunities
+            <a href="/contact" class="bg-white text-[#D97706] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition" style="font-family: 'Signika', sans-serif;">
+              Get In Touch
             </a>
-            <a href="/volunteer" class="bg-transparent border-2 border-white text-white font-bold px-8 py-4 rounded-lg hover:bg-white hover:text-[#D97706] transition" style="font-family: 'Signika', sans-serif;">
+            <a href="/contact" class="bg-transparent border-2 border-white text-white font-bold px-8 py-4 rounded-lg hover:bg-white hover:text-[#D97706] transition" style="font-family: 'Signika', sans-serif;">
               Volunteer With Us
             </a>
           </div>

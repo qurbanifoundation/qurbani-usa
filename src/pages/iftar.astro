@@ -3,8 +3,6 @@
  * Feed Iftar Page
  * Explains Iftar feeding programs and provides donation options ($5/meal)
  */
-export const prerender = false;
-
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
@@ -218,7 +216,7 @@ import Footer from '../components/Footer.astro';
               </a>
               <a href="/kaffarah" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
                 <span class="text-sm font-medium text-gray-700">Kaffarah</span>
-                <span class="text-xs text-gray-500">$300</span>
+                <span class="text-xs text-gray-500">$180</span>
               </a>
               <a href="/food-packs" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
                 <span class="text-sm font-medium text-gray-700">Food Packs</span>
@@ -289,16 +287,28 @@ import Footer from '../components/Footer.astro';
       <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
         As the sun sets and families gather to break their fast, let your generosity be the reason someone has food on their table.
       </p>
-      <a
-        href="/ramadan"
-        class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#ea580c] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
-        style="font-family: 'Signika', sans-serif;"
-      >
-        Explore All Ramadan Giving
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-        </svg>
-      </a>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/zakat"
+          class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#ea580c] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Give Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+        <a
+          href="/zakat/calculator"
+          class="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 border-2 border-white/30"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Calculate Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+        </a>
+      </div>
     </div>
   </section>
 

@@ -23,7 +23,7 @@
 # Zakat related
 /zakat-donation*     /zakat 301
 /pay-zakat*          /zakat 301
-/calculate-zakat*    /zakat-calculator 301
+/calculate-zakat*    /zakat/calculator 301
 /zakat-al-fitr*      /zakat-ul-fitr 301
 /fitrana*            /zakat-ul-fitr 301
 
@@ -35,7 +35,8 @@
 /iftar-donation*     /iftar 301
 /feed-fasting*       /iftar 301
 /fidyah*             /fidya 301
-/kaffara*            /kaffarah 301
+/kaffara              /kaffarah 301
+/kaffara/             /kaffarah 301
 
 # Orphan sponsorship (don't catch /orphans/ category routes)
 /orphan-sponsorship* /orphans/sponsor-an-orphan 301

@@ -13,7 +13,7 @@ const defaultSettings = {
   footer_logo: '',
   site_favicon: '/favicon.ico',
 
-  contact_phone: '+1 (703) 596-4900',
+  contact_phone: '+1 (989) QURBANI',
   contact_toll_free: '1-800-900-0027',
   contact_email: 'info@qurbani.com',
   contact_address_street: '145 Sherwood Ave',

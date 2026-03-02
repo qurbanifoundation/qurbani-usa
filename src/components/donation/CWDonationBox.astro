@@ -43,6 +43,7 @@ interface Props {
   specialProjectText?: string;
   specialProjectAmount?: number;
   showAlternatePayments?: boolean;
+  skipUpsell?: boolean;
   colors?: {
     accentColor?: string;
     accentTextColor?: string;
@@ -72,6 +73,7 @@ const {
   specialProjectText = 'Sponsor an entire water project',
   specialProjectAmount = 10000,
   showAlternatePayments = false,
+  skipUpsell = false,
   colors = {},
   tabEmoji = '',
   tabLabelMonthly = 'MONTHLY',
@@ -250,96 +252,98 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
       {frequencyTabs.map((freq, fi) => {
         const amounts = freq.amounts || [];
         const total = amounts.length;
-        const row1 = amounts.slice(0, 3);
-        const row2 = amounts.slice(3, 5);
-        const otherColSpan = 3 - row2.length;
         const needsSmallText = total > 4;
         const amtSize = needsSmallText ? 'text-[14px]' : 'text-[17px]';
         const suffSize = needsSmallText ? 'text-[10px]' : 'text-[11px]';
-        const otherSpanClass = otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : '';
         const defaultIdx = freq.defaultAmountIndex ?? 1;
         const defaultAmt = amounts[defaultIdx] || amounts[0] || 0;
 
+        // Split amounts into rows of 3
+        const amountRows: number[][] = [];
+        for (let i = 0; i < total; i += 3) {
+          amountRows.push(amounts.slice(i, i + 3));
+        }
+        // Check if last row is full (3 items) — if so, Other gets its own row
+        const lastRow = amountRows[amountRows.length - 1] || [];
+        const lastRowFull = lastRow.length === 3;
+        const otherColSpan = lastRowFull ? 3 : (3 - lastRow.length);
+        const otherSpanClass = otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : '';
+
         return (
           <div class={`cw-freq-grid ${fi === 0 ? '' : 'hidden'}`} data-freq-key={freq.key}>
-            {/* Row 1: first 3 amounts */}
-            <div class="grid grid-cols-3 gap-2.5 mb-2.5">
-              {row1.map((amt, i) => {
-                const isDefault = i === defaultIdx;
-                return (
-                  <button
-                    type="button"
-                    class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
-                    data-amount={amt}
-                    data-freq={freq.key}
-                    style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-                  >
-                    <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                    <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {/* Row 2: remaining amounts + Other button */}
-            <div class="grid grid-cols-3 gap-2.5">
-              {row2.map((amt) => {
-                const idx = amounts.indexOf(amt);
-                const isDefault = idx === defaultIdx;
-                return (
-                  <button
-                    type="button"
-                    class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
-                    data-amount={amt}
-                    data-freq={freq.key}
-                    style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
-                  >
-                    <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                    <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
-                  </button>
-                );
-              })}
-              {/* Other amount button */}
-              <button
-                type="button"
-                class={`cw-freq-other-btn ${otherSpanClass} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtSize}`}
-                style="background-color: #f4f5f0;"
-              >
-                Other
-              </button>
-              {/* Custom amount input */}
-              <div class={`cw-freq-custom-wrap ${otherSpanClass} hidden`}>
-                <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    class="cw-freq-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
-                    placeholder="Other"
-                  />
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">{freq.suffix}</span>
-                </div>
-              </div>
-            </div>
-            {/* Row 3: overflow amounts (6+) */}
-            {total > 5 && (
-              <div class="grid grid-cols-3 gap-2.5 mt-2.5">
-                {amounts.slice(5).map((amt) => {
-                  const idx = amounts.indexOf(amt);
-                  const isDefault = idx === defaultIdx;
-                  return (
+            {/* Amount rows */}
+            {amountRows.map((row, ri) => {
+              const isLastRow = ri === amountRows.length - 1;
+              const showOtherInThisRow = isLastRow && !lastRowFull;
+              return (
+                <div class={`grid grid-cols-3 gap-2.5 ${ri < amountRows.length - 1 || showOtherInThisRow ? 'mb-2.5' : lastRowFull ? 'mb-2.5' : ''}`}>
+                  {row.map((amt) => {
+                    const idx = amounts.indexOf(amt);
+                    const isDefault = idx === defaultIdx;
+                    return (
+                      <button
+                        type="button"
+                        class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
+                        data-amount={amt}
+                        data-freq={freq.key}
+                        style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                      >
+                        <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
+                        <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
+                      </button>
+                    );
+                  })}
+                  {/* Other button — inline with last row if it has room */}
+                  {showOtherInThisRow && (
                     <button
                       type="button"
-                      class={`cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc] ${isDefault ? 'cw-amt-selected' : ''}`}
-                      data-amount={amt}
-                      data-freq={freq.key}
-                      style={isDefault ? `background-color: ${accentColor}; border-color: ${accentColor}; color: ${accentTextColor};` : 'background-color: #f4f5f0;'}
+                      class={`cw-freq-other-btn ${otherSpanClass} rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtSize}`}
+                      style="background-color: #f4f5f0;"
                     >
-                      <span class={`${amtSize} font-bold ${isDefault ? '' : 'text-gray-400'}`}>${amt}</span>
-                      <span class={`${suffSize} ml-0.5 font-medium ${isDefault ? 'opacity-70' : 'text-gray-400'}`}>{freq.suffix}</span>
+                      Other
                     </button>
-                  );
-                })}
+                  )}
+                  {showOtherInThisRow && (
+                    <div class={`cw-freq-custom-wrap ${otherSpanClass} hidden`}>
+                      <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="1"
+                          class="cw-freq-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                          placeholder="Other"
+                        />
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">{freq.suffix}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {/* Other button — own row when all amount rows are full */}
+            {lastRowFull && (
+              <div class="grid grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  class={`cw-freq-other-btn col-span-3 rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold ${amtSize}`}
+                  style="background-color: #f4f5f0;"
+                >
+                  Other
+                </button>
+                <div class="cw-freq-custom-wrap col-span-3 hidden">
+                  <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      class="cw-freq-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
+                      placeholder="Other"
+                    />
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">{freq.suffix}</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -438,7 +442,8 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
   upsellMonthlyRatio,
   specialProjectAmount,
   accentColor,
-  accentTextColor
+  accentTextColor,
+  skipUpsell
 }}>
   document.addEventListener('DOMContentLoaded', function() {
     var box = document.getElementById(boxId);
@@ -754,8 +759,8 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
         return;
       }
 
-      // For single/one-time: show upsell for amounts ≤ $200
-      if (amt > 200) {
+      // For single/one-time: show upsell for amounts ≤ $200 (unless skipUpsell is true)
+      if (skipUpsell || amt > 200) {
         addItemToCart(amt, 'single');
         return;
       }

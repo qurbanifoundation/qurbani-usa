@@ -23,7 +23,7 @@ export const siteConfig = {
   // CONTACT INFORMATION
   // ============================================
   contact: {
-    phone: '+1 (703) 596-4900',
+    phone: '+1 (989) QURBANI',
     tollFree: '1-800-900-0027',
     email: 'info@qurbani.com',
     address: {
@@ -60,7 +60,7 @@ export const siteConfig = {
         hasDropdown: true,
         dropdownItems: [
           { label: 'Pay Zakat', href: '/zakat' },
-          { label: 'Zakat Calculator', href: '/zakat-calculator' },
+          { label: 'Zakat Calculator', href: '/zakat/calculator' },
           { label: 'Zakat FAQ', href: '/zakat-faq' },
         ],
       },
@@ -70,12 +70,12 @@ export const siteConfig = {
         hasDropdown: true,
         dropdownItems: [
           { label: 'Our Story', href: '/about' },
-          { label: 'Our Team', href: '/about/team' },
-          { label: 'Annual Reports', href: '/about/reports' },
+          { label: 'Leadership', href: '/team' },
+          { label: 'Annual Reports', href: '/reports' },
         ],
       },
       { label: 'CONTACT US', href: '/contact', hasDropdown: false },
-      { label: 'ZAKAT CALCULATOR', href: '/zakat-calculator', hasDropdown: false },
+      { label: 'ZAKAT CALCULATOR', href: '/zakat/calculator', hasDropdown: false },
     ],
 
     // Donate button

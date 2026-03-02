@@ -83,7 +83,7 @@ const zakatWidgets = [
       hoverColor: '#e6f4fa',
       links: [
         { label: 'Pay Your Zakat', href: '/zakat', icon: 'money', color: '#0096D6' },
-        { label: 'Zakat Calculator', href: '/zakat-calculator', icon: 'calculator', color: '#16a34a' },
+        { label: 'Zakat Calculator', href: '/zakat/calculator', icon: 'calculator', color: '#16a34a' },
         { label: 'Zakat FAQ', href: '/zakat-faq', icon: 'question', color: '#7c3aed' },
         { label: 'What is Zakat?', href: '/what-is-zakat', icon: 'book', color: '#ea580c' },
         { label: 'Zakat on Gold & Silver', href: '/zakat-on-gold', icon: 'gold', color: '#eab308' },
@@ -102,12 +102,12 @@ const zakatWidgets = [
       heading: 'The Third Pillar of Islam',
       description: 'Zakat is an obligatory form of charity for Muslims who meet the necessary criteria of wealth (nisab). It purifies your wealth and helps those in need.',
       stats: [
-        { value: '2.5%', label: 'Of qualifying wealth', color: '#0096D6', href: '/zakat-calculator' },
-        { value: 'Live', label: 'Silver Nisab threshold', color: '#eab308', href: '/zakat-calculator' },
+        { value: '2.5%', label: 'Of qualifying wealth', color: '#0096D6', href: '/zakat/calculator' },
+        { value: 'Live', label: 'Silver Nisab threshold', color: '#eab308', href: '/zakat/calculator' },
       ],
       button: {
         label: 'Calculate Your Zakat Now',
-        href: '/zakat-calculator',
+        href: '/zakat/calculator',
         color: '#0096D6'
       }
     },
@@ -145,6 +145,7 @@ const aboutWidgets = [
     config: {
       links: [
         { label: 'Our Story', href: '/about', icon: 'user', color: '#D97718' },
+        { label: 'Leadership', href: '/team', icon: 'team', color: '#0096D6' },
         { label: 'Annual Reports', href: '/reports', icon: 'document', color: '#16a34a' },
         { label: 'Our Impact', href: '/impact', icon: 'heart', color: '#7c3aed' },
         { label: 'Media Center', href: '/media', icon: 'image', color: '#dc2626' },

@@ -80,7 +80,7 @@ function getDefaultContent(page: any) {
         {
           id: 'info',
           type: 'content',
-          content: '<h2>Get in Touch</h2><p>Have questions about our programs or want to learn more about how you can help?</p><h3>Office Address</h3><p>145 Sherwood Ave<br>Teaneck, NJ 07666</p><h3>Phone</h3><p>+1 (703) 596-4900<br>Toll Free: 1-800-900-0027</p><h3>Email</h3><p>info@qurbani.com</p>'
+          content: '<h2>Get in Touch</h2><p>Have questions about our programs or want to learn more about how you can help?</p><h3>Office Address</h3><p>145 Sherwood Ave<br>Teaneck, NJ 07666</p><h3>Phone</h3><p>+1 (989) QURBANI<br>Toll Free: 1-800-900-0027</p><h3>Email</h3><p>info@qurbani.com</p>'
         }
       ]
     };
