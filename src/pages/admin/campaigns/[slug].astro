@@ -375,8 +375,118 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
           </div>
         </div>
 
+        <!-- AQIQAH PACKAGE PRICING (shown only when page_template === 'aqiqah') -->
+        <div id="aqiqahPricingSettings" class="hidden bg-white rounded-xl shadow-sm border border-amber-200 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-amber-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-amber-500 text-sm font-mono">🐐</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Aqiqah Package Pricing</h2>
+                <p class="text-sm text-gray-400">Set prices for Baby Girl, Baby Boy, and Sadaqah packages</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <p class="text-xs text-gray-400 mb-4">These prices will be shown on the Aqiqah page. Leave blank to use the default prices.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Baby Girl -->
+              <div class="border border-pink-200 rounded-lg p-4 bg-pink-50/30">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">👧</span>
+                  <div>
+                    <p class="font-semibold text-gray-800">Baby Girl</p>
+                    <p class="text-xs text-gray-400">1 Goat/Sheep per Sunnah</p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                  <input type="number" id="aqiqahPriceGirl" placeholder="150" min="1" step="1" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" />
+                </div>
+              </div>
+              <!-- Baby Boy -->
+              <div class="border border-blue-200 rounded-lg p-4 bg-blue-50/30">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">👦</span>
+                  <div>
+                    <p class="font-semibold text-gray-800">Baby Boy</p>
+                    <p class="text-xs text-gray-400">2 Goats/Sheep per Sunnah</p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                  <input type="number" id="aqiqahPriceBoy" placeholder="300" min="1" step="1" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                </div>
+              </div>
+              <!-- Sadaqah -->
+              <div class="border border-orange-200 rounded-lg p-4 bg-orange-50/30">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">🪙</span>
+                  <div>
+                    <p class="font-semibold text-gray-800">Sadaqah</p>
+                    <p class="text-xs text-gray-400">Optional gift for baby's well-being</p>
+                  </div>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                  <input type="number" id="aqiqahPriceSadaqah" placeholder="100" min="1" step="1" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QURBANI PRICING (shown only when page_template === 'qurbani') -->
+        <div id="qurbaniPricingSettings" class="hidden bg-white rounded-xl shadow-sm border border-green-200 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-green-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-green-600 text-sm font-mono">🐄</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Qurbani Country Pricing</h2>
+                <p class="text-sm text-gray-400">Override prices per country and animal type — leave blank to use defaults</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs text-gray-400">Enter prices in USD. Empty fields use the default price shown in the placeholder.</p>
+              <button type="button" onclick="resetQurbaniPricing()" class="text-xs text-red-500 hover:text-red-700 font-medium">Reset All</button>
+            </div>
+            <div id="qurbaniPricingTable" class="overflow-x-auto">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ORPHAN SPONSORSHIP PRICING (shown for orphan-sponsorship & tilestack-sponsorship) -->
+        <div id="orphanPricingSettings" class="hidden bg-white rounded-xl shadow-sm border border-purple-200 overflow-hidden admin-collapsible">
+          <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-purple-50 transition">
+            <div class="flex items-center gap-3">
+              <span class="text-purple-500 text-sm font-mono">👶</span>
+              <div class="text-left">
+                <h2 class="text-lg font-bold text-gray-800">Orphan Sponsorship Pricing</h2>
+                <p class="text-sm text-gray-400">Monthly and yearly sponsorship amounts per country</p>
+              </div>
+            </div>
+            <svg class="admin-collapse-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div class="admin-collapse-body hidden px-6 pb-6">
+            <p class="text-xs text-gray-400 mb-4">Set monthly and yearly sponsorship amounts per country. Leave blank to use defaults.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="orphanPricingGrid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
         <!-- 5. CRISIS STATISTICS -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+        <div id="crisisStatsSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
           <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
             <div class="flex items-center gap-3">
               <span class="text-gray-400 text-sm font-mono">5</span>
@@ -407,7 +517,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
         </div>
 
         <!-- 6. PAGE CONTENT -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
+        <div id="pageContentSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden admin-collapsible">
           <button type="button" class="admin-collapse-toggle w-full flex items-center justify-between p-6 hover:bg-gray-50 transition">
             <div class="flex items-center gap-3">
               <span class="text-gray-400 text-sm font-mono">6</span>
@@ -1680,6 +1790,241 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     toggleDonationPanels();
   }
 
+  // ============ SMART SECTION VISIBILITY ============
+  // Template-specific panels and standard-only sections
+  const pageTemplateSelect = document.querySelector('select[name="page_template"]');
+  const aqiqahPricingPanel = document.getElementById('aqiqahPricingSettings');
+  const qurbaniPricingPanel = document.getElementById('qurbaniPricingSettings');
+  const orphanPricingPanel = document.getElementById('orphanPricingSettings');
+  const crisisStatsSection = document.getElementById('crisisStatsSection');
+  const pageContentSection = document.getElementById('pageContentSection');
+
+  const CUSTOM_TEMPLATES = ['aqiqah', 'qurbani', 'zakat-calculator', 'orphan-sponsorship', 'tilestack-sponsorship'];
+
+  function toggleTemplateSections() {
+    const template = pageTemplateSelect?.value || '';
+    const isCustom = CUSTOM_TEMPLATES.includes(template);
+
+    // Hide standard-only sections for custom templates
+    if (crisisStatsSection) crisisStatsSection.classList.toggle('hidden', isCustom);
+    if (pageContentSection) pageContentSection.classList.toggle('hidden', isCustom);
+
+    // Show/hide template-specific sections
+    if (aqiqahPricingPanel) aqiqahPricingPanel.classList.toggle('hidden', template !== 'aqiqah');
+    if (qurbaniPricingPanel) qurbaniPricingPanel.classList.toggle('hidden', template !== 'qurbani');
+    if (orphanPricingPanel) orphanPricingPanel.classList.toggle('hidden', template !== 'orphan-sponsorship' && template !== 'tilestack-sponsorship');
+  }
+
+  if (pageTemplateSelect) {
+    pageTemplateSelect.addEventListener('change', toggleTemplateSections);
+    toggleTemplateSections();
+  }
+
+  // ============ AQIQAH PRICING ============
+  function initAqiqahPricing() {
+    const aqConfig = existingTemplateConfig?.aqiqahPackages || {};
+    if (aqConfig.girl) document.getElementById('aqiqahPriceGirl').value = aqConfig.girl;
+    if (aqConfig.boy) document.getElementById('aqiqahPriceBoy').value = aqConfig.boy;
+    if (aqConfig.sadaqah) document.getElementById('aqiqahPriceSadaqah').value = aqConfig.sadaqah;
+  }
+  initAqiqahPricing();
+
+  function getAqiqahPricing() {
+    const girl = parseFloat(document.getElementById('aqiqahPriceGirl')?.value);
+    const boy = parseFloat(document.getElementById('aqiqahPriceBoy')?.value);
+    const sadaqah = parseFloat(document.getElementById('aqiqahPriceSadaqah')?.value);
+    const pricing = {};
+    if (girl > 0) pricing.girl = girl;
+    if (boy > 0) pricing.boy = boy;
+    if (sadaqah > 0) pricing.sadaqah = sadaqah;
+    return Object.keys(pricing).length > 0 ? pricing : null;
+  }
+
+  // ============ QURBANI PRICING ============
+  const QURBANI_DEFAULTS = [
+    { id: 'palestine-gaza', name: 'Palestine Gaza', flag: '🇵🇸', cat: 'Most Needed', goat: null, sheep: 425, cow_share: 400, cow_full: 2800 },
+    { id: 'palestine-jerusalem', name: 'Palestine Jerusalem', flag: '🇵🇸', cat: 'Most Needed', goat: null, sheep: 325, cow_share: 300, cow_full: 2100 },
+    { id: 'yemen', name: 'Yemen', flag: '🇾🇪', cat: 'Most Needed', goat: 155, sheep: 155, cow_share: 130, cow_full: 910 },
+    { id: 'syria', name: 'Syria', flag: '🇸🇾', cat: 'Most Needed', goat: null, sheep: 225, cow_share: 200, cow_full: 1400 },
+    { id: 'afghanistan', name: 'Afghanistan', flag: '🇦🇫', cat: 'Most Needed', goat: 200, sheep: 200, cow_share: 175, cow_full: 1225 },
+    { id: 'iraq', name: 'Iraq', flag: '🇮🇶', cat: 'Most Needed', goat: null, sheep: 275, cow_share: 250, cow_full: 1750 },
+    { id: 'iraq-refugees', name: 'Iraq Refugees', flag: '🇮🇶', cat: 'Most Needed', goat: null, sheep: 225, cow_share: 200, cow_full: 1400 },
+    { id: 'sudan', name: 'Sudan', flag: '🇸🇩', cat: 'Most Needed', goat: 145, sheep: 145, cow_share: 120, cow_full: 840 },
+    { id: 'kashmir-pakistan', name: 'Kashmir Pakistan', flag: '🇵🇰', cat: 'Most Needed', goat: 125, sheep: 125, cow_share: 100, cow_full: 700 },
+    { id: 'kashmir-india', name: 'Kashmir India', flag: '🇮🇳', cat: 'Most Needed', goat: 75, sheep: 75, cow_share: 50, cow_full: 350 },
+    { id: 'myanmar-refugees', name: 'Myanmar Refugees', flag: '🇲🇲', cat: 'Most Needed', goat: 125, sheep: null, cow_share: 100, cow_full: 700 },
+    { id: 'refugees-jordan', name: 'Refugees in Jordan', flag: '🇯🇴', cat: 'Most Needed', goat: null, sheep: 275, cow_share: 250, cow_full: 1750 },
+    { id: 'refugees-lebanon', name: 'Refugees in Lebanon', flag: '🇱🇧', cat: 'Most Needed', goat: null, sheep: 225, cow_share: 200, cow_full: 1400 },
+    { id: 'bosnia', name: 'Bosnia', flag: '🇧🇦', cat: 'Most Needed', goat: null, sheep: 300, cow_share: 250, cow_full: 1750 },
+    { id: 'india', name: 'India', flag: '🇮🇳', cat: 'Lowest Price', goat: 75, sheep: 75, cow_share: 50, cow_full: 350 },
+    { id: 'burundi', name: 'Burundi', flag: '🇧🇮', cat: 'Lowest Price', goat: 100, sheep: null, cow_share: 75, cow_full: 525 },
+    { id: 'kenya', name: 'Kenya', flag: '🇰🇪', cat: 'Lowest Price', goat: 85, sheep: 85, cow_share: 80, cow_full: 560 },
+    { id: 'bangladesh', name: 'Bangladesh', flag: '🇧🇩', cat: 'Lowest Price', goat: 125, sheep: 125, cow_share: 100, cow_full: 700 },
+    { id: 'rohingya-malaysia', name: 'Rohingya Malaysia', flag: '🇲🇾', cat: 'Lowest Price', goat: 110, sheep: null, cow_share: 85, cow_full: 595 },
+    { id: 'nepal', name: 'Nepal', flag: '🇳🇵', cat: 'Lowest Price', goat: 100, sheep: null, cow_share: 75, cow_full: 525 },
+    { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', cat: 'All Countries', goat: 140, sheep: 140, cow_share: 115, cow_full: 805 },
+    { id: 'somalia', name: 'Somalia', flag: '🇸🇴', cat: 'All Countries', goat: 150, sheep: 150, cow_share: 125, cow_full: 875 },
+    { id: 'jordan', name: 'Jordan', flag: '🇯🇴', cat: 'All Countries', goat: null, sheep: 300, cow_share: 275, cow_full: 1925 },
+    { id: 'lebanon', name: 'Lebanon', flag: '🇱🇧', cat: 'All Countries', goat: null, sheep: 250, cow_share: 225, cow_full: 1575 },
+    { id: 'turkey', name: 'Turkey', flag: '🇹🇷', cat: 'All Countries', goat: null, sheep: 275, cow_share: 250, cow_full: 1750 },
+    { id: 'indonesia', name: 'Indonesia', flag: '🇮🇩', cat: 'All Countries', goat: 225, sheep: null, cow_share: 200, cow_full: 1400 },
+    { id: 'mali', name: 'Mali', flag: '🇲🇱', cat: 'All Countries', goat: 125, sheep: 125, cow_share: 100, cow_full: 700 },
+    { id: 'niger', name: 'Niger', flag: '🇳🇪', cat: 'All Countries', goat: 125, sheep: 125, cow_share: 100, cow_full: 700 },
+    { id: 'ethiopia', name: 'Ethiopia', flag: '🇪🇹', cat: 'All Countries', goat: 115, sheep: 115, cow_share: 90, cow_full: 630 },
+    { id: 'ghana', name: 'Ghana', flag: '🇬🇭', cat: 'All Countries', goat: 135, sheep: 135, cow_share: 110, cow_full: 770 },
+    { id: 'senegal', name: 'Senegal', flag: '🇸🇳', cat: 'All Countries', goat: 135, sheep: 135, cow_share: 110, cow_full: 770 },
+    { id: 'mauritania', name: 'Mauritania', flag: '🇲🇷', cat: 'All Countries', goat: 100, sheep: 100, cow_share: null, cow_full: null },
+    { id: 'chad', name: 'Chad', flag: '🇹🇩', cat: 'All Countries', goat: 120, sheep: 120, cow_share: 95, cow_full: 665 },
+    { id: 'cameroon', name: 'Cameroon', flag: '🇨🇲', cat: 'All Countries', goat: 125, sheep: 125, cow_share: 100, cow_full: 700 },
+    { id: 'nigeria', name: 'Nigeria', flag: '🇳🇬', cat: 'All Countries', goat: 125, sheep: 125, cow_share: 100, cow_full: 700 },
+    { id: 'tanzania', name: 'Tanzania', flag: '🇹🇿', cat: 'All Countries', goat: 110, sheep: 110, cow_share: 85, cow_full: 595 },
+    { id: 'uganda', name: 'Uganda', flag: '🇺🇬', cat: 'All Countries', goat: 110, sheep: null, cow_share: 85, cow_full: 595 },
+    { id: 'egypt', name: 'Egypt', flag: '🇪🇬', cat: 'All Countries', goat: null, sheep: 225, cow_share: 200, cow_full: 1400 },
+    { id: 'morocco', name: 'Morocco', flag: '🇲🇦', cat: 'All Countries', goat: null, sheep: 250, cow_share: 225, cow_full: 1575 },
+    { id: 'tunisia', name: 'Tunisia', flag: '🇹🇳', cat: 'All Countries', goat: null, sheep: 225, cow_share: 200, cow_full: 1400 },
+    { id: 'albania', name: 'Albania', flag: '🇦🇱', cat: 'All Countries', goat: null, sheep: 275, cow_share: 250, cow_full: 1750 },
+    { id: 'kosovo', name: 'Kosovo', flag: '🇽🇰', cat: 'All Countries', goat: null, sheep: 300, cow_share: 275, cow_full: 1925 },
+    { id: 'philippines', name: 'Philippines', flag: '🇵🇭', cat: 'All Countries', goat: 175, sheep: null, cow_share: 150, cow_full: 1050 },
+    { id: 'sri-lanka', name: 'Sri Lanka', flag: '🇱🇰', cat: 'All Countries', goat: 125, sheep: null, cow_share: 100, cow_full: 700 },
+  ];
+
+  function initQurbaniPricing() {
+    const container = document.getElementById('qurbaniPricingTable');
+    if (!container) return;
+
+    const savedPricing = existingTemplateConfig?.qurbaniPricing || {};
+    const animalTypes = ['goat', 'sheep', 'cow_share', 'cow_full'];
+    const animalLabels = { goat: 'Goat', sheep: 'Sheep', cow_share: 'Cow Share', cow_full: 'Full Cow' };
+
+    let html = '<table class="w-full text-sm border-collapse">';
+    html += '<thead><tr class="bg-gray-50 border-b border-gray-200">';
+    html += '<th class="text-left py-2 px-2 font-medium text-gray-600 w-48">Country</th>';
+    animalTypes.forEach(t => {
+      html += '<th class="text-center py-2 px-1 font-medium text-gray-600 w-20">' + animalLabels[t] + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    let lastCat = '';
+    QURBANI_DEFAULTS.forEach(country => {
+      if (country.cat !== lastCat) {
+        html += '<tr><td colspan="5" class="pt-4 pb-1 px-2 text-xs font-bold text-green-700 uppercase tracking-wider border-b border-green-100">' + country.cat + '</td></tr>';
+        lastCat = country.cat;
+      }
+      const saved = savedPricing[country.id] || {};
+      html += '<tr class="border-b border-gray-100 hover:bg-gray-50">';
+      html += '<td class="py-1.5 px-2 text-gray-700 whitespace-nowrap">' + country.flag + ' ' + country.name + '</td>';
+      animalTypes.forEach(t => {
+        const def = country[t];
+        if (def === null) {
+          html += '<td class="py-1.5 px-1 text-center"><span class="text-gray-300">—</span></td>';
+        } else {
+          const savedVal = saved[t];
+          html += '<td class="py-1.5 px-1"><div class="relative">';
+          html += '<span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-gray-300 text-xs">$</span>';
+          html += '<input type="number" data-country="' + country.id + '" data-animal="' + t + '" ';
+          html += 'placeholder="' + def + '" ';
+          if (savedVal !== undefined && savedVal !== null) html += 'value="' + savedVal + '" ';
+          html += 'min="1" step="1" class="qurbani-price-input w-full pl-5 pr-1 py-1 border border-gray-200 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-green-400 focus:border-green-400" />';
+          html += '</div></td>';
+        }
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+  initQurbaniPricing();
+
+  function getQurbaniPricing() {
+    const inputs = document.querySelectorAll('.qurbani-price-input');
+    const pricing = {};
+    inputs.forEach(input => {
+      const val = parseFloat(input.value);
+      if (val > 0) {
+        const country = input.dataset.country;
+        const animal = input.dataset.animal;
+        if (!pricing[country]) pricing[country] = {};
+        pricing[country][animal] = val;
+      }
+    });
+    return Object.keys(pricing).length > 0 ? pricing : null;
+  }
+
+  window.resetQurbaniPricing = function() {
+    document.querySelectorAll('.qurbani-price-input').forEach(input => {
+      input.value = '';
+    });
+  };
+
+  // ============ ORPHAN SPONSORSHIP PRICING ============
+  const ORPHAN_DEFAULTS = [
+    { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', monthly: 45, yearly: 540 },
+    { id: 'palestine', name: 'Palestine', flag: '🇵🇸', monthly: 45, yearly: 540 },
+    { id: 'yemen', name: 'Yemen', flag: '🇾🇪', monthly: 40, yearly: 480 },
+    { id: 'syria', name: 'Syria', flag: '🇸🇾', monthly: 45, yearly: 540 },
+    { id: 'afghanistan', name: 'Afghanistan', flag: '🇦🇫', monthly: 40, yearly: 480 },
+    { id: 'bangladesh', name: 'Bangladesh', flag: '🇧🇩', monthly: 35, yearly: 420 },
+    { id: 'general', name: 'Where Most Needed', flag: '🌍', monthly: 35, yearly: 420 },
+  ];
+
+  function initOrphanPricing() {
+    const container = document.getElementById('orphanPricingGrid');
+    if (!container) return;
+
+    const savedPricing = existingTemplateConfig?.orphanPricing || {};
+
+    let html = '';
+    ORPHAN_DEFAULTS.forEach(country => {
+      const saved = savedPricing[country.id] || {};
+      html += '<div class="border border-purple-200 rounded-lg p-3 bg-purple-50/20">';
+      html += '<div class="flex items-center gap-2 mb-3">';
+      html += '<span class="text-xl">' + country.flag + '</span>';
+      html += '<p class="font-semibold text-gray-800 text-sm">' + country.name + '</p>';
+      html += '</div>';
+      html += '<div class="space-y-2">';
+      // Monthly
+      html += '<div class="flex items-center gap-2">';
+      html += '<label class="text-xs text-gray-500 w-14">Monthly</label>';
+      html += '<div class="relative flex-1">';
+      html += '<span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>';
+      html += '<input type="number" data-orphan-country="' + country.id + '" data-orphan-freq="monthly" ';
+      html += 'placeholder="' + country.monthly + '" ';
+      if (saved.monthly) html += 'value="' + saved.monthly + '" ';
+      html += 'min="1" step="1" class="orphan-price-input w-full pl-5 pr-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-purple-400" />';
+      html += '</div></div>';
+      // Yearly
+      html += '<div class="flex items-center gap-2">';
+      html += '<label class="text-xs text-gray-500 w-14">Yearly</label>';
+      html += '<div class="relative flex-1">';
+      html += '<span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>';
+      html += '<input type="number" data-orphan-country="' + country.id + '" data-orphan-freq="yearly" ';
+      html += 'placeholder="' + country.yearly + '" ';
+      if (saved.yearly) html += 'value="' + saved.yearly + '" ';
+      html += 'min="1" step="1" class="orphan-price-input w-full pl-5 pr-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-purple-400" />';
+      html += '</div></div>';
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+  }
+  initOrphanPricing();
+
+  function getOrphanPricing() {
+    const inputs = document.querySelectorAll('.orphan-price-input');
+    const pricing = {};
+    inputs.forEach(input => {
+      const val = parseFloat(input.value);
+      if (val > 0) {
+        const country = input.dataset.orphanCountry;
+        const freq = input.dataset.orphanFreq;
+        if (!pricing[country]) pricing[country] = {};
+        pricing[country][freq] = val;
+      }
+    });
+    return Object.keys(pricing).length > 0 ? pricing : null;
+  }
+
   // Add monthly amount row
   window.addCWMonthlyAmount = function(amount, impactText) {
     amount = amount || '';
@@ -2096,6 +2441,27 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       delete templateConfig.cwDonation;
     }
     templateConfig.pageContent = getPageContent();
+    // Aqiqah package pricing
+    const aqiqahPrices = getAqiqahPricing();
+    if (aqiqahPrices) {
+      templateConfig.aqiqahPackages = aqiqahPrices;
+    } else {
+      delete templateConfig.aqiqahPackages;
+    }
+    // Qurbani country pricing
+    const qurbaniPrices = getQurbaniPricing();
+    if (qurbaniPrices) {
+      templateConfig.qurbaniPricing = qurbaniPrices;
+    } else {
+      delete templateConfig.qurbaniPricing;
+    }
+    // Orphan sponsorship pricing
+    const orphanPrices = getOrphanPricing();
+    if (orphanPrices) {
+      templateConfig.orphanPricing = orphanPrices;
+    } else {
+      delete templateConfig.orphanPricing;
+    }
     data.template_config = templateConfig;
 
     try {

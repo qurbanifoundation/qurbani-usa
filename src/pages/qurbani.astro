@@ -5,27 +5,47 @@
  *
  * High-converting Qurbani donation page with country selection,
  * animal type options, and "on behalf of" personalization.
+ *
+ * Fetches campaign data from database to pick up admin-editable
+ * template_config (including pricing overrides). Falls back to
+ * hardcoded defaults if the DB campaign doesn't exist.
  */
 
 import QurbaniTemplate from '../templates/QurbaniTemplate.astro';
 import DonationCart from '../components/DonationCart.astro';
 import { getSettings } from '../lib/settings';
+import { supabaseAdmin } from '../lib/supabase';
 
 export const prerender = false;
 
 const settings = await getSettings();
 
-// Campaign data for the Qurbani page
+// Try to fetch the Qurbani campaign from database for admin-editable settings
+let dbCampaign: Record<string, unknown> | null = null;
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('slug', 'qurbani')
+    .eq('is_active', true)
+    .single();
+  dbCampaign = data;
+} catch (e) {
+  // Campaign may not exist in DB yet — that's fine, use fallback
+}
+
+// Build campaign object — DB values override defaults
 const campaign = {
-  id: 'qurbani-global',
-  title: 'Global Qurbani',
-  subtitle: 'Give Your Qurbani Where It\'s Needed Most',
+  id: (dbCampaign?.id as string) || 'qurbani-global',
+  title: (dbCampaign?.name as string) || (dbCampaign?.title as string) || 'Global Qurbani',
+  subtitle: (dbCampaign?.subtitle as string) || 'Give Your Qurbani Where It\'s Needed Most',
   slug: 'qurbani',
-  featured_image: '/images/qurbani-hero.jpg',
-  description: 'Fulfill your Qurbani obligation with 100% Shariah-compliant sacrifice. Fresh meat delivered to families in 70+ countries within 24 hours.',
-  goal_amount: 500000,
-  raised_amount: 245000,
-  is_zakat_eligible: false,
+  featured_image: (dbCampaign?.featured_image as string) || (dbCampaign?.hero_image_url as string) || '/images/qurbani-hero.jpg',
+  description: (dbCampaign?.long_description as string) || (dbCampaign?.description as string) || 'Fulfill your Qurbani obligation with 100% Shariah-compliant sacrifice. Fresh meat delivered to families in 70+ countries within 24 hours.',
+  goal_amount: (dbCampaign?.goal_amount as number) || 500000,
+  raised_amount: (dbCampaign?.raised_amount as number) || 245000,
+  is_zakat_eligible: (dbCampaign?.is_zakat_eligible as boolean) ?? false,
+  template_config: (dbCampaign?.template_config as Record<string, unknown>) || {},
 };
 ---
 

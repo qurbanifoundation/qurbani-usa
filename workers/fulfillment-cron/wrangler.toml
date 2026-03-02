@@ -1,0 +1,10 @@
+name = "qurbani-fulfillment-cron"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+no_bundle = false
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+FULFILLMENT_URL = "https://www.qurbani.com/api/fulfillment/process"

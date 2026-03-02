@@ -30,6 +30,7 @@ interface Props {
     goal_amount?: number;
     raised_amount?: number;
     is_zakat_eligible?: boolean;
+    template_config?: Record<string, unknown>;
   };
   donationBoxTemplate?: string;
 }
@@ -111,6 +112,16 @@ const countries = [
     badge: 'Best Value',
   },
 ];
+
+// Merge saved pricing overrides from template_config (admin-editable)
+const savedOrphanPricing = (campaign.template_config?.orphanPricing || {}) as Record<string, { monthly?: number; yearly?: number }>;
+countries.forEach(country => {
+  const overrides = savedOrphanPricing[country.id];
+  if (overrides) {
+    if (overrides.monthly && overrides.monthly > 0) country.monthlyAmount = overrides.monthly;
+    if (overrides.yearly && overrides.yearly > 0) country.yearlyAmount = overrides.yearly;
+  }
+});
 
 // What sponsorship provides
 const sponsorshipBenefits = [

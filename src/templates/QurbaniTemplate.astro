@@ -28,6 +28,7 @@ interface Props {
     goal_amount?: number;
     raised_amount?: number;
     is_zakat_eligible?: boolean;
+    template_config?: Record<string, unknown>;
   };
   donationBoxTemplate?: string;
 }
@@ -675,6 +676,19 @@ const countries: Country[] = [
     lowestPrice: true
   },
 ].sort((a, b) => a.name.localeCompare(b.name));
+
+// Merge saved pricing overrides from template_config (admin-editable)
+const savedPricing = (campaign.template_config?.qurbaniPricing || {}) as Record<string, Record<string, number>>;
+countries.forEach(country => {
+  const overrides = savedPricing[country.id];
+  if (overrides) {
+    country.animals.forEach(animal => {
+      if (overrides[animal.type] !== undefined && overrides[animal.type] > 0) {
+        animal.price = overrides[animal.type];
+      }
+    });
+  }
+});
 
 // Statistics
 const stats = [

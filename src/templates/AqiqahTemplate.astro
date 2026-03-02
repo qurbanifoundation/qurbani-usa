@@ -29,20 +29,22 @@ interface Props {
     goal_amount?: number;
     raised_amount?: number;
     is_zakat_eligible?: boolean;
+    template_config?: Record<string, unknown>;
   };
   donationBoxTemplate?: string;
 }
 
 const { campaign, donationBoxTemplate } = Astro.props;
 
-// Aqiqah Package Options
+// Aqiqah Package Options — prices from admin (template_config) with defaults
+const aqPricing = (campaign.template_config?.aqiqahPackages || {}) as Record<string, number>;
 const packages = [
   {
     id: 'girl',
     name: 'Baby Girl',
     icon: '👧',
     animals: 1,
-    price: 150,
+    price: aqPricing.girl || 150,
     description: '1 Goat/Sheep sacrificed according to Sunnah',
     popular: false,
     color: 'pink',
@@ -55,7 +57,7 @@ const packages = [
     name: 'Baby Boy',
     icon: '👦',
     animals: 2,
-    price: 300,
+    price: aqPricing.boy || 300,
     description: '2 Goats/Sheep sacrificed according to Sunnah',
     popular: false,
     color: 'blue',
@@ -68,7 +70,7 @@ const packages = [
     name: 'Sadaqah',
     icon: 'coins',
     animals: 0,
-    price: 100,
+    price: aqPricing.sadaqah || 100,
     description: 'Add a gift of Sadaqah for your baby\'s well-being.',
     popular: false,
     color: 'orange',

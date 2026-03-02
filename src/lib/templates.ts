@@ -45,6 +45,7 @@ export async function getPageTemplates(): Promise<TemplateOption[]> {
       { id: 2, template_type: 'page', template_key: 'emergency-appeal', template_label: 'Urgent Appeal', description: null, is_active: true, sort_order: 2 },
       { id: 3, template_type: 'page', template_key: 'orphan-sponsorship', template_label: 'Orphan Sponsorship', description: 'High-converting orphan sponsorship page with quantity selector', is_active: true, sort_order: 3 },
       { id: 4, template_type: 'page', template_key: 'zakat-calculator', template_label: 'Zakat Calculator', description: 'Full Zakat calculator with live metal prices, asset categories, and integrated payment CTA', is_active: true, sort_order: 4 },
+      { id: 5, template_type: 'page', template_key: 'aqiqah', template_label: 'Aqiqah', description: 'Premium Aqiqah page with boy/girl packages, child name personalization, and Sadaqah upsell', is_active: true, sort_order: 5 },
     ];
   }
 

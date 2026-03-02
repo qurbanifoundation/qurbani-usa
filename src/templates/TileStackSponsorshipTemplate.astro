@@ -27,28 +27,37 @@ interface Props {
     goal_amount?: number;
     raised_amount?: number;
     is_zakat_eligible?: boolean;
+    template_config?: Record<string, unknown>;
   };
   donationBoxTemplate?: string;
 }
 
 const { campaign, donationBoxTemplate } = Astro.props;
 
-// Sponsorship quantity tiles with social proof
+// Base price per child per month (default $45)
+const defaultBasePrice = 45;
+
+// Merge saved pricing overrides from template_config (admin-editable)
+// orphanPricing stores per-country monthly/yearly; we derive basePrice from pakistan's monthly
+const savedOrphanPricing = (campaign.template_config?.orphanPricing || {}) as Record<string, { monthly?: number; yearly?: number }>;
+const effectiveBasePrice = savedOrphanPricing?.pakistan?.monthly || defaultBasePrice;
+
+// Sponsorship quantity tiles with social proof — dynamically computed from base price
 const quantityTiles = [
-  { qty: 1, label: '1 Child', monthly: 45, badge: null, popularity: 15 },
-  { qty: 2, label: '2 Children', monthly: 90, badge: 'Most Popular', popularity: 45 },
-  { qty: 3, label: '3 Children', monthly: 135, badge: null, popularity: 25 },
-  { qty: 5, label: '5 Children', monthly: 225, badge: 'Best Impact', popularity: 10 },
-  { qty: 10, label: '10 Children', monthly: 450, badge: null, popularity: 5 },
+  { qty: 1, label: '1 Child', monthly: effectiveBasePrice * 1, badge: null, popularity: 15 },
+  { qty: 2, label: '2 Children', monthly: effectiveBasePrice * 2, badge: 'Most Popular', popularity: 45 },
+  { qty: 3, label: '3 Children', monthly: effectiveBasePrice * 3, badge: null, popularity: 25 },
+  { qty: 5, label: '5 Children', monthly: effectiveBasePrice * 5, badge: 'Best Impact', popularity: 10 },
+  { qty: 10, label: '10 Children', monthly: effectiveBasePrice * 10, badge: null, popularity: 5 },
 ];
 
-// Countries available
+// Countries available — derive multipliers from saved pricing
 const countries = [
-  { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', priceMultiplier: 1 },
-  { id: 'palestine', name: 'Palestine', flag: '🇵🇸', priceMultiplier: 1, urgent: true },
-  { id: 'yemen', name: 'Yemen', flag: '🇾🇪', priceMultiplier: 0.89 },
-  { id: 'syria', name: 'Syria', flag: '🇸🇾', priceMultiplier: 1 },
-  { id: 'afghanistan', name: 'Afghanistan', flag: '🇦🇫', priceMultiplier: 0.89 },
+  { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', priceMultiplier: (savedOrphanPricing?.pakistan?.monthly || defaultBasePrice) / effectiveBasePrice },
+  { id: 'palestine', name: 'Palestine', flag: '🇵🇸', priceMultiplier: (savedOrphanPricing?.palestine?.monthly || defaultBasePrice) / effectiveBasePrice, urgent: true },
+  { id: 'yemen', name: 'Yemen', flag: '🇾🇪', priceMultiplier: (savedOrphanPricing?.yemen?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'syria', name: 'Syria', flag: '🇸🇾', priceMultiplier: (savedOrphanPricing?.syria?.monthly || defaultBasePrice) / effectiveBasePrice },
+  { id: 'afghanistan', name: 'Afghanistan', flag: '🇦🇫', priceMultiplier: (savedOrphanPricing?.afghanistan?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
 ];
 
 // What each sponsorship provides
@@ -439,7 +448,7 @@ const benefits = [
   <Footer />
 </Layout>
 
-<script is:inline define:vars={{ campaignId: campaign.id, campaignTitle: campaign.title, campaignSlug: campaign.slug }}>
+<script is:inline define:vars={{ campaignId: campaign.id, campaignTitle: campaign.title, campaignSlug: campaign.slug, effectiveBasePrice }}>
   // Track view_item in GA4 on page load
   if (window.trackViewItem) {
     window.trackViewItem({
@@ -481,7 +490,7 @@ const benefits = [
     // State - nothing pre-selected
     let selectedCountry: { id: string; name: string; flag: string; multiplier: number } | null = null;
     let selectedQty = 0;
-    let basePrice = 45;
+    let basePrice = effectiveBasePrice || 45;
     let isMonthly = true;
     let isCustom = false;
     const summaryQtyLabel = document.getElementById('summary-qty-label');
