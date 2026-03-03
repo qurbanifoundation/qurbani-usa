@@ -127,7 +127,7 @@ admin_notifications (
 ## DonationCart / Sidecart Features
 
 - **Slide-in Sidecart**: Opens from right side
-- **Full-screen Checkout Modal**: 2-step checkout (Info → Payment)
+- **Full-screen Checkout Modal**: 1-step checkout (Info + Payment in single column)
 - **Recurring Options**: "Make it Monthly" and "Every Jummah" checkboxes
 - **Upsell Section**: Pre-checked Prophetic Qurbani + optional Feed a Family
 - **Cover Fees Option**: 3% processing fee coverage
@@ -139,12 +139,31 @@ admin_notifications (
 - "Make a bigger impact with every Friday gift" header (Caveat font)
 - Two checkboxes side-by-side: Monthly (left), Jummah (right)
 - Total shows frequency label (One-time / Monthly / Every Jummah)
+- **Split totals**: When cart has both one-time and monthly items, shows "Total due today" + "Monthly Total" separately
 
 ### Checkout Modal Features
-- Step 1: Donor info + Donation basket + Upsells + Cover fees
-- Step 2: Card payment (Stripe Elements) + Billing address
+- 1-step layout: Donor info + Payment fields + Billing address in single column
+- Dynamically-built inside `openCheckoutModal()` JS function
+- **Split totals**: Dynamic total label changes based on cart contents:
+  - One-time only: "Your Total"
+  - Monthly only: "Monthly Total"
+  - Mixed: "Total due today:" + separate "Monthly Total" row
+- **Stripe Link disabled**: `wallets: { link: 'never' }` — no "Save my information" form
+- **Stripe card terms hidden**: `terms: { card: 'never' }` — replaced with custom text
+- **Custom terms text**: "By making a donation to Qurbani Foundation, you agree to our Terms of Service and Privacy Policy" — below the pay button
 - Success state: Shows subscription info with next billing date
 - Social proof: "847 people donated this month"
+
+### Checkout Templates
+Three checkout UI paths exist in DonationCart.astro:
+1. **Three-step** (side cart inline) — `data-checkout-template="three-step"`
+2. **Two-step** (HTML template modal) — `data-checkout-template="two-step"` but triggers 1-step JS
+3. **One-step** (dynamically-built JS) — `openCheckoutModal()` — **currently active**
+
+All three have split totals, custom terms, and Stripe Link disabled.
+
+### Donor Lookup API
+`POST /api/donor/lookup` returns `donorPhone` and `billingAddress` for returning donors. Currently used by `/my-donations` page. Client-side auto-fill was planned but deferred due to privacy concerns (anyone typing an email gets that donor's data). Future approach: localStorage-only with "Remember me" checkbox consent.
 
 ### LocalStorage
 Cart persists in `donationCart` key with items including:

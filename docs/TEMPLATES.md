@@ -17,6 +17,32 @@
 
 ---
 
+## GreenWithYellow Template
+
+### Overview
+Default campaign page template used by most appeals (yemen-emergency, afghanistan-emergency, etc.). Features a hero section, "Choose Your Impact" tier system, and content sections.
+
+### File
+`src/templates/GreenWithYellowTemplate.astro`
+
+### "Choose Your Impact" Tier System
+- **Give Once / Monthly toggle**: Tab-style toggle at top
+- **Pricing**: Monthly amounts are 40% of one-time amounts (60% less)
+- **Format**: `$150 USD` (give once) / `$60 USD/mo` (monthly)
+- **Tier rows**: Each row has `data-tier-single-amount` and `data-tier-monthly-amount` attributes
+- **Cart integration**: Works with all donation box templates (CW, teal-yellow, etc.)
+- **Bug fix (Mar 2026)**: Null check on `donateBtn` — CW donation box template doesn't have `id="donate-btn"`, so the addEventListener was crashing and preventing tier handlers from registering
+
+### Donation Box Templates
+Campaign's `donation_box_template` field determines which donation box to render:
+- `cw-donation` → CWDonationBox.astro (uses `window.addToCart()` global)
+- `teal-yellow` → Default teal/yellow donation box (has `id="donate-btn"`)
+
+### Key JS Function
+`initGreenYellowTemplate()` — initializes tier system, toggle, and click handlers. Called on DOMContentLoaded or immediately if DOM already ready.
+
+---
+
 ## Aqiqah Template
 
 ### Overview
