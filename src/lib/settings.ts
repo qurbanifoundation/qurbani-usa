@@ -100,11 +100,14 @@ export interface CheckoutUpsell {
   amount: number;
   enabled: boolean;
   sort_order: number;
+  type?: 'single' | 'monthly' | 'weekly';
+  show_stamp?: boolean;
+  stamp_text?: string;
 }
 
 const defaultUpsells: CheckoutUpsell[] = [
-  { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1 },
-  { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2 },
+  { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1, type: 'single' },
+  { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2, type: 'single' },
 ];
 
 export async function getCheckoutUpsells(): Promise<CheckoutUpsell[]> {

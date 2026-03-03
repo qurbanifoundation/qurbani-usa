@@ -245,6 +245,24 @@ const campaignTemplates = [
           </label>
 
           <div class="border-t border-gray-200 pt-4 mt-4">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sidecart Settings</p>
+          </div>
+
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+            <div>
+              <span class="font-medium text-gray-800">🛒 Enable Sidecart</span>
+              <p class="text-sm text-gray-500">When enabled, clicking the cart icon opens the sidecart panel. When disabled, clicking the cart icon goes straight to checkout.</p>
+            </div>
+            <input
+              type="checkbox"
+              name="sidecartEnabled"
+              id="sidecartEnabled"
+              checked={settings.sidecart_enabled !== false}
+              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
+            />
+          </label>
+
+          <div class="border-t border-gray-200 pt-4 mt-4">
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sidecart Recurring Upsells</p>
           </div>
 
@@ -428,6 +446,7 @@ const campaignTemplates = [
     // Handle checkboxes explicitly (unchecked ones aren't in FormData)
     settingsData.showRamadanPopup = (document.getElementById('showRamadanPopup') as HTMLInputElement)?.checked ?? true;
     settingsData.showCartReminder = (document.getElementById('showCartReminder') as HTMLInputElement)?.checked ?? true;
+    settingsData.sidecartEnabled = (document.getElementById('sidecartEnabled') as HTMLInputElement)?.checked ?? true;
     settingsData.showSidecartMonthly = (document.getElementById('showSidecartMonthly') as HTMLInputElement)?.checked ?? true;
     settingsData.showSidecartJummah = (document.getElementById('showSidecartJummah') as HTMLInputElement)?.checked ?? true;
 

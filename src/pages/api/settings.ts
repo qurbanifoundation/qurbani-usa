@@ -95,7 +95,8 @@ export const POST: APIRoute = async ({ request }) => {
     if ('showRamadanPopup' in body) updateData.show_ramadan_popup = body.showRamadanPopup === true || body.showRamadanPopup === 'on';
     if ('showCartReminder' in body) updateData.show_cart_reminder = body.showCartReminder === true || body.showCartReminder === 'on';
 
-    // Sidecart recurring upsell settings (boolean)
+    // Sidecart settings (boolean)
+    if ('sidecartEnabled' in body) updateData.sidecart_enabled = body.sidecartEnabled === true || body.sidecartEnabled === 'on';
     if ('showSidecartMonthly' in body) updateData.show_sidecart_monthly = body.showSidecartMonthly === true || body.showSidecartMonthly === 'on';
     if ('showSidecartJummah' in body) updateData.show_sidecart_jummah = body.showSidecartJummah === true || body.showSidecartJummah === 'on';
 

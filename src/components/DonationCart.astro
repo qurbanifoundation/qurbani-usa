@@ -7,11 +7,12 @@ import type { CheckoutUpsell } from '../lib/settings';
 interface Props {
   checkoutTemplate?: string;
   showCartReminder?: boolean;
+  sidecartEnabled?: boolean;
   showSidecartMonthly?: boolean;
   showSidecartJummah?: boolean;
 }
 
-const { checkoutTemplate = 'three-step', showCartReminder = true, showSidecartMonthly = true, showSidecartJummah = true } = Astro.props;
+const { checkoutTemplate = 'three-step', showCartReminder = true, sidecartEnabled = true, showSidecartMonthly = true, showSidecartJummah = true } = Astro.props;
 
 // Google Places API key
 const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
@@ -171,7 +172,7 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
 </style>
 
 <!-- Checkout template setting for client-side JS -->
-<div id="checkout-template-setting" data-checkout-template={checkoutTemplate} data-site-logo={siteLogo} class="hidden"></div>
+<div id="checkout-template-setting" data-checkout-template={checkoutTemplate} data-site-logo={siteLogo} data-sidecart-enabled={sidecartEnabled ? 'true' : 'false'} class="hidden"></div>
 <script is:inline>
   // URL param override: ?checkout=gg-one-step (for testing without changing DB)
   (function() {
@@ -1111,16 +1112,19 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
             <!-- Upsells (dynamic from admin) -->
             {enabledUpsells.length > 0 && (
             <div class="bg-white rounded-md border border-gray-200 p-4">
-              <p class="text-sm font-semibold text-gray-700 mb-3">Add to your impact:</p>
+              <p class="text-sm font-semibold text-gray-700 mb-3">Please support us further:</p>
               <div class="space-y-2">
                 {enabledUpsells.map((upsell) => (
                 <label class="flex items-center gap-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-amber-50 transition border border-transparent hover:border-amber-200">
-                  <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} />
+                  <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} />
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-gray-800">{upsell.title}</p>
                     {upsell.description && <p class="text-xs text-gray-500">{upsell.description}</p>}
+                    {upsell.show_stamp && upsell.stamp_text && (
+                      <span class="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 rounded">{upsell.stamp_text}</span>
+                    )}
                   </div>
-                  <span class="font-bold text-[#d97706] text-sm">${upsell.amount}</span>
+                  <span class="font-bold text-[#d97706] text-sm">${upsell.amount}{upsell.type === 'monthly' ? '/mo' : upsell.type === 'weekly' ? '/wk' : ''}</span>
                 </label>
                 ))}
               </div>
@@ -1154,8 +1158,8 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
 
             <!-- Recurring Info Box -->
             <div id="gg-recurring-info" class="bg-gray-50 border border-gray-200 rounded-md p-4 text-sm text-gray-700" style="display: none;">
-              <p class="font-semibold mb-1 text-gray-800">You have chosen to make a monthly recurring donation.</p>
-              <p class="text-xs text-gray-500">Your credit card will be charged today and each month until you cancel your donation. You can edit your recurring donation at any time. <a href="/manage-subscription" target="_blank" class="underline font-semibold text-[#d97706] hover:text-[#b45309]">LEARN MORE</a></p>
+              <p id="gg-recurring-heading" class="font-semibold mb-1 text-gray-800">Your recurring support ensures families receive continuous aid during crisis.</p>
+              <p id="gg-recurring-body" class="text-xs text-gray-500">Your credit card will be charged today and on a recurring basis until you cancel your donation. You can edit your recurring donation at any time. <a href="/manage-subscription" target="_blank" class="underline font-semibold text-[#d97706] hover:text-[#b45309]">LEARN MORE</a></p>
             </div>
           </div>
         </div>
@@ -1256,7 +1260,7 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
               <div>
                 <span class="font-semibold text-gray-800 text-sm">Cover transaction fees</span>
                 <span class="ml-1 px-1.5 py-0.5 bg-amber-200 text-amber-800 text-xs font-bold rounded-sm">+3%</span>
-                <p id="gg-fee-description" class="text-xs text-gray-500 mt-0.5">Add $0.00 so 100% goes to those in need</p>
+                <p id="gg-fee-description" class="text-xs text-gray-500 mt-0.5">Add $0.00 to ensure 100% of your donation goes directly to families in need.</p>
               </div>
             </label>
           </div>
@@ -1297,10 +1301,9 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
             </div>
             <div class="flex items-center gap-1">
               <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
               </svg>
-              <span>Receipt Emailed</span>
+              <span>Cancel anytime.</span>
             </div>
           </div>
         </div>
@@ -1928,6 +1931,15 @@ function hideCartReminder() {
 
 // Open/Close Cart
 function openCart() {
+  // If sidecart is disabled, skip straight to checkout
+  var sidecartSetting = document.getElementById('checkout-template-setting')?.dataset?.sidecartEnabled;
+  if (sidecartSetting === 'false' && window.donationCart.items.length > 0) {
+    var mode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
+    if (mode === 'gg-one-step') { openGGCheckout(); }
+    else { openCheckoutModal(); }
+    return;
+  }
+
   window.donationCart.isOpen = true;
   var overlay = document.getElementById('cart-overlay');
   var sidebar = document.getElementById('cart-sidebar');
@@ -3416,7 +3428,8 @@ document.querySelectorAll('.gg-upsell-checkbox').forEach(function(checkbox) {
     var upsellId = this.dataset.upsellId;
     var upsellTitle = this.dataset.upsellTitle;
     var upsellAmount = parseFloat(this.dataset.upsellAmount) || 0;
-    var upsellItem = { id: upsellId, name: upsellTitle, amount: upsellAmount, type: 'single', quantity: 1, isUpsell: true, originalType: 'single' };
+    var upsellType = this.dataset.upsellType || 'single';
+    var upsellItem = { id: upsellId, name: upsellTitle, amount: upsellAmount, type: upsellType, quantity: 1, isUpsell: true, originalType: upsellType, recurringInterval: (upsellType === 'monthly' || upsellType === 'weekly') ? upsellType : undefined };
     if (this.checked) {
       window.donationCart.items.push(Object.assign({}, upsellItem));
     } else {
@@ -3446,7 +3459,13 @@ window.ggUpdateQty = function(index, delta) {
 };
 
 window.ggRemove = function(index) {
+  var removedItem = window.donationCart.items[index];
   window.donationCart.items.splice(index, 1);
+  // Uncheck upsell checkbox if the removed item was an upsell
+  if (removedItem && removedItem.isUpsell && removedItem.id) {
+    var cb = document.querySelector('.gg-upsell-checkbox[data-upsell-id="' + removedItem.id + '"]');
+    if (cb) cb.checked = false;
+  }
   saveCart();
   updateCartUI();
   updateGGCart();
@@ -3459,6 +3478,32 @@ window.ggUpdateAmount = function(index, value) {
     var amt = parseFloat(value);
     if (isNaN(amt) || amt < 1) amt = 1;
     item.amount = amt;
+    saveCart();
+    updateCartUI();
+    updateGGCart();
+  }
+};
+
+window.ggToggleEdit = function(index) {
+  var panel = document.getElementById('gg-edit-panel-' + index);
+  if (panel) {
+    var isHidden = panel.style.display === 'none' || !panel.style.display;
+    // Close all other edit panels first
+    document.querySelectorAll('[id^="gg-edit-panel-"]').forEach(function(p) { p.style.display = 'none'; });
+    document.querySelectorAll('[id^="gg-edit-btn-"]').forEach(function(b) { b.textContent = 'Edit'; });
+    if (isHidden) {
+      panel.style.display = 'flex';
+      document.getElementById('gg-edit-btn-' + index).textContent = 'Done';
+    }
+  }
+};
+
+window.ggToggleType = function(index, type) {
+  var item = window.donationCart.items[index];
+  if (item) {
+    item.type = type;
+    item.recurringInterval = type === 'single' ? undefined : type;
+    item.originalType = type;
     saveCart();
     updateCartUI();
     updateGGCart();
@@ -3519,37 +3564,56 @@ function updateGGCart() {
     var mobileHtml = '';
     var fallbackImg = 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80';
     items.forEach(function(item, index) {
-      var isRecurring = item.type === 'monthly' || item.type === 'weekly' || item.recurringInterval;
-      var freqLabel = isRecurring ? '/mo' : '';
+      var itemType = item.type || 'single';
+      var itemInterval = item.recurringInterval || itemType;
+      var isRecurring = itemType === 'monthly' || itemType === 'weekly' || itemType === 'yearly' || itemType === 'daily' || (item.recurringInterval && item.recurringInterval !== 'single');
+      var freqSuffix = isRecurring ? (itemInterval === 'weekly' ? '/wk' : itemInterval === 'yearly' ? '/yr' : itemInterval === 'daily' ? '/day' : '/mo') : '';
+      var freqLabel = freqSuffix;
       var imgSrc = item.image || fallbackImg;
       var itemName = item.name || item.campaign || 'Donation';
       var onetimeActive = !isRecurring;
       var monthlyActive = isRecurring;
 
-      var freqText = isRecurring ? 'per month' : 'one-time';
-
       html +=
         '<div class="px-4 py-4">' +
-          '<div class="flex gap-3.5">' +
+          // Main row: image, name, price + edit
+          '<div class="flex items-center gap-3.5">' +
             // Thumbnail
             '<div class="flex-shrink-0 w-[72px] h-[72px] rounded overflow-hidden bg-gray-100">' +
               '<img src="' + imgSrc + '" alt="' + itemName + '" class="w-full h-full object-cover" onerror="this.onerror=null;this.src=\'' + fallbackImg + '\';" />' +
             '</div>' +
-            // Info column
+            // Name
             '<div class="flex-1 min-w-0">' +
-              // Name
-              '<p class="text-sm font-bold text-gray-800 leading-snug mb-1.5" style="font-family:\'Signika\',sans-serif;">' + itemName + '</p>' +
-              // Price badge: editable $ amount + frequency text
-              '<span class="inline-flex items-center border border-[#d97706]/40 rounded px-1.5 py-0.5 bg-[#d97706]/5">' +
-                '<span class="text-[#d97706] text-xs font-medium mr-0.5">$</span>' +
-                '<input type="number" value="' + item.amount + '" min="1" step="1" onchange="ggUpdateAmount(' + index + ',this.value)" class="w-10 text-sm font-bold text-[#d97706] bg-transparent outline-none text-left [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />' +
-                '<span class="text-xs text-[#d97706] font-medium">' + freqText + '</span>' +
-              '</span>' +
+              '<p class="text-sm font-bold text-gray-800 leading-snug" style="font-family:\'Signika\',sans-serif;">' + itemName + '</p>' +
             '</div>' +
-            // Remove link
-            '<div class="flex-shrink-0">' +
-              '<button type="button" onclick="ggRemove(' + index + ')" class="text-xs text-gray-400 hover:text-red-500 transition font-medium">Remove</button>' +
+            // Price + Edit link
+            '<div class="flex-shrink-0 text-right">' +
+              '<span class="text-[#d97706] text-base font-bold whitespace-nowrap">$' + item.amount + (freqSuffix || '') + '</span>' +
+              '<div>' +
+                '<button type="button" id="gg-edit-btn-' + index + '" onclick="ggToggleEdit(' + index + ')" class="text-[10px] text-gray-400 hover:text-[#d97706] font-medium transition mt-0.5">Edit</button>' +
+              '</div>' +
             '</div>' +
+          '</div>' +
+          // Expandable edit panel (hidden by default)
+          '<div id="gg-edit-panel-' + index + '" class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100" style="display:none;">' +
+            // Amount input + Update underneath
+            '<div class="flex flex-col items-center">' +
+              '<div class="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">' +
+                '<span class="text-xs text-gray-400">$</span>' +
+                '<input type="number" value="' + item.amount + '" min="1" step="1" onchange="ggUpdateAmount(' + index + ',this.value)" class="w-12 text-sm font-bold text-gray-800 bg-transparent outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />' +
+              '</div>' +
+              '<button type="button" onclick="ggToggleEdit(' + index + ')" class="text-[10px] text-gray-400 hover:text-gray-600 font-semibold transition mt-1">Update</button>' +
+            '</div>' +
+            // Frequency toggle switch: One-time [toggle] Monthly
+            '<div class="flex items-center gap-1.5">' +
+              '<span class="text-[10px] font-medium ' + (!isRecurring ? 'text-gray-800' : 'text-gray-400') + '">One-time</span>' +
+              '<button type="button" onclick="ggToggleType(' + index + ',' + (isRecurring ? '\'single\'' : '\'monthly\'') + ')" class="relative w-8 h-[18px] rounded-full transition-colors ' + (isRecurring ? 'bg-[#d97706]' : 'bg-gray-300') + '">' +
+                '<span class="absolute top-[2px] ' + (isRecurring ? 'left-[14px]' : 'left-[2px]') + ' w-[14px] h-[14px] bg-white rounded-full shadow transition-all"></span>' +
+              '</button>' +
+              '<span class="text-[10px] font-medium ' + (isRecurring ? 'text-gray-800' : 'text-gray-400') + '">Monthly</span>' +
+            '</div>' +
+            // Remove text link
+            '<button type="button" onclick="ggRemove(' + index + ')" class="ml-auto text-[10px] text-red-400 hover:text-red-600 font-medium transition">Remove</button>' +
           '</div>' +
         '</div>';
 
@@ -3571,8 +3635,14 @@ function updateGGCart() {
   var total = subtotal + feeAmount;
 
   // Split totals for mixed carts
-  var singleItems = items.filter(function(i) { return i.type === 'single' && !i.recurringInterval; });
-  var recurringItems = items.filter(function(i) { return i.type !== 'single' || i.recurringInterval; });
+  var recurringItems = items.filter(function(i) {
+    var t = i.type || 'single';
+    var r = i.recurringInterval;
+    return (t === 'monthly' || t === 'weekly' || t === 'yearly' || t === 'daily') || (r && r !== 'single' && r !== undefined);
+  });
+  var singleItems = items.filter(function(i) {
+    return recurringItems.indexOf(i) === -1;
+  });
   var singleTotal = singleItems.reduce(function(sum, i) { return sum + (i.amount * (i.quantity || 1)); }, 0);
   var recurringTotal = recurringItems.reduce(function(sum, i) { return sum + (i.amount * (i.quantity || 1)); }, 0);
   var hasMixed = singleItems.length > 0 && recurringItems.length > 0;
@@ -3593,7 +3663,7 @@ function updateGGCart() {
 
   // Update fee description
   var feeDesc = document.getElementById('gg-fee-description');
-  if (feeDesc) feeDesc.textContent = 'Add $' + (subtotal * 0.03).toFixed(2) + ' so 100% goes to those in need';
+  if (feeDesc) feeDesc.textContent = 'Add $' + (subtotal * 0.03).toFixed(2) + ' to ensure 100% of your donation goes directly to families in need.';
 
   // Update total label & amount
   var totalLabel = document.getElementById('gg-total-label');
@@ -3602,6 +3672,14 @@ function updateGGCart() {
   var monthlyRow = document.getElementById('gg-monthly-total-row');
   var monthlyTotalEl = document.getElementById('gg-monthly-total');
 
+  // Determine recurring frequency label
+  var hasWeeklyItems = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; });
+  var hasDailyItems = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; });
+  var hasYearlyItems = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; });
+  var recurLabel = hasWeeklyItems ? 'Weekly' : hasDailyItems ? 'Daily' : hasYearlyItems ? 'Yearly' : 'Monthly';
+  var recurSuffix = hasWeeklyItems ? '/wk' : hasDailyItems ? '/day' : hasYearlyItems ? '/yr' : '/mo';
+  var recurFreqText = hasWeeklyItems ? '/ week' : hasDailyItems ? '/ day' : hasYearlyItems ? '/ year' : '/ month';
+
   if (hasMixed) {
     var singleFee = coverFees ? Math.round(singleTotal * 0.03 * 100) / 100 : 0;
     var recurringFee = coverFees ? Math.round(recurringTotal * 0.03 * 100) / 100 : 0;
@@ -3609,11 +3687,12 @@ function updateGGCart() {
     totalEl.textContent = '$' + (singleTotal + recurringTotal + singleFee + recurringFee).toFixed(2);
     totalFreq.textContent = '';
     monthlyRow.style.display = 'flex';
-    monthlyTotalEl.textContent = '$' + (recurringTotal + recurringFee).toFixed(2) + '/mo';
+    monthlyRow.querySelector('span:first-child').textContent = recurLabel.toUpperCase() + ' TOTAL';
+    monthlyTotalEl.textContent = '$' + (recurringTotal + recurringFee).toFixed(2) + recurSuffix;
   } else if (hasRecurring) {
-    totalLabel.textContent = 'Monthly Total:';
+    totalLabel.textContent = recurLabel + ' Total:';
     totalEl.textContent = '$' + total.toFixed(2);
-    totalFreq.textContent = '/ month';
+    totalFreq.textContent = recurFreqText;
     monthlyRow.style.display = 'none';
   } else {
     totalLabel.textContent = 'Total:';
@@ -3622,9 +3701,19 @@ function updateGGCart() {
     monthlyRow.style.display = 'none';
   }
 
-  // Show/hide recurring info box
+  // Show/hide recurring info box + update text based on frequency
   var recurringInfo = document.getElementById('gg-recurring-info');
-  if (recurringInfo) recurringInfo.style.display = hasRecurring ? 'block' : 'none';
+  if (recurringInfo) {
+    recurringInfo.style.display = hasRecurring ? 'block' : 'none';
+    if (hasRecurring) {
+      var headingEl = document.getElementById('gg-recurring-heading');
+      var bodyEl = document.getElementById('gg-recurring-body');
+      var freqWord = hasWeeklyItems ? 'weekly' : hasDailyItems ? 'daily' : hasYearlyItems ? 'yearly' : 'monthly';
+      var freqPhrase = hasWeeklyItems ? 'each Friday' : hasDailyItems ? 'each day' : hasYearlyItems ? 'each year' : 'each month';
+      if (headingEl) headingEl.textContent = 'Your ' + freqWord + ' support ensures families receive continuous aid during crisis.';
+      if (bodyEl) bodyEl.innerHTML = 'Your credit card will be charged today and ' + freqPhrase + ' until you cancel your donation. You can edit your recurring donation at any time. <a href="/manage-subscription" target="_blank" class="underline font-semibold text-[#d97706] hover:text-[#b45309]">LEARN MORE</a>';
+    }
+  }
 
   // Update mobile badge
   var countBadge = document.getElementById('gg-cart-count-badge');
