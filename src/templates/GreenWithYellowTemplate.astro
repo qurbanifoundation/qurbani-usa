@@ -865,13 +865,13 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                 <div class="px-5 pt-4 sm:px-7">
                   <div class="inline-flex bg-[#f4f5f0] rounded border border-[#e0e1dc] p-0.5">
                     <button type="button"
-                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all"
+                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       data-tier-type="single"
                       style="color: #9ca3af;">
                       {pageContent.chooseYourImpact.singleTabText}
                     </button>
                     <button type="button"
-                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all"
+                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       data-tier-type="monthly"
                       style="background-color: #d97706; color: #ffffff;">
                       {pageContent.chooseYourImpact.monthlyTabText}
@@ -881,20 +881,23 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
                 <!-- Tier rows -->
                 <div class="px-5 sm:px-7 py-4 space-y-2.5">
-                  {activeOptions.map((opt: any) => (
+                  {activeOptions.map((opt: any) => {
+                    const monthlyAmount = Math.round(opt.amount * 0.4);
+                    return (
                     <button type="button"
                       class="tier-row w-full flex items-center gap-3 bg-[#f4f5f0] border border-[#e0e1dc] rounded px-4 py-3.5 hover:border-[#d97706] hover:bg-[#d97706]/5 transition-all group cursor-pointer text-left"
+                      data-tier-single-amount={opt.amount}
+                      data-tier-monthly-amount={monthlyAmount}
                       data-tier-amount={opt.amount}
                       data-tier-label={opt.label || `$${opt.amount} Donation`}>
                       <div class="flex-shrink-0 min-w-[70px] md:min-w-[80px]">
-                        <span class="font-bold text-[17px] text-gray-800" style="font-family: 'Signika', sans-serif;">
+                        <span class="tier-price font-bold text-[17px] text-gray-800" style="font-family: 'Signika', sans-serif;">
                           ${opt.amount.toLocaleString()}
                         </span>
                       </div>
                       <div class="w-px h-8 bg-[#e0e1dc] flex-shrink-0"></div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-[14px] text-gray-600 leading-snug">{opt.label || 'Support our cause'}</p>
-                        <p class="tier-monthly-hint text-[11px] text-gray-400 mt-0.5" style="display: none;">Just ${Math.ceil(opt.amount / 12)}/month</p>
+                        <p class="tier-label text-[14px] text-gray-600 leading-snug">{opt.label || 'Support our cause'}</p>
                       </div>
                       <div class="flex-shrink-0">
                         <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#d97706] text-white group-hover:scale-110 group-hover:shadow-md transition-all">
@@ -904,7 +907,8 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                         </span>
                       </div>
                     </button>
-                  ))}
+                    );
+                  })}
 
                   <!-- Custom amount -->
                   <div class="flex items-center gap-3 bg-[#f4f5f0] border border-[#e0e1dc] rounded px-4 py-3">
@@ -1087,7 +1091,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
   let selectedLabel = '';
   let donationType = 'single';
 
-  document.addEventListener('DOMContentLoaded', function() {
+  function initGreenYellowTemplate() {
     // Donation box elements
     const typeButtons = document.querySelectorAll('.donation-type-btn');
     const amountButtons = document.querySelectorAll('.amount-btn');
@@ -1379,10 +1383,8 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
     }
 
     // Donate buttons
-    donateBtn.addEventListener('click', handleDonate);
-    if (mobileDonateBtn) {
-      mobileDonateBtn.addEventListener('click', handleDonate);
-    }
+    if (donateBtn) donateBtn.addEventListener('click', handleDonate);
+    if (mobileDonateBtn) mobileDonateBtn.addEventListener('click', handleDonate);
 
     // Set initial selection
     if (amountButtons.length > 0) {
@@ -1397,26 +1399,47 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
     // Tier type toggle (Single / Monthly)
     var tierTypeButtons = document.querySelectorAll('.tier-type-btn');
-    var monthlyHints = document.querySelectorAll('.tier-monthly-hint');
+
+    function updateTierDisplay() {
+      var isMonthly = tierDonationType === 'monthly';
+      // Update button styles
+      tierTypeButtons.forEach(function(b) {
+        if (b.dataset.tierType === tierDonationType) {
+          b.style.backgroundColor = '#d97706';
+          b.style.color = '#ffffff';
+        } else {
+          b.style.backgroundColor = 'transparent';
+          b.style.color = '#9ca3af';
+        }
+      });
+      // Update each tier row: swap displayed price and toggle monthly hints
+      document.querySelectorAll('.tier-row').forEach(function(row) {
+        var singleAmt = parseInt(row.dataset.tierSingleAmount);
+        var monthlyAmt = parseInt(row.dataset.tierMonthlyAmount);
+        var activeAmt = isMonthly ? monthlyAmt : singleAmt;
+        var priceEl = row.querySelector('.tier-price');
+        // Update the active amount used for add-to-cart
+        row.dataset.tierAmount = activeAmt;
+        // Update displayed price — append /mo on monthly tab
+        if (priceEl) {
+          if (isMonthly) {
+            priceEl.innerHTML = '$' + activeAmt.toLocaleString() + ' <span style="font-size: 11px; font-weight: 500; color: #9ca3af;">USD/mo</span>';
+          } else {
+            priceEl.innerHTML = '$' + singleAmt.toLocaleString() + ' <span style="font-size: 11px; font-weight: 500; color: #9ca3af;">USD</span>';
+          }
+        }
+      });
+    }
 
     tierTypeButtons.forEach(function(btn) {
       btn.addEventListener('click', function() {
         tierDonationType = this.dataset.tierType;
-        tierTypeButtons.forEach(function(b) {
-          if (b.dataset.tierType === tierDonationType) {
-            b.style.backgroundColor = '#d97706';
-            b.style.color = '#ffffff';
-          } else {
-            b.style.backgroundColor = 'transparent';
-            b.style.color = '#9ca3af';
-          }
-        });
-        // Show monthly hints only on single tab
-        monthlyHints.forEach(function(hint) {
-          hint.style.display = tierDonationType === 'single' ? 'block' : 'none';
-        });
+        updateTierDisplay();
       });
     });
+
+    // Initialize display (default is monthly)
+    updateTierDisplay();
 
     // Tier row click → add to cart
     var tierRows = document.querySelectorAll('.tier-row');
@@ -1428,21 +1451,37 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
         var itemId = campaignData.slug + '-' + amount + '-' + tierDonationType;
 
-        window.addToCart({
-          id: itemId,
-          name: campaignData.title,
-          label: label,
-          amount: amount,
-          quantity: 1,
-          type: tierDonationType,
-          image: campaignData.image,
-          campaign: campaignData.slug
-        });
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({
+            id: itemId,
+            name: campaignData.title,
+            label: label,
+            amount: amount,
+            quantity: 1,
+            type: tierDonationType,
+            image: campaignData.image,
+            campaign: campaignData.slug
+          });
+        }
 
-        // Brief visual feedback
+        // Visual feedback — flash green with checkmark
         var el = this;
-        el.style.backgroundColor = 'rgba(1, 83, 77, 0.08)';
-        setTimeout(function() { el.style.backgroundColor = ''; }, 400);
+        var plusIcon = el.querySelector('.rounded-full');
+        var originalBg = plusIcon ? plusIcon.style.backgroundColor : '';
+        el.style.backgroundColor = '#d9770610';
+        el.style.borderColor = '#d97706';
+        if (plusIcon) {
+          plusIcon.style.backgroundColor = '#16a34a';
+          plusIcon.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>';
+        }
+        setTimeout(function() {
+          el.style.backgroundColor = '';
+          el.style.borderColor = '';
+          if (plusIcon) {
+            plusIcon.style.backgroundColor = '#d97706';
+            plusIcon.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>';
+          }
+        }, 1200);
       });
     });
 
@@ -1459,16 +1498,18 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
           return;
         }
         var itemId = campaignData.slug + '-' + amount + '-' + tierDonationType;
-        window.addToCart({
-          id: itemId,
-          name: campaignData.title,
-          label: 'Custom Amount',
-          amount: amount,
-          quantity: 1,
-          type: tierDonationType,
-          image: campaignData.image,
-          campaign: campaignData.slug
-        });
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({
+            id: itemId,
+            name: campaignData.title,
+            label: 'Custom Amount',
+            amount: amount,
+            quantity: 1,
+            type: tierDonationType,
+            image: campaignData.image,
+            campaign: campaignData.slug
+          });
+        }
         tierCustomInput.value = '';
       });
 
@@ -1541,7 +1582,14 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
         }
       });
     }
-  });
+  }
+
+  // Execute immediately if DOM already loaded, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGreenYellowTemplate);
+  } else {
+    initGreenYellowTemplate();
+  }
 </script>
 
 <style is:global>
