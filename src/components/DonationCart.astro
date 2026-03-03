@@ -1373,7 +1373,8 @@ function mountPaymentElement() {
     var checkoutMode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
     var paymentOpts = {
       layout: 'tabs',
-      terms: { card: 'never' }
+      terms: { card: 'never' },
+      wallets: { link: 'never' }
     };
     if (checkoutMode === 'two-step') {
       paymentOpts.fields = {
@@ -1869,10 +1870,13 @@ function openCheckoutModal() {
         }
       });
 
-      // Abandoned checkout capture on two-step email blur
+      // Abandoned checkout capture + returning donor auto-fill on email blur
       var tsEmailField = document.getElementById('ts-info-email');
       if (tsEmailField) {
-        tsEmailField.addEventListener('blur', function() { captureAbandonedCheckout(); });
+        tsEmailField.addEventListener('blur', function() {
+          captureAbandonedCheckout();
+          donorAutoFill(this.value);
+        });
       }
 
       // Re-attach pay button handler
@@ -2012,6 +2016,116 @@ function openCheckoutModal() {
 
   // Update cart display with upsell included
   try { updateModalCart(); } catch(e) {}
+
+  // Pre-fill email from localStorage for returning donors
+  var savedEmail = localStorage.getItem('qurbani_user_email');
+  if (savedEmail) {
+    var emailField = document.getElementById('ts-info-email') || document.getElementById('modal-email');
+    if (emailField && !emailField.value) {
+      emailField.value = savedEmail;
+      // Sync to modal field if in two-step
+      var modalEmail = document.getElementById('modal-email');
+      if (modalEmail) modalEmail.value = savedEmail;
+      // Trigger auto-fill lookup
+      donorAutoFill(savedEmail);
+    }
+  }
+}
+
+// Returning donor auto-fill: look up donor by email and populate checkout fields
+var _donorAutoFillCache = {};
+function donorAutoFill(email) {
+  if (!email || !email.includes('@') || email.length < 5) return;
+  var normalized = email.trim().toLowerCase();
+
+  // Don't re-fetch for the same email
+  if (_donorAutoFillCache[normalized] !== undefined) {
+    applyDonorAutoFill(_donorAutoFillCache[normalized]);
+    return;
+  }
+
+  fetch('/api/donor/lookup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: normalized })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (!data || data.error) return;
+    _donorAutoFillCache[normalized] = data;
+    // Save email for future sessions
+    try { localStorage.setItem('qurbani_user_email', normalized); } catch(e) {}
+    applyDonorAutoFill(data);
+  })
+  .catch(function() {});
+}
+
+function applyDonorAutoFill(data) {
+  if (!data || (!data.donorName && !data.donorPhone && !data.billingAddress)) return;
+  if ((data.donations || []).length === 0 && (data.subscriptions || []).length === 0) return;
+
+  // Helper: only fill if field is empty
+  function fillIfEmpty(id, value) {
+    if (!value) return;
+    var el = document.getElementById(id);
+    if (el && !el.value.trim()) {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
+  // Split name
+  if (data.donorName) {
+    var parts = data.donorName.trim().split(' ');
+    var firstName = parts[0] || '';
+    var lastName = parts.slice(1).join(' ') || '';
+    fillIfEmpty('ts-info-firstName', firstName);
+    fillIfEmpty('ts-info-lastName', lastName);
+    fillIfEmpty('modal-firstName', firstName);
+    fillIfEmpty('modal-lastName', lastName);
+  }
+
+  // Phone
+  if (data.donorPhone) {
+    fillIfEmpty('ts-info-phone', data.donorPhone);
+    fillIfEmpty('modal-phone', data.donorPhone);
+  }
+
+  // Billing address
+  if (data.billingAddress) {
+    var addr = data.billingAddress;
+    fillIfEmpty('modal-address', addr.line1);
+    fillIfEmpty('modal-city', addr.city);
+    fillIfEmpty('modal-state', addr.state);
+    fillIfEmpty('modal-zip', addr.postal_code);
+    // Set country select
+    if (addr.country) {
+      var countryEl = document.getElementById('modal-country');
+      if (countryEl) {
+        for (var i = 0; i < countryEl.options.length; i++) {
+          if (countryEl.options[i].value === addr.country) {
+            countryEl.selectedIndex = i;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Show "Welcome back" message
+  var firstName = data.donorName ? data.donorName.trim().split(' ')[0] : '';
+  if (firstName) {
+    var emailField = document.getElementById('ts-info-email') || document.getElementById('modal-email');
+    if (emailField && !emailField.parentElement.querySelector('.donor-welcome')) {
+      var msg = document.createElement('p');
+      msg.className = 'donor-welcome text-xs text-green-600 font-medium mt-1';
+      msg.innerHTML = '&#9996; Welcome back, ' + firstName + '! We\'ve filled in your details.';
+      emailField.parentElement.appendChild(msg);
+      // Fade out after 5 seconds
+      setTimeout(function() { msg.style.transition = 'opacity 0.5s'; msg.style.opacity = '0'; }, 5000);
+      setTimeout(function() { msg.remove(); }, 5500);
+    }
+  }
 }
 
 // Update upsell card visual styles based on checked state
@@ -2910,7 +3024,7 @@ async function mountTwoStepPaymentElement() {
     });
     twoStepStripeElements = elements;
 
-    var paymentElement = elements.create('payment', { layout: 'tabs', terms: { card: 'never' } });
+    var paymentElement = elements.create('payment', { layout: 'tabs', terms: { card: 'never' }, wallets: { link: 'never' } });
     paymentElement.mount('#ts-card-element');
 
     paymentElement.on('change', function(event) {

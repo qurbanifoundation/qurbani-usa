@@ -23,10 +23,10 @@ export const POST: APIRoute = async ({ request }) => {
       .eq('donor_email', normalizedEmail)
       .order('created_at', { ascending: false });
 
-    // Fetch recent donations (one-time + recurring)
+    // Fetch recent donations (one-time + recurring) — include phone + metadata for auto-fill
     const { data: donations } = await supabaseAdmin
       .from('donations')
-      .select('id, amount, currency, status, donation_type, items, created_at, completed_at')
+      .select('id, amount, currency, status, donation_type, items, donor_name, donor_phone, metadata, created_at, completed_at')
       .eq('donor_email', normalizedEmail)
       .order('created_at', { ascending: false })
       .limit(20);
@@ -36,11 +36,19 @@ export const POST: APIRoute = async ({ request }) => {
       .filter(d => d.status === 'completed')
       .reduce((sum, d) => sum + (d.amount || 0), 0);
 
+    // Extract phone and billing address from most recent completed donation
+    const completedDonation = (donations || []).find((d: any) => d.status === 'completed' && d.metadata?.billing_address);
+    const latestDonation = (donations || [])[0];
+    const donorPhone = completedDonation?.donor_phone || latestDonation?.donor_phone || null;
+    const billingAddress = completedDonation?.metadata?.billing_address || latestDonation?.metadata?.billing_address || null;
+
     return new Response(JSON.stringify({
       subscriptions: subscriptions || [],
       donations: donations || [],
       totalDonated,
-      donorName: subscriptions?.[0]?.donor_name || donations?.[0]?.donor_name || null,
+      donorName: subscriptions?.[0]?.donor_name || latestDonation?.donor_name || null,
+      donorPhone,
+      billingAddress,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
