@@ -20,6 +20,17 @@ const STRIPE_INTERVALS: Record<string, Stripe.Price.Recurring.Interval> = {
   daily: 'day',
 };
 
+// Helper function to get next Friday (for Jummah donations)
+function getNextFriday(): Date {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
+  const nextFriday = new Date(now);
+  nextFriday.setDate(now.getDate() + daysUntilFriday);
+  nextFriday.setHours(12, 0, 0, 0);
+  return nextFriday;
+}
+
 /**
  * Creates a Subscription AFTER the user has confirmed their payment method via SetupIntent.
  * Handles MIXED carts: recurring items become a subscription, one-time items get charged separately.
@@ -201,8 +212,7 @@ export const POST: APIRoute = async ({ request }) => {
       subMetadata.customer_phone = customer.phone || '';
     }
 
-    // Create subscription — charges immediately, no billing_cycle_anchor
-    // This ensures the first charge happens NOW, then repeats on the interval
+    // Create subscription with the saved payment method
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
       items: [{ price: price.id }],
@@ -214,19 +224,51 @@ export const POST: APIRoute = async ({ request }) => {
       metadata: subMetadata,
     };
 
+    // For weekly (Jummah/Friday) subscriptions:
+    // - Anchor billing to next Friday so all future charges land on Fridays
+    // - proration_behavior: 'none' means NO charge at subscription creation
+    // - We charge the first payment separately via an off-session PaymentIntent
+    if (isWeekly) {
+      const nextFriday = getNextFriday();
+      subscriptionParams.billing_cycle_anchor = Math.floor(nextFriday.getTime() / 1000);
+      subscriptionParams.proration_behavior = 'none';
+    }
+
     const subscription = await stripe.subscriptions.create(subscriptionParams);
 
     // Get payment info from first invoice — with null safety
+    // For weekly subs with billing_cycle_anchor + no proration, invoice may be null/$0
     const invoice = subscription.latest_invoice as Stripe.Invoice | null;
     const subPaymentIntent = invoice
       ? (invoice.payment_intent as Stripe.PaymentIntent | null)
       : null;
 
+    // For weekly subscriptions anchored to Friday, charge the first payment NOW
+    // (the subscription won't charge until next Friday, so we need an immediate charge)
+    let firstPaymentPI: Stripe.PaymentIntent | null = null;
+    if (isWeekly && !subPaymentIntent) {
+      firstPaymentPI = await stripe.paymentIntents.create({
+        amount: Math.round(subscriptionAmount * 100),
+        currency,
+        customer: customerId,
+        payment_method: paymentMethodId,
+        off_session: true,
+        confirm: true,
+        metadata: {
+          ...subMetadata,
+          first_payment_for_subscription: subscription.id,
+        },
+        description: `First payment - Jummah (Friday) Donation`,
+      });
+    }
+
+    // Use either the invoice PI or the first-payment PI
+    const effectivePaymentIntentId = subPaymentIntent?.id || firstPaymentPI?.id || null;
+    const effectivePaymentStatus = subPaymentIntent?.status || firstPaymentPI?.status || null;
+
     // Calculate next billing date based on interval
-    const nextBillingDate = new Date();
-    if (interval === 'weekly') {
-      nextBillingDate.setDate(nextBillingDate.getDate() + 7);
-    } else if (interval === 'monthly') {
+    const nextBillingDate = isWeekly ? getNextFriday() : new Date();
+    if (interval === 'monthly') {
       nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
     } else if (interval === 'yearly') {
       nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
@@ -283,11 +325,11 @@ export const POST: APIRoute = async ({ request }) => {
     const { data: recurringDonation, error: recurringDonationError } = await supabaseAdmin
       .from('donations')
       .insert({
-        stripe_payment_intent_id: subPaymentIntent?.id || null,
+        stripe_payment_intent_id: effectivePaymentIntentId,
         stripe_subscription_id: subscription.id,
         amount: subscriptionAmount,
         currency,
-        status: subPaymentIntent?.status === 'succeeded' ? 'completed' : 'pending',
+        status: effectivePaymentStatus === 'succeeded' ? 'completed' : 'pending',
         donation_type: interval,
         donor_email: customer?.email,
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
@@ -419,8 +461,8 @@ export const POST: APIRoute = async ({ request }) => {
       subscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
       donationId: recurringDonation?.id || singleDonationId,
-      paymentIntentId: subPaymentIntent?.id || singlePaymentIntentId || null,
-      paymentIntentStatus: subPaymentIntent?.status || null,
+      paymentIntentId: effectivePaymentIntentId || singlePaymentIntentId || null,
+      paymentIntentStatus: effectivePaymentStatus || null,
       type: 'subscription',
       interval: interval,
       isJummah: isWeekly,
