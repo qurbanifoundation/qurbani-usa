@@ -96,6 +96,7 @@ export async function getCheckoutTemplates(): Promise<TemplateOption[]> {
     return [
       { id: 1, template_type: 'checkout', template_key: 'three-step', template_label: '3-Step Checkout', description: 'Side Cart → Information → Payment (current default)', is_active: true, sort_order: 1 },
       { id: 2, template_type: 'checkout', template_key: 'two-step', template_label: '1-Step Checkout', description: 'Direct single-page checkout with info + payment combined', is_active: true, sort_order: 2 },
+      { id: 3, template_type: 'checkout', template_key: 'gg-one-step', template_label: '1-Step GG Checkout', description: 'GlobalGiving-style 2-column layout: order summary left, form right', is_active: true, sort_order: 3 },
     ];
   }
 

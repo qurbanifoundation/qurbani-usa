@@ -39,7 +39,7 @@ const defaultSettings = {
   show_top_bar: true,
   header_transparent: false,
 
-  // Checkout settings
+  // Checkout settings: 'three-step' | 'two-step' | 'gg-one-step'
   checkout_template: 'three-step' as string,
 
   // Popup settings
