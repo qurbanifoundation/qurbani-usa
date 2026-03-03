@@ -163,6 +163,13 @@ try {
 
 <!-- Checkout template setting for client-side JS -->
 <div id="checkout-template-setting" data-checkout-template={checkoutTemplate} data-site-logo={siteLogo} class="hidden"></div>
+<script is:inline>
+  // URL param override: ?checkout=gg-one-step (for testing without changing DB)
+  (function() {
+    var p = new URLSearchParams(window.location.search).get('checkout');
+    if (p) document.getElementById('checkout-template-setting')?.setAttribute('data-checkout-template', p);
+  })();
+</script>
 
 <!-- ==================== CART REMINDER POPUP ==================== -->
 {showCartReminder && (
