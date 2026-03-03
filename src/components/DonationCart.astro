@@ -279,9 +279,15 @@ try {
       )}
 
       <!-- Total -->
-      <div class="flex justify-between items-center mb-3">
-        <span class="text-gray-600 text-sm" id="payment-type-label">One-time Payment</span>
-        <span class="text-xl font-bold text-[#d97706]" id="cart-total">$0.00</span>
+      <div class="mb-3">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-600 text-sm" id="payment-type-label">Total due today:</span>
+          <span class="text-xl font-bold text-[#d97706]" id="cart-total">$0.00</span>
+        </div>
+        <div id="monthly-total-row" class="flex justify-between items-center mt-1" style="display: none;">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Monthly Total</span>
+          <span class="text-sm font-bold text-gray-600" id="cart-monthly-total">$0.00</span>
+        </div>
       </div>
 
       <!-- Checkout Button -->
@@ -609,6 +615,11 @@ try {
               </svg>
               <span id="pay-btn-text">Complete Secure Donation</span>
             </button>
+
+            <!-- Recurring payment terms (shown only for monthly donations) -->
+            <p id="recurring-terms" class="mt-3 text-[11px] text-gray-400 text-center leading-relaxed" style="display: none;">
+              By providing your card information, you allow Qurbani Foundation to charge your card for future payments in accordance with their terms.
+            </p>
 
             <!-- Trust Indicators Below Button -->
             <div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500">
@@ -1353,7 +1364,10 @@ function mountPaymentElement() {
 
     // Create and mount Payment Element
     var checkoutMode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
-    var paymentOpts = { layout: 'tabs' };
+    var paymentOpts = {
+      layout: 'tabs',
+      terms: { card: 'never' }
+    };
     if (checkoutMode === 'two-step') {
       paymentOpts.fields = {
         billingDetails: {
@@ -1513,8 +1527,12 @@ function updateCartUI() {
     `}).join('');
   }
 
-  // Update total
-  const total = items.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+  // Calculate totals — split one-time vs recurring
+  const singleItems = items.filter(item => !item.type || item.type === 'single');
+  const recurringItems = items.filter(item => item.type && item.type !== 'single');
+  const singleTotal = singleItems.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+  const recurringTotal = recurringItems.reduce((sum, item) => sum + (item.amount * item.quantity), 0);
+  const total = singleTotal + recurringTotal;
 
   // Determine payment label based on cart contents
   const hasWeekly = items.some(item => (item.recurringInterval || item.type) === 'weekly');
@@ -1522,7 +1540,7 @@ function updateCartUI() {
   const hasAnnual = items.some(item => (item.recurringInterval || item.type) === 'annual');
   const hasYearly = items.some(item => (item.recurringInterval || item.type) === 'yearly');
   const hasDaily = items.some(item => (item.recurringInterval || item.type) === 'daily');
-  const hasSingle = items.some(item => !item.type || item.type === 'single');
+  const hasSingle = singleItems.length > 0;
   const hasRecurring = hasWeekly || hasMonthly || hasAnnual || hasYearly || hasDaily;
 
   let paymentLabel = 'One-time Payment';
@@ -1536,14 +1554,37 @@ function updateCartUI() {
     paymentLabel = 'Yearly Payment';
   } else if (hasDaily && !hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasSingle) {
     paymentLabel = 'Daily Payment';
+  } else if (hasRecurring && hasSingle) {
+    paymentLabel = 'Total due today:';
   } else if (hasRecurring) {
     paymentLabel = 'Includes Recurring';
   }
 
   var cartTotalEl = document.getElementById('cart-total');
   var paymentLabelEl = document.getElementById('payment-type-label');
+  var monthlyTotalRow = document.getElementById('monthly-total-row');
+  var monthlyTotalEl = document.getElementById('cart-monthly-total');
+
   if (cartTotalEl) cartTotalEl.textContent = '$' + total.toFixed(2);
   if (paymentLabelEl) paymentLabelEl.textContent = paymentLabel;
+
+  // Show monthly total row when there are recurring items
+  if (monthlyTotalRow && monthlyTotalEl) {
+    if (hasRecurring) {
+      var recurLabel = hasWeekly ? 'Weekly Total' : hasDaily ? 'Daily Total' : hasYearly || hasAnnual ? 'Yearly Total' : 'Monthly Total';
+      monthlyTotalRow.style.display = 'flex';
+      monthlyTotalRow.querySelector('span:first-child').textContent = recurLabel;
+      monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2);
+    } else {
+      monthlyTotalRow.style.display = 'none';
+    }
+  }
+
+  // Show/hide recurring terms text on checkout
+  var recurringTerms = document.getElementById('recurring-terms');
+  if (recurringTerms) {
+    recurringTerms.style.display = hasRecurring ? 'block' : 'none';
+  }
 
   // Update cart count badge (if exists)
   const badge = document.getElementById('cart-count');
