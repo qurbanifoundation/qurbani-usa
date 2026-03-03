@@ -92,6 +92,34 @@ export function clearSettingsCache(): void {
   settingsCacheTime = 0;
 }
 
+// Get checkout upsells from settings (cached)
+export interface CheckoutUpsell {
+  id: string;
+  title: string;
+  description: string;
+  amount: number;
+  enabled: boolean;
+  sort_order: number;
+}
+
+const defaultUpsells: CheckoutUpsell[] = [
+  { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1 },
+  { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2 },
+];
+
+export async function getCheckoutUpsells(): Promise<CheckoutUpsell[]> {
+  try {
+    const settings = await getSettings() as any;
+    const upsells = settings?.checkout_upsells;
+    if (Array.isArray(upsells) && upsells.length > 0) {
+      return upsells.sort((a: CheckoutUpsell, b: CheckoutUpsell) => (a.sort_order || 0) - (b.sort_order || 0));
+    }
+    return defaultUpsells;
+  } catch {
+    return defaultUpsells;
+  }
+}
+
 // Helper to format phone for tel: links
 export function formatPhoneLink(phone: string): string {
   return phone.replace(/[^0-9+]/g, '');

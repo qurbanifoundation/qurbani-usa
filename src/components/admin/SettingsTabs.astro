@@ -1,6 +1,6 @@
 ---
 interface Props {
-  active: 'general' | 'templates' | 'header-footer' | 'gallery' | 'media' | 'integrations' | 'payments' | 'fulfillment';
+  active: 'general' | 'templates' | 'header-footer' | 'gallery' | 'media' | 'integrations' | 'payments' | 'fulfillment' | 'upsells';
 }
 
 const { active } = Astro.props;
@@ -14,6 +14,7 @@ const tabs = [
   { id: 'integrations', label: 'Integrations', href: '/admin/settings/integrations' },
   { id: 'payments', label: 'Payments', href: '/admin/settings/payments' },
   { id: 'fulfillment', label: 'Fulfillment', href: '/admin/settings/fulfillment' },
+  { id: 'upsells', label: 'Upsells', href: '/admin/settings/upsells' },
 ];
 ---
 
