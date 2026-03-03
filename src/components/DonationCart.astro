@@ -931,6 +931,11 @@ try {
                   Processing...
                 </span>
               </button>
+
+              <!-- Recurring payment terms (shown only for monthly donations) -->
+              <p id="ts-recurring-terms" class="mt-3 text-[11px] text-gray-400 text-center leading-relaxed" style="display: none;">
+                By providing your card information, you allow Qurbani Foundation to charge your card for future payments in accordance with their terms.
+              </p>
             </div>
 
             <!-- Trust Signals -->
@@ -1027,8 +1032,12 @@ try {
                   <span id="ts-fee-amount">$0.00</span>
                 </div>
                 <div class="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-100">
-                  <span>Total</span>
+                  <span id="ts-total-label">Total</span>
                   <span id="ts-total" class="text-[#d97706]">$0.00</span>
+                </div>
+                <div id="ts-monthly-total-row" class="flex justify-between text-sm font-semibold text-gray-500" style="display: none;">
+                  <span class="uppercase tracking-wide text-xs">Monthly Total</span>
+                  <span id="ts-monthly-total">$0.00</span>
                 </div>
               </div>
 
@@ -1545,19 +1554,19 @@ function updateCartUI() {
 
   let paymentLabel = 'One-time Payment';
   if (hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
-    paymentLabel = 'Every Jummah';
+    paymentLabel = 'Weekly Total';
   } else if (hasMonthly && !hasWeekly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
-    paymentLabel = 'Monthly Payment';
+    paymentLabel = 'Monthly Total';
   } else if (hasAnnual && !hasWeekly && !hasMonthly && !hasYearly && !hasDaily && !hasSingle) {
-    paymentLabel = 'Annual Payment';
+    paymentLabel = 'Annual Total';
   } else if (hasYearly && !hasWeekly && !hasMonthly && !hasAnnual && !hasDaily && !hasSingle) {
-    paymentLabel = 'Yearly Payment';
+    paymentLabel = 'Yearly Total';
   } else if (hasDaily && !hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasSingle) {
-    paymentLabel = 'Daily Payment';
+    paymentLabel = 'Daily Total';
   } else if (hasRecurring && hasSingle) {
     paymentLabel = 'Total due today:';
   } else if (hasRecurring) {
-    paymentLabel = 'Includes Recurring';
+    paymentLabel = 'Recurring Total';
   }
 
   var cartTotalEl = document.getElementById('cart-total');
@@ -2695,9 +2704,53 @@ function updateTwoStepTotals() {
   var feeAmount = coverFees ? Math.round(subtotal * 0.03 * 100) / 100 : 0;
   var total = subtotal + feeAmount;
 
+  // Split totals: one-time vs recurring
+  var singleItems = items.filter(function(i) { return !i.type || i.type === 'single'; });
+  var recurringItems = items.filter(function(i) { return i.type && i.type !== 'single'; });
+  var recurringTotal = recurringItems.reduce(function(sum, i) { return sum + (i.amount * i.quantity); }, 0);
+  var hasRecurring = recurringItems.length > 0;
+  var hasSingle = singleItems.length > 0;
+
+  // Determine total label
+  var totalLabel = document.getElementById('ts-total-label');
+  if (totalLabel) {
+    if (hasRecurring && !hasSingle) {
+      var hasWeekly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; });
+      var hasDaily = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; });
+      var hasYearly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; });
+      totalLabel.textContent = hasWeekly ? 'Weekly Total' : hasDaily ? 'Daily Total' : hasYearly ? 'Yearly Total' : 'Monthly Total';
+    } else if (hasRecurring && hasSingle) {
+      totalLabel.textContent = 'Total due today';
+    } else {
+      totalLabel.textContent = 'Total';
+    }
+  }
+
   document.getElementById('ts-subtotal').textContent = '$' + subtotal.toFixed(2);
   document.getElementById('ts-total').textContent = '$' + total.toFixed(2);
   document.getElementById('ts-cart-total-badge').textContent = '$' + total.toFixed(2);
+
+  // Monthly total row (shown when both single + recurring exist)
+  var monthlyRow = document.getElementById('ts-monthly-total-row');
+  var monthlyTotalEl = document.getElementById('ts-monthly-total');
+  if (monthlyRow && monthlyTotalEl) {
+    if (hasRecurring && hasSingle) {
+      var recurLabel = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; }) ? 'Weekly Total' :
+                       recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; }) ? 'Daily Total' :
+                       recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; }) ? 'Yearly Total' : 'Monthly Total';
+      monthlyRow.querySelector('span:first-child').textContent = recurLabel;
+      monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2);
+      monthlyRow.style.display = 'flex';
+    } else {
+      monthlyRow.style.display = 'none';
+    }
+  }
+
+  // Show/hide recurring terms
+  var tsRecurringTerms = document.getElementById('ts-recurring-terms');
+  if (tsRecurringTerms) {
+    tsRecurringTerms.style.display = hasRecurring ? 'block' : 'none';
+  }
 
   var feeRow = document.getElementById('ts-fee-row');
   if (feeRow) {
@@ -2813,7 +2866,7 @@ async function mountTwoStepPaymentElement() {
     });
     twoStepStripeElements = elements;
 
-    var paymentElement = elements.create('payment', { layout: 'tabs' });
+    var paymentElement = elements.create('payment', { layout: 'tabs', terms: { card: 'never' } });
     paymentElement.mount('#ts-card-element');
 
     paymentElement.on('change', function(event) {
