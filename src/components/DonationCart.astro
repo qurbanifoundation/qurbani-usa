@@ -1373,8 +1373,7 @@ function mountPaymentElement() {
     var checkoutMode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
     var paymentOpts = {
       layout: 'tabs',
-      terms: { card: 'never' },
-      wallets: { link: 'never' }
+      terms: { card: 'never' }
     };
     if (checkoutMode === 'two-step') {
       paymentOpts.fields = {
@@ -2911,7 +2910,7 @@ async function mountTwoStepPaymentElement() {
     });
     twoStepStripeElements = elements;
 
-    var paymentElement = elements.create('payment', { layout: 'tabs', terms: { card: 'never' }, wallets: { link: 'never' } });
+    var paymentElement = elements.create('payment', { layout: 'tabs', terms: { card: 'never' } });
     paymentElement.mount('#ts-card-element');
 
     paymentElement.on('change', function(event) {
