@@ -1093,32 +1093,11 @@ try {
         <div class="md:col-span-2 order-2 md:order-1">
           <div class="md:sticky md:top-20 space-y-4">
 
-            <!-- Campaign Hero Image -->
-            <div class="relative rounded-xl overflow-hidden shadow-md">
-              <img id="gg-campaign-image" src="" alt="" class="w-full h-48 object-cover bg-gray-100" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-              <button type="button" id="gg-close-img" class="absolute top-2 right-2 w-7 h-7 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center transition">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-              </button>
-              <h3 id="gg-campaign-name" class="absolute bottom-3 left-4 right-4 text-white font-bold text-lg leading-tight" style="font-family: 'Signika', sans-serif;"></h3>
+            <!-- Cart Items (GG-style per-item cards) -->
+            <div id="gg-cart-items" class="space-y-4">
+              <!-- Rendered by JS — each item: image + name + amount input + freq toggle + remove -->
             </div>
-
-            <!-- Donate: Frequency Toggle -->
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-base font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Donate:</span>
-                <div class="flex bg-white rounded-lg border border-gray-300 overflow-hidden">
-                  <button type="button" id="gg-freq-onetime" class="px-4 py-2 text-sm font-semibold transition bg-[#d97706] text-white">one-time</button>
-                  <button type="button" id="gg-freq-monthly" class="px-4 py-2 text-sm font-semibold transition text-gray-500 hover:bg-gray-50">monthly</button>
-                </div>
-              </div>
-
-              <!-- Cart Items -->
-              <div id="gg-cart-items" class="space-y-2 mb-3">
-                <!-- Rendered by JS -->
-              </div>
-              <div id="gg-empty-cart" class="hidden text-center py-4 text-gray-400 text-sm">Your cart is empty</div>
-            </div>
+            <div id="gg-empty-cart" class="hidden text-center py-6 text-gray-400 text-sm">Your cart is empty</div>
 
             <!-- Upsells -->
             <div class="bg-white rounded-xl border border-gray-200 p-4">
@@ -3386,7 +3365,7 @@ function initTwoStepPlaces() {
 
 var ggStripeElements = null;
 var ggPendingPayment = null;
-var ggFrequency = 'single'; // 'single' or 'monthly'
+// Per-item frequency is now handled by ggToggleItemFreq()
 
 function openGGCheckout() {
   // Close side cart if open
@@ -3402,28 +3381,7 @@ function openGGCheckout() {
     window.trackBeginCheckout(window.donationCart.items, total);
   }
 
-  // Populate campaign image and name from first cart item
-  var items = window.donationCart.items;
-  if (items.length > 0) {
-    var firstItem = items[0];
-    var imgEl = document.getElementById('gg-campaign-image');
-    var nameEl = document.getElementById('gg-campaign-name');
-    var headingEl = document.getElementById('gg-heading');
-    if (imgEl && firstItem.image) { imgEl.src = firstItem.image; imgEl.alt = firstItem.name || ''; }
-    if (nameEl) nameEl.textContent = firstItem.name || firstItem.campaign || 'Donation';
-    if (headingEl) headingEl.textContent = 'Donate to ' + (firstItem.name || firstItem.campaign || 'Qurbani Foundation');
-
-    // Detect frequency from items
-    var hasMonthly = items.some(function(i) { return i.type === 'monthly' || i.recurringInterval === 'monthly'; });
-    if (hasMonthly) {
-      ggFrequency = 'monthly';
-      document.getElementById('gg-freq-onetime').classList.remove('bg-[#d97706]', 'text-white');
-      document.getElementById('gg-freq-onetime').classList.add('text-gray-500');
-      document.getElementById('gg-freq-monthly').classList.add('bg-[#d97706]', 'text-white');
-      document.getElementById('gg-freq-monthly').classList.remove('text-gray-500');
-    }
-  }
-
+  // updateGGCart handles heading, item cards, and totals
   updateGGCart();
 
   // Init Google Places for GG address field
@@ -3438,7 +3396,6 @@ function closeGGCheckout() {
 
 // Close handlers
 document.getElementById('gg-close')?.addEventListener('click', closeGGCheckout);
-document.getElementById('gg-close-img')?.addEventListener('click', closeGGCheckout);
 
 // Mobile cart accordion toggle
 document.getElementById('gg-cart-toggle')?.addEventListener('click', function() {
@@ -3450,50 +3407,7 @@ document.getElementById('gg-cart-toggle')?.addEventListener('click', function() 
   }
 });
 
-// Frequency toggle handlers
-document.getElementById('gg-freq-onetime')?.addEventListener('click', function() {
-  ggFrequency = 'single';
-  this.classList.add('bg-[#d97706]', 'text-white');
-  this.classList.remove('text-gray-500');
-  var monthlyBtn = document.getElementById('gg-freq-monthly');
-  monthlyBtn.classList.remove('bg-[#d97706]', 'text-white');
-  monthlyBtn.classList.add('text-gray-500');
-  // Switch all items to single
-  window.donationCart.items.forEach(function(item) {
-    if (item.originalType !== 'monthly') {
-      item.type = 'single';
-      item.recurringInterval = null;
-    }
-  });
-  window.donationCart.pendingDonationType = 'single';
-  saveCart();
-  updateGGCart();
-  // Reset Stripe element since donation type changed
-  ggStripeElements = null;
-  ggPendingPayment = null;
-});
-
-document.getElementById('gg-freq-monthly')?.addEventListener('click', function() {
-  ggFrequency = 'monthly';
-  this.classList.add('bg-[#d97706]', 'text-white');
-  this.classList.remove('text-gray-500');
-  var onetimeBtn = document.getElementById('gg-freq-onetime');
-  onetimeBtn.classList.remove('bg-[#d97706]', 'text-white');
-  onetimeBtn.classList.add('text-gray-500');
-  // Switch all non-protected items to monthly
-  window.donationCart.items.forEach(function(item) {
-    if (item.originalType !== 'single') {
-      item.type = 'monthly';
-      item.recurringInterval = 'monthly';
-    }
-  });
-  window.donationCart.pendingDonationType = 'monthly';
-  saveCart();
-  updateGGCart();
-  // Reset Stripe element since donation type changed
-  ggStripeElements = null;
-  ggPendingPayment = null;
-});
+// Per-item frequency toggle is handled by window.ggToggleItemFreq() (defined above updateGGCart)
 
 // Upsell handlers
 document.getElementById('gg-upsell-prophetic')?.addEventListener('change', function() {
@@ -3545,6 +3459,39 @@ window.ggRemove = function(index) {
   if (window.donationCart.items.length === 0) closeGGCheckout();
 };
 
+window.ggUpdateAmount = function(index, value) {
+  var item = window.donationCart.items[index];
+  if (item) {
+    var amt = parseFloat(value);
+    if (isNaN(amt) || amt < 1) amt = 1;
+    item.amount = amt;
+    saveCart();
+    updateCartUI();
+    updateGGCart();
+  }
+};
+
+window.ggToggleItemFreq = function(index, freq) {
+  var item = window.donationCart.items[index];
+  if (item) {
+    if (freq === 'monthly') {
+      item.type = 'monthly';
+      item.recurringInterval = 'monthly';
+      item.originalType = 'monthly';
+    } else {
+      item.type = 'single';
+      item.recurringInterval = undefined;
+      item.originalType = 'single';
+    }
+    saveCart();
+    updateCartUI();
+    updateGGCart();
+    // Reset Stripe element since donation type changed
+    ggStripeElements = null;
+    ggPendingPayment = null;
+  }
+};
+
 function updateGGCart() {
   var items = window.donationCart.items.slice();
   var cartContainer = document.getElementById('gg-cart-items');
@@ -3552,6 +3499,18 @@ function updateGGCart() {
   var mobileItems = document.getElementById('gg-cart-mobile-items');
 
   if (!cartContainer) return;
+
+  // Update heading for single vs multiple projects
+  var headingEl = document.getElementById('gg-heading');
+  if (headingEl) {
+    if (items.length === 0) {
+      headingEl.textContent = 'Donate to Qurbani Foundation';
+    } else if (items.length === 1) {
+      headingEl.textContent = 'Donate to ' + (items[0].name || items[0].campaign || 'Qurbani Foundation');
+    } else {
+      headingEl.textContent = 'Donate to ' + items.length + ' Projects';
+    }
+  }
 
   if (items.length === 0) {
     cartContainer.innerHTML = '';
@@ -3562,31 +3521,51 @@ function updateGGCart() {
 
     var html = '';
     var mobileHtml = '';
+    var fallbackImg = 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80';
     items.forEach(function(item, index) {
       var isRecurring = item.type === 'monthly' || item.type === 'weekly' || item.recurringInterval;
       var freqLabel = isRecurring ? '/mo' : '';
+      var imgSrc = item.image || fallbackImg;
+      var itemName = item.name || item.campaign || 'Donation';
+      var onetimeActive = !isRecurring;
+      var monthlyActive = isRecurring;
+
       html +=
-        '<div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">' +
-          '<div class="flex-1 min-w-0">' +
-            '<p class="text-sm font-medium text-gray-800 truncate">' + (item.name || 'Donation') + '</p>' +
-            '<p class="text-xs text-gray-500">' + (item.campaign || '') + '</p>' +
-          '</div>' +
-          '<div class="flex items-center gap-2 ml-3">' +
-            '<div class="flex items-center border border-gray-200 rounded">' +
-              '<button type="button" onclick="ggUpdateQty(' + index + ',-1)" class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 text-sm">−</button>' +
-              '<span class="w-7 h-7 flex items-center justify-center text-xs font-medium border-x border-gray-200">' + (item.quantity || 1) + '</span>' +
-              '<button type="button" onclick="ggUpdateQty(' + index + ',1)" class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 text-sm">+</button>' +
+        '<div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">' +
+          '<div class="flex gap-3 p-3">' +
+            // Thumbnail image
+            '<div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100">' +
+              '<img src="' + imgSrc + '" alt="' + itemName + '" class="w-full h-full object-cover" onerror="this.onerror=null;this.src=\'' + fallbackImg + '\';" />' +
             '</div>' +
-            '<span class="text-sm font-bold text-gray-800 w-16 text-right">$' + (item.amount * (item.quantity || 1)).toLocaleString() + freqLabel + '</span>' +
-            '<button type="button" onclick="ggRemove(' + index + ')" class="text-gray-300 hover:text-red-500 transition">' +
-              '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
-            '</button>' +
+            // Item info: name + remove
+            '<div class="flex-1 min-w-0">' +
+              '<div class="flex items-start justify-between">' +
+                '<p class="text-sm font-semibold text-gray-800 leading-tight pr-2" style="font-family:\'Signika\',sans-serif;">' + itemName + '</p>' +
+                '<button type="button" onclick="ggRemove(' + index + ')" class="flex-shrink-0 text-gray-300 hover:text-red-500 transition mt-0.5" title="Remove">' +
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' +
+                '</button>' +
+              '</div>' +
+              // Amount input
+              '<div class="flex items-center mt-2 mb-2">' +
+                '<span class="text-gray-400 text-sm font-medium mr-1">$</span>' +
+                '<input type="number" value="' + item.amount + '" min="1" step="1" onchange="ggUpdateAmount(' + index + ',this.value)" class="w-20 border border-gray-300 rounded-md px-2 py-1.5 text-base font-bold text-gray-800 focus:ring-1 focus:ring-[#d97706] focus:border-[#d97706] outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />' +
+              '</div>' +
+              // Per-item frequency toggle
+              '<div class="flex items-center">' +
+                '<button type="button" onclick="ggToggleItemFreq(' + index + ',\'single\')" class="px-3 py-1 text-xs font-semibold rounded-l-md border transition ' +
+                  (onetimeActive ? 'bg-[#d97706] text-white border-[#d97706]' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50') + '">' +
+                  'one-time</button>' +
+                '<button type="button" onclick="ggToggleItemFreq(' + index + ',\'monthly\')" class="px-3 py-1 text-xs font-semibold rounded-r-md border-t border-b border-r transition ' +
+                  (monthlyActive ? 'bg-[#d97706] text-white border-[#d97706]' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50') + '">' +
+                  'monthly</button>' +
+              '</div>' +
+            '</div>' +
           '</div>' +
         '</div>';
 
       mobileHtml +=
         '<div class="flex items-center justify-between py-1.5">' +
-          '<span class="text-sm text-gray-700">' + (item.name || 'Donation') + ' x' + (item.quantity || 1) + '</span>' +
+          '<span class="text-sm text-gray-700">' + itemName + (item.quantity > 1 ? ' x' + item.quantity : '') + '</span>' +
           '<span class="text-sm font-bold">$' + (item.amount * (item.quantity || 1)).toLocaleString() + freqLabel + '</span>' +
         '</div>';
     });
