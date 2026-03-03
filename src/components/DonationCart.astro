@@ -3855,78 +3855,153 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
     var submitResult = await ggStripeElements.submit();
     if (submitResult.error) throw new Error(submitResult.error.message);
 
-    // Create payment intent on server
-    var response = await fetch('/api/payments/create-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: total,
-        items: items,
-        customer: customer,
-        billingAddress: billingAddress,
-        type: donationType,
-        coverFees: coverFees,
-        feeAmount: feeAmount,
-        baseAmount: total - feeAmount,
-      }),
-    });
+    var isRecurring = (donationType === 'monthly' || donationType === 'weekly' || donationType === 'yearly' || donationType === 'daily');
 
-    var data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Failed to create payment');
+    if (isRecurring) {
+      // ═══════════════════════════════════════════════════════════
+      // RECURRING FLOW (SetupIntent → confirmSetup → create-subscription)
+      // ═══════════════════════════════════════════════════════════
+      payText.textContent = 'Securing payment...';
 
-    // Confirm payment with the client secret from server
-    var result = await window.donationCart.stripe.confirmPayment({
-      elements: ggStripeElements,
-      clientSecret: data.clientSecret,
-      confirmParams: {
-        return_url: window.location.origin + '/donate/success?donation_id=' + (data.donationId || '') + '&type=' + (data.type || 'single'),
-        payment_method_data: {
-          billing_details: {
-            name: firstName + ' ' + lastName,
-            email: customer.email,
-            phone: customer.phone,
-            address: billingAddress,
+      // STEP 1: Create SetupIntent + Customer on server
+      var setupRes = await fetch('/api/payments/create-setup-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer: customer, billingAddress: billingAddress }),
+      });
+      var setupData = await setupRes.json();
+      if (!setupRes.ok) throw new Error(setupData.error || 'Failed to initialize payment.');
+
+      // STEP 2: Confirm the SetupIntent — saves the payment method
+      var setupResult2 = await window.donationCart.stripe.confirmSetup({
+        elements: ggStripeElements,
+        clientSecret: setupData.clientSecret,
+        confirmParams: {
+          return_url: window.location.origin + '/donate/success',
+          payment_method_data: {
+            billing_details: {
+              name: firstName + ' ' + lastName,
+              email: customer.email,
+              phone: customer.phone,
+              address: billingAddress,
+            },
           },
         },
-      },
-      redirect: 'if_required',
-    });
+        redirect: 'if_required',
+      });
+      if (setupResult2.error) throw new Error(setupResult2.error.message);
 
-    if (result.error) throw new Error(result.error.message);
+      var setupIntent = setupResult2.setupIntent;
+      if (!setupIntent || !setupIntent.payment_method) throw new Error('Payment setup failed. Please try again.');
 
-    var paymentIntent = result.paymentIntent;
-    if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
+      // STEP 3: Create the REAL subscription with the saved payment method
+      payText.textContent = 'Creating subscription...';
+      var subResponse = await fetch('/api/payments/create-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethodId: setupIntent.payment_method,
+          customerId: setupData.customerId,
+          amount: total,
+          items: items,
+          customer: customer,
+          billingAddress: billingAddress,
+          interval: donationType,
+          coverFees: coverFees,
+          feeAmount: feeAmount,
+          baseAmount: total - feeAmount,
+        }),
+      });
+      var subData = await subResponse.json();
+      if (!subResponse.ok) throw new Error(subData.error || 'Failed to create subscription.');
 
-    if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
       var successData = {
-        transaction_id: paymentIntent.id,
-        donation_id: data.donationId || '',
+        transaction_id: subData.paymentIntentId || setupIntent.id,
+        donation_id: subData.donationId || '',
         total: total,
         items: items.map(function(item) {
-          return {
-            id: item.id || item.slug,
-            name: item.name || item.campaign || 'Donation',
-            category: item.campaign || 'donation',
-            amount: item.amount,
-            quantity: item.quantity || 1
-          };
+          return { id: item.id || item.slug, name: item.name || item.campaign || 'Donation', category: item.campaign || 'donation', amount: item.amount, quantity: item.quantity || 1 };
         }),
         cover_fees: coverFees && feeAmount > 0,
         fee_amount: feeAmount,
-        is_subscription: data.type === 'subscription' && !!data.subscriptionId,
-        subscription_id: data.subscriptionId || '',
-        is_jummah: data.isJummah || data.interval === 'weekly',
-        interval: data.interval || '',
-        next_billing_date: data.nextBillingDate || '',
+        is_subscription: true,
+        subscription_id: subData.subscriptionId || '',
+        is_jummah: subData.isJummah || donationType === 'weekly',
+        interval: subData.interval || donationType,
+        next_billing_date: subData.nextBillingDate || '',
         donor_email: customer.email,
         timestamp: Date.now()
       };
       sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
-
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
+      window.location.href = '/donate/success?payment_intent=' + (subData.paymentIntentId || setupIntent.id) + '&donation_id=' + (subData.donationId || '');
 
-      window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
+    } else {
+      // ═══════════════════════════════════════════════════════════
+      // ONE-TIME FLOW (PaymentIntent → confirmPayment)
+      // ═══════════════════════════════════════════════════════════
+      var response = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: total,
+          items: items,
+          customer: customer,
+          billingAddress: billingAddress,
+          type: donationType,
+          coverFees: coverFees,
+          feeAmount: feeAmount,
+          baseAmount: total - feeAmount,
+        }),
+      });
+      var data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to create payment');
+
+      var result = await window.donationCart.stripe.confirmPayment({
+        elements: ggStripeElements,
+        clientSecret: data.clientSecret,
+        confirmParams: {
+          return_url: window.location.origin + '/donate/success?donation_id=' + (data.donationId || '') + '&type=single',
+          payment_method_data: {
+            billing_details: {
+              name: firstName + ' ' + lastName,
+              email: customer.email,
+              phone: customer.phone,
+              address: billingAddress,
+            },
+          },
+        },
+        redirect: 'if_required',
+      });
+      if (result.error) throw new Error(result.error.message);
+
+      var paymentIntent = result.paymentIntent;
+      if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
+
+      if (paymentIntent.status === 'succeeded' || paymentIntent.status === 'requires_capture') {
+        var successData = {
+          transaction_id: paymentIntent.id,
+          donation_id: data.donationId || '',
+          total: total,
+          items: items.map(function(item) {
+            return { id: item.id || item.slug, name: item.name || item.campaign || 'Donation', category: item.campaign || 'donation', amount: item.amount, quantity: item.quantity || 1 };
+          }),
+          cover_fees: coverFees && feeAmount > 0,
+          fee_amount: feeAmount,
+          is_subscription: false,
+          subscription_id: '',
+          is_jummah: false,
+          interval: '',
+          next_billing_date: '',
+          donor_email: customer.email,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+        window.donationCart.items = [];
+        localStorage.removeItem('donationCart');
+        window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
+      }
     }
   } catch (err) {
     errorDiv.classList.remove('hidden');
