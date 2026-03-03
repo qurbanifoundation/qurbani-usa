@@ -20,25 +20,17 @@ const STRIPE_INTERVALS: Record<string, Stripe.Price.Recurring.Interval> = {
   daily: 'day',
 };
 
-// Helper function to get next Friday (for Jummah donations)
-function getNextFriday(): Date {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
-  const nextFriday = new Date(now);
-  nextFriday.setDate(now.getDate() + daysUntilFriday);
-  nextFriday.setHours(12, 0, 0, 0);
-  return nextFriday;
-}
-
 /**
  * Creates a Subscription AFTER the user has confirmed their payment method via SetupIntent.
+ * Handles MIXED carts: recurring items become a subscription, one-time items get charged separately.
  *
  * Flow:
  * 1. User's payment method was saved via SetupIntent + confirmSetup()
  * 2. Frontend sends the paymentMethodId here
- * 3. We attach the PM to the customer, create the Subscription, and charge immediately
- * 4. The Subscription is REAL from the start — no "incomplete" junk
+ * 3. We split items into recurring vs one-time
+ * 4. Create Subscription for recurring items (charges immediately)
+ * 5. Create separate PaymentIntent for one-time items (off-session, using saved PM)
+ * 6. Return combined result
  */
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -104,7 +96,45 @@ export const POST: APIRoute = async ({ request }) => {
       },
     });
 
-    // Get or create the donation product
+    // ════════════════════════════════════════════════════════════════
+    // SPLIT items into recurring and one-time
+    // ════════════════════════════════════════════════════════════════
+    const allItems = items || [];
+    const recurringItems = allItems.filter((i: any) => {
+      const t = (i.type || 'single').toLowerCase();
+      return t === 'monthly' || t === 'weekly' || t === 'yearly' || t === 'daily';
+    });
+    const singleItems = allItems.filter((i: any) => {
+      const t = (i.type || 'single').toLowerCase();
+      return t !== 'monthly' && t !== 'weekly' && t !== 'yearly' && t !== 'daily';
+    });
+
+    const recurringTotal = recurringItems.reduce((sum: number, i: any) =>
+      sum + ((parseFloat(i.amount) || 0) * (parseInt(i.quantity) || 1)), 0);
+    const singleTotal = singleItems.reduce((sum: number, i: any) =>
+      sum + ((parseFloat(i.amount) || 0) * (parseInt(i.quantity) || 1)), 0);
+
+    // If coverFees, split fee proportionally between recurring and one-time
+    const totalBeforeFees = recurringTotal + singleTotal;
+    const recurringFee = coverFees && totalBeforeFees > 0
+      ? Math.round((recurringTotal / totalBeforeFees) * (feeAmount || 0) * 100) / 100
+      : 0;
+    const singleFee = coverFees ? ((feeAmount || 0) - recurringFee) : 0;
+
+    const subscriptionAmount = recurringTotal + recurringFee;
+    const oneTimeAmount = singleTotal + singleFee;
+
+    // Validate we have recurring items
+    if (recurringItems.length === 0 || subscriptionAmount < 1) {
+      return new Response(JSON.stringify({ error: 'No recurring items found. Use /api/payments/create-intent for one-time donations.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // PART 1: Create SUBSCRIPTION for recurring items
+    // ════════════════════════════════════════════════════════════════
     const isWeekly = interval === 'weekly';
     const stripeInterval = STRIPE_INTERVALS[interval] || 'month';
     const productName = DONATION_PRODUCT_NAMES[interval] || 'Recurring Donation';
@@ -125,54 +155,54 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Create a price for this amount
+    // Create a price for the RECURRING amount only
     const price = await stripe.prices.create({
       product: product.id,
-      unit_amount: Math.round(amount * 100),
+      unit_amount: Math.round(subscriptionAmount * 100),
       currency,
       recurring: {
         interval: stripeInterval,
       },
       metadata: {
-        donation_amount: amount.toString(),
+        donation_amount: subscriptionAmount.toString(),
         interval_type: interval,
       },
     });
 
-    // Build metadata
-    const itemsSummary = items?.map((i: any) => ({
+    // Build metadata for the subscription
+    const recurringItemsSummary = recurringItems.map((i: any) => ({
       c: i.campaign,
       a: i.amount,
       q: i.quantity,
       n: i.name,
-    })) || [];
-    let itemsJson = JSON.stringify(itemsSummary);
-    if (itemsJson.length > 500) {
-      const minimal = items?.map((i: any) => ({ c: i.campaign, a: i.amount, q: i.quantity })) || [];
-      itemsJson = JSON.stringify(minimal);
+    }));
+    let recurringItemsJson = JSON.stringify(recurringItemsSummary);
+    if (recurringItemsJson.length > 500) {
+      const minimal = recurringItems.map((i: any) => ({ c: i.campaign, a: i.amount, q: i.quantity }));
+      recurringItemsJson = JSON.stringify(minimal);
     }
-    if (itemsJson.length > 500) {
-      itemsJson = itemsJson.substring(0, 497) + '...';
+    if (recurringItemsJson.length > 500) {
+      recurringItemsJson = recurringItemsJson.substring(0, 497) + '...';
     }
 
-    const metadata: Record<string, string> = {
+    const subMetadata: Record<string, string> = {
       donation_type: interval,
       covers_fees: coverFees ? 'true' : 'false',
-      fee_amount: (feeAmount || 0).toString(),
-      base_amount: (baseAmount || amount).toString(),
-      donation_items: itemsJson,
+      fee_amount: recurringFee.toString(),
+      base_amount: recurringTotal.toString(),
+      donation_items: recurringItemsJson,
       interval_type: interval,
       is_jummah: isWeekly ? 'true' : 'false',
     };
 
     if (customer) {
-      metadata.customer_email = customer.email;
-      metadata.customer_name = `${customer.firstName} ${customer.lastName}`;
-      metadata.customer_phone = customer.phone || '';
+      subMetadata.customer_email = customer.email;
+      subMetadata.customer_name = `${customer.firstName} ${customer.lastName}`;
+      subMetadata.customer_phone = customer.phone || '';
     }
 
-    // Create the subscription with the saved payment method
-    // Since the PM is already confirmed via SetupIntent, this charges immediately
+    // Create subscription — charges immediately, no billing_cycle_anchor
+    // This ensures the first charge happens NOW, then repeats on the interval
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
       items: [{ price: price.id }],
@@ -181,25 +211,22 @@ export const POST: APIRoute = async ({ request }) => {
         save_default_payment_method: 'on_subscription',
       },
       expand: ['latest_invoice.payment_intent'],
-      metadata,
+      metadata: subMetadata,
     };
-
-    // For weekly subscriptions, anchor billing to next Friday
-    if (isWeekly) {
-      const nextFriday = getNextFriday();
-      subscriptionParams.billing_cycle_anchor = Math.floor(nextFriday.getTime() / 1000);
-      subscriptionParams.proration_behavior = 'none';
-    }
 
     const subscription = await stripe.subscriptions.create(subscriptionParams);
 
-    // Get payment info from first invoice
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+    // Get payment info from first invoice — with null safety
+    const invoice = subscription.latest_invoice as Stripe.Invoice | null;
+    const subPaymentIntent = invoice
+      ? (invoice.payment_intent as Stripe.PaymentIntent | null)
+      : null;
 
     // Calculate next billing date based on interval
-    const nextBillingDate = isWeekly ? getNextFriday() : new Date();
-    if (interval === 'monthly') {
+    const nextBillingDate = new Date();
+    if (interval === 'weekly') {
+      nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+    } else if (interval === 'monthly') {
       nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
     } else if (interval === 'yearly') {
       nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
@@ -207,8 +234,8 @@ export const POST: APIRoute = async ({ request }) => {
       nextBillingDate.setDate(nextBillingDate.getDate() + 1);
     }
 
-    // Prepare items with full metadata
-    const itemsWithMetadata = items?.map((i: any) => ({
+    // Prepare recurring items with full metadata
+    const recurringItemsWithMetadata = recurringItems.map((i: any) => ({
       id: i.id,
       campaign: i.campaign,
       amount: i.amount,
@@ -221,12 +248,12 @@ export const POST: APIRoute = async ({ request }) => {
       aqiqahFor: i.metadata?.aqiqahFor || null,
       notes: i.metadata?.notes || null,
       metadata: i.metadata || null,
-    })) || [];
+    }));
 
-    // Extract campaign info
-    const primaryItem = items?.[0];
-    const campaignSlug = primaryItem?.campaign || 'general';
-    const campaignName = primaryItem?.name || 'General Donation';
+    // Extract campaign info from recurring items
+    const primaryRecurringItem = recurringItems[0];
+    const recurringCampaignSlug = primaryRecurringItem?.campaign || 'general';
+    const recurringCampaignName = primaryRecurringItem?.name || 'General Donation';
 
     // Create subscription record in database
     const { data: subscriptionRecord, error: subError } = await supabaseAdmin
@@ -237,12 +264,12 @@ export const POST: APIRoute = async ({ request }) => {
         donor_email: customer?.email,
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
         donor_phone: customer?.phone,
-        amount,
+        amount: subscriptionAmount,
         currency,
         status: subscription.status === 'active' ? 'active' : 'pending',
         interval: interval,
-        items: itemsWithMetadata,
-        campaign_slug: campaignSlug,
+        items: recurringItemsWithMetadata,
+        campaign_slug: recurringCampaignSlug,
         next_billing_date: nextBillingDate.toISOString(),
       })
       .select()
@@ -252,25 +279,25 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('Error creating subscription record:', subError);
     }
 
-    // Create donation record for the first payment
-    const { data: donation, error: donationError } = await supabaseAdmin
+    // Create donation record for the subscription's first payment
+    const { data: recurringDonation, error: recurringDonationError } = await supabaseAdmin
       .from('donations')
       .insert({
-        stripe_payment_intent_id: paymentIntent?.id || null,
+        stripe_payment_intent_id: subPaymentIntent?.id || null,
         stripe_subscription_id: subscription.id,
-        amount,
+        amount: subscriptionAmount,
         currency,
-        status: paymentIntent?.status === 'succeeded' ? 'completed' : 'pending',
+        status: subPaymentIntent?.status === 'succeeded' ? 'completed' : 'pending',
         donation_type: interval,
         donor_email: customer?.email,
         donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
         donor_phone: customer?.phone,
-        items: itemsWithMetadata,
-        campaign_slug: campaignSlug,
-        campaign_name: campaignName,
+        items: recurringItemsWithMetadata,
+        campaign_slug: recurringCampaignSlug,
+        campaign_name: recurringCampaignName,
         covers_fees: coverFees,
-        fee_amount: feeAmount,
-        base_amount: baseAmount || amount,
+        fee_amount: recurringFee,
+        base_amount: recurringTotal,
         metadata: {
           stripe_customer_id: customerId,
           billing_address: billingAddress || null,
@@ -282,20 +309,128 @@ export const POST: APIRoute = async ({ request }) => {
       .select()
       .single();
 
-    if (donationError) {
-      console.error('Error creating donation record:', donationError);
+    if (recurringDonationError) {
+      console.error('Error creating recurring donation record:', recurringDonationError);
     }
 
+    // ════════════════════════════════════════════════════════════════
+    // PART 2: If there are ONE-TIME items, charge them separately
+    // ════════════════════════════════════════════════════════════════
+    let singleDonationId: string | null = null;
+    let singlePaymentIntentId: string | null = null;
+
+    if (oneTimeAmount >= 0.5 && singleItems.length > 0) {
+      // Build metadata for one-time charge
+      const singleItemsSummary = singleItems.map((i: any) => ({
+        c: i.campaign,
+        a: i.amount,
+        q: i.quantity,
+        n: i.name,
+      }));
+      let singleItemsJson = JSON.stringify(singleItemsSummary);
+      if (singleItemsJson.length > 500) {
+        singleItemsJson = singleItemsJson.substring(0, 497) + '...';
+      }
+
+      const singleMetadata: Record<string, string> = {
+        donation_type: 'single',
+        covers_fees: coverFees ? 'true' : 'false',
+        fee_amount: singleFee.toString(),
+        base_amount: singleTotal.toString(),
+        items: singleItemsJson,
+      };
+      if (customer) {
+        singleMetadata.customer_email = customer.email;
+        singleMetadata.customer_name = `${customer.firstName} ${customer.lastName}`;
+        singleMetadata.customer_phone = customer.phone || '';
+      }
+
+      // Create and confirm PaymentIntent using the saved payment method (off-session)
+      const singlePI = await stripe.paymentIntents.create({
+        amount: Math.round(oneTimeAmount * 100),
+        currency,
+        customer: customerId,
+        payment_method: paymentMethodId,
+        off_session: true,
+        confirm: true,
+        metadata: singleMetadata,
+        description: `One-time donation - ${singleItems.map((i: any) => i.name).join(', ') || 'General'}`,
+      });
+
+      singlePaymentIntentId = singlePI.id;
+
+      // Prepare one-time items with metadata
+      const singleItemsWithMetadata = singleItems.map((i: any) => ({
+        id: i.id,
+        campaign: i.campaign,
+        amount: i.amount,
+        quantity: i.quantity || 1,
+        label: i.label,
+        name: i.name,
+        type: 'single',
+        childName: i.metadata?.childName || null,
+        packageType: i.metadata?.packageType || null,
+        aqiqahFor: i.metadata?.aqiqahFor || null,
+        notes: i.metadata?.notes || null,
+        metadata: i.metadata || null,
+      }));
+
+      const primarySingleItem = singleItems[0];
+      const singleCampaignSlug = primarySingleItem?.campaign || 'general';
+      const singleCampaignName = primarySingleItem?.name || 'General Donation';
+
+      // Create one-time donation record
+      const { data: singleDonation, error: singleDonationError } = await supabaseAdmin
+        .from('donations')
+        .insert({
+          stripe_payment_intent_id: singlePI.id,
+          amount: oneTimeAmount,
+          currency,
+          status: singlePI.status === 'succeeded' ? 'completed' : 'pending',
+          donation_type: 'single',
+          donor_email: customer?.email,
+          donor_name: customer ? `${customer.firstName} ${customer.lastName}` : null,
+          donor_phone: customer?.phone,
+          items: singleItemsWithMetadata,
+          campaign_slug: singleCampaignSlug,
+          campaign_name: singleCampaignName,
+          covers_fees: coverFees,
+          fee_amount: singleFee,
+          base_amount: singleTotal,
+          metadata: {
+            stripe_customer_id: customerId,
+            billing_address: billingAddress || null,
+            is_recurring: false,
+            linked_subscription_id: subscription.id,
+          },
+        })
+        .select()
+        .single();
+
+      if (singleDonationError) {
+        console.error('Error creating one-time donation record:', singleDonationError);
+      }
+
+      singleDonationId = singleDonation?.id || null;
+    }
+
+    // Return combined result — primary IDs come from the subscription
     return new Response(JSON.stringify({
       subscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      donationId: donation?.id,
-      paymentIntentId: paymentIntent?.id || null,
-      paymentIntentStatus: paymentIntent?.status || null,
+      donationId: recurringDonation?.id || singleDonationId,
+      paymentIntentId: subPaymentIntent?.id || singlePaymentIntentId || null,
+      paymentIntentStatus: subPaymentIntent?.status || null,
       type: 'subscription',
       interval: interval,
       isJummah: isWeekly,
       nextBillingDate: nextBillingDate.toISOString(),
+      // Include one-time info if present
+      ...(singleDonationId ? {
+        singleDonationId,
+        singlePaymentIntentId,
+        singleAmount: oneTimeAmount,
+      } : {}),
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
