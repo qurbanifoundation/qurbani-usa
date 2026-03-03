@@ -3375,6 +3375,7 @@ function initTwoStepPlaces() {
 
 var ggStripeElements = null;
 var ggPendingPayment = null;
+var ggCurrentStripeMode = null; // track 'payment' or 'setup' to re-mount when needed
 // Per-item frequency is now handled by ggToggleItemFreq()
 
 function openGGCheckout() {
@@ -3724,6 +3725,14 @@ function updateGGCart() {
   // Enable/disable pay button
   var payBtn = document.getElementById('gg-pay-btn');
   if (payBtn) payBtn.disabled = items.length === 0;
+
+  // Re-mount Stripe Elements if mode changed (payment ↔ setup)
+  var neededMode = hasRecurring ? 'setup' : 'payment';
+  if (ggCurrentStripeMode && ggCurrentStripeMode !== neededMode) {
+    ggStripeElements = null;
+    ggPendingPayment = null;
+    mountGGPaymentElement();
+  }
 }
 
 // GG Stripe mount
@@ -3747,8 +3756,10 @@ function mountGGPaymentElement() {
     if (ggStripeElements) container.innerHTML = '';
 
     // Deferred mode — card fields appear instantly, no API call needed
+    var neededMode = isRecurring ? 'setup' : 'payment';
+    ggCurrentStripeMode = neededMode;
     var elementsConfig = {
-      mode: isRecurring ? 'setup' : 'payment',
+      mode: neededMode,
       currency: 'usd',
       appearance: {
         theme: 'stripe',
