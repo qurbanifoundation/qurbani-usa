@@ -276,7 +276,13 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   }
 
   // Sync to GoHighLevel with full campaign attribution and lifetime tracking
-  if (donation?.donor_email && donation?.donor_name) {
+  // Skip if already synced from create-subscription.ts (prevents double-counting)
+  const alreadySynced = donation?.metadata?.ghl_synced_at;
+  if (alreadySynced) {
+    console.log('GHL sync already done by create-subscription, skipping webhook sync for:', paymentIntent.id);
+  }
+
+  if (donation?.donor_email && donation?.donor_name && !alreadySynced) {
     try {
       // Extract campaign slug from the donation or items
       const campaignSlug = donation.campaign_slug ||

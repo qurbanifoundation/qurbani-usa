@@ -1,5 +1,8 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { trackDonation, markReceiptSent, moveDonationThroughPipeline } from '../../../lib/ghl-advanced';
+import { notifyDonationReceived } from '../../../lib/notifications';
+import { sendDonationReceipt } from '../../../lib/donor-emails';
 import Stripe from 'stripe';
 
 export const prerender = false;
@@ -454,6 +457,160 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       singleDonationId = singleDonation?.id || null;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // PART 3: Post-payment processing — GHL sync, notifications, receipts
+    // Done here because the Stripe webhook fires BEFORE we insert the
+    // donation row (race condition), so the webhook can't find the record.
+    // ════════════════════════════════════════════════════════════════
+    const donorName = customer ? `${customer.firstName} ${customer.lastName}` : null;
+    const donorEmail = customer?.email;
+
+    if (donorEmail && donorName) {
+      // --- Sync RECURRING donation to GHL ---
+      if (recurringDonation && (effectivePaymentStatus === 'succeeded' || subscription.status === 'active')) {
+        try {
+          const campaignSlug = recurringItems[0]?.campaign || 'general';
+          const campaignName = recurringItems[0]?.name || 'General Donation';
+          const itemsList = recurringItems.map((i: any) => ({
+            name: i.name || 'Donation',
+            amount: typeof i.amount === 'string' ? parseFloat(i.amount) : (i.amount || 0),
+          }));
+
+          const ghlResult = await trackDonation({
+            email: donorEmail,
+            name: donorName,
+            phone: customer?.phone || null,
+            amount: subscriptionAmount,
+            campaignSlug,
+            campaignName,
+            donationType: interval as 'single' | 'monthly' | 'weekly',
+            items: itemsList,
+            address: billingAddress || null,
+            stripePaymentId: effectivePaymentIntentId || subscription.id,
+            donationId: recurringDonation.id,
+            currency: currency.toUpperCase(),
+          });
+
+          console.log('[create-subscription] Recurring donation synced to GHL:', {
+            contactId: ghlResult.contactId,
+            lifetimeGiving: ghlResult.lifetimeGiving,
+            donationCount: ghlResult.donationCount,
+            donorTier: ghlResult.donorTier,
+          });
+
+          // Move pipeline
+          await moveDonationThroughPipeline(donorEmail, 'payment received')
+            .catch(err => console.error('[create-subscription] GHL pipeline error:', err));
+          await moveDonationThroughPipeline(donorEmail, 'active subscriber')
+            .catch(err => console.error('[create-subscription] GHL pipeline error:', err));
+
+          // Mark donation as GHL-synced (prevents double-sync from webhook)
+          await supabaseAdmin
+            .from('donations')
+            .update({ metadata: { ...recurringDonation.metadata, ghl_synced_at: new Date().toISOString() } })
+            .eq('id', recurringDonation.id);
+        } catch (ghlError) {
+          console.error('[create-subscription] GHL sync error (recurring):', ghlError);
+        }
+      }
+
+      // --- Sync ONE-TIME donation to GHL (if mixed cart) ---
+      if (singleDonationId && singlePaymentIntentId) {
+        try {
+          const campaignSlug = singleItems[0]?.campaign || 'general';
+          const campaignName = singleItems[0]?.name || 'General Donation';
+          const itemsList = singleItems.map((i: any) => ({
+            name: i.name || 'Donation',
+            amount: typeof i.amount === 'string' ? parseFloat(i.amount) : (i.amount || 0),
+          }));
+
+          const ghlResult = await trackDonation({
+            email: donorEmail,
+            name: donorName,
+            phone: customer?.phone || null,
+            amount: oneTimeAmount,
+            campaignSlug,
+            campaignName,
+            donationType: 'single',
+            items: itemsList,
+            address: billingAddress || null,
+            stripePaymentId: singlePaymentIntentId,
+            donationId: singleDonationId,
+            currency: currency.toUpperCase(),
+          });
+
+          console.log('[create-subscription] One-time donation synced to GHL:', {
+            contactId: ghlResult.contactId,
+            lifetimeGiving: ghlResult.lifetimeGiving,
+          });
+
+          // Mark as GHL-synced
+          await supabaseAdmin
+            .from('donations')
+            .update({ metadata: { ghl_synced_at: new Date().toISOString() } })
+            .eq('id', singleDonationId);
+        } catch (ghlError) {
+          console.error('[create-subscription] GHL sync error (one-time):', ghlError);
+        }
+      }
+
+      // --- Admin notification ---
+      const allItemsList = allItems.map((i: any) => ({
+        name: i.name || 'Donation',
+        amount: typeof i.amount === 'string' ? parseFloat(i.amount) : (i.amount || 0),
+      }));
+
+      await notifyDonationReceived({
+        amount: subscriptionAmount + oneTimeAmount,
+        donorName,
+        donorEmail,
+        items: allItemsList,
+        type: interval,
+      }).catch(err => console.error('[create-subscription] Admin notification error:', err));
+
+      // --- Donor receipt email ---
+      // Fetch subscription management URL
+      let managementUrl: string | undefined;
+      try {
+        const { data: sub } = await supabaseAdmin
+          .from('donation_subscriptions')
+          .select('id, management_token')
+          .eq('donor_email', donorEmail)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (sub?.management_token) {
+          managementUrl = `https://www.qurbani.com/manage-subscription/${sub.id}_${sub.management_token}`;
+        }
+      } catch {}
+
+      await sendDonationReceipt({
+        donorEmail,
+        donorName,
+        amount: subscriptionAmount + oneTimeAmount,
+        items: allItemsList,
+        transactionId: effectivePaymentIntentId || singlePaymentIntentId || subscription.id,
+        donationType: interval as 'single' | 'monthly' | 'weekly',
+        date: new Date(),
+        billingAddress: billingAddress || undefined,
+        managementUrl,
+      }).catch(err => console.error('[create-subscription] Receipt email error:', err));
+
+      // Mark receipt sent + GHL receipt status
+      if (recurringDonation?.id) {
+        await supabaseAdmin
+          .from('donations')
+          .update({ receipt_sent: true })
+          .eq('id', recurringDonation.id);
+      }
+      await markReceiptSent(donorEmail).catch(err =>
+        console.error('[create-subscription] GHL markReceiptSent error:', err)
+      );
+      await moveDonationThroughPipeline(donorEmail, 'receipt sent')
+        .catch(err => console.error('[create-subscription] GHL pipeline receipt sent error:', err));
     }
 
     // Return combined result — primary IDs come from the subscription
