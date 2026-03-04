@@ -61,6 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
       coverFees = false,
       feeAmount = 0,
       baseAmount,
+      resumeToken,
     } = body;
 
     // Validate required fields
@@ -349,6 +350,7 @@ export const POST: APIRoute = async ({ request }) => {
           is_recurring: true,
           is_jummah: isWeekly,
           subscription_id: subscriptionRecord?.id,
+          ...(resumeToken ? { resume_token: resumeToken } : {}),
         },
       })
       .select()
@@ -447,6 +449,7 @@ export const POST: APIRoute = async ({ request }) => {
             billing_address: billingAddress || null,
             is_recurring: false,
             linked_subscription_id: subscription.id,
+            ...(resumeToken ? { resume_token: resumeToken } : {}),
           },
         })
         .select()
@@ -457,6 +460,19 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       singleDonationId = singleDonation?.id || null;
+    }
+
+    // Mark abandoned checkout as recovered (if applicable)
+    if (resumeToken) {
+      try {
+        await supabaseAdmin
+          .from('abandoned_checkouts')
+          .update({ status: 'recovered', recovered_at: new Date().toISOString() })
+          .eq('resume_token', resumeToken)
+          .eq('status', 'abandoned');
+      } catch (e) {
+        console.error('Error marking abandoned checkout as recovered:', e);
+      }
     }
 
     // ════════════════════════════════════════════════════════════════

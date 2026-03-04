@@ -519,18 +519,34 @@ export async function trackDonation(data: {
   const syncContext = { action: 'track_donation', email: data.email, donationId: data.donationId };
 
   if (existing?.id) {
+    // UPDATE existing contact — remove locationId (GHL rejects it on PUT)
+    const { locationId: _omit, ...updateData } = contactData;
     await ghlFetch(`/contacts/${existing.id}`, {
       method: 'PUT',
-      body: JSON.stringify(contactData),
+      body: JSON.stringify(updateData),
     }, syncContext);
     contactId = existing.id;
   } else {
+    // CREATE new contact — locationId is required for POST
     const res = await ghlFetch('/contacts/', {
       method: 'POST',
       body: JSON.stringify(contactData),
     }, syncContext);
     const result = await res.json();
-    contactId = result.contact?.id;
+
+    // Handle "duplicate contacts" error — GHL matched by phone/name/etc.
+    // The error response includes the matched contactId, so fall back to UPDATE
+    if (!result.contact?.id && result.meta?.contactId) {
+      console.log('GHL duplicate contact detected, falling back to update:', result.meta.contactId);
+      contactId = result.meta.contactId;
+      const { locationId: _omit, ...updateData } = contactData;
+      await ghlFetch(`/contacts/${contactId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updateData),
+      }, syncContext);
+    } else {
+      contactId = result.contact?.id;
+    }
   }
 
   if (contactId) {
@@ -765,25 +781,39 @@ async function createDonationOpportunity(
 
     const itemNames = data.items?.map(i => i.name).join(', ') || data.campaignName;
 
-    const oppRes = await ghlFetch('/opportunities/', {
-      method: 'POST',
-      body: JSON.stringify({
-        pipelineId: cachedPipelineId,
-        locationId,
-        name: `$${data.amount} - ${itemNames} (${donationTypeLabel})`,
-        pipelineStageId: firstStageId,
-        status: 'open',
-        contactId,
-        monetaryValue: data.amount,
-        source: 'Website Donation',
-      }),
-    }, { action: 'create_opportunity', email: data.email });
+    // Check for existing open opportunities to avoid duplicate error
+    const existingOppRes = await ghlFetch(
+      `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${contactId}&status=open`
+    );
+    let hasExistingOpp = false;
+    if (existingOppRes.ok) {
+      const existingOppData = await existingOppRes.json();
+      hasExistingOpp = (existingOppData.opportunities?.length || 0) > 0;
+    }
 
-    if (!oppRes.ok) {
-      const errBody = await oppRes.text();
-      console.error('GHL opportunity creation failed:', oppRes.status, errBody);
+    if (hasExistingOpp) {
+      console.log('GHL opportunity already exists for', data.email, '- skipping creation');
     } else {
-      console.log('GHL opportunity created for', data.email);
+      const oppRes = await ghlFetch('/opportunities/', {
+        method: 'POST',
+        body: JSON.stringify({
+          pipelineId: cachedPipelineId,
+          locationId,
+          name: `$${data.amount} - ${itemNames} (${donationTypeLabel})`,
+          pipelineStageId: firstStageId,
+          status: 'open',
+          contactId,
+          monetaryValue: data.amount,
+          source: 'Website Donation',
+        }),
+      }, { action: 'create_opportunity', email: data.email });
+
+      if (!oppRes.ok) {
+        const errBody = await oppRes.text();
+        console.error('GHL opportunity creation failed:', oppRes.status, errBody);
+      } else {
+        console.log('GHL opportunity created for', data.email);
+      }
     }
   } catch (err) {
     console.error('GHL opportunity creation error:', err);

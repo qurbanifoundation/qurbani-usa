@@ -2505,16 +2505,23 @@ function stopCheckoutHeartbeat() {
 
 // Capture donor data on email blur — called silently, never blocks checkout
 function captureAbandonedCheckout() {
-  var email = (document.getElementById('modal-email')?.value || document.getElementById('ts-info-email')?.value || '').trim().toLowerCase();
+  var email = (document.getElementById('modal-email')?.value || document.getElementById('ts-info-email')?.value || document.getElementById('gg-email')?.value || '').trim().toLowerCase();
   if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) return;
 
   // Debounce: don't re-fire if we already captured this exact email
   if (window.donationCart._lastCapturedEmail === email) return;
   window.donationCart._lastCapturedEmail = email;
 
+  // Read name fields — GG uses fullName, others use firstName + lastName
+  var ggFullName = (document.getElementById('gg-fullName')?.value || '').trim();
   var firstName = (document.getElementById('modal-firstName')?.value || document.getElementById('ts-info-firstName')?.value || '').trim();
   var lastName = (document.getElementById('modal-lastName')?.value || document.getElementById('ts-info-lastName')?.value || '').trim();
-  var phone = (document.getElementById('modal-phone')?.value || document.getElementById('ts-info-phone')?.value || '').trim();
+  if (!firstName && ggFullName) {
+    var nameParts = ggFullName.split(' ');
+    firstName = nameParts[0] || '';
+    lastName = nameParts.slice(1).join(' ') || '';
+  }
+  var phone = (document.getElementById('modal-phone')?.value || document.getElementById('ts-info-phone')?.value || document.getElementById('gg-phone')?.value || '').trim();
   var country = (document.getElementById('modal-country')?.value || 'US');
 
   var items = window.donationCart.items || [];
@@ -2712,6 +2719,7 @@ async function handlePayment() {
           coverFees: coverFees,
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
+          resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
         }),
       });
 
@@ -3806,6 +3814,12 @@ function mountGGPaymentElement() {
   }
 }
 
+// ---- GG Abandoned Checkout Capture ----
+var ggEmailField = document.getElementById('gg-email');
+if (ggEmailField) {
+  ggEmailField.addEventListener('blur', function() { captureAbandonedCheckout(); });
+}
+
 // GG payment handler
 document.getElementById('gg-pay-btn')?.addEventListener('click', async function() {
   var payBtn = this;
@@ -3928,6 +3942,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           coverFees: coverFees,
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
+          resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
         }),
       });
       var subData = await subResponse.json();
@@ -3953,6 +3968,8 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
       sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
+      localStorage.removeItem('qurbani_resume_token');
+      stopCheckoutHeartbeat();
       window.location.href = '/donate/success?payment_intent=' + (subData.paymentIntentId || setupIntent.id) + '&donation_id=' + (subData.donationId || '');
 
     } else {
@@ -3971,6 +3988,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           coverFees: coverFees,
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
+          resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
         }),
       });
       var data = await response.json();
@@ -4018,6 +4036,8 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
         sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
         window.donationCart.items = [];
         localStorage.removeItem('donationCart');
+        localStorage.removeItem('qurbani_resume_token');
+        stopCheckoutHeartbeat();
         window.location.href = '/donate/success?payment_intent=' + paymentIntent.id + '&donation_id=' + (data.donationId || '');
       }
     }

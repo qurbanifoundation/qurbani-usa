@@ -172,6 +172,16 @@ export const POST: APIRoute = async ({ request }) => {
     // Abandoned checkout recovery token
     if (resumeToken) {
       metadata.resume_token = resumeToken;
+      // Mark abandoned checkout as recovered
+      try {
+        await supabaseAdmin
+          .from('abandoned_checkouts')
+          .update({ status: 'recovered', recovered_at: new Date().toISOString() })
+          .eq('resume_token', resumeToken)
+          .eq('status', 'abandoned');
+      } catch (e) {
+        console.error('Error marking abandoned checkout as recovered:', e);
+      }
     }
 
     // Recurring donations (monthly/weekly/yearly/daily) now use the SetupIntent → create-subscription flow
