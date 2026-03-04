@@ -123,55 +123,55 @@ if (upsells.length === 0) {
       container.innerHTML = upsells.map(function(u, i) {
         return `
           <div class="border border-gray-200 rounded-lg p-4 ${u.enabled ? 'bg-white' : 'bg-gray-50 opacity-75'}" data-index="${i}">
-            <div class="flex items-start gap-4">
-              <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Title</label>
-                  <input type="text" value="${u.title.replace(/"/g, '&quot;')}" data-field="title" data-index="${i}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</label>
-                  <input type="text" value="${(u.description || '').replace(/"/g, '&quot;')}" data-field="description" data-index="${i}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
-                </div>
-                <div class="flex gap-3">
-                  <div class="flex-1">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Amount ($)</label>
-                    <input type="number" value="${u.amount}" min="1" step="1" data-field="amount" data-index="${i}"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
-                  </div>
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Type</label>
-                    <select data-field="type" data-index="${i}"
-                      class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent bg-white">
-                      <option value="single" ${(u.type || 'single') === 'single' ? 'selected' : ''}>One-time</option>
-                      <option value="monthly" ${u.type === 'monthly' ? 'selected' : ''}>Monthly</option>
-                      <option value="weekly" ${u.type === 'weekly' ? 'selected' : ''}>Every Friday</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Show On</label>
-                    <select data-field="visibility" data-index="${i}"
-                      class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent bg-white">
-                      <option value="both" ${(u.visibility || 'both') === 'both' ? 'selected' : ''}>Both</option>
-                      <option value="mobile" ${u.visibility === 'mobile' ? 'selected' : ''}>Mobile Only</option>
-                      <option value="desktop" ${u.visibility === 'desktop' ? 'selected' : ''}>Desktop Only</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Order</label>
-                    <input type="number" value="${u.sort_order || i + 1}" min="1" step="1" data-field="sort_order" data-index="${i}"
-                      class="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
-                  </div>
-                </div>
+            <!-- Row 1: Title + Description -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Title</label>
+                <input type="text" value="${u.title.replace(/"/g, '&quot;')}" data-field="title" data-index="${i}"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
               </div>
-              <div class="flex flex-col items-center gap-2 pt-5">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</label>
+                <input type="text" value="${(u.description || '').replace(/"/g, '&quot;')}" data-field="description" data-index="${i}"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
+              </div>
+            </div>
+            <!-- Row 2: Amount, Type, Show On, Order + Toggle/Delete -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Amount ($)</label>
+                <input type="number" value="${u.amount}" min="1" step="1" data-field="amount" data-index="${i}"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Type</label>
+                <select data-field="type" data-index="${i}"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent bg-white">
+                  <option value="single" ${(u.type || 'single') === 'single' ? 'selected' : ''}>One-time</option>
+                  <option value="monthly" ${u.type === 'monthly' ? 'selected' : ''}>Monthly</option>
+                  <option value="weekly" ${u.type === 'weekly' ? 'selected' : ''}>Every Friday</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Show On</label>
+                <select data-field="visibility" data-index="${i}"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent bg-white">
+                  <option value="both" ${(u.visibility || 'both') === 'both' ? 'selected' : ''}>Both</option>
+                  <option value="mobile" ${u.visibility === 'mobile' ? 'selected' : ''}>Mobile Only</option>
+                  <option value="desktop" ${u.visibility === 'desktop' ? 'selected' : ''}>Desktop Only</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Order</label>
+                <input type="number" value="${u.sort_order || i + 1}" min="1" step="1" data-field="sort_order" data-index="${i}"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
+              </div>
+              <div class="flex items-center gap-3 justify-end md:justify-center pb-1">
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" ${u.enabled ? 'checked' : ''} data-field="enabled" data-index="${i}" class="sr-only peer" />
                   <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#01534d]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#01534d]"></div>
                 </label>
-                <button type="button" data-remove="${i}" class="text-xs text-red-400 hover:text-red-600 font-medium transition mt-1">Delete</button>
+                <button type="button" data-remove="${i}" class="text-xs text-red-400 hover:text-red-600 font-medium transition">Delete</button>
               </div>
             </div>
             <!-- Stamp text row -->
