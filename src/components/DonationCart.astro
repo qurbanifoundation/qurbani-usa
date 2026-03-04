@@ -2,7 +2,7 @@
 // Donation Cart Sidebar + Full-Screen Checkout Modal
 import { supabaseAdmin } from '../lib/supabase';
 import { getCheckoutUpsells } from '../lib/settings';
-import type { CheckoutUpsell } from '../lib/settings';
+import type { CheckoutUpsell, CheckoutUpsellsConfig } from '../lib/settings';
 
 interface Props {
   checkoutTemplate?: string;
@@ -46,11 +46,13 @@ try {
 } catch (e) {}
 
 // Fetch checkout upsells
-let checkoutUpsells: CheckoutUpsell[] = [];
+let upsellsConfig: CheckoutUpsellsConfig = { items: [], heading_desktop: 'Please support us further:', heading_mobile: 'Please support us further:' };
 try {
-  checkoutUpsells = await getCheckoutUpsells();
+  upsellsConfig = await getCheckoutUpsells();
 } catch (e) {}
-const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
+const enabledUpsells = upsellsConfig.items.filter(u => u.enabled);
+const upsellHeadingDesktop = upsellsConfig.heading_desktop;
+const upsellHeadingMobile = upsellsConfig.heading_mobile;
 ---
 
 <!-- Stripe.js -->
@@ -1115,24 +1117,29 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
             </div>
             <div id="gg-empty-cart" class="hidden text-center py-6 text-gray-400 text-sm">Your cart is empty</div>
 
-            <!-- Upsells (dynamic from admin) -->
+            <!-- Upsells (dynamic from admin, with mobile/desktop visibility) -->
             {enabledUpsells.length > 0 && (
             <div class="bg-white rounded-md border border-gray-200 p-4">
-              <p class="text-sm font-semibold text-gray-700 mb-3">Please support us further:</p>
+              <p class="hidden md:block text-sm font-semibold text-gray-700 mb-3">{upsellHeadingDesktop}</p>
+              <p class="block md:hidden text-sm font-semibold text-gray-700 mb-3">{upsellHeadingMobile}</p>
               <div class="space-y-2">
-                {enabledUpsells.map((upsell) => (
-                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-amber-50 transition border border-transparent hover:border-amber-200">
-                  <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} />
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-800">{upsell.title}</p>
-                    {upsell.description && <p class="text-xs text-gray-500">{upsell.description}</p>}
-                    {upsell.show_stamp && upsell.stamp_text && (
-                      <span class="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 rounded">{upsell.stamp_text}</span>
-                    )}
-                  </div>
-                  <span class="font-bold text-[#d97706] text-sm">${upsell.amount}{upsell.type === 'monthly' ? '/mo' : upsell.type === 'weekly' ? '/wk' : ''}</span>
-                </label>
-                ))}
+                {enabledUpsells.map((upsell) => {
+                  const vis = upsell.visibility || 'both';
+                  const visClass = vis === 'mobile' ? 'flex md:hidden' : vis === 'desktop' ? 'hidden md:flex' : 'flex';
+                  return (
+                  <label class={`${visClass} items-center gap-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-amber-50 transition border border-transparent hover:border-amber-200`}>
+                    <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} />
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-gray-800">{upsell.title}</p>
+                      {upsell.description && <p class="text-xs text-gray-500">{upsell.description}</p>}
+                      {upsell.show_stamp && upsell.stamp_text && (
+                        <span class="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 rounded">{upsell.stamp_text}</span>
+                      )}
+                    </div>
+                    <span class="font-bold text-[#d97706] text-sm">${upsell.amount}{upsell.type === 'monthly' ? '/mo' : upsell.type === 'weekly' ? '/wk' : ''}</span>
+                  </label>
+                  );
+                })}
               </div>
             </div>
             )}

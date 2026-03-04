@@ -5,8 +5,11 @@ import { supabaseAdmin } from '../../../lib/supabase';
 
 export const prerender = false;
 
-// Fetch current upsells
+// Fetch current upsells — handle both old array and new object format
 let upsells: any[] = [];
+let headingDesktop = 'Please support us further:';
+let headingMobile = 'Please support us further:';
+
 try {
   const { data, error } = await supabaseAdmin
     .from('site_settings')
@@ -14,8 +17,15 @@ try {
     .eq('id', 'main')
     .single();
 
-  if (data?.checkout_upsells && Array.isArray(data.checkout_upsells)) {
-    upsells = data.checkout_upsells;
+  const raw = data?.checkout_upsells;
+  if (Array.isArray(raw)) {
+    // Old format: plain array
+    upsells = raw;
+  } else if (raw && Array.isArray(raw.items)) {
+    // New format: object with items + headings
+    upsells = raw.items;
+    headingDesktop = raw.heading_desktop || headingDesktop;
+    headingMobile = raw.heading_mobile || headingMobile;
   }
 } catch (e) {
   console.error('Error fetching upsells:', e);
@@ -24,8 +34,8 @@ try {
 // Fallback defaults if empty
 if (upsells.length === 0) {
   upsells = [
-    { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1 },
-    { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2 },
+    { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1, visibility: 'both' },
+    { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2, visibility: 'both' },
   ];
 }
 ---
@@ -41,11 +51,29 @@ if (upsells.length === 0) {
 
     <SettingsTabs active="upsells" />
 
+    <!-- Section Headings -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-bold text-gray-900 mb-1">Upsell Section Headings</h2>
+      <p class="text-sm text-gray-500 mb-4">Customize the heading text shown above upsell items on desktop vs mobile</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Desktop Heading</label>
+          <input type="text" id="heading-desktop" value={headingDesktop}
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Mobile Heading</label>
+          <input type="text" id="heading-mobile" value={headingMobile}
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" />
+        </div>
+      </div>
+    </div>
+
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-lg font-bold text-gray-900">Checkout Upsells</h2>
-          <p class="text-sm text-gray-500 mt-0.5">Items shown in the "Add to your impact" section during checkout</p>
+          <p class="text-sm text-gray-500 mt-0.5">Items shown in the upsell section during checkout</p>
         </div>
         <button type="button" id="add-upsell-btn" class="px-4 py-2 bg-[#01534d] text-white text-sm font-semibold rounded-lg hover:bg-[#013d39] transition flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -73,7 +101,7 @@ if (upsells.length === 0) {
   <!-- Toast -->
   <div id="toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
 
-  <script define:vars={{ initialUpsells: upsells }}>
+  <script define:vars={{ initialUpsells: upsells, initialHeadingDesktop: headingDesktop, initialHeadingMobile: headingMobile }}>
     let upsells = JSON.parse(JSON.stringify(initialUpsells));
 
     function generateId(title) {
@@ -120,6 +148,15 @@ if (upsells.length === 0) {
                       <option value="single" ${(u.type || 'single') === 'single' ? 'selected' : ''}>One-time</option>
                       <option value="monthly" ${u.type === 'monthly' ? 'selected' : ''}>Monthly</option>
                       <option value="weekly" ${u.type === 'weekly' ? 'selected' : ''}>Every Friday</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Show On</label>
+                    <select data-field="visibility" data-index="${i}"
+                      class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent bg-white">
+                      <option value="both" ${(u.visibility || 'both') === 'both' ? 'selected' : ''}>Both</option>
+                      <option value="mobile" ${u.visibility === 'mobile' ? 'selected' : ''}>Mobile Only</option>
+                      <option value="desktop" ${u.visibility === 'desktop' ? 'selected' : ''}>Desktop Only</option>
                     </select>
                   </div>
                   <div>
@@ -218,6 +255,7 @@ if (upsells.length === 0) {
         type: 'single',
         show_stamp: false,
         stamp_text: 'Cancel anytime.',
+        visibility: 'both',
       });
       renderUpsells();
       // Focus the new title input
@@ -244,10 +282,16 @@ if (upsells.length === 0) {
           }
         });
 
+        const config = {
+          items: toSave,
+          heading_desktop: document.getElementById('heading-desktop').value.trim() || 'Please support us further:',
+          heading_mobile: document.getElementById('heading-mobile').value.trim() || 'Please support us further:',
+        };
+
         const res = await fetch('/api/settings/upsells', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(toSave),
+          body: JSON.stringify(config),
         });
 
         if (!res.ok) {

@@ -103,23 +103,50 @@ export interface CheckoutUpsell {
   type?: 'single' | 'monthly' | 'weekly';
   show_stamp?: boolean;
   stamp_text?: string;
+  visibility?: 'both' | 'mobile' | 'desktop';
 }
 
-const defaultUpsells: CheckoutUpsell[] = [
-  { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1, type: 'single' },
-  { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2, type: 'single' },
-];
+export interface CheckoutUpsellsConfig {
+  items: CheckoutUpsell[];
+  heading_desktop: string;
+  heading_mobile: string;
+}
 
-export async function getCheckoutUpsells(): Promise<CheckoutUpsell[]> {
+const defaultUpsellsConfig: CheckoutUpsellsConfig = {
+  items: [
+    { id: 'prophetic-qurbani', title: 'Prophetic Qurbani', description: 'Follow the Sunnah of the Prophet ﷺ', amount: 50, enabled: true, sort_order: 1, type: 'single', visibility: 'both' },
+    { id: 'feed-family', title: 'Feed a Family', description: 'Provide meals for a family in need', amount: 25, enabled: true, sort_order: 2, type: 'single', visibility: 'both' },
+  ],
+  heading_desktop: 'Please support us further:',
+  heading_mobile: 'Please support us further:',
+};
+
+export async function getCheckoutUpsells(): Promise<CheckoutUpsellsConfig> {
   try {
     const settings = await getSettings() as any;
-    const upsells = settings?.checkout_upsells;
-    if (Array.isArray(upsells) && upsells.length > 0) {
-      return upsells.sort((a: CheckoutUpsell, b: CheckoutUpsell) => (a.sort_order || 0) - (b.sort_order || 0));
+    const raw = settings?.checkout_upsells;
+
+    // Backward compat: old format is a plain array
+    if (Array.isArray(raw) && raw.length > 0) {
+      return {
+        items: raw.sort((a: CheckoutUpsell, b: CheckoutUpsell) => (a.sort_order || 0) - (b.sort_order || 0)),
+        heading_desktop: 'Please support us further:',
+        heading_mobile: 'Please support us further:',
+      };
     }
-    return defaultUpsells;
+
+    // New format: object with items array + headings
+    if (raw && Array.isArray(raw.items)) {
+      return {
+        items: raw.items.sort((a: CheckoutUpsell, b: CheckoutUpsell) => (a.sort_order || 0) - (b.sort_order || 0)),
+        heading_desktop: raw.heading_desktop || 'Please support us further:',
+        heading_mobile: raw.heading_mobile || 'Please support us further:',
+      };
+    }
+
+    return defaultUpsellsConfig;
   } catch {
-    return defaultUpsells;
+    return defaultUpsellsConfig;
   }
 }
 
