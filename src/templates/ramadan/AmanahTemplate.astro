@@ -87,11 +87,9 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
       .hero-section {
         aspect-ratio: auto;
         min-height: auto;
-        height: 100vh;
-        height: 100dvh;
-        max-height: 100vh;
-        max-height: 100dvh;
-        padding: 60px 20px 30px;
+        height: auto;
+        max-height: none;
+        padding: 110px 20px 40px;
         background-size: cover;
         background-position: center;
         justify-content: center;
@@ -1871,21 +1869,19 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
     @media (max-width: 768px) {
       .hero-section {
         min-height: auto;
-        height: 100vh;
-        height: 100dvh;
-        max-height: 100vh;
-        max-height: 100dvh;
-        padding: 50px 16px 30px;
+        height: auto;
+        max-height: none;
+        padding: 110px 16px 40px;
         justify-content: center;
       }
 
       .hero-title {
-        font-size: 28px;
+        font-size: 36px;
       }
 
       .hero-subtitle {
-        font-size: 14px;
-        margin-bottom: 16px;
+        font-size: 15px;
+        margin-bottom: 20px;
       }
 
       .hero-stats {
@@ -1968,15 +1964,15 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
     /* Extra small screens */
     @media (max-width: 380px) {
       .hero-section {
-        padding: 40px 12px 20px;
+        padding: 100px 12px 30px;
       }
 
       .hero-title {
-        font-size: 24px;
+        font-size: 30px;
       }
 
       .hero-subtitle {
-        font-size: 13px;
+        font-size: 14px;
       }
 
       .hero-stats {
@@ -2020,15 +2016,15 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
           </div>
         </div>
 
-        <button class="hero-cta" onclick="document.querySelector('.step-content').scrollIntoView({ behavior: 'smooth' })">
+        <button class="hero-cta" onclick="window.goToStep(2)">
           Start My 30 Nights Giving
         </button>
 
         <div>
-          <a href="#how-it-works" class="how-it-works-link">
+          <a href="#step-1" class="how-it-works-link" onclick="event.preventDefault(); document.getElementById('step-1').scrollIntoView({ behavior: 'smooth' });">
             How It Works
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
             </svg>
           </a>
         </div>
@@ -2959,6 +2955,10 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
 
       // Hide error and continue
       errorEl.style.display = 'none';
+
+      // Capture abandoned checkout when moving to payment step
+      captureRamadanAbandonedCheckout(true);
+
       window.goToStep(6);
     };
 
@@ -3361,6 +3361,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
             feeAmount: feeAmount,
             customer,
             billingAddress,
+            resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
           }),
         });
 
@@ -3404,6 +3405,10 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
         }
 
         if (paymentIntent && paymentIntent.status === 'succeeded') {
+          // Clear abandoned checkout tracking
+          localStorage.removeItem('qurbani_resume_token');
+          stopRamadanHeartbeat();
+
           // Save cart data for success page
           const baseDonation = calculateTotalWithAmplify();
           const feeCovered = coverFeesEnabled ? Math.round(baseDonation * 0.03 * 100) / 100 : 0;
@@ -3618,5 +3623,99 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
         loadGooglePlaces();
       }
     }
+
+    // ============================================
+    // ABANDONED CHECKOUT RECOVERY
+    // ============================================
+
+    // Heartbeat: keep last_activity_at fresh while checkout is open
+    var _ramadanHeartbeatInterval = null;
+    function startRamadanHeartbeat() {
+      if (_ramadanHeartbeatInterval) return;
+      _ramadanHeartbeatInterval = setInterval(function() {
+        var token = localStorage.getItem('qurbani_resume_token');
+        if (!token) return;
+        try {
+          navigator.sendBeacon('/api/abandoned-checkout/heartbeat', JSON.stringify({ resume_token: token }));
+        } catch(e) { /* silent */ }
+      }, 5 * 60 * 1000); // every 5 minutes
+    }
+
+    function stopRamadanHeartbeat() {
+      if (_ramadanHeartbeatInterval) { clearInterval(_ramadanHeartbeatInterval); _ramadanHeartbeatInterval = null; }
+    }
+
+    // Capture abandoned checkout on email blur
+    var _ramadanLastCaptureFingerprint = '';
+    function captureRamadanAbandonedCheckout(force) {
+      var email = (document.getElementById('email')?.value || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) return;
+
+      var total = calculateTotalWithAmplify();
+      var fingerprint = email + ':ramadan-30-days:' + total;
+
+      if (!force && _ramadanLastCaptureFingerprint === fingerprint) return;
+      _ramadanLastCaptureFingerprint = fingerprint;
+
+      var firstName = (document.getElementById('first-name')?.value || '').trim();
+      var lastName = (document.getElementById('last-name')?.value || '').trim();
+      var phone = (document.getElementById('phone')?.value || '').trim();
+
+      var params = new URLSearchParams(window.location.search);
+
+      var payload = {
+        email: email,
+        first_name: firstName || undefined,
+        last_name: lastName || undefined,
+        phone: phone || undefined,
+        amount: total || undefined,
+        currency: 'USD',
+        campaign_type: 'single',
+        campaign_slug: 'ramadan-30-days',
+        country: 'US',
+        utm_source: params.get('utm_source') || undefined,
+        utm_medium: params.get('utm_medium') || undefined,
+        utm_campaign: params.get('utm_campaign') || undefined,
+        utm_term: params.get('utm_term') || undefined,
+      };
+
+      fetch('/api/abandoned-checkout/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.resume_token) {
+          localStorage.setItem('qurbani_resume_token', data.resume_token);
+          startRamadanHeartbeat();
+        }
+      })
+      .catch(function() { /* silent — never disrupt checkout */ });
+    }
+
+    // Attach blur listeners for abandoned checkout capture
+    document.addEventListener('DOMContentLoaded', function() {
+      var emailField = document.getElementById('email');
+      if (emailField) {
+        emailField.addEventListener('blur', function() { captureRamadanAbandonedCheckout(); });
+      }
+      // Re-capture on phone blur to update phone number
+      var phoneField = document.getElementById('phone');
+      if (phoneField) {
+        phoneField.addEventListener('blur', function() { captureRamadanAbandonedCheckout(true); });
+      }
+      // Re-capture on name blur to update name
+      var firstNameField = document.getElementById('first-name');
+      if (firstNameField) {
+        firstNameField.addEventListener('blur', function() { captureRamadanAbandonedCheckout(true); });
+      }
+      var lastNameField = document.getElementById('last-name');
+      if (lastNameField) {
+        lastNameField.addEventListener('blur', function() { captureRamadanAbandonedCheckout(true); });
+      }
+      // Resume heartbeat if token exists from previous visit
+      if (localStorage.getItem('qurbani_resume_token')) startRamadanHeartbeat();
+    });
   </script>
 </Layout>

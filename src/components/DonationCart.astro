@@ -1500,6 +1500,11 @@ document.addEventListener('DOMContentLoaded', function() {
   if (modalEmailField) {
     modalEmailField.addEventListener('blur', function() { captureAbandonedCheckout(); });
   }
+  // Re-capture on phone blur to update phone number
+  var modalPhoneField = document.getElementById('modal-phone');
+  if (modalPhoneField) {
+    modalPhoneField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
+  }
 
   // Upsell checkboxes - update total and visual styles
   document.getElementById('upsell-checkbox-1').addEventListener('change', function() {
@@ -3857,6 +3862,15 @@ function mountGGPaymentElement() {
 var ggEmailField = document.getElementById('gg-email');
 if (ggEmailField) {
   ggEmailField.addEventListener('blur', function() { captureAbandonedCheckout(); });
+}
+// Re-capture on phone/name blur to update those fields
+var ggPhoneField = document.getElementById('gg-phone');
+if (ggPhoneField) {
+  ggPhoneField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
+}
+var ggNameField = document.getElementById('gg-fullName');
+if (ggNameField) {
+  ggNameField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
 }
 
 // GG payment handler

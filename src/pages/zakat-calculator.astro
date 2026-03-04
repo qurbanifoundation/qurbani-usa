@@ -103,6 +103,12 @@ const nisabSilverGrams = 595;
       color: #9ca3af;
       font-size: 0.875rem;
     }
+    /* Mobile: 1 input per row */
+    @media (max-width: 640px) {
+      .mobile-single-col {
+        grid-template-columns: 1fr !important;
+      }
+    }
   </style>
 
   <!-- Compact Hero -->
@@ -171,7 +177,7 @@ const nisabSilverGrams = 595;
                   </span>
                   Cash & Savings
                 </h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mobile-single-col">
                   <div>
                     <label class="calc-label">Cash on Hand <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Physical cash you have at home or in your wallet</span></span></label>
                     <div class="input-group">
@@ -214,7 +220,7 @@ const nisabSilverGrams = 595;
                   Gold & Silver
                   <span class="text-xs font-normal text-gray-400">(in grams)</span>
                 </h3>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 mobile-single-col">
                   <div>
                     <label class="calc-label">Gold (in grams) <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Total weight of gold jewelry, coins, or bars you own (excluding daily worn items by some scholars)</span></span></label>
                     <div class="input-group">
@@ -250,7 +256,7 @@ const nisabSilverGrams = 595;
                   </span>
                   Investments
                 </h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mobile-single-col">
                   <div>
                     <label class="calc-label">Stocks/Shares <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Current market value of stocks, mutual funds, ETFs, and shares</span></span></label>
                     <div class="input-group">
@@ -292,7 +298,7 @@ const nisabSilverGrams = 595;
                   </span>
                   Business Assets
                 </h3>
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-3 gap-3 mobile-single-col">
                   <div>
                     <label class="calc-label">Business Cash <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Cash held in business accounts</span></span></label>
                     <div class="input-group">
@@ -328,7 +334,7 @@ const nisabSilverGrams = 595;
                   Property
                   <span class="text-xs font-normal text-gray-400">(rental/investment only)</span>
                 </h3>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 mobile-single-col">
                   <div>
                     <label class="calc-label">Rental Income Saved <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Accumulated rental income you haven't spent</span></span></label>
                     <div class="input-group">
@@ -356,7 +362,7 @@ const nisabSilverGrams = 595;
                   </span>
                   Money Owed to You
                 </h3>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 mobile-single-col">
                   <div>
                     <label class="calc-label">Loans Given <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Money you've lent to others that you expect to be repaid</span></span></label>
                     <div class="input-group">
@@ -389,7 +395,7 @@ const nisabSilverGrams = 595;
             </div>
 
             <div class="p-4">
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-2 gap-3 mobile-single-col">
                 <div>
                   <label class="calc-label">Money You Owe <span class="info-tip"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg><span class="info-tooltip">Personal loans, credit card debt, or money borrowed from others</span></span></label>
                   <div class="input-group">

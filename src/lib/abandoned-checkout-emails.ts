@@ -78,13 +78,13 @@ function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribe
                       A 501(c)(3) Tax-Exempt Organization
                     </p>
                     <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                      1-800-900-0027 | <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
+                      EIN: 38-4109716
                     </p>
                     <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                      <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a>
+                      <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
+                      <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
                     </p>
                     <p style="margin: 0; color: #9ca3af; font-size: 11px;">
-                      This is a transactional email related to your recent checkout activity.<br>
                       <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe from reminders</a>
                     </p>
                   </td>
@@ -93,6 +93,18 @@ function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribe
             </td>
           </tr>
 
+        </table>
+
+        <!-- Quran Verse Footer -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="padding: 24px; text-align: center;">
+              <p style="margin: 0; color: #9ca3af; font-size: 11px; line-height: 1.6; font-style: italic;">
+                "Those who (in sadaqah) spend of their goods by night and by day, in secret and in public, have their reward with their Lord: On them shall be no fear, nor shall they grieve."<br>
+                <span style="font-style: normal;">(Al-Quran, 2:274)</span>
+              </p>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>

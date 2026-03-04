@@ -122,7 +122,7 @@ function getFreqLabel(type: string): string {
               {serverItems.length > 0 ? (
                 serverItems.map((item) => (
                   <div class="flex justify-between">
-                    <span>{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ''}{getFreqLabel(item.type || '') ? <span class="text-xs text-amber-600 font-medium ml-1">{getFreqLabel(item.type || '')}</span> : null}</span>
+                    <span>{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ''}</span>
                     <span class="font-medium text-stone-800">${(item.amount * item.quantity).toFixed(2)}{getFreqLabel(item.type || '')}</span>
                   </div>
                 ))
@@ -250,7 +250,6 @@ function getFreqLabel(type: string): string {
           var freqLabel = itemType === 'monthly' ? '/mo' : itemType === 'weekly' ? '/wk' : itemType === 'yearly' ? '/yr' : itemType === 'daily' ? '/day' : '';
           return '<div class="flex justify-between"><span>' +
             (item.name || 'Donation') + (qty > 1 ? ' x' + qty : '') +
-            (freqLabel ? ' <span class="text-xs text-amber-600 font-medium">' + freqLabel + '</span>' : '') +
             '</span><span class="font-medium text-stone-800">$' + itemTotal + freqLabel + '</span></div>';
         }).join('');
 
