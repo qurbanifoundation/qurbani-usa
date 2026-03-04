@@ -12,10 +12,10 @@ import CWDonationBox from '../../components/donation/CWDonationBox.astro';
   <main>
     <!-- Hero Section -->
     <section class="relative min-h-[500px] flex items-center" style="background: linear-gradient(135deg, #255764 0%, #1a3d47 100%);">
-      <div class="absolute inset-0 opacity-10">
-        <div class="absolute inset-0" style="background-image: url('https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?w=1920'); background-size: cover; background-position: center;"></div>
+      <div class="absolute inset-0">
+        <div class="absolute inset-0" style="background-image: url('/images/qurbani-foundation-food-distribution.png'); background-size: cover; background-position: center;"></div>
       </div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/95 to-[#255764]/80"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/80 to-[#255764]/50"></div>
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -28,7 +28,7 @@ import CWDonationBox from '../../components/donation/CWDonationBox.astro';
             </div>
 
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6" style="font-family: 'Signika', sans-serif;">
-              Pay Your <span class="text-[#fdc448]">Zakat</span>
+              Pay Your <span class="text-[#e1861d]">Zakat</span>
             </h1>
 
             <p class="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;">
@@ -37,24 +37,34 @@ import CWDonationBox from '../../components/donation/CWDonationBox.astro';
 
             <div class="flex flex-wrap gap-4 mb-8">
               <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-                <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="text-sm">100% Zakat Policy</span>
               </div>
               <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-                <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="text-sm">Shariah Compliant</span>
               </div>
               <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-                <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="text-sm">Tax Deductible</span>
               </div>
             </div>
+
+            <a href="/zakat-calculator" class="inline-flex items-center gap-2 bg-[#e1861d] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#c97418] transition shadow-lg" style="font-family: 'Signika', sans-serif;">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm0 2h8v2H6V4zm0 4h2v2H6V8zm0 3h2v2H6v-2zm0 3h2v2H6v-2zm3-6h2v2H9V8zm0 3h2v2H9v-2zm0 3h2v2H9v-2zm3-6h2v2h-2V8zm0 3h2v5h-2v-5z"></path>
+              </svg>
+              Calculate My Zakat
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </a>
           </div>
 
           <!-- Donation Box -->
