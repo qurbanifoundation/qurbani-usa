@@ -572,18 +572,22 @@ export const POST: APIRoute = async ({ request }) => {
         }
       }
 
-      // --- Admin notification ---
-      const allItemsList = allItems.map((i: any) => ({
+      // --- Admin notification (with per-item type info) ---
+      const allItemsListWithTypes = allItems.map((i: any) => ({
         name: i.name || 'Donation',
         amount: typeof i.amount === 'string' ? parseFloat(i.amount) : (i.amount || 0),
+        quantity: i.quantity || 1,
+        type: i.type || 'single',
       }));
 
       await notifyDonationReceived({
         amount: subscriptionAmount + oneTimeAmount,
         donorName,
         donorEmail,
-        items: allItemsList,
-        type: interval,
+        items: allItemsListWithTypes,
+        type: singleItems.length > 0 ? 'mixed' : interval,
+        recurringAmount: subscriptionAmount,
+        onetimeAmount: oneTimeAmount,
       }).catch(err => console.error('[create-subscription] Admin notification error:', err));
 
       // --- Donor receipt email ---
@@ -607,12 +611,14 @@ export const POST: APIRoute = async ({ request }) => {
         donorEmail,
         donorName,
         amount: subscriptionAmount + oneTimeAmount,
-        items: allItemsList,
+        items: allItemsListWithTypes,
         transactionId: effectivePaymentIntentId || singlePaymentIntentId || subscription.id,
-        donationType: interval as 'single' | 'monthly' | 'weekly',
+        donationType: singleItems.length > 0 ? 'mixed' as any : interval as 'single' | 'monthly' | 'weekly',
         date: new Date(),
         billingAddress: billingAddress || undefined,
         managementUrl,
+        recurringAmount: subscriptionAmount,
+        onetimeAmount: oneTimeAmount,
       }).catch(err => console.error('[create-subscription] Receipt email error:', err));
 
       // Mark receipt sent + GHL receipt status

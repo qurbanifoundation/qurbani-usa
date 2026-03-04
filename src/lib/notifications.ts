@@ -264,16 +264,31 @@ export async function notifyDonationReceived(donation: {
   amount: number;
   donorName: string;
   donorEmail: string;
-  items?: Array<{ name: string }>;
+  items?: Array<{ name: string; amount?: number; quantity?: number; type?: string }>;
   type?: string;
+  recurringAmount?: number;
+  onetimeAmount?: number;
 }): Promise<void> {
-  const itemNames = donation.items?.map(i => i.name).join(', ') || 'General Donation';
-  const typeLabel = donation.type === 'monthly' ? 'Monthly' : donation.type === 'weekly' ? 'Jummah' : 'One-time';
+  // Build per-item breakdown with frequency labels
+  const itemDetails = donation.items?.map(i => {
+    const t = (i.type || 'single').toLowerCase();
+    const freqLabel = t === 'monthly' ? '/mo' : t === 'weekly' ? '/wk' : t === 'yearly' ? '/yr' : t === 'daily' ? '/day' : '';
+    const itemTotal = (i.amount || 0) * (i.quantity || 1);
+    return `${i.name} — $${itemTotal.toFixed(2)}${freqLabel}`;
+  }).join(', ') || 'General Donation';
+
+  const typeLabel = donation.type === 'mixed' ? 'Mixed (One-Time + Recurring)' : donation.type === 'monthly' ? 'Monthly' : donation.type === 'weekly' ? 'Jummah' : 'One-time';
+
+  // Build breakdown message
+  let amountBreakdown = `$${donation.amount.toFixed(2)}`;
+  if (donation.recurringAmount && donation.onetimeAmount && donation.onetimeAmount > 0) {
+    amountBreakdown += ` ($${donation.onetimeAmount.toFixed(2)} one-time + $${donation.recurringAmount.toFixed(2)} recurring)`;
+  }
 
   await sendNotification({
     type: 'donation_received',
     title: 'New Donation Received!',
-    message: `${typeLabel} donation of $${donation.amount.toFixed(2)} received for: ${itemNames}`,
+    message: `${typeLabel} donation of ${amountBreakdown} received.\nItems: ${itemDetails}`,
     amount: donation.amount,
     donorName: donation.donorName,
     donorEmail: donation.donorEmail,

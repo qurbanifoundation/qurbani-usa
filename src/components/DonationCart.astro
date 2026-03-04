@@ -2739,7 +2739,8 @@ async function handlePayment() {
             name: item.name || item.campaign || 'Donation',
             category: item.campaign || 'donation',
             amount: item.amount,
-            quantity: item.quantity || 1
+            quantity: item.quantity || 1,
+            type: item.type || item.recurringInterval || 'single'
           };
         }),
         cover_fees: coverFees && feeAmount > 0,
@@ -2830,7 +2831,8 @@ async function handlePayment() {
               name: item.name || item.campaign || 'Donation',
               category: item.campaign || 'donation',
               amount: item.amount,
-              quantity: item.quantity || 1
+              quantity: item.quantity || 1,
+              type: item.type || item.recurringInterval || 'single'
             };
           }),
           cover_fees: coverFees && feeAmount > 0,
@@ -3315,7 +3317,8 @@ document.getElementById('ts-pay-btn')?.addEventListener('click', async function(
             name: item.name || item.campaign || 'Donation',
             category: item.campaign || 'donation',
             amount: item.amount,
-            quantity: item.quantity || 1
+            quantity: item.quantity || 1,
+            type: item.type || item.recurringInterval || 'single'
           };
         }),
         cover_fees: coverFees && feeAmount > 0,
@@ -3953,7 +3956,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
         donation_id: subData.donationId || '',
         total: total,
         items: items.map(function(item) {
-          return { id: item.id || item.slug, name: item.name || item.campaign || 'Donation', category: item.campaign || 'donation', amount: item.amount, quantity: item.quantity || 1 };
+          return { id: item.id || item.slug, name: item.name || item.campaign || 'Donation', category: item.campaign || 'donation', amount: item.amount, quantity: item.quantity || 1, type: item.type || item.recurringInterval || 'single' };
         }),
         cover_fees: coverFees && feeAmount > 0,
         fee_amount: feeAmount,
@@ -4021,7 +4024,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           donation_id: data.donationId || '',
           total: total,
           items: items.map(function(item) {
-            return { id: item.id || item.slug, name: item.name || item.campaign || 'Donation', category: item.campaign || 'donation', amount: item.amount, quantity: item.quantity || 1 };
+            return { id: item.id || item.slug, name: item.name || item.campaign || 'Donation', category: item.campaign || 'donation', amount: item.amount, quantity: item.quantity || 1, type: item.type || item.recurringInterval || 'single' };
           }),
           cover_fees: coverFees && feeAmount > 0,
           fee_amount: feeAmount,

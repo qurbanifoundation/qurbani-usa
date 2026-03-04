@@ -15,9 +15,9 @@ interface DonationReceiptData {
   donorEmail: string;
   donorName: string;
   amount: number;
-  items: Array<{ name: string; amount: number; quantity?: number }>;
+  items: Array<{ name: string; amount: number; quantity?: number; type?: string }>;
   transactionId: string;
-  donationType: 'single' | 'monthly' | 'weekly';
+  donationType: 'single' | 'monthly' | 'weekly' | 'mixed';
   date: Date;
   billingAddress?: {
     line1?: string;
@@ -27,6 +27,8 @@ interface DonationReceiptData {
     country?: string;
   };
   managementUrl?: string;
+  recurringAmount?: number;
+  onetimeAmount?: number;
 }
 
 interface SubscriptionConfirmationData {
@@ -199,8 +201,8 @@ function getEmailWrapper(content: string, preheader: string = ''): string {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); padding: 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Qurbani Foundation</h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Serving Humanity Through Faith</p>
+              <img src="https://www.staging9.qurbani.com/wp-content/uploads/2021/07/QurbaniFoundation-Logo-2.png" alt="Qurbani Foundation" width="220" style="max-width: 220px; height: auto; display: inline-block;" />
+              <p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Serving Humanity Through Faith</p>
             </td>
           </tr>
 
@@ -222,7 +224,7 @@ function getEmailWrapper(content: string, preheader: string = ''): string {
                       A 501(c)(3) Tax-Exempt Organization
                     </p>
                     <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                      EIN: XX-XXXXXXX
+                      EIN: 38-4109716
                     </p>
                     <p style="margin: 0; color: #9ca3af; font-size: 12px;">
                       <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
@@ -241,7 +243,6 @@ function getEmailWrapper(content: string, preheader: string = ''): string {
           <tr>
             <td style="padding: 24px; text-align: center;">
               <p style="margin: 0; color: #9ca3af; font-size: 11px; line-height: 1.5;">
-                This email serves as your official donation receipt for tax purposes.<br>
                 No goods or services were provided in exchange for this contribution.<br>
                 Please retain this email for your records.
               </p>
@@ -275,19 +276,33 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
     timeZone: 'America/New_York',
   });
 
-  const typeLabel = donationType === 'monthly' ? 'Monthly Recurring' : donationType === 'weekly' ? 'Jummah (Weekly)' : 'One-Time';
+  const typeLabel = donationType === 'mixed' ? 'Mixed (One-Time + Recurring)' : donationType === 'monthly' ? 'Monthly Recurring' : donationType === 'weekly' ? 'Jummah (Weekly)' : 'One-Time';
 
-  const itemsHtml = items.map(item => `
+  // Helper to get per-item frequency label
+  function getItemFreqLabel(itemType?: string): string {
+    const t = (itemType || 'single').toLowerCase();
+    if (t === 'monthly') return '/mo';
+    if (t === 'weekly') return '/wk';
+    if (t === 'yearly') return '/yr';
+    if (t === 'daily') return '/day';
+    return '';
+  }
+
+  const itemsHtml = items.map(item => {
+    const freqLabel = getItemFreqLabel(item.type);
+    return `
     <tr>
       <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
         <span style="color: #374151; font-weight: 500;">${item.name}</span>
         ${item.quantity && item.quantity > 1 ? `<span style="color: #6b7280;"> × ${item.quantity}</span>` : ''}
+        ${freqLabel ? `<span style="color: #d97706; font-size: 12px; font-weight: 600;"> ${freqLabel}</span>` : ''}
       </td>
       <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb; text-align: right; color: #374151; font-weight: 600;">
         $${(item.amount * (item.quantity || 1)).toFixed(2)}
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   const content = `
     <!-- Thank You Message -->
@@ -304,9 +319,15 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tr>
           <td>
-            <p style="margin: 0 0 4px 0; color: #92400e; font-size: 14px; font-weight: 500;">Total Donation</p>
+            <p style="margin: 0 0 4px 0; color: #92400e; font-size: 14px; font-weight: 500;">Total Charged Today</p>
             <p style="margin: 0; color: #78350f; font-size: 36px; font-weight: bold;">$${amount.toFixed(2)}</p>
+            ${data.recurringAmount && data.onetimeAmount && data.onetimeAmount > 0 ? `
+            <p style="margin: 8px 0 0 0; color: #92400e; font-size: 13px;">
+              $${data.onetimeAmount.toFixed(2)} one-time + $${data.recurringAmount.toFixed(2)} recurring
+            </p>
+            ` : `
             <p style="margin: 8px 0 0 0; color: #92400e; font-size: 14px;">${typeLabel} Donation</p>
+            `}
           </td>
           <td style="text-align: right; vertical-align: top;">
             <p style="margin: 0; color: #92400e; font-size: 12px;">Transaction ID</p>
@@ -362,7 +383,7 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
     <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
       <p style="margin: 0; color: #1e40af; font-size: 14px;">
         <strong>🔄 Recurring Donation</strong><br>
-        You will be automatically charged $${amount.toFixed(2)} ${donationType === 'weekly' ? 'every Friday' : 'each month'}.
+        You will be automatically charged $${(data.recurringAmount || amount).toFixed(2)} ${donationType === 'weekly' ? 'every Friday' : 'each month'}.
       </p>
       ${data.managementUrl ? `
       <div style="margin-top: 12px;">
@@ -398,18 +419,20 @@ Your ${typeLabel} donation of $${amount.toFixed(2)} has been received.
 
 DONATION DETAILS
 ${'-'.repeat(30)}
-${items.map(i => `• ${i.name}: $${(i.amount * (i.quantity || 1)).toFixed(2)}`).join('\n')}
+${items.map(i => {
+    const freq = getItemFreqLabel(i.type);
+    return `• ${i.name}${freq ? ' (' + freq.replace('/', '') + ')' : ''}: $${(i.amount * (i.quantity || 1)).toFixed(2)}`;
+  }).join('\n')}
 
-Total: $${amount.toFixed(2)}
+Total: $${amount.toFixed(2)}${data.recurringAmount && data.onetimeAmount && data.onetimeAmount > 0 ? `\n($${data.onetimeAmount.toFixed(2)} one-time + $${data.recurringAmount.toFixed(2)} recurring)` : ''}
 Date: ${formattedDate}
 Transaction ID: ${transactionId}
 ${donationType !== 'single' && data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
-This email serves as your official donation receipt for tax purposes.
 No goods or services were provided in exchange for this contribution.
 
 Thank you for your generosity!
 
-Qurbani Foundation
+Qurbani Foundation (EIN: 38-4109716)
 www.qurbani.com | donorcare@qurbani.com`;
 
   return sendEmailAndLogToGHL({

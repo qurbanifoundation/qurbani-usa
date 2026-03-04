@@ -175,7 +175,7 @@ if (serverDonation?.items) {
             <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
             </svg>
-            <p class="text-sm text-emerald-800">A tax-deductible receipt has been sent to your email.</p>
+            <p class="text-sm text-emerald-800">A confirmation email has been sent to your inbox.</p>
           </div>
 
           <!-- Impact message -->
@@ -243,8 +243,11 @@ if (serverDonation?.items) {
         var html = purchaseData.items.map(function(item) {
           var qty = item.quantity || 1;
           var itemTotal = (item.amount * qty).toFixed(2);
+          var itemType = (item.type || 'single').toLowerCase();
+          var freqLabel = itemType === 'monthly' ? '/mo' : itemType === 'weekly' ? '/wk' : itemType === 'yearly' ? '/yr' : itemType === 'daily' ? '/day' : '';
           return '<div class="flex justify-between"><span>' +
             (item.name || 'Donation') + (qty > 1 ? ' x' + qty : '') +
+            (freqLabel ? ' <span class="text-xs text-amber-600 font-medium">' + freqLabel + '</span>' : '') +
             '</span><span class="font-medium text-stone-800">$' + itemTotal + '</span></div>';
         }).join('');
 
@@ -259,6 +262,20 @@ if (serverDonation?.items) {
       // Update success message
       var msgEl = document.getElementById('success-message');
       if (purchaseData.is_subscription) {
+        // Calculate recurring vs one-time totals from item types
+        var recurringItemsList = purchaseData.items.filter(function(item) {
+          var t = (item.type || 'single').toLowerCase();
+          return t === 'monthly' || t === 'weekly' || t === 'yearly' || t === 'daily';
+        });
+        var singleItemsList = purchaseData.items.filter(function(item) {
+          var t = (item.type || 'single').toLowerCase();
+          return t !== 'monthly' && t !== 'weekly' && t !== 'yearly' && t !== 'daily';
+        });
+        var recurringAmount = recurringItemsList.reduce(function(sum, item) {
+          return sum + (item.amount * (item.quantity || 1));
+        }, 0);
+        var hasMixedCart = singleItemsList.length > 0 && recurringItemsList.length > 0;
+
         // Show subscription info
         var subInfoEl = document.getElementById('subscription-info');
         if (subInfoEl) subInfoEl.classList.remove('hidden');
@@ -268,16 +285,17 @@ if (serverDonation?.items) {
         var monthlyEl = document.getElementById('monthly-amount');
 
         if (purchaseData.is_jummah) {
-          if (msgEl) msgEl.textContent = 'Your Jummah (Friday) donation is active!';
+          if (msgEl) msgEl.textContent = hasMixedCart ? 'Your donation has been received and Jummah giving is active!' : 'Your Jummah (Friday) donation is active!';
           if (titleEl) titleEl.textContent = 'Jummah (Friday) Recurring';
           if (intervalTextEl) intervalTextEl.textContent = 'every Friday';
         } else {
-          if (msgEl) msgEl.textContent = 'Your monthly donation is active!';
+          if (msgEl) msgEl.textContent = hasMixedCart ? 'Your donation has been received and recurring giving is active!' : 'Your monthly donation is active!';
           if (titleEl) titleEl.textContent = 'Monthly Recurring';
           if (intervalTextEl) intervalTextEl.textContent = 'each month';
         }
 
-        if (monthlyEl) monthlyEl.textContent = '$' + purchaseData.total.toFixed(2);
+        // Show only the recurring portion amount, not the combined total
+        if (monthlyEl) monthlyEl.textContent = '$' + (recurringAmount > 0 ? recurringAmount : purchaseData.total).toFixed(2);
 
         // Set next billing date
         if (purchaseData.next_billing_date) {
