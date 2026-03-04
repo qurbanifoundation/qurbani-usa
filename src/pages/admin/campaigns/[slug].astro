@@ -175,12 +175,13 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
                     id="url-category"
                     class="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] text-sm bg-white"
                   >
-                    <option value="">appeals</option>
+                    <option value="__root__" selected={!existingCategoryPrefix && existingUrlPath === `/${campaign.slug}`}>/ (root level)</option>
+                    <option value="" selected={!existingCategoryPrefix && existingUrlPath !== `/${campaign.slug}`}>appeals</option>
                     {categories.map(cat => (
                       <option value={cat.slug} selected={existingCategoryPrefix === cat.slug}>{cat.slug}</option>
                     ))}
                   </select>
-                  <span class="text-gray-500 text-sm">/</span>
+                  <span class="text-gray-500 text-sm" id="url-separator">/</span>
                   <input
                     type="text"
                     name="slug"
@@ -2369,10 +2370,15 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
   function updateUrlPreview() {
     const category = categorySelect?.value || '';
     const slug = slugInput?.value || '';
-    const prefix = category || 'appeals';
-    const fullPath = `/${prefix}/${slug}`;
-    if (urlPreview) {
-      urlPreview.textContent = fullPath;
+    const separator = document.getElementById('url-separator');
+    if (category === '__root__') {
+      // Root level: /slug
+      if (urlPreview) urlPreview.textContent = `/${slug}`;
+      if (separator) separator.style.display = 'none';
+    } else {
+      const prefix = category || 'appeals';
+      if (urlPreview) urlPreview.textContent = `/${prefix}/${slug}`;
+      if (separator) separator.style.display = '';
     }
   }
 
@@ -2394,6 +2400,9 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     categorySelect.addEventListener('change', updateUrlPreview);
   }
 
+  // Initialize preview on page load (handles root-level separator visibility)
+  updateUrlPreview();
+
   // Form Submit
   document.getElementById('campaignForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -2403,8 +2412,9 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     // Build url_path from category select and slug
     const urlCategory = formData.get('url_category') || '';
     const slug = formData.get('slug');
-    const urlPrefix = urlCategory || 'appeals';
-    const urlPath = `/${urlPrefix}/${slug}`;
+    const isRootLevel = urlCategory === '__root__';
+    const urlPrefix = isRootLevel ? '' : (urlCategory || 'appeals');
+    const urlPath = isRootLevel ? `/${slug}` : `/${urlPrefix}/${slug}`;
 
     const data = {
       id: formData.get('id'),
@@ -2426,7 +2436,9 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       meta_title: formData.get('meta_title') || null,
       meta_description: formData.get('meta_description') || null,
       url_path: urlPath,
-      category: urlCategory || null, // Also store category for filtering
+      // For root-level URLs, keep existing category (used for menu grouping)
+      // For category URLs, sync category with URL prefix
+      ...(isRootLevel ? {} : { category: urlCategory || null }),
       template_type: formData.get('template_type') || 'standard',
       page_template: formData.get('page_template') || null,
       donation_box_template: formData.get('donation_box_template') || null,

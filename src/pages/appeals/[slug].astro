@@ -9,6 +9,7 @@ import OrphanSponsorshipTemplate from '../../templates/OrphanSponsorshipTemplate
 import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTemplate.astro';
 import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
 import ZakatCalculatorTemplate from '../../templates/ZakatCalculatorTemplate.astro';
+import ZakatHubTemplate from '../../templates/ZakatHubTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -101,7 +102,9 @@ const pageTemplate = campaign.page_template || (isOrphanSponsorship ? orphanTemp
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
 ---
 
-{pageTemplate === 'zakat-calculator' ? (
+{pageTemplate === 'zakat-hub' ? (
+  <ZakatHubTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'zakat-calculator' ? (
   <ZakatCalculatorTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : pageTemplate === 'aqiqah' ? (
   <AqiqahTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />

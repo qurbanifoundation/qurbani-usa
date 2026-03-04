@@ -1,0 +1,407 @@
+---
+/**
+ * ZAKAT HUB TEMPLATE
+ *
+ * Custom campaign template for the /zakat page.
+ * Preserves the unique zakat page design while reading ALL content
+ * from the campaigns database, making it fully editable via /admin/campaigns.
+ *
+ * Data Mapping:
+ * - Hero badge text         → campaign.subtitle2
+ * - Hero title              → campaign.hero_title (falls back to campaign.title)
+ * - Hero description        → campaign.subtitle
+ * - Hero background image   → campaign.featured_image
+ * - Hero trust badges       → template_config.heroBadges[]
+ * - Hero CTA button         → template_config.heroCta { text, link }
+ * - Donation box            → template_config.cwDonation
+ * - Categories section      → pageContent.theCrisis (heading + content)
+ * - Category cards          → pageContent.howDonationHelps.items[]
+ * - Why Give heading        → pageContent.whyMonthly.heading
+ * - Why Give benefits       → content_sections[] (title + content)
+ * - Why Give image          → gallery_images[0]
+ * - Image overlay           → template_config.imageOverlay (0-100)
+ * - Stat badge              → impact_stats[0] { value, label }
+ * - Info banner             → pageContent.midCta
+ * - Quick links             → template_config.quickLinks[]
+ * - FAQ (optional)          → pageContent.faq
+ * - Final CTA (optional)    → pageContent.finalCta
+ * - SEO                     → meta_title, meta_description
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import CWDonationBox from '../components/donation/CWDonationBox.astro';
+import { DEFAULT_PAGE_CONTENT } from '../lib/page-content-defaults';
+
+interface Props {
+  campaign: {
+    title: string;
+    hero_title?: string;
+    subtitle?: string;
+    subtitle2?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: Array<{ title?: string; content?: string; image?: string }>;
+    donation_options?: Array<{ amount: number; label?: string }>;
+    gallery_images?: string[];
+    impact_stats?: Array<{ value: string; label: string }> | Record<string, string>;
+    template_config?: Record<string, any>;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign } = Astro.props;
+
+// ── Extract template_config data ─────────────────────────────────────
+const cwConfig = campaign.template_config?.cwDonation || {};
+const savedPC = campaign.template_config?.pageContent || {};
+
+const pageContent = {
+  theCrisis: { ...DEFAULT_PAGE_CONTENT.theCrisis, ...savedPC.theCrisis },
+  howDonationHelps: {
+    heading: savedPC.howDonationHelps?.heading || DEFAULT_PAGE_CONTENT.howDonationHelps.heading,
+    items: savedPC.howDonationHelps?.items || DEFAULT_PAGE_CONTENT.howDonationHelps.items,
+  },
+  midCta: { ...DEFAULT_PAGE_CONTENT.midCta, ...savedPC.midCta },
+  whyMonthly: {
+    ...DEFAULT_PAGE_CONTENT.whyMonthly,
+    ...savedPC.whyMonthly,
+    benefits: savedPC.whyMonthly?.benefits || DEFAULT_PAGE_CONTENT.whyMonthly.benefits,
+  },
+  faq: {
+    heading: savedPC.faq?.heading || DEFAULT_PAGE_CONTENT.faq.heading,
+    items: savedPC.faq?.items || [],
+  },
+  finalCta: { ...DEFAULT_PAGE_CONTENT.finalCta, ...savedPC.finalCta },
+};
+
+// ── Hero data ────────────────────────────────────────────────────────
+const heroTitle = campaign.hero_title || campaign.title || 'Fulfill Your Zakat Today';
+const heroDescription = campaign.subtitle || '';
+const heroBadgeText = campaign.subtitle2 || 'THIRD PILLAR OF ISLAM';
+const heroImage = campaign.featured_image || '/images/qurbani-foundation-food-distribution.png';
+const heroBadges: string[] = campaign.template_config?.heroBadges || ['100% Zakat Policy', 'Shariah Compliant', 'Tax Deductible'];
+const heroCta = campaign.template_config?.heroCta || { text: 'Calculate My Zakat', link: '/zakat-calculator' };
+
+// ── Category cards (from howDonationHelps) ───────────────────────────
+// items[] use { amount: "title", label: "description" } pattern
+const categoryCards = pageContent.howDonationHelps.items || [];
+// Default gradient colors for up to 4 cards
+const cardGradients = [
+  'from-[#255764] to-[#1a3d47]',
+  'from-[#D97706] to-[#b45309]',
+  'from-[#0096D6] to-[#0077b3]',
+  'from-[#7c3aed] to-[#6d28d9]',
+];
+// Default SVG icons for up to 4 cards
+const cardIcons = [
+  '<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>',
+  '<path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>',
+  '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>',
+  '<path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"></path>',
+];
+
+// ── Why Give section ─────────────────────────────────────────────────
+const whyGiveHeading = pageContent.whyMonthly.heading || 'Why Give Your Zakat Through Us?';
+const contentSections = campaign.content_sections || [];
+const whyGiveImage = campaign.gallery_images?.[0] || '/images/qurbani-foundation-zakat.png';
+const imageOverlay = campaign.template_config?.imageOverlay ?? 40;
+
+// ── Impact stats badge ───────────────────────────────────────────────
+const rawImpactStats = campaign.impact_stats;
+let statBadge = { value: '50+', label: 'Countries Served' };
+if (Array.isArray(rawImpactStats) && rawImpactStats.length > 0) {
+  statBadge = rawImpactStats[0];
+} else if (rawImpactStats && typeof rawImpactStats === 'object' && !Array.isArray(rawImpactStats)) {
+  const entries = Object.entries(rawImpactStats);
+  if (entries.length > 0) {
+    statBadge = { value: String(entries[0][1]), label: entries[0][0] };
+  }
+}
+
+// ── Why Give benefit icon colors ─────────────────────────────────────
+const benefitIconColors = ['#0096D6', '#D97706', '#255764', '#16a34a'];
+const benefitIcons = [
+  '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>',
+  '<path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>',
+  '<path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>',
+  '<path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd"></path>',
+];
+
+// ── Quick links ──────────────────────────────────────────────────────
+const defaultQuickLinks = [
+  { title: 'What is Zakat?', description: 'Learn about the importance and significance of Zakat in Islam.', url: '/what-is-zakat', color: '#D97706', icon: '<path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>' },
+  { title: 'Zakat FAQ', description: 'Get answers to commonly asked questions about Zakat.', url: '/zakat-faq', color: '#7c3aed', icon: '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>' },
+  { title: 'Zakat on Gold & Silver', description: 'Understand how to calculate Zakat on precious metals.', url: '/zakat-on-gold', color: '#eab308', icon: '<path fill-rule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm2.5 3a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6.207.293a1 1 0 00-1.414 0l-6 6a1 1 0 101.414 1.414l6-6a1 1 0 000-1.414zM12.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" clip-rule="evenodd"></path>' },
+];
+const quickLinks = campaign.template_config?.quickLinks || defaultQuickLinks;
+const quickLinksHeading = campaign.template_config?.quickLinksHeading || 'Learn More About Zakat';
+
+// ── SEO ──────────────────────────────────────────────────────────────
+const metaTitle = campaign.meta_title || campaign.title || 'Pay Your Zakat | Qurbani USA';
+---
+
+<Layout title={metaTitle}>
+  <Navbar />
+  <main>
+    <!-- Hero Section -->
+    <section class="relative min-h-[500px] flex items-center" style="background: linear-gradient(135deg, #255764 0%, #1a3d47 100%);">
+      <div class="absolute inset-0">
+        <div class="absolute inset-0" style={`background-image: url('${heroImage}'); background-size: cover; background-position: center;`}></div>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/80 to-[#255764]/50"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="text-white">
+            <div class="inline-flex items-center gap-2 bg-[#0096D6] text-white text-sm font-bold px-4 py-2 rounded-full mb-6">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+              </svg>
+              {heroBadgeText}
+            </div>
+
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6" style="font-family: 'Signika', sans-serif;" set:html={heroTitle.replace(/\*(.*?)\*/g, '<span class="text-[#e1861d]">$1</span>')} />
+
+            {heroDescription && (
+              <p class="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                {heroDescription}
+              </p>
+            )}
+
+            {heroBadges.length > 0 && (
+              <div class="flex flex-wrap gap-4 mb-8">
+                {heroBadges.map((badge: string) => (
+                  <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                    <svg class="w-5 h-5 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm">{badge}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {heroCta.text && heroCta.link && (
+              <a href={heroCta.link} class="inline-flex items-center gap-2 bg-[#e1861d] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#c97418] transition shadow-lg" style="font-family: 'Signika', sans-serif;">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm0 2h8v2H6V4zm0 4h2v2H6V8zm0 3h2v2H6v-2zm0 3h2v2H6v-2zm3-6h2v2H9V8zm0 3h2v2H9v-2zm0 3h2v2H9v-2zm3-6h2v2h-2V8zm0 3h2v5h-2v-5z"></path>
+                </svg>
+                {heroCta.text}
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+              </a>
+            )}
+          </div>
+
+          <!-- Donation Box -->
+          <div>
+            <CWDonationBox
+              campaignSlug={campaign.slug}
+              campaignTitle={campaign.title}
+              campaignImage={campaign.featured_image}
+              donationBoxHeading={cwConfig.donationBoxHeading || 'Pay Your Zakat'}
+              tabEmoji={cwConfig.tabEmoji || '\u{1F932}'}
+              skipUpsell={cwConfig.skipUpsell !== false}
+              frequencies={cwConfig.frequencies}
+              monthlyAmounts={cwConfig.monthlyAmounts}
+              oneTimeAmounts={cwConfig.oneTimeAmounts}
+              impactTexts={cwConfig.impactTexts}
+              monthlyImpactText={cwConfig.monthlyImpactText}
+              upsellBody={cwConfig.upsellBody}
+              upsellSubText={cwConfig.upsellSubText}
+              buttonTextMonthly={cwConfig.buttonTextMonthly}
+              buttonTextOneTime={cwConfig.buttonTextOneTime}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zakat Categories Section -->
+    {categoryCards.length > 0 && (
+      <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              {pageContent.theCrisis.heading}
+            </h2>
+            {pageContent.theCrisis.content && (
+              <p class="text-lg text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+                {pageContent.theCrisis.content}
+              </p>
+            )}
+          </div>
+
+          <div class={`grid md:grid-cols-2 lg:grid-cols-${Math.min(categoryCards.length, 4)} gap-6`}>
+            {categoryCards.map((card: { amount: string; label: string }, index: number) => (
+              <div class={`bg-gradient-to-br ${cardGradients[index % cardGradients.length]} rounded-xl p-6 text-white`}>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <Fragment set:html={cardIcons[index % cardIcons.length]} />
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">{card.amount}</h3>
+                <p class="text-sm text-gray-200" style="font-family: 'Lato', sans-serif;">{card.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Why Give Section -->
+    {contentSections.length > 0 && (
+      <section class="py-16 bg-stone-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+                {whyGiveHeading}
+              </h2>
+
+              <div class="space-y-6">
+                {contentSections.map((section: { title?: string; content?: string }, index: number) => (
+                  <div class="flex gap-4">
+                    <div class={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0`} style={`background-color: ${benefitIconColors[index % benefitIconColors.length]}`}>
+                      <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <Fragment set:html={benefitIcons[index % benefitIcons.length]} />
+                      </svg>
+                    </div>
+                    <div>
+                      {section.title && (
+                        <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">{section.title}</h3>
+                      )}
+                      {section.content && (
+                        <p class="text-gray-600" style="font-family: 'Lato', sans-serif;">{section.content}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div class="relative">
+              <div class="relative rounded-xl overflow-hidden shadow-lg">
+                <img
+                  src={whyGiveImage}
+                  alt={whyGiveHeading}
+                  class="w-full"
+                />
+                <div class={`absolute inset-0 rounded-xl`} style={`background: rgba(0,0,0,${imageOverlay / 100})`}></div>
+              </div>
+              <div class="absolute -bottom-6 -left-6 bg-[#0096D6] text-white p-6 rounded-xl shadow-lg">
+                <p class="text-4xl font-bold" style="font-family: 'Signika', sans-serif;">{statBadge.value}</p>
+                <p class="text-sm" style="font-family: 'Lato', sans-serif;">{statBadge.label}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Info Banner / Mid CTA -->
+    {pageContent.midCta.heading && (
+      <section class="py-12 bg-[#0096D6]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-white text-center md:text-left">
+              <h3 class="text-2xl md:text-3xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">{pageContent.midCta.heading}</h3>
+              {pageContent.midCta.subtext && (
+                <p class="text-blue-100" style="font-family: 'Lato', sans-serif;">{pageContent.midCta.subtext}</p>
+              )}
+            </div>
+            {pageContent.midCta.primaryButtonText && (
+              <a href={pageContent.midCta.secondaryButtonText || '/zakat/calculator'} class="bg-white text-[#0096D6] font-bold px-8 py-4 rounded-lg hover:bg-gray-100 transition flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
+                {pageContent.midCta.primaryButtonText}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Quick Links Section -->
+    {quickLinks.length > 0 && (
+      <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+              {quickLinksHeading}
+            </h2>
+          </div>
+
+          <div class={`grid md:grid-cols-${Math.min(quickLinks.length, 3)} gap-6`}>
+            {quickLinks.map((link: { title: string; description: string; url: string; color: string; icon?: string }) => (
+              <a href={link.url} class="group bg-stone-50 rounded-xl p-6 hover:shadow-lg transition border border-gray-100">
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition" style={`background-color: ${link.color}`}>
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    {link.icon ? <Fragment set:html={link.icon} /> : (
+                      <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"></path>
+                    )}
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 transition" style={`font-family: 'Signika', sans-serif;`}>{link.title}</h3>
+                <p class="text-gray-600 text-sm" style="font-family: 'Lato', sans-serif;">{link.description}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- FAQ Section (optional — renders only if faq items exist) -->
+    {pageContent.faq.items.length > 0 && (
+      <section class="py-16 bg-stone-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+            {pageContent.faq.heading}
+          </h2>
+          <div class="space-y-4">
+            {pageContent.faq.items.map((item: { question: string; answer: string }) => (
+              <details class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 group">
+                <summary class="font-bold text-gray-800 cursor-pointer list-none flex items-center justify-between" style="font-family: 'Signika', sans-serif;">
+                  {item.question}
+                  <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </summary>
+                <p class="mt-4 text-gray-600" style="font-family: 'Lato', sans-serif;">{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Final CTA Section (optional — renders only if heading exists and differs from default) -->
+    {pageContent.finalCta.heading && savedPC.finalCta?.heading && (
+      <section class="py-16 bg-gradient-to-r from-[#255764] to-[#1a3d47] text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4" style="font-family: 'Signika', sans-serif;">
+            {pageContent.finalCta.heading}
+          </h2>
+          {pageContent.finalCta.subtext && (
+            <p class="text-lg text-gray-200 mb-8" style="font-family: 'Lato', sans-serif;">
+              {pageContent.finalCta.subtext}
+            </p>
+          )}
+          <div class="flex flex-wrap gap-4 justify-center">
+            <a href="#" class="bg-[#e1861d] text-white font-bold px-8 py-4 rounded-lg hover:bg-[#c97418] transition" style="font-family: 'Signika', sans-serif;" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+              {pageContent.finalCta.primaryButtonText}
+            </a>
+          </div>
+        </div>
+      </section>
+    )}
+  </main>
+  <Footer />
+</Layout>
