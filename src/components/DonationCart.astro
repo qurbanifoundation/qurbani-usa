@@ -1099,8 +1099,8 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
     <div class="max-w-5xl mx-auto px-4 py-6 md:py-8">
       <div class="grid md:grid-cols-5 gap-6 lg:gap-8">
 
-        <!-- LEFT COLUMN: Order Summary (2 cols on desktop) -->
-        <div class="md:col-span-2 order-2 md:order-1">
+        <!-- LEFT COLUMN: Order Summary (2 cols on desktop, on TOP on mobile) -->
+        <div class="md:col-span-2">
           <div class="md:sticky md:top-20 space-y-4">
 
             <!-- Cart Items (GG-style, all in one card) -->
@@ -1164,8 +1164,8 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Checkout Form (3 cols on desktop) -->
-        <div class="md:col-span-3 order-1 md:order-2">
+        <!-- RIGHT COLUMN: Checkout Form (3 cols on desktop, on BOTTOM on mobile) -->
+        <div class="md:col-span-3">
 
           <!-- Heading -->
           <div class="mb-6">
@@ -1173,8 +1173,8 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
             <p class="text-sm text-gray-500 mt-1">and we'll send you updates from <strong>Qurbani Foundation</strong> about your impact!</p>
           </div>
 
-          <!-- Mobile Cart Accordion -->
-          <div class="md:hidden mb-4">
+          <!-- Mobile Cart Accordion — hidden since full cart is now on top on mobile -->
+          <div class="hidden">
             <button type="button" id="gg-cart-toggle" class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 transition">
               <div class="flex items-center gap-2">
                 <svg class="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1225,7 +1225,7 @@ const enabledUpsells = checkoutUpsells.filter(u => u.enabled);
             <div>
               <input type="text" id="gg-address" autocomplete="off" placeholder="Billing Address" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
             </div>
-            <div class="grid grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <input type="text" id="gg-city" placeholder="City" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />
               <input type="text" id="gg-state" placeholder="State" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />
               <input type="text" id="gg-zip" placeholder="ZIP" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />
