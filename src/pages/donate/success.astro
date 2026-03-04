@@ -58,7 +58,7 @@ if (donationId || paymentIntentId) {
 }
 
 // Parse items from server donation for display
-let serverItems: { name: string; amount: number; quantity: number }[] = [];
+let serverItems: { name: string; amount: number; quantity: number; type?: string }[] = [];
 if (serverDonation?.items) {
   try {
     const raw = typeof serverDonation.items === 'string' ? JSON.parse(serverDonation.items) : serverDonation.items;
@@ -67,9 +67,20 @@ if (serverDonation?.items) {
         name: item.name || 'Donation',
         amount: parseFloat(item.amount || item.price || 0),
         quantity: item.quantity || 1,
+        type: item.type || item.recurringInterval || 'single',
       }));
     }
   } catch {}
+}
+
+// Helper to get frequency label
+function getFreqLabel(type: string): string {
+  const t = (type || 'single').toLowerCase();
+  if (t === 'monthly') return '/mo';
+  if (t === 'weekly') return '/wk';
+  if (t === 'yearly') return '/yr';
+  if (t === 'daily') return '/day';
+  return '';
 }
 ---
 
@@ -84,23 +95,15 @@ if (serverDonation?.items) {
       <!-- Success Card -->
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
 
-        <!-- Green banner with checkmark -->
-        <div class="relative bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 pt-10 pb-8 px-6 text-center overflow-hidden">
-          <!-- Decorative circles -->
-          <div class="absolute top-3 left-6 w-3 h-3 bg-yellow-300 rounded-full opacity-80"></div>
-          <div class="absolute top-8 left-16 w-2 h-2 bg-white rounded-full opacity-60"></div>
-          <div class="absolute top-4 right-8 w-4 h-4 bg-amber-300 rounded-full opacity-70"></div>
-          <div class="absolute top-10 right-20 w-2 h-2 bg-emerald-200 rounded-full opacity-80"></div>
-          <div class="absolute bottom-4 left-10 w-2 h-2 bg-yellow-200 rounded-full opacity-60"></div>
-          <div class="absolute bottom-6 right-12 w-3 h-3 bg-white rounded-full opacity-40"></div>
-
+        <!-- Orange banner with checkmark -->
+        <div class="relative pt-10 pb-8 px-6 text-center overflow-hidden" style="background: linear-gradient(135deg, #e1861d 0%, #b45309 100%);">
           <div class="w-20 h-20 mx-auto bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-5 ring-4 ring-white/30">
             <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
           <h1 class="text-3xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">JazakAllah Khair!</h1>
-          <p class="text-emerald-100 text-base" id="success-message">Your generous donation has been received. May Allah reward you.</p>
+          <p class="text-orange-100 text-base" id="success-message">Your generous donation has been received. May Allah reward you.</p>
         </div>
 
         <!-- Content -->
@@ -110,7 +113,7 @@ if (serverDonation?.items) {
           <div id="donation-summary" class="bg-stone-50 rounded-2xl p-5 mb-5 border border-stone-200">
             <div class="flex items-center justify-between mb-3">
               <span class="text-sm font-medium text-stone-500 uppercase tracking-wide">Donation Amount</span>
-              <span id="success-amount" class="text-2xl font-bold text-emerald-700" style="font-family: 'Signika', sans-serif;">
+              <span id="success-amount" class="text-2xl font-bold text-stone-900" style="font-family: 'Signika', sans-serif;">
                 {serverDonation ? `$${parseFloat(serverDonation.amount).toFixed(2)}` : ''}
               </span>
             </div>
@@ -119,8 +122,8 @@ if (serverDonation?.items) {
               {serverItems.length > 0 ? (
                 serverItems.map((item) => (
                   <div class="flex justify-between">
-                    <span>{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ''}</span>
-                    <span class="font-medium text-stone-800">${(item.amount * item.quantity).toFixed(2)}</span>
+                    <span>{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ''}{getFreqLabel(item.type || '') ? <span class="text-xs text-amber-600 font-medium ml-1">{getFreqLabel(item.type || '')}</span> : null}</span>
+                    <span class="font-medium text-stone-800">${(item.amount * item.quantity).toFixed(2)}{getFreqLabel(item.type || '')}</span>
                   </div>
                 ))
               ) : serverDonation ? (
@@ -171,11 +174,11 @@ if (serverDonation?.items) {
           </div>
 
           <!-- Trust signals -->
-          <div class="flex items-center gap-3 bg-emerald-50 rounded-xl p-4 mb-5">
-            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-3 bg-amber-50 rounded-xl p-4 mb-5 border border-amber-100">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
             </svg>
-            <p class="text-sm text-emerald-800">A confirmation email has been sent to your inbox.</p>
+            <p class="text-sm text-stone-700">A confirmation email has been sent to your inbox.</p>
           </div>
 
           <!-- Impact message -->
@@ -185,10 +188,10 @@ if (serverDonation?.items) {
 
           <!-- Action buttons -->
           <div class="space-y-3">
-            <a href="/" class="block w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition shadow-sm text-base text-center">
+            <a href="/" class="block w-full py-3.5 text-white font-semibold rounded-xl hover:opacity-90 transition shadow-sm text-base text-center" style="background: linear-gradient(135deg, #e1861d, #b45309);">
               Continue Browsing
             </a>
-            <a href="/appeals" class="block w-full py-3 text-center text-emerald-700 font-medium rounded-xl border border-emerald-200 hover:bg-emerald-50 transition text-sm">
+            <a href="/appeals" class="block w-full py-3 text-center text-stone-700 font-medium rounded-xl border border-stone-300 hover:bg-stone-50 transition text-sm">
               View More Campaigns
             </a>
           </div>
@@ -248,12 +251,12 @@ if (serverDonation?.items) {
           return '<div class="flex justify-between"><span>' +
             (item.name || 'Donation') + (qty > 1 ? ' x' + qty : '') +
             (freqLabel ? ' <span class="text-xs text-amber-600 font-medium">' + freqLabel + '</span>' : '') +
-            '</span><span class="font-medium text-stone-800">$' + itemTotal + '</span></div>';
+            '</span><span class="font-medium text-stone-800">$' + itemTotal + freqLabel + '</span></div>';
         }).join('');
 
         // Add processing fee if covered
         if (purchaseData.cover_fees && purchaseData.fee_amount > 0) {
-          html += '<div class="flex justify-between text-emerald-600"><span>Processing fee covered</span><span>+$' + purchaseData.fee_amount.toFixed(2) + '</span></div>';
+          html += '<div class="flex justify-between text-amber-700"><span>Processing fee covered</span><span>+$' + purchaseData.fee_amount.toFixed(2) + '</span></div>';
         }
 
         itemsListEl.innerHTML = html;

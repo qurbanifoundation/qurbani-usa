@@ -54,9 +54,9 @@ function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribe
 
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); padding: 32px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Qurbani Foundation</h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Serving Humanity Through Faith</p>
+            <td style="background: linear-gradient(135deg, #e1861d 0%, #b45309 100%); padding: 32px; text-align: center;">
+              <img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png" alt="Qurbani Foundation" width="220" style="max-width: 220px; height: auto; display: inline-block;" />
+              <p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Serving Humanity Through Faith</p>
             </td>
           </tr>
 

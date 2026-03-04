@@ -1717,6 +1717,11 @@ window.addToCart = function(item) {
   saveCart();
   try { updateCartUI(); } catch(e) { console.warn('updateCartUI error:', e); }
 
+  // Re-capture abandoned checkout with updated cart data (if email already captured)
+  if (window.donationCart._lastCapturedEmail) {
+    captureAbandonedCheckout(true);
+  }
+
   // Check checkout template mode - two-step and gg-one-step skip side cart, open checkout directly
   var mode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
   if (mode === 'two-step') {
@@ -1739,6 +1744,11 @@ window.removeFromCart = function(index) {
   window.donationCart.items.splice(index, 1);
   saveCart();
   updateCartUI();
+
+  // Re-capture abandoned checkout with updated cart data (if email already captured)
+  if (window.donationCart._lastCapturedEmail) {
+    captureAbandonedCheckout(true);
+  }
 };
 
 window.updateQuantity = function(index, delta) {
@@ -2504,12 +2514,19 @@ function stopCheckoutHeartbeat() {
 }
 
 // Capture donor data on email blur — called silently, never blocks checkout
-function captureAbandonedCheckout() {
+// Also called when cart items change (force=true) to keep campaign/amount fresh
+function captureAbandonedCheckout(force) {
   var email = (document.getElementById('modal-email')?.value || document.getElementById('ts-info-email')?.value || document.getElementById('gg-email')?.value || '').trim().toLowerCase();
   if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) return;
 
-  // Debounce: don't re-fire if we already captured this exact email
-  if (window.donationCart._lastCapturedEmail === email) return;
+  // Build a fingerprint of email + items so we re-capture when cart changes
+  var items = window.donationCart.items || [];
+  var total = items.reduce(function(sum, item) { return sum + (item.amount * (item.quantity || 1)); }, 0);
+  var cartFingerprint = email + ':' + items.length + ':' + total;
+
+  // Debounce: don't re-fire if same email AND same cart contents (unless forced)
+  if (!force && window.donationCart._lastCaptureFingerprint === cartFingerprint) return;
+  window.donationCart._lastCaptureFingerprint = cartFingerprint;
   window.donationCart._lastCapturedEmail = email;
 
   // Read name fields — GG uses fullName, others use firstName + lastName
@@ -2524,9 +2541,28 @@ function captureAbandonedCheckout() {
   var phone = (document.getElementById('modal-phone')?.value || document.getElementById('ts-info-phone')?.value || document.getElementById('gg-phone')?.value || '').trim();
   var country = (document.getElementById('modal-country')?.value || 'US');
 
-  var items = window.donationCart.items || [];
-  var total = items.reduce(function(sum, item) { return sum + (item.amount * (item.quantity || 1)); }, 0);
-  var primaryItem = items[0] || {};
+  // Use the LAST added item as primary (most recent intent), skip generic fallbacks
+  var primaryItem = items[items.length - 1] || {};
+
+  // If there are multiple items, collect all unique campaign slugs
+  var allCampaigns = [];
+  for (var i = 0; i < items.length; i++) {
+    var c = items[i].campaign || items[i].slug || '';
+    if (c && allCampaigns.indexOf(c) === -1) allCampaigns.push(c);
+  }
+  // Prefer the most specific campaign (skip 'where-needed'/'general' if there's something better)
+  var campaignSlug = 'general';
+  if (allCampaigns.length === 1) {
+    campaignSlug = allCampaigns[0];
+  } else if (allCampaigns.length > 1) {
+    var specific = allCampaigns.filter(function(c) { return c !== 'where-needed' && c !== 'general'; });
+    campaignSlug = specific.length > 0 ? specific[specific.length - 1] : allCampaigns[allCampaigns.length - 1];
+  }
+
+  // Determine donation type from items
+  var hasRecurring = items.some(function(it) { return it.type === 'monthly' || it.type === 'weekly' || it.type === 'yearly'; });
+  var hasSingle = items.some(function(it) { return !it.type || it.type === 'single'; });
+  var campaignType = hasRecurring && hasSingle ? 'mixed' : hasRecurring ? 'recurring' : 'single';
 
   // Read UTMs from URL
   var params = new URLSearchParams(window.location.search);
@@ -2538,8 +2574,8 @@ function captureAbandonedCheckout() {
     phone: phone || undefined,
     amount: total || undefined,
     currency: 'USD',
-    campaign_type: window.donationCart.pendingDonationType || 'single',
-    campaign_slug: primaryItem.campaign || primaryItem.slug || 'general',
+    campaign_type: campaignType,
+    campaign_slug: campaignSlug,
     country: country,
     utm_source: params.get('utm_source') || undefined,
     utm_medium: params.get('utm_medium') || undefined,

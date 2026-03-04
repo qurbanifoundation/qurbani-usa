@@ -92,11 +92,11 @@ function getRecoveryStageId(stageName: string): string | undefined {
 // Map recovery step number to pipeline stage name
 const STEP_TO_STAGE: Record<number, string> = {
   0: 'checkout started',
-  1: 'abandoned 1h',
-  2: 'abandoned 24h',
-  3: 'abandoned 72h',
-  4: 'abandoned 5d',
-  5: 'abandoned 7d',
+  1: 'abandoned 15m',
+  2: 'abandoned 6h',
+  3: 'abandoned 24h',
+  4: 'abandoned 48h',
+  5: 'abandoned 72h',
 };
 
 // ============================================

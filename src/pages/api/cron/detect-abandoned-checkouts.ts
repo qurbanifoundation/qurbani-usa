@@ -2,8 +2,8 @@
  * GET /api/cron/detect-abandoned-checkouts
  *
  * Cron job that runs every 10 minutes (called externally).
- * 1. Marks checkouts as "abandoned" if inactive for 30+ minutes.
- * 2. Marks old abandoned checkouts as "expired" after 14 days.
+ * 1. Marks checkouts as "abandoned" if inactive for 10+ minutes.
+ * 2. Marks old abandoned checkouts as "expired" after 72 hours.
  *
  * Authentication: Bearer token via CRON_SECRET env var.
  */
@@ -15,8 +15,8 @@ import { syncCheckoutToGHL } from '../../../lib/abandoned-checkout-ghl';
 export const prerender = false;
 
 const CRON_SECRET = import.meta.env.CRON_SECRET || '';
-const ABANDONMENT_THRESHOLD_MIN = 30;
-const EXPIRATION_THRESHOLD_DAYS = 14;
+const ABANDONMENT_THRESHOLD_MIN = 10;
+const EXPIRATION_THRESHOLD_HOURS = 72;
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -88,8 +88,8 @@ export const GET: APIRoute = async ({ request }) => {
       }
     }
 
-    // Step 2: Expire old abandoned checkouts (14+ days)
-    const expirationTime = new Date(now.getTime() - EXPIRATION_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    // Step 2: Expire old abandoned checkouts (72+ hours)
+    const expirationTime = new Date(now.getTime() - EXPIRATION_THRESHOLD_HOURS * 60 * 60 * 1000).toISOString();
 
     const { data: expired, error: expireError } = await supabaseAdmin
       .from('abandoned_checkouts')

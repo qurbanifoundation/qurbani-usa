@@ -1,15 +1,15 @@
 /**
  * GET /api/cron/send-recovery-emails
  *
- * Cron job that runs every 15 minutes (called externally).
+ * Cron job that runs every 10 minutes (called externally).
  * Processes abandoned checkouts and sends timed recovery emails.
  *
  * Schedule:
- *   Step 1: 1 hour after abandoned_at
- *   Step 2: 24 hours after abandoned_at
- *   Step 3: 72 hours after abandoned_at
- *   Step 4: 5 days after abandoned_at
- *   Step 5: 7 days after abandoned_at (then mark closed lost)
+ *   Step 1: 15 minutes after abandoned_at
+ *   Step 2: 6 hours after abandoned_at
+ *   Step 3: 24 hours after abandoned_at
+ *   Step 4: 48 hours after abandoned_at
+ *   Step 5: 72 hours after abandoned_at (then mark expired)
  *
  * Authentication: Bearer token via CRON_SECRET env var.
  */
@@ -25,15 +25,15 @@ const CRON_SECRET = import.meta.env.CRON_SECRET || '';
 
 // Delay thresholds in milliseconds from abandoned_at
 const RECOVERY_SCHEDULE = [
-  { step: 1, delayMs: 1 * 60 * 60 * 1000 },         // 1 hour
-  { step: 2, delayMs: 24 * 60 * 60 * 1000 },        // 24 hours
-  { step: 3, delayMs: 72 * 60 * 60 * 1000 },        // 72 hours
-  { step: 4, delayMs: 5 * 24 * 60 * 60 * 1000 },    // 5 days
-  { step: 5, delayMs: 7 * 24 * 60 * 60 * 1000 },    // 7 days
+  { step: 1, delayMs: 15 * 60 * 1000 },              // 15 minutes
+  { step: 2, delayMs: 6 * 60 * 60 * 1000 },          // 6 hours
+  { step: 3, delayMs: 24 * 60 * 60 * 1000 },         // 24 hours
+  { step: 4, delayMs: 48 * 60 * 60 * 1000 },         // 48 hours
+  { step: 5, delayMs: 72 * 60 * 60 * 1000 },         // 72 hours
 ];
 
 // Minimum gap between emails to prevent double-sends
-const MIN_EMAIL_GAP_MS = 6 * 60 * 60 * 1000; // 6 hours
+const MIN_EMAIL_GAP_MS = 10 * 60 * 1000; // 10 minutes (first two emails are 15min and 6hr apart)
 
 export const GET: APIRoute = async ({ request }) => {
   try {

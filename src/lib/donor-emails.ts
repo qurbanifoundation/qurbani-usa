@@ -200,8 +200,8 @@ function getEmailWrapper(content: string, preheader: string = ''): string {
 
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); padding: 32px; text-align: center;">
-              <img src="https://www.staging9.qurbani.com/wp-content/uploads/2021/07/QurbaniFoundation-Logo-2.png" alt="Qurbani Foundation" width="220" style="max-width: 220px; height: auto; display: inline-block;" />
+            <td style="background: linear-gradient(135deg, #e1861d 0%, #b45309 100%); padding: 32px; text-align: center;">
+              <img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png" alt="Qurbani Foundation" width="220" style="max-width: 220px; height: auto; display: inline-block;" />
               <p style="margin: 12px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Serving Humanity Through Faith</p>
             </td>
           </tr>
@@ -238,13 +238,13 @@ function getEmailWrapper(content: string, preheader: string = ''): string {
 
         </table>
 
-        <!-- Legal Footer -->
+        <!-- Quran Verse Footer -->
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0">
           <tr>
             <td style="padding: 24px; text-align: center;">
-              <p style="margin: 0; color: #9ca3af; font-size: 11px; line-height: 1.5;">
-                No goods or services were provided in exchange for this contribution.<br>
-                Please retain this email for your records.
+              <p style="margin: 0; color: #9ca3af; font-size: 11px; line-height: 1.6; font-style: italic;">
+                "Those who (in sadaqah) spend of their goods by night and by day, in secret and in public, have their reward with their Lord: On them shall be no fear, nor shall they grieve."<br>
+                <span style="font-style: normal;">(Al-Quran, 2:274)</span>
               </p>
             </td>
           </tr>
@@ -298,7 +298,7 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
         ${freqLabel ? `<span style="color: #d97706; font-size: 12px; font-weight: 600;"> ${freqLabel}</span>` : ''}
       </td>
       <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb; text-align: right; color: #374151; font-weight: 600;">
-        $${(item.amount * (item.quantity || 1)).toFixed(2)}
+        $${(item.amount * (item.quantity || 1)).toFixed(2)}${freqLabel ? `<span style="color: #d97706; font-size: 12px;">${freqLabel}</span>` : ''}
       </td>
     </tr>
   `;
@@ -307,9 +307,11 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
   const content = `
     <!-- Thank You Message -->
     <div style="text-align: center; margin-bottom: 32px;">
-      <div style="width: 64px; height: 64px; background-color: #dcfce7; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-        <span style="font-size: 32px;">✓</span>
-      </div>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 16px auto;">
+        <tr>
+          <td style="width: 64px; height: 64px; background-color: #dcfce7; border-radius: 50%; text-align: center; vertical-align: middle; font-size: 32px; color: #16a34a;">✓</td>
+        </tr>
+      </table>
       <h2 style="margin: 0 0 8px 0; color: #111827; font-size: 24px;">Thank You, ${firstName}!</h2>
       <p style="margin: 0; color: #6b7280; font-size: 16px;">Your generosity is making a real difference.</p>
     </div>
@@ -428,9 +430,7 @@ Total: $${amount.toFixed(2)}${data.recurringAmount && data.onetimeAmount && data
 Date: ${formattedDate}
 Transaction ID: ${transactionId}
 ${donationType !== 'single' && data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
-No goods or services were provided in exchange for this contribution.
-
-Thank you for your generosity!
+"Those who (in sadaqah) spend of their goods by night and by day, in secret and in public, have their reward with their Lord: On them shall be no fear, nor shall they grieve." (Al-Quran, 2:274)
 
 Qurbani Foundation (EIN: 38-4109716)
 www.qurbani.com | donorcare@qurbani.com`;
