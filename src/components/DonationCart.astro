@@ -87,6 +87,44 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
     font-weight: 600;
   }
 
+  /* Orange check on white background checkboxes */
+  .gg-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .gg-checkbox:checked {
+    background-color: #fff;
+    border-color: #d97706;
+  }
+  .gg-checkbox:checked::after {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 9px;
+    border: solid #d97706;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 1px;
+  }
+  .gg-checkbox.gg-checkbox-lg:checked::after {
+    width: 6px;
+    height: 11px;
+    border-width: 0 2.5px 2.5px 0;
+  }
+  .gg-checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.3);
+  }
+
   /* Highlight checked recurring option */
   .recurring-option:has(input:checked) {
     background-color: #fef3c7 !important;
@@ -318,7 +356,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 </div>
 
 <!-- ==================== FULL-SCREEN CHECKOUT MODAL ==================== -->
-<div id="checkout-modal" class="fixed inset-0 z-[200] hidden">
+<div id="checkout-modal" class="fixed inset-0 z-[10001] hidden">
   <!-- Modal Content - True Full Screen -->
   <div class="absolute inset-0 bg-white overflow-y-auto">
 
@@ -773,7 +811,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 </div>
 
 <!-- ==================== 2-STEP CHECKOUT MODAL ==================== -->
-<div id="two-step-checkout" class="fixed inset-0 z-[200] hidden">
+<div id="two-step-checkout" class="fixed inset-0 z-[10001] hidden">
   <div class="absolute inset-0 bg-white overflow-y-auto">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
@@ -1078,7 +1116,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 </div>
 
 <!-- ==================== GG ONE-STEP CHECKOUT MODAL ==================== -->
-<div id="gg-checkout" class="fixed inset-0 z-[200] hidden">
+<div id="gg-checkout" class="fixed inset-0 z-[10001] hidden">
   <div class="absolute inset-0 bg-white overflow-y-auto">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
@@ -1104,59 +1142,47 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
     <!-- Main Content: 2-Column Layout -->
     <div class="max-w-5xl mx-auto px-4 py-6 md:py-8">
 
-      <!-- Mobile-only: Heading above cart -->
-      <div class="md:hidden mb-5">
-        <h2 id="gg-heading-mobile" class="text-2xl text-gray-900" style="font-family: 'Signika', sans-serif;">Donate to <strong>Qurbani Foundation</strong></h2>
-        <p class="text-sm text-gray-500 mt-1">and we'll send you updates from <strong>Qurbani Foundation</strong> about your impact!</p>
+      <!-- Mobile-only heading at top -->
+      <div class="md:hidden mb-4 text-center">
+        <h2 id="gg-heading-mobile" class="text-lg text-gray-700" style="font-family: 'Signika', sans-serif;">Donate to <strong>Qurbani Foundation</strong></h2>
+        <p class="text-xs text-gray-400 mt-1">and we'll send you updates from <strong>Qurbani Foundation</strong> about your impact!</p>
       </div>
 
-      <div class="grid md:grid-cols-5 gap-6 lg:gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-6 lg:gap-8">
 
-        <!-- LEFT COLUMN: Order Summary (2 cols on desktop, on TOP on mobile) -->
-        <div class="md:col-span-2">
-          <div class="md:sticky md:top-20 space-y-4">
-
-            <!-- Cart Items (GG-style, all in one card) -->
-            <div id="gg-cart-items" class="bg-white rounded-md border border-gray-200 shadow-sm divide-y divide-gray-100 overflow-hidden">
+        <!-- LEFT COLUMN: Cart + Totals + Upsells + Recurring -->
+        <div class="md:col-span-2 space-y-4">
+          <div class="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden">
+            <div id="gg-cart-items" class="divide-y divide-gray-100">
               <!-- Rendered by JS — each item: image + name + amount input + freq toggle + remove -->
             </div>
             <div id="gg-empty-cart" class="hidden text-center py-6 text-gray-400 text-sm">Your cart is empty</div>
 
-            <!-- Add Another Cause -->
-            <button type="button" id="gg-add-another" class="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-[#01534d] hover:text-[#d97706] transition">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-              Add Another Donation
-            </button>
+            <!-- Add Another Project -->
+            <div class="border-t border-gray-100">
+              <button type="button" id="gg-add-another" class="w-full flex items-center justify-center gap-1.5 py-2 md:py-2.5 text-xs md:text-sm font-semibold text-[#01534d] hover:text-[#d97706] transition">
+                <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Add Another Project
+              </button>
+            </div>
 
-            <!-- Upsells (dynamic from admin, with mobile/desktop visibility) -->
-            {enabledUpsells.length > 0 && (
-            <div class="bg-white rounded-md border border-gray-200 p-4">
-              <p class="hidden md:block text-sm font-semibold text-gray-700 mb-3">{upsellHeadingDesktop}</p>
-              <p class="block md:hidden text-sm font-semibold text-gray-700 mb-3">{upsellHeadingMobile}</p>
-              <div class="space-y-2">
-                {enabledUpsells.map((upsell) => {
-                  const vis = upsell.visibility || 'both';
-                  const visClass = vis === 'mobile' ? 'flex md:hidden' : vis === 'desktop' ? 'hidden md:flex' : 'flex';
-                  return (
-                  <label class={`${visClass} items-center gap-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-amber-50 transition border border-transparent hover:border-amber-200`}>
-                    <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} />
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-gray-800">{upsell.title}</p>
-                      {upsell.description && <p class="text-xs text-gray-500">{upsell.description}</p>}
-                      {upsell.show_stamp && upsell.stamp_text && (
-                        <span class="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 rounded">{upsell.stamp_text}</span>
-                      )}
-                    </div>
-                    <span class="font-bold text-[#d97706] text-sm">${upsell.amount}{upsell.type === 'monthly' ? '/mo' : upsell.type === 'weekly' ? '/wk' : ''}</span>
-                  </label>
-                  );
-                })}
+            <!-- Mobile inline total (inside cart box) -->
+            <div id="gg-mobile-total" class="md:hidden flex justify-between items-baseline px-4 pt-2 pb-2 border-t border-gray-200">
+              <span class="text-sm font-bold text-gray-800" id="gg-mobile-total-label">Total:</span>
+              <div class="text-right">
+                <span class="text-lg font-bold text-[#d97706]" id="gg-mobile-total-amount">$0.00</span>
+                <span id="gg-mobile-total-freq" class="text-xs text-gray-500 ml-1"></span>
               </div>
             </div>
-            )}
+            <div class="md:hidden">
+              <div id="gg-mobile-monthly-row" class="flex justify-between items-center px-4 pb-2" style="display: none;">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide" id="gg-mobile-monthly-label">Monthly Total</span>
+                <span class="text-sm font-semibold text-gray-500" id="gg-mobile-monthly-amount">$0.00</span>
+              </div>
+            </div>
 
-            <!-- Totals -->
-            <div class="bg-white rounded-md border border-gray-200 p-4">
+            <!-- Desktop inline total (inside cart box) -->
+            <div class="hidden md:block border-t border-gray-200 px-4 py-3">
               <div class="flex justify-between text-sm text-gray-600 mb-2">
                 <span>Subtotal</span>
                 <span id="gg-subtotal">$0.00</span>
@@ -1179,48 +1205,62 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Recurring Info Box -->
-            <div id="gg-recurring-info" class="bg-gray-50 border border-gray-200 rounded-md p-4 text-sm text-gray-700" style="display: none;">
-              <p id="gg-recurring-heading" class="font-semibold mb-1 text-gray-800">Your recurring support ensures families receive continuous aid during crisis.</p>
-              <p id="gg-recurring-body" class="text-xs text-gray-500">Your credit card will be charged today and on a recurring basis until you cancel your donation. You can edit your recurring donation at any time. <a href="/manage-subscription" target="_blank" class="underline font-semibold text-[#d97706] hover:text-[#b45309]">LEARN MORE</a></p>
+          <!-- Recurring Info Box (shown when cart has recurring items) -->
+          <div id="gg-recurring-info" class="relative" style="display: none;">
+            <!-- Upward arrow aligned right under total price -->
+            <div class="flex justify-end -mb-px" style="padding-right:3rem;">
+              <div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:8px solid #e5e7eb;"></div>
+            </div>
+            <div class="flex justify-end" style="padding-right:3rem;margin-top:-1px;">
+              <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:7px solid #f9fafb;position:relative;top:1px;"></div>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-md p-4 text-sm text-gray-700" style="margin-top:-6px;">
+              <p id="gg-recurring-body" class="text-xs text-gray-500 italic leading-relaxed"></p>
             </div>
           </div>
+
+          <!-- Upsells -->
+          {enabledUpsells.length > 0 && (
+          <div class="bg-white rounded-md border border-gray-200 p-4">
+            <p class="hidden md:block text-sm font-semibold text-gray-700 mb-3">{upsellHeadingDesktop}</p>
+            <p class="block md:hidden text-sm font-semibold text-gray-700 mb-3">{upsellHeadingMobile}</p>
+            <div class="space-y-2">
+              {enabledUpsells.map((upsell) => {
+                const vis = upsell.visibility || 'both';
+                const visClass = vis === 'mobile' ? 'flex md:hidden' : vis === 'desktop' ? 'hidden md:flex' : 'flex';
+                return (
+                <label class={`${visClass} items-center gap-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-amber-50 transition border border-transparent hover:border-amber-200`}>
+                  <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} />
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-800">{upsell.title}</p>
+                    {upsell.description && <p class="text-xs text-gray-500">{upsell.description}</p>}
+                    {upsell.show_stamp && upsell.stamp_text && (
+                      <span class="inline-block mt-1 px-1.5 py-0.5 text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 rounded">{upsell.stamp_text}</span>
+                    )}
+                  </div>
+                  <span class="font-bold text-[#d97706] text-sm">${upsell.amount}{upsell.type === 'monthly' ? '/mo' : upsell.type === 'weekly' ? '/wk' : ''}</span>
+                </label>
+                );
+              })}
+            </div>
+          </div>
+          )}
+
         </div>
 
-        <!-- RIGHT COLUMN: Checkout Form (3 cols on desktop, on BOTTOM on mobile) -->
+        <!-- RIGHT COLUMN: Heading + Personal Info + Card + Address + Pay -->
         <div class="md:col-span-3">
 
-          <!-- Heading (desktop only — mobile heading is above the grid) -->
+          <!-- Heading (desktop only — mobile version is above the grid) -->
           <div class="hidden md:block mb-6">
             <h2 id="gg-heading" class="text-2xl text-gray-900" style="font-family: 'Signika', sans-serif;">Donate to <strong>Qurbani Foundation</strong></h2>
             <p class="text-sm text-gray-500 mt-1">and we'll send you updates from <strong>Qurbani Foundation</strong> about your impact!</p>
           </div>
 
-          <!-- Mobile Cart Accordion — hidden since full cart is now on top on mobile -->
-          <div class="hidden">
-            <button type="button" id="gg-cart-toggle" class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 transition">
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                </svg>
-                <span class="font-semibold text-gray-800 text-sm">Order Summary</span>
-                <span id="gg-cart-count-badge" class="px-2 py-0.5 bg-[#d97706] text-white text-xs font-bold rounded-full">0</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span id="gg-cart-total-badge" class="font-bold text-[#d97706] text-sm">$0.00</span>
-                <svg id="gg-cart-chevron" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </div>
-            </button>
-            <div id="gg-cart-mobile-body" class="hidden mt-2 bg-gray-50 rounded-md border border-gray-200 p-4">
-              <div id="gg-cart-mobile-items"><!-- Items rendered by JS --></div>
-            </div>
-          </div>
-
-          <!-- Payment Method Header (desktop only) -->
-          <div class="hidden md:block border-b border-gray-200 mb-6">
+          <!-- Payment Method Header -->
+          <div class="border-b border-gray-200 mb-6">
             <div class="flex items-center gap-4 pb-3">
               <div class="flex items-center gap-2 text-[#d97706] border-b-2 border-[#d97706] pb-3 -mb-3 px-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
@@ -1230,8 +1270,12 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
           </div>
 
           <!-- Personal Info -->
+          <h3 class="text-base font-bold text-gray-800 mb-3" style="font-family: 'Signika', sans-serif;">Your Details</h3>
           <div class="space-y-4 mb-6">
-            <input type="text" id="gg-fullName" placeholder="Full Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" id="gg-firstName" placeholder="First Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
+              <input type="text" id="gg-lastName" placeholder="Last Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
+            </div>
             <input type="email" id="gg-email" placeholder="Email" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
             <input type="tel" id="gg-phone" placeholder="Phone Number" class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
           </div>
@@ -1266,21 +1310,21 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
           </div>
 
           <!-- Communication Preferences -->
-          <div class="mb-6 space-y-2">
+          <div class="mb-6 space-y-2 bg-white rounded-md border border-gray-200 p-4">
             <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="gg-pref-email" checked class="w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" />
+              <input type="checkbox" id="gg-pref-email" checked class="gg-checkbox w-4 h-4" />
               <span class="text-sm text-gray-600">Email me periodic reports from the projects I supported.</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="gg-pref-sms" checked class="w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" />
+              <input type="checkbox" id="gg-pref-sms" checked class="gg-checkbox w-4 h-4" />
               <span class="text-sm text-gray-600">Plus, email me inspiring stories, exclusive promotions, and donation match opportunities to amplify my impact!</span>
             </label>
           </div>
 
           <!-- Cover Fees -->
-          <div class="mb-4 p-4 bg-amber-50 rounded-md border border-amber-200">
+          <div class="mb-4 p-4 bg-white rounded-md border border-gray-200">
             <label class="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" id="gg-cover-fees" checked class="mt-0.5 w-5 h-5 text-[#d97706] rounded-sm focus:ring-[#d97706]" />
+              <input type="checkbox" id="gg-cover-fees" checked class="gg-checkbox gg-checkbox-lg mt-0.5 w-5 h-5" />
               <div>
                 <span class="font-semibold text-gray-800 text-sm">Cover transaction fees</span>
                 <span class="ml-1 px-1.5 py-0.5 bg-amber-200 text-amber-800 text-xs font-bold rounded-sm">+3%</span>
@@ -1310,26 +1354,27 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
           </p>
 
           <!-- Trust Signals -->
-          <div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-400">
-            <div class="flex items-center gap-1">
-              <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          <div class="mt-4 bg-white border border-gray-200 rounded-md p-3 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-[#d97706]" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
               </svg>
               <span>Secure Payment</span>
             </div>
-            <div class="flex items-center gap-1">
-              <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-[#d97706]" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
               </svg>
               <span>Tax-Deductible</span>
             </div>
-            <div class="flex items-center gap-1">
-              <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-[#d97706]" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
               </svg>
               <span>Cancel anytime.</span>
             </div>
           </div>
+
         </div>
 
       </div>
@@ -2552,15 +2597,9 @@ function captureAbandonedCheckout(force) {
   window.donationCart._lastCaptureFingerprint = cartFingerprint;
   window.donationCart._lastCapturedEmail = email;
 
-  // Read name fields — GG uses fullName, others use firstName + lastName
-  var ggFullName = (document.getElementById('gg-fullName')?.value || '').trim();
-  var firstName = (document.getElementById('modal-firstName')?.value || document.getElementById('ts-info-firstName')?.value || '').trim();
-  var lastName = (document.getElementById('modal-lastName')?.value || document.getElementById('ts-info-lastName')?.value || '').trim();
-  if (!firstName && ggFullName) {
-    var nameParts = ggFullName.split(' ');
-    firstName = nameParts[0] || '';
-    lastName = nameParts.slice(1).join(' ') || '';
-  }
+  // Read name fields — all checkouts now use firstName + lastName
+  var firstName = (document.getElementById('gg-firstName')?.value || document.getElementById('modal-firstName')?.value || document.getElementById('ts-info-firstName')?.value || '').trim();
+  var lastName = (document.getElementById('gg-lastName')?.value || document.getElementById('modal-lastName')?.value || document.getElementById('ts-info-lastName')?.value || '').trim();
   var phone = (document.getElementById('modal-phone')?.value || document.getElementById('ts-info-phone')?.value || document.getElementById('gg-phone')?.value || '').trim();
   var country = (document.getElementById('modal-country')?.value || 'US');
 
@@ -3467,6 +3506,9 @@ function openGGCheckout() {
   document.body.style.position = 'fixed';
   document.body.style.top = '-' + window._ggScrollY + 'px';
   document.body.style.width = '100%';
+  // Hide any page-level sticky bars (e.g. Zakat calculator's sticky CTA)
+  var stickyBar = document.getElementById('zw-sticky-bar');
+  if (stickyBar) stickyBar.style.display = 'none';
 
   // Track begin_checkout in GA4
   if (window.trackBeginCheckout) {
@@ -3493,6 +3535,9 @@ function closeGGCheckout() {
   document.body.style.top = '';
   document.body.style.width = '';
   window.scrollTo(0, window._ggScrollY || 0);
+  // Restore page-level sticky bars
+  var stickyBar = document.getElementById('zw-sticky-bar');
+  if (stickyBar && window.innerWidth <= 768) stickyBar.style.display = 'flex';
 }
 
 // Close handlers
@@ -3665,25 +3710,28 @@ function updateGGCart() {
       var isRecurring = itemType === 'monthly' || itemType === 'weekly' || itemType === 'yearly' || itemType === 'daily' || (item.recurringInterval && item.recurringInterval !== 'single');
       var freqSuffix = isRecurring ? (itemInterval === 'weekly' ? '/wk' : itemInterval === 'yearly' ? '/yr' : itemInterval === 'daily' ? '/day' : '/mo') : '';
       var freqLabel = freqSuffix;
-      var imgSrc = item.image || fallbackImg;
+      // Use zakat hero image for zakat items that have no image
+      var zakatFallbackImg = '/images/qurbani-foundation-food-distribution.png';
+      var effectiveImage = item.image || ((item.campaignSlug === 'zakat' || (item.name && item.name.toLowerCase().indexOf('zakat') !== -1)) ? zakatFallbackImg : null);
+      var imgSrc = effectiveImage || fallbackImg;
       var itemName = item.name || item.campaign || 'Donation';
       var onetimeActive = !isRecurring;
       var monthlyActive = isRecurring;
 
-      var showImage = item.image && !item.isUpsell;
+      var showImage = effectiveImage && !item.isUpsell;
       html +=
         '<div class="px-4 py-4">' +
           // Main row: image, name, price + edit
           '<div class="flex items-center gap-3.5">' +
             // Thumbnail (only for non-upsell items with images)
             (showImage ?
-              '<div class="flex-shrink-0 w-[72px] h-[72px] rounded overflow-hidden bg-gray-100">' +
+              '<div class="hidden md:block flex-shrink-0 w-[72px] h-[72px] rounded overflow-hidden bg-gray-100">' +
                 '<img src="' + imgSrc + '" alt="' + itemName + '" class="w-full h-full object-cover" onerror="this.onerror=null;this.src=\'' + fallbackImg + '\';" />' +
               '</div>'
             : '') +
             // Name
             '<div class="flex-1 min-w-0">' +
-              '<p class="text-sm font-bold text-gray-800 leading-snug" style="font-family:\'Signika\',sans-serif;">' + itemName + '</p>' +
+              '<p class="text-sm font-medium text-gray-700 leading-snug">' + itemName + '</p>' +
             '</div>' +
             // Price + Edit link
             '<div class="flex-shrink-0 text-right">' +
@@ -3800,17 +3848,52 @@ function updateGGCart() {
     monthlyRow.style.display = 'none';
   }
 
-  // Show/hide recurring info box + update text based on frequency
+  // Update mobile inline total
+  var mobTotalLabel = document.getElementById('gg-mobile-total-label');
+  var mobTotalAmount = document.getElementById('gg-mobile-total-amount');
+  var mobTotalFreq = document.getElementById('gg-mobile-total-freq');
+  var mobMonthlyRow = document.getElementById('gg-mobile-monthly-row');
+  var mobMonthlyLabel = document.getElementById('gg-mobile-monthly-label');
+  var mobMonthlyAmount = document.getElementById('gg-mobile-monthly-amount');
+  if (mobTotalLabel && mobTotalAmount) {
+    if (hasMixed) {
+      var sFee = coverFees ? Math.round(singleTotal * 0.03 * 100) / 100 : 0;
+      var rFee = coverFees ? Math.round(recurringTotal * 0.03 * 100) / 100 : 0;
+      mobTotalLabel.textContent = 'Total due today:';
+      mobTotalAmount.textContent = '$' + (singleTotal + recurringTotal + sFee + rFee).toFixed(2);
+      if (mobTotalFreq) mobTotalFreq.textContent = '';
+      if (mobMonthlyRow) mobMonthlyRow.style.display = 'flex';
+      if (mobMonthlyLabel) mobMonthlyLabel.textContent = recurLabel.toUpperCase() + ' TOTAL';
+      if (mobMonthlyAmount) mobMonthlyAmount.textContent = '$' + (recurringTotal + rFee).toFixed(2) + recurSuffix;
+    } else if (hasRecurring) {
+      mobTotalLabel.textContent = recurLabel + ' Total:';
+      mobTotalAmount.textContent = '$' + total.toFixed(2);
+      if (mobTotalFreq) mobTotalFreq.textContent = recurFreqText;
+      if (mobMonthlyRow) mobMonthlyRow.style.display = 'none';
+    } else {
+      mobTotalLabel.textContent = 'Total:';
+      mobTotalAmount.textContent = '$' + total.toFixed(2);
+      if (mobTotalFreq) mobTotalFreq.textContent = '';
+      if (mobMonthlyRow) mobMonthlyRow.style.display = 'none';
+    }
+  }
+
+  // Show/hide recurring info box + update text with totals
   var recurringInfo = document.getElementById('gg-recurring-info');
   if (recurringInfo) {
     recurringInfo.style.display = hasRecurring ? 'block' : 'none';
     if (hasRecurring) {
-      var headingEl = document.getElementById('gg-recurring-heading');
       var bodyEl = document.getElementById('gg-recurring-body');
       var freqWord = hasWeeklyItems ? 'weekly' : hasDailyItems ? 'daily' : hasYearlyItems ? 'yearly' : 'monthly';
       var freqPhrase = hasWeeklyItems ? 'each Friday' : hasDailyItems ? 'each day' : hasYearlyItems ? 'each year' : 'each month';
-      if (headingEl) headingEl.textContent = 'Your ' + freqWord + ' support ensures families receive continuous aid during crisis.';
-      if (bodyEl) bodyEl.innerHTML = 'Your credit card will be charged today and ' + freqPhrase + ' until you cancel your donation. You can edit your recurring donation at any time. <a href="/manage-subscription" target="_blank" class="underline font-semibold text-[#d97706] hover:text-[#b45309]">LEARN MORE</a>';
+      // Calculate today's charge and recurring charge
+      var todayTotal = total; // total already includes fees if checked
+      var recurringCharge = hasMixed
+        ? (recurringTotal + (coverFees ? Math.round(recurringTotal * 0.03 * 100) / 100 : 0))
+        : total;
+      if (bodyEl) {
+        bodyEl.innerHTML = '<strong>Your ' + freqWord + ' support ensures families receive continuous aid during crisis.</strong> Your credit card will be charged <strong>$' + todayTotal.toFixed(2) + '</strong> today. Starting next ' + freqPhrase.replace('each ', '') + ', your credit card will be charged <strong>$' + recurringCharge.toFixed(2) + '</strong> ' + freqPhrase + ' until you cancel your donation. You can edit your recurring donation at any time.';
+      }
     }
   }
 
@@ -3907,9 +3990,13 @@ var ggPhoneField = document.getElementById('gg-phone');
 if (ggPhoneField) {
   ggPhoneField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
 }
-var ggNameField = document.getElementById('gg-fullName');
-if (ggNameField) {
-  ggNameField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
+var ggFirstNameField = document.getElementById('gg-firstName');
+if (ggFirstNameField) {
+  ggFirstNameField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
+}
+var ggLastNameField = document.getElementById('gg-lastName');
+if (ggLastNameField) {
+  ggLastNameField.addEventListener('blur', function() { captureAbandonedCheckout(true); });
 }
 
 // GG payment handler
@@ -3920,14 +4007,16 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
   var errorDiv = document.getElementById('gg-payment-error');
 
   // Validate required fields
-  var fullName = (document.getElementById('gg-fullName').value || '').trim();
+  var firstName = (document.getElementById('gg-firstName').value || '').trim();
+  var lastName = (document.getElementById('gg-lastName').value || '').trim();
   var email = (document.getElementById('gg-email').value || '').trim();
   var address = (document.getElementById('gg-address').value || '').trim();
   var city = (document.getElementById('gg-city').value || '').trim();
   var state = (document.getElementById('gg-state').value || '').trim();
   var zip = (document.getElementById('gg-zip').value || '').trim();
 
-  if (!fullName) { document.getElementById('gg-fullName').focus(); return; }
+  if (!firstName) { document.getElementById('gg-firstName').focus(); return; }
+  if (!lastName) { document.getElementById('gg-lastName').focus(); return; }
   if (!email) { document.getElementById('gg-email').focus(); return; }
   if (!address) { document.getElementById('gg-address').focus(); return; }
   if (!city) { document.getElementById('gg-city').focus(); return; }
@@ -3944,10 +4033,6 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
     if (!ggStripeElements) {
       throw new Error('Payment form not loaded. Please refresh and try again.');
     }
-
-    var nameParts = fullName.split(' ');
-    var firstName = nameParts[0] || '';
-    var lastName = nameParts.slice(1).join(' ') || '';
 
     var customer = {
       firstName: firstName,
