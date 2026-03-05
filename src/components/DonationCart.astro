@@ -1168,34 +1168,10 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
             <!-- Mobile-only totals wrapper -->
             <div class="md:hidden border-t border-gray-200">
-              <!-- Fee: collapsed view (just amount + Edit) -->
-              <div id="gg-mobile-fee-row" class="px-4 pt-2" style="display: none;">
-                <div class="flex justify-between items-center">
-                  <span class="text-xs text-gray-500">Platform support (<span id="gg-mobile-fee-pct">3</span>%)</span>
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-500" id="gg-mobile-fee-amount">$0.00</span>
-                    <button type="button" id="gg-mobile-fee-edit" class="text-[10px] text-gray-400 hover:text-gray-600 font-medium underline">Edit</button>
-                  </div>
-                </div>
-              </div>
-              <!-- Fee: expanded editor (percentage pills + remove) -->
-              <div id="gg-mobile-fee-editor" class="px-4 pb-1 hidden">
-                <div class="flex items-center justify-between mt-1.5">
-                  <div class="flex items-center gap-1.5">
-                    <button type="button" data-pct="3" class="gg-fee-pct-btn px-2.5 py-0.5 text-[10px] font-bold rounded-full border transition">3%</button>
-                    <button type="button" data-pct="5" class="gg-fee-pct-btn px-2.5 py-0.5 text-[10px] font-bold rounded-full border transition">5%</button>
-                    <button type="button" data-pct="10" class="gg-fee-pct-btn px-2.5 py-0.5 text-[10px] font-bold rounded-full border transition">10%</button>
-                    <button type="button" data-pct="15" class="gg-fee-pct-btn px-2.5 py-0.5 text-[10px] font-bold rounded-full border transition">15%</button>
-                  </div>
-                  <button type="button" id="gg-mobile-fee-remove" class="text-[10px] text-gray-400 hover:text-gray-600 font-medium underline ml-2">Remove</button>
-                </div>
-              </div>
-              <!-- Fee: add prompt (when fees are off) -->
-              <div id="gg-mobile-fee-add" style="display: none;">
-                <button type="button" id="gg-mobile-fee-add-btn" class="flex items-center gap-1 px-4 pt-2 text-[11px] text-[#d97706] font-semibold">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                  Support our platform (+3%)
-                </button>
+              <!-- Fee line (read-only, shown when cover fees checkbox is checked) -->
+              <div id="gg-mobile-fee-row" class="flex justify-between items-center px-4 pt-2" style="display: none;">
+                <span class="text-xs text-gray-500">Processing fee (<span id="gg-mobile-fee-pct">3</span>%)</span>
+                <span class="text-xs text-gray-500" id="gg-mobile-fee-amount">$0.00</span>
               </div>
               <div id="gg-mobile-total" class="flex justify-between items-baseline px-4 pt-1 pb-2">
                 <span class="text-sm font-bold text-gray-800" id="gg-mobile-total-label">Total:</span>
@@ -1212,34 +1188,11 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
             <!-- Desktop inline total (inside cart box) -->
             <div class="hidden md:block border-t border-gray-200 px-4 py-3">
-              <!-- Fee: collapsed (amount + Edit) -->
+              <!-- Fee line (read-only, shown when cover fees checkbox is checked) -->
               <div id="gg-fee-row" class="flex justify-between items-center text-sm text-gray-600 mb-2" style="display: none;">
                 <span>Processing fee (<span id="gg-desk-fee-pct">3</span>%)</span>
-                <div class="flex items-center gap-2">
-                  <span id="gg-fee-amount">$0.00</span>
-                  <button type="button" id="gg-desk-fee-edit" class="text-[10px] text-gray-400 hover:text-[#d97706] font-medium transition">Edit</button>
-                </div>
+                <span id="gg-fee-amount">$0.00</span>
               </div>
-              <!-- Fee: expanded editor -->
-              <div id="gg-desk-fee-editor" class="mb-2 hidden">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <button type="button" data-pct="3" class="gg-fee-pct-btn px-3 py-0.5 text-xs font-bold rounded-full border transition">3%</button>
-                    <button type="button" data-pct="5" class="gg-fee-pct-btn px-3 py-0.5 text-xs font-bold rounded-full border transition">5%</button>
-                    <button type="button" data-pct="10" class="gg-fee-pct-btn px-3 py-0.5 text-xs font-bold rounded-full border transition">10%</button>
-                    <button type="button" data-pct="15" class="gg-fee-pct-btn px-3 py-0.5 text-xs font-bold rounded-full border transition">15%</button>
-                  </div>
-                  <button type="button" id="gg-desk-fee-remove" class="text-[10px] text-gray-400 hover:text-[#d97706] font-medium transition ml-3">Remove</button>
-                </div>
-              </div>
-              <!-- Fee: add prompt (when off) -->
-              <div id="gg-desk-fee-add" style="display: none;">
-                <button type="button" id="gg-desk-fee-add-btn" class="flex items-center gap-1 mb-2 text-xs text-[#d97706] font-semibold">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                  Cover transaction fees (+3%)
-                </button>
-              </div>
-              <!-- Subtotal (hidden, kept for JS reference) -->
               <span id="gg-subtotal" class="hidden">$0.00</span>
               <div>
                 <div class="flex justify-between items-baseline">
@@ -3910,31 +3863,17 @@ function updateGGCart() {
   // Update subtotal
   document.getElementById('gg-subtotal').textContent = '$' + subtotal.toFixed(2);
 
-  // Update fee row (desktop) — same pattern as mobile: show/hide fee row vs add prompt
+  // Update fee row (desktop) — show when coverFees is checked, hide otherwise
   var feePctDisplay = window.donationCart.feePercent || 3;
   var feeRow = document.getElementById('gg-fee-row');
   var feeAmountEl = document.getElementById('gg-fee-amount');
-  var deskFeeAdd = document.getElementById('gg-desk-fee-add');
   var deskFeePct = document.getElementById('gg-desk-fee-pct');
   if (coverFees && feeAmount > 0) {
     feeRow.style.display = 'flex';
     feeAmountEl.textContent = '$' + feeAmount.toFixed(2);
     if (deskFeePct) deskFeePct.textContent = feePctDisplay;
-    if (deskFeeAdd) deskFeeAdd.style.display = 'none';
-    // Highlight active pct button in desktop editor
-    document.querySelectorAll('#gg-desk-fee-editor .gg-fee-pct-btn').forEach(function(btn) {
-      var btnPct = parseInt(btn.getAttribute('data-pct'));
-      if (btnPct === feePctDisplay) {
-        btn.className = 'gg-fee-pct-btn px-3 py-0.5 text-xs font-bold rounded-full border border-[#d97706] bg-[#d97706] text-white transition';
-      } else {
-        btn.className = 'gg-fee-pct-btn px-3 py-0.5 text-xs font-bold rounded-full border border-gray-300 text-gray-600 hover:border-[#d97706] hover:text-[#d97706] transition';
-      }
-    });
   } else {
     feeRow.style.display = 'none';
-    document.getElementById('gg-desk-fee-editor')?.classList.add('hidden');
-    if (deskFeeAdd && subtotal > 0) deskFeeAdd.style.display = 'block';
-    else if (deskFeeAdd) deskFeeAdd.style.display = 'none';
   }
   // Update badge
   var feeBadge = document.getElementById('gg-fee-badge');
@@ -3959,15 +3898,14 @@ function updateGGCart() {
   var recurSuffix = hasWeeklyItems ? '/wk' : hasDailyItems ? '/day' : hasYearlyItems ? '/yr' : '/mo';
   var recurFreqText = hasWeeklyItems ? '/ week' : hasDailyItems ? '/ day' : hasYearlyItems ? '/ year' : '/ month';
 
+  // Cart totals include fee when coverFees is checked
   if (hasMixed) {
-    var singleFee = coverFees ? Math.round(singleTotal * feePct * 100) / 100 : 0;
-    var recurringFee = coverFees ? Math.round(recurringTotal * feePct * 100) / 100 : 0;
     totalLabel.textContent = 'Total due today:';
-    totalEl.textContent = '$' + (singleTotal + recurringTotal + singleFee + recurringFee).toFixed(2);
+    totalEl.textContent = '$' + (singleTotal + recurringTotal + feeAmount).toFixed(2);
     totalFreq.textContent = '';
     monthlyRow.style.display = 'flex';
     monthlyRow.querySelector('span:first-child').textContent = recurLabel.toUpperCase() + ' TOTAL';
-    monthlyTotalEl.textContent = '$' + (recurringTotal + recurringFee).toFixed(2) + recurSuffix;
+    monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2) + recurSuffix;
   } else if (hasRecurring) {
     totalLabel.textContent = recurLabel + ' Total:';
     totalEl.textContent = '$' + total.toFixed(2);
@@ -3980,34 +3918,17 @@ function updateGGCart() {
     monthlyRow.style.display = 'none';
   }
 
-  // Update mobile inline total + fee row + add button
+  // Update mobile inline total + fee row
   var mobFeeRow = document.getElementById('gg-mobile-fee-row');
   var mobFeeAmount = document.getElementById('gg-mobile-fee-amount');
   var mobFeePctEl = document.getElementById('gg-mobile-fee-pct');
-  var mobFeeAdd = document.getElementById('gg-mobile-fee-add');
-  var mobTotalDiv = document.getElementById('gg-mobile-total');
   if (mobFeeRow) {
-    if (coverFees && subtotal > 0) {
-      var mobFee = Math.round(subtotal * feePct * 100) / 100;
-      mobFeeRow.style.display = 'block';
-      if (mobFeeAmount) mobFeeAmount.textContent = '$' + mobFee.toFixed(2);
+    if (coverFees && feeAmount > 0) {
+      mobFeeRow.style.display = 'flex';
+      if (mobFeeAmount) mobFeeAmount.textContent = '$' + feeAmount.toFixed(2);
       if (mobFeePctEl) mobFeePctEl.textContent = feePctDisplay;
-      if (mobFeeAdd) mobFeeAdd.style.display = 'none';
-      if (mobTotalDiv) mobTotalDiv.style.borderTop = 'none';
-      // Highlight active percentage button
-      document.querySelectorAll('.gg-fee-pct-btn').forEach(function(btn) {
-        var btnPct = parseInt(btn.getAttribute('data-pct'));
-        if (btnPct === feePctDisplay) {
-          btn.className = 'gg-fee-pct-btn px-2 py-0.5 text-[10px] font-bold rounded-full border border-[#d97706] bg-[#d97706] text-white transition';
-        } else {
-          btn.className = 'gg-fee-pct-btn px-2 py-0.5 text-[10px] font-bold rounded-full border border-gray-300 text-gray-600 hover:border-[#d97706] hover:text-[#d97706] transition';
-        }
-      });
     } else {
       mobFeeRow.style.display = 'none';
-      if (mobFeeAdd && subtotal > 0) mobFeeAdd.style.display = 'block';
-      else if (mobFeeAdd) mobFeeAdd.style.display = 'none';
-      if (mobTotalDiv) mobTotalDiv.style.borderTop = '1px solid #e5e7eb';
     }
   }
   var mobTotalLabel = document.getElementById('gg-mobile-total-label');
@@ -4016,16 +3937,15 @@ function updateGGCart() {
   var mobMonthlyRow = document.getElementById('gg-mobile-monthly-row');
   var mobMonthlyLabel = document.getElementById('gg-mobile-monthly-label');
   var mobMonthlyAmount = document.getElementById('gg-mobile-monthly-amount');
+  // Mobile cart totals include fee when coverFees is checked
   if (mobTotalLabel && mobTotalAmount) {
     if (hasMixed) {
-      var sFee = coverFees ? Math.round(singleTotal * feePct * 100) / 100 : 0;
-      var rFee = coverFees ? Math.round(recurringTotal * feePct * 100) / 100 : 0;
       mobTotalLabel.textContent = 'Total due today:';
-      mobTotalAmount.textContent = '$' + (singleTotal + recurringTotal + sFee + rFee).toFixed(2);
+      mobTotalAmount.textContent = '$' + (singleTotal + recurringTotal + feeAmount).toFixed(2);
       if (mobTotalFreq) mobTotalFreq.textContent = '';
       if (mobMonthlyRow) mobMonthlyRow.style.display = 'flex';
       if (mobMonthlyLabel) mobMonthlyLabel.textContent = recurLabel.toUpperCase() + ' TOTAL';
-      if (mobMonthlyAmount) mobMonthlyAmount.textContent = '$' + (recurringTotal + rFee).toFixed(2) + recurSuffix;
+      if (mobMonthlyAmount) mobMonthlyAmount.textContent = '$' + recurringTotal.toFixed(2) + recurSuffix;
     } else if (hasRecurring) {
       mobTotalLabel.textContent = recurLabel + ' Total:';
       mobTotalAmount.textContent = '$' + total.toFixed(2);
