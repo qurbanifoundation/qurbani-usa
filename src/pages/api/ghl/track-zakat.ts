@@ -14,7 +14,9 @@
  */
 import type { APIRoute } from 'astro';
 import { trackZakatCalculation } from '../../../lib/ghl-advanced';
-import { getSettings } from '../../../lib/settings';
+import { supabaseAdmin } from '../../../lib/supabase';
+
+const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 
 export const prerender = false;
 
@@ -89,7 +91,7 @@ function buildZakatEmail(data: {
 
         <!-- Header with Logo -->
         <tr>
-          <td style="background: linear-gradient(135deg, #024139 0%, #01201c 100%); padding: 30px 30px 20px; text-align: center;">
+          <td style="background: linear-gradient(135deg, #e1861d 0%, #b45309 100%); padding: 30px 30px 20px; text-align: center;">
             <img src="${logoUrl}" alt="Qurbani Foundation" width="180" style="width: 180px; max-width: 100%; height: auto; display: inline-block;" />
             <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 8px 0 0; letter-spacing: 1px;">SERVING HUMANITY THROUGH FAITH</p>
           </td>
@@ -97,10 +99,16 @@ function buildZakatEmail(data: {
 
         <!-- Zakat Amount Banner -->
         <tr>
-          <td style="background: linear-gradient(135deg, #024139 0%, #0a3d2e 100%); padding: 0 30px 30px; text-align: center;">
-            <p style="color: rgba(255,255,255,0.6); font-size: 13px; margin: 0 0 6px;">${zakatDue ? 'Your Zakat Due' : 'Zakat Calculation'}</p>
-            <p style="color: #fbbf24; font-size: 48px; font-weight: 800; margin: 0; line-height: 1.1;">${fmtCurrency(data.zakatAmount)}</p>
-            <p style="color: rgba(255,255,255,0.4); font-size: 12px; margin: 8px 0 0;">2.5% of net zakatable wealth</p>
+          <td style="padding: 24px 30px 0; text-align: center;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;">
+              <tr>
+                <td style="padding: 14px 20px; text-align: center;">
+                  <p style="color: #92400e; font-size: 11px; margin: 0 0 2px; text-transform: uppercase; letter-spacing: 1px;">${zakatDue ? 'Your Zakat Due' : 'Zakat Calculation'}</p>
+                  <p style="color: #b45309; font-size: 28px; font-weight: 700; margin: 0; line-height: 1.2;">${fmtCurrency(data.zakatAmount)}</p>
+                  <p style="color: #92400e; font-size: 11px; margin: 4px 0 0;">2.5% of net zakatable wealth</p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
 
@@ -119,7 +127,7 @@ function buildZakatEmail(data: {
         <!-- Assets Breakdown -->
         <tr>
           <td style="padding: 20px 30px 0;">
-            <p style="font-size: 13px; font-weight: 700; color: #0096D6; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; border-bottom: 2px solid #0096D6; padding-bottom: 6px;">Assets</p>
+            <p style="font-size: 13px; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px; border-bottom: 2px solid #d97706; padding-bottom: 6px;">Assets</p>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               ${assetsRows}
               <tr style="border-top: 2px solid #e5e7eb;">
@@ -185,11 +193,11 @@ function buildZakatEmail(data: {
         <!-- Zakat Summary Box -->
         <tr>
           <td style="padding: 0 30px 20px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #024139, #01201c); border-radius: 12px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;">
               <tr>
-                <td style="padding: 20px; text-align: center;">
-                  <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0 0 4px;">Your Zakat Due (2.5%)</p>
-                  <p style="color: #fbbf24; font-size: 36px; font-weight: 800; margin: 0;">${fmtCurrency(data.zakatAmount)}</p>
+                <td style="padding: 14px 20px; text-align: center;">
+                  <p style="color: #92400e; font-size: 11px; margin: 0 0 2px; text-transform: uppercase; letter-spacing: 1px;">Your Zakat Due (2.5%)</p>
+                  <p style="color: #b45309; font-size: 26px; font-weight: 700; margin: 0;">${fmtCurrency(data.zakatAmount)}</p>
                 </td>
               </tr>
             </table>
@@ -202,7 +210,7 @@ function buildZakatEmail(data: {
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td align="center">
-                  <a href="${payUrl}" style="display: inline-block; background: #B32629; color: #ffffff; font-size: 18px; font-weight: 700; text-decoration: none; padding: 16px 50px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; box-sizing: border-box;">
+                  <a href="${payUrl}" style="display: inline-block; background: linear-gradient(135deg, #d97706, #b45309); color: #ffffff; font-size: 18px; font-weight: 700; text-decoration: none; padding: 16px 50px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; box-sizing: border-box;">
                     Pay Your Zakat Now →
                   </a>
                 </td>
@@ -223,8 +231,8 @@ function buildZakatEmail(data: {
             <p style="font-size: 12px; color: #999; margin: 0 0 4px;">Qurbani Foundation USA</p>
             <p style="font-size: 11px; color: #bbb; margin: 0 0 4px;">EIN: 38-4109716 | 1-800-900-0027</p>
             <p style="font-size: 11px; color: #bbb; margin: 0;">
-              <a href="https://www.qurbani.com" style="color: #0096D6; text-decoration: none;">www.qurbani.com</a> |
-              <a href="mailto:donorcare@qurbani.com" style="color: #0096D6; text-decoration: none;">donorcare@qurbani.com</a>
+              <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
+              <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
             </p>
           </td>
         </tr>
@@ -288,7 +296,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Track the Zakat calculation in GHL
+    // Track the Zakat calculation in GHL (with full breakdown)
     const result = await trackZakatCalculation({
       email,
       firstName,
@@ -296,6 +304,12 @@ export const POST: APIRoute = async ({ request }) => {
       phone,
       zakatAmount,
       totalAssets: totalAssets || 0,
+      totalLiabilities: totalLiabilities || 0,
+      netWealth: netWealth || 0,
+      nisabType: nisabType || 'silver',
+      nisabValue: nisabValue || 0,
+      assetsBreakdown: assetsBreakdown || [],
+      liabilitiesBreakdown: liabilitiesBreakdown || [],
       wantsReminder: wantsReminder || false,
     });
 
@@ -306,10 +320,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Send detailed email via Resend
     let emailSent = false;
     try {
-      const settings = await getSettings();
-      const resendKey = settings.resend_api_key;
-
-      if (resendKey) {
+      if (RESEND_API_KEY) {
         const emailHtml = buildZakatEmail({
           firstName: firstName || '',
           zakatAmount: zakatAmount || 0,
@@ -325,11 +336,12 @@ export const POST: APIRoute = async ({ request }) => {
         const emailRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${resendKey}`,
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Qurbani Foundation <donorcare@qurbani.com>',
+            from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
+            reply_to: 'donorcare@qurbani.com',
             to: [email],
             subject: zakatAmount > 0
               ? `Your Zakat Calculation: ${fmtCurrency(zakatAmount)} Due`
@@ -345,9 +357,102 @@ export const POST: APIRoute = async ({ request }) => {
           const errData = await emailRes.text();
           console.error('[Zakat Email] Failed:', errData);
         }
+      } else {
+        console.error('[Zakat Email] RESEND_API_KEY not configured');
       }
     } catch (emailErr: any) {
       console.error('[Zakat Email] Error:', emailErr.message);
+    }
+
+    // Queue follow-up drip emails (steps 2-4)
+    try {
+      const payUrl = `https://www.qurbani.com/zakat?amount=${zakatAmount.toFixed(2)}`;
+
+      // Upsert: if they recalculate, update the data and reset the drip
+      const { error: queueError } = await supabaseAdmin
+        .from('zakat_email_queue')
+        .upsert({
+          email,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          zakat_amount: zakatAmount,
+          total_assets: totalAssets || 0,
+          total_liabilities: totalLiabilities || 0,
+          net_wealth: netWealth || 0,
+          nisab_type: nisabType || 'silver',
+          nisab_value: nisabValue || 0,
+          assets_breakdown: assetsBreakdown || [],
+          liabilities_breakdown: liabilitiesBreakdown || [],
+          pay_url: payUrl,
+          drip_step_last_sent: 1,
+          drip_last_sent_at: new Date().toISOString(),
+          status: 'active',
+          created_at: new Date().toISOString(),
+        }, {
+          onConflict: 'email',
+          ignoreDuplicates: false,
+        });
+
+      if (queueError) {
+        // If upsert fails due to no unique constraint on email, do insert
+        // with manual dedup
+        const { data: existing } = await supabaseAdmin
+          .from('zakat_email_queue')
+          .select('id')
+          .eq('email', email)
+          .eq('status', 'active')
+          .limit(1)
+          .single();
+
+        if (existing) {
+          await supabaseAdmin
+            .from('zakat_email_queue')
+            .update({
+              first_name: firstName || null,
+              last_name: lastName || null,
+              zakat_amount: zakatAmount,
+              total_assets: totalAssets || 0,
+              total_liabilities: totalLiabilities || 0,
+              net_wealth: netWealth || 0,
+              nisab_type: nisabType || 'silver',
+              nisab_value: nisabValue || 0,
+              assets_breakdown: assetsBreakdown || [],
+              liabilities_breakdown: liabilitiesBreakdown || [],
+              pay_url: payUrl,
+              drip_step_last_sent: 1,
+              drip_last_sent_at: new Date().toISOString(),
+              status: 'active',
+              created_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
+        } else {
+          await supabaseAdmin
+            .from('zakat_email_queue')
+            .insert({
+              email,
+              first_name: firstName || null,
+              last_name: lastName || null,
+              zakat_amount: zakatAmount,
+              total_assets: totalAssets || 0,
+              total_liabilities: totalLiabilities || 0,
+              net_wealth: netWealth || 0,
+              nisab_type: nisabType || 'silver',
+              nisab_value: nisabValue || 0,
+              assets_breakdown: assetsBreakdown || [],
+              liabilities_breakdown: liabilitiesBreakdown || [],
+              pay_url: payUrl,
+              drip_step_last_sent: 1,
+              drip_last_sent_at: new Date().toISOString(),
+              status: 'active',
+            });
+        }
+        console.log(`[Zakat Queue] Queued drip emails for ${email} (fallback method)`);
+      } else {
+        console.log(`[Zakat Queue] Queued drip emails for ${email}`);
+      }
+    } catch (queueErr: any) {
+      // Non-fatal: don't fail the whole request if queue fails
+      console.error('[Zakat Queue] Error:', queueErr.message);
     }
 
     return new Response(JSON.stringify({

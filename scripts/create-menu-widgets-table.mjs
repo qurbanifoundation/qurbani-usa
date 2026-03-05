@@ -69,7 +69,7 @@ INSERT INTO menu_widgets (menu_id, position, widget_type, title, config, sort_or
 ('zakat', 'left', 'link-list', 'Zakat Resources', '{
   "links": [
     {"label": "Pay Your Zakat", "href": "/zakat", "icon": "money", "color": "#0096D6"},
-    {"label": "Zakat Calculator", "href": "/zakat-calculator", "icon": "calculator", "color": "#16a34a"},
+    {"label": "Zakat Calculator", "href": "/zakat/calculator", "icon": "calculator", "color": "#16a34a"},
     {"label": "Zakat FAQ", "href": "/zakat-faq", "icon": "question", "color": "#7c3aed"},
     {"label": "What is Zakat?", "href": "/what-is-zakat", "icon": "book", "color": "#ea580c"},
     {"label": "Zakat on Gold & Silver", "href": "/zakat-on-gold", "icon": "gold", "color": "#eab308"}
@@ -79,11 +79,11 @@ INSERT INTO menu_widgets (menu_id, position, widget_type, title, config, sort_or
   "heading": "The Third Pillar of Islam",
   "description": "Zakat is an obligatory form of charity for Muslims who meet the necessary criteria of wealth (nisab). It purifies your wealth and helps those in need.",
   "stats": [
-    {"value": "2.5%", "label": "Of qualifying wealth", "link": "/zakat-calculator", "bgColor": "#e6f4fa"},
-    {"value": "$5,500", "label": "Approx. Nisab threshold", "link": "/zakat-calculator", "bgColor": "#fef3c7"}
+    {"value": "2.5%", "label": "Of qualifying wealth", "link": "/zakat/calculator", "bgColor": "#e6f4fa"},
+    {"value": "$5,500", "label": "Approx. Nisab threshold", "link": "/zakat/calculator", "bgColor": "#fef3c7"}
   ],
   "buttonText": "Calculate Your Zakat Now",
-  "buttonLink": "/zakat-calculator",
+  "buttonLink": "/zakat/calculator",
   "buttonColor": "#0096D6"
 }', 1),
 ('zakat', 'right', 'quick-form', 'Quick Zakat', '{

@@ -911,5 +911,23 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
     // INITIAL STATE
     // ═══════════════════════════════════════════
     updateImpact();
+
+    // ═══════════════════════════════════════════
+    // AUTO-CART: ?amount= URL parameter
+    // When arriving from email CTA, auto-add to cart
+    // ═══════════════════════════════════════════
+    (function() {
+      var urlParams = new URLSearchParams(window.location.search);
+      var urlAmount = urlParams.get('amount');
+      if (urlAmount) {
+        var amt = parseFloat(urlAmount);
+        if (!isNaN(amt) && amt > 0) {
+          // Short delay to ensure window.addToCart is ready
+          setTimeout(function() {
+            addItemToCart(amt, 'single');
+          }, 300);
+        }
+      }
+    })();
   });
 </script>

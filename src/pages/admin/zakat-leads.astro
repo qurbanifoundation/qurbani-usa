@@ -1,0 +1,491 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Get query params for filtering
+const url = new URL(Astro.request.url);
+const statusFilter = url.searchParams.get('status') || 'all';
+const dateRange = url.searchParams.get('range') || '30d';
+const page = parseInt(url.searchParams.get('page') || '1');
+const perPage = 25;
+
+// Date range filter
+let dateThreshold: Date | null = null;
+if (dateRange === '7d') dateThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+else if (dateRange === '30d') dateThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+else if (dateRange === '90d') dateThreshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+// Build query
+let query = supabaseAdmin
+  .from('zakat_email_queue')
+  .select('*', { count: 'exact' })
+  .order('created_at', { ascending: false });
+
+if (statusFilter !== 'all') {
+  query = query.eq('status', statusFilter);
+}
+if (dateThreshold) {
+  query = query.gte('created_at', dateThreshold.toISOString());
+}
+
+// Pagination
+const { data: leads, count, error } = await query
+  .range((page - 1) * perPage, page * perPage - 1);
+
+const totalPages = Math.ceil((count || 0) / perPage);
+
+// Get stats
+let statsQuery = supabaseAdmin
+  .from('zakat_email_queue')
+  .select('status, zakat_amount, drip_step_last_sent, created_at, converted_at');
+
+if (dateThreshold) {
+  statsQuery = statsQuery.gte('created_at', dateThreshold.toISOString());
+}
+
+const { data: statsData } = await statsQuery;
+
+const stats = {
+  total: statsData?.length || 0,
+  active: statsData?.filter((d: any) => d.status === 'active').length || 0,
+  expired: statsData?.filter((d: any) => d.status === 'expired').length || 0,
+  unsubscribed: statsData?.filter((d: any) => d.status === 'unsubscribed').length || 0,
+  converted: statsData?.filter((d: any) => d.status === 'converted').length || 0,
+  totalZakat: 0,
+  avgZakat: 0,
+};
+
+stats.totalZakat = statsData
+  ?.reduce((sum: number, d: any) => sum + (parseFloat(d.zakat_amount) || 0), 0) || 0;
+stats.avgZakat = stats.total > 0 ? stats.totalZakat / stats.total : 0;
+
+// Format helpers
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'America/New_York',
+  });
+}
+
+function formatDateShort(dateStr: string | null) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'America/New_York',
+  });
+}
+
+function formatAmount(amount: number | string | null) {
+  if (!amount) return '$0';
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num || 0);
+}
+
+function formatAmountFull(amount: number | string | null) {
+  if (!amount) return '$0.00';
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'active': return 'bg-green-100 text-green-800';
+    case 'expired': return 'bg-gray-100 text-gray-600';
+    case 'unsubscribed': return 'bg-red-100 text-red-700';
+    case 'converted': return 'bg-blue-100 text-blue-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+function getDripLabel(step: number | null) {
+  if (!step) return 'Pending';
+  if (step === 1) return 'Email 1 sent';
+  if (step === 2) return 'Email 2 sent';
+  if (step === 3) return 'Email 3 sent';
+  if (step === 4) return 'All 4 sent';
+  return `Step ${step}`;
+}
+
+function getDripColor(step: number | null) {
+  if (!step || step === 0) return 'text-gray-400';
+  if (step === 1) return 'text-amber-600';
+  if (step === 2) return 'text-orange-600';
+  if (step === 3) return 'text-orange-700';
+  return 'text-green-600';
+}
+
+// Pagination helpers
+const paginationPages: number[] = [];
+for (let i = 0; i < Math.min(totalPages, 5); i++) {
+  const p = page <= 3 ? i + 1 : page + i - 2;
+  if (p >= 1 && p <= totalPages) paginationPages.push(p);
+}
+const showPrevPage = page > 1;
+const showNextPage = page < totalPages;
+const showPagination = totalPages > 1;
+---
+
+<AdminLayout title="Zakat Leads" activeNav="zakat-leads">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <p class="text-sm text-gray-500 font-medium">Total Leads</p>
+      <p class="text-2xl font-bold text-gray-800 mt-1">{stats.total}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-green-100">
+      <p class="text-sm text-green-600 font-medium">Active (Dripping)</p>
+      <p class="text-2xl font-bold text-green-700 mt-1">{stats.active}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-blue-100">
+      <p class="text-sm text-blue-600 font-medium">Converted</p>
+      <p class="text-2xl font-bold text-blue-700 mt-1">{stats.converted}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <p class="text-sm text-gray-500 font-medium">Expired</p>
+      <p class="text-2xl font-bold text-gray-600 mt-1">{stats.expired}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-amber-100">
+      <p class="text-sm text-amber-600 font-medium">Total Zakat Owed</p>
+      <p class="text-2xl font-bold text-amber-700 mt-1">{formatAmount(stats.totalZakat)}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-purple-100">
+      <p class="text-sm text-purple-600 font-medium">Avg Zakat</p>
+      <p class="text-2xl font-bold text-purple-700 mt-1">{formatAmount(stats.avgZakat)}</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-2">
+      <label class="text-sm font-medium text-gray-600">Status:</label>
+      <div class="flex gap-1">
+        {['all', 'active', 'expired', 'unsubscribed', 'converted'].map((s) => (
+          <a
+            href={`?status=${s}&range=${dateRange}&page=1`}
+            class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              statusFilter === s
+                ? 'bg-[#01534d] text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 ml-auto">
+      <label class="text-sm font-medium text-gray-600">Range:</label>
+      <div class="flex gap-1">
+        {['7d', '30d', '90d', 'all'].map((r) => (
+          <a
+            href={`?status=${statusFilter}&range=${r}&page=1`}
+            class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              dateRange === r
+                ? 'bg-[#01534d] text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {r === 'all' ? 'All Time' : r}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Leads Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    {error ? (
+      <div class="p-8 text-center text-red-500">
+        <p class="font-semibold">Error loading leads</p>
+        <p class="text-sm mt-1">{error.message}</p>
+      </div>
+    ) : !leads || leads.length === 0 ? (
+      <div class="p-12 text-center text-gray-400">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <p class="font-semibold text-gray-500">No Zakat leads found</p>
+        <p class="text-sm mt-1">Leads will appear here when users calculate their Zakat.</p>
+      </div>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="text-left px-4 py-3 font-semibold text-gray-600">Name</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600">Phone</th>
+              <th class="text-right px-4 py-3 font-semibold text-gray-600">Zakat Due</th>
+              <th class="text-right px-4 py-3 font-semibold text-gray-600">Assets</th>
+              <th class="text-center px-4 py-3 font-semibold text-gray-600">Nisab</th>
+              <th class="text-center px-4 py-3 font-semibold text-gray-600">Drip</th>
+              <th class="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+              <th class="text-left px-4 py-3 font-semibold text-gray-600">Date</th>
+              <th class="text-center px-4 py-3 font-semibold text-gray-600">Details</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {leads.map((lead: any) => (
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3">
+                  <span class="font-medium text-gray-800">
+                    {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || '-'}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <a href={`mailto:${lead.email}`} class="text-[#01534d] hover:underline font-medium">{lead.email}</a>
+                </td>
+                <td class="px-4 py-3 text-gray-600">{lead.phone || '-'}</td>
+                <td class="px-4 py-3 text-right">
+                  <span class="font-bold text-[#d97706]">{formatAmountFull(lead.zakat_amount)}</span>
+                </td>
+                <td class="px-4 py-3 text-right text-gray-600">{formatAmount(lead.total_assets)}</td>
+                <td class="px-4 py-3 text-center">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                    {(lead.nisab_type || 'silver').charAt(0).toUpperCase() + (lead.nisab_type || 'silver').slice(1)}
+                  </span>
+                </td>
+                <td class={`px-4 py-3 text-center text-xs font-semibold ${getDripColor(lead.drip_step_last_sent)}`}>
+                  {getDripLabel(lead.drip_step_last_sent)}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusBadge(lead.status)}`}>
+                    {lead.status}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">{formatDateShort(lead.created_at)}</td>
+                <td class="px-4 py-3 text-center">
+                  <button
+                    type="button"
+                    class="lead-detail-btn text-[#01534d] hover:text-[#d97706] transition p-1"
+                    data-lead={JSON.stringify({
+                      name: [lead.first_name, lead.last_name].filter(Boolean).join(' ') || '-',
+                      email: lead.email,
+                      phone: lead.phone || '-',
+                      zakatAmount: formatAmountFull(lead.zakat_amount),
+                      totalAssets: formatAmountFull(lead.total_assets),
+                      totalLiabilities: formatAmountFull(lead.total_liabilities),
+                      netWealth: formatAmountFull(lead.net_wealth),
+                      nisabType: lead.nisab_type || 'silver',
+                      nisabValue: formatAmountFull(lead.nisab_value),
+                      assetsBreakdown: lead.assets_breakdown || [],
+                      liabilitiesBreakdown: lead.liabilities_breakdown || [],
+                      dripStep: lead.drip_step_last_sent || 0,
+                      lastDrip: formatDate(lead.drip_last_sent_at),
+                      status: lead.status,
+                      payUrl: lead.pay_url || '',
+                      createdAt: formatDate(lead.created_at),
+                      unsubscribedAt: lead.unsubscribed_at ? formatDate(lead.unsubscribed_at) : null,
+                      convertedAt: lead.converted_at ? formatDate(lead.converted_at) : null,
+                    })}
+                    aria-label="View details"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <!-- Pagination -->
+    {showPagination && (
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+        <p class="text-sm text-gray-500">
+          Showing {((page - 1) * perPage) + 1}-{Math.min(page * perPage, count || 0)} of {count} leads
+        </p>
+        <div class="flex gap-1">
+          {showPrevPage && (
+            <a href={`?status=${statusFilter}&range=${dateRange}&page=${page - 1}`} class="px-3 py-1.5 rounded-lg text-sm bg-gray-100 text-gray-600 hover:bg-gray-200">&laquo; Prev</a>
+          )}
+          {paginationPages.map((p) => (
+            <a
+              href={`?status=${statusFilter}&range=${dateRange}&page=${p}`}
+              class={`px-3 py-1.5 rounded-lg text-sm font-medium ${p === page ? 'bg-[#01534d] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {p}
+            </a>
+          ))}
+          {showNextPage && (
+            <a href={`?status=${statusFilter}&range=${dateRange}&page=${page + 1}`} class="px-3 py-1.5 rounded-lg text-sm bg-gray-100 text-gray-600 hover:bg-gray-200">Next &raquo;</a>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="lead-detail-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" id="lead-modal-overlay"></div>
+    <div class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl overflow-y-auto">
+      <!-- Header -->
+      <div class="sticky top-0 bg-gradient-to-r from-[#01534d] to-[#017a6e] px-6 py-4 flex items-center justify-between z-10">
+        <h3 class="text-white font-bold text-lg" id="modal-lead-name">Lead Details</h3>
+        <button id="close-lead-modal" class="text-white/80 hover:text-white p-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <!-- Contact Info -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Contact Information</h4>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div class="flex justify-between"><span class="text-gray-500">Email</span><span id="modal-email" class="font-medium text-[#01534d]"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Phone</span><span id="modal-phone" class="font-medium"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Submitted</span><span id="modal-date" class="text-sm"></span></div>
+          </div>
+        </div>
+
+        <!-- Zakat Calculation -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Zakat Calculation</h4>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center mb-3">
+            <p class="text-sm text-amber-700 font-medium">Zakat Due</p>
+            <p id="modal-zakat" class="text-3xl font-bold text-[#d97706]"></p>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div class="flex justify-between"><span class="text-gray-500">Total Assets</span><span id="modal-assets" class="font-medium text-green-700"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Total Liabilities</span><span id="modal-liabilities" class="font-medium text-red-600"></span></div>
+            <div class="flex justify-between border-t pt-2"><span class="text-gray-500 font-semibold">Net Wealth</span><span id="modal-net-wealth" class="font-bold"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Nisab Type</span><span id="modal-nisab-type" class="font-medium"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Nisab Threshold</span><span id="modal-nisab-value" class="font-medium"></span></div>
+          </div>
+        </div>
+
+        <!-- Assets Breakdown -->
+        <div id="modal-assets-section">
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Assets Breakdown</h4>
+          <div id="modal-assets-list" class="bg-gray-50 rounded-lg p-4 space-y-1.5"></div>
+        </div>
+
+        <!-- Liabilities Breakdown -->
+        <div id="modal-liabilities-section">
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Liabilities Breakdown</h4>
+          <div id="modal-liabilities-list" class="bg-gray-50 rounded-lg p-4 space-y-1.5"></div>
+        </div>
+
+        <!-- Drip Status -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Email Drip Status</h4>
+          <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div class="flex justify-between"><span class="text-gray-500">Status</span><span id="modal-status" class="font-semibold"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Drip Step</span><span id="modal-drip-step" class="font-medium"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500">Last Email Sent</span><span id="modal-last-drip" class="text-sm"></span></div>
+            <div id="modal-unsub-row" class="flex justify-between hidden"><span class="text-gray-500">Unsubscribed</span><span id="modal-unsub-date" class="text-sm text-red-600"></span></div>
+            <div id="modal-converted-row" class="flex justify-between hidden"><span class="text-gray-500">Converted</span><span id="modal-converted-date" class="text-sm text-green-600"></span></div>
+          </div>
+        </div>
+
+        <!-- Pay URL -->
+        <div id="modal-pay-section" class="hidden">
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Payment Link</h4>
+          <a id="modal-pay-url" href="#" target="_blank" class="block text-center bg-[#d97706] text-white font-bold py-3 rounded-lg hover:bg-[#b45309] transition">
+            Open Payment Link
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Detail modal
+    document.querySelectorAll('.lead-detail-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var data = JSON.parse(this.dataset.lead);
+        var modal = document.getElementById('lead-detail-modal');
+
+        document.getElementById('modal-lead-name').textContent = data.name;
+        document.getElementById('modal-email').textContent = data.email;
+        document.getElementById('modal-phone').textContent = data.phone;
+        document.getElementById('modal-date').textContent = data.createdAt;
+        document.getElementById('modal-zakat').textContent = data.zakatAmount;
+        document.getElementById('modal-assets').textContent = data.totalAssets;
+        document.getElementById('modal-liabilities').textContent = data.totalLiabilities;
+        document.getElementById('modal-net-wealth').textContent = data.netWealth;
+        document.getElementById('modal-nisab-type').textContent = data.nisabType.charAt(0).toUpperCase() + data.nisabType.slice(1);
+        document.getElementById('modal-nisab-value').textContent = data.nisabValue;
+
+        // Status badge
+        var statusEl = document.getElementById('modal-status');
+        statusEl.textContent = data.status;
+        statusEl.className = 'font-semibold px-2 py-0.5 rounded-full text-xs ' +
+          (data.status === 'active' ? 'bg-green-100 text-green-800' :
+           data.status === 'converted' ? 'bg-blue-100 text-blue-800' :
+           data.status === 'unsubscribed' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600');
+
+        // Drip step
+        var steps = ['Pending', 'Email 1 of 4', 'Email 2 of 4', 'Email 3 of 4', 'All 4 of 4'];
+        document.getElementById('modal-drip-step').textContent = steps[data.dripStep] || steps[0];
+        document.getElementById('modal-last-drip').textContent = data.lastDrip;
+
+        // Unsub/Converted dates
+        var unsubRow = document.getElementById('modal-unsub-row');
+        if (data.unsubscribedAt) { unsubRow.classList.remove('hidden'); document.getElementById('modal-unsub-date').textContent = data.unsubscribedAt; }
+        else { unsubRow.classList.add('hidden'); }
+
+        var convertedRow = document.getElementById('modal-converted-row');
+        if (data.convertedAt) { convertedRow.classList.remove('hidden'); document.getElementById('modal-converted-date').textContent = data.convertedAt; }
+        else { convertedRow.classList.add('hidden'); }
+
+        // Assets breakdown
+        var assetsList = document.getElementById('modal-assets-list');
+        var assetsSection = document.getElementById('modal-assets-section');
+        if (data.assetsBreakdown && data.assetsBreakdown.length > 0) {
+          assetsSection.classList.remove('hidden');
+          assetsList.innerHTML = data.assetsBreakdown.map(function(a) {
+            var amt = parseFloat(a.amount || 0);
+            return '<div class="flex justify-between text-sm"><span class="text-gray-600">' + (a.label || a.category || 'Item') + '</span><span class="font-medium text-gray-800">$' + amt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span></div>';
+          }).join('');
+        } else {
+          assetsSection.classList.add('hidden');
+        }
+
+        // Liabilities breakdown
+        var liabList = document.getElementById('modal-liabilities-list');
+        var liabSection = document.getElementById('modal-liabilities-section');
+        if (data.liabilitiesBreakdown && data.liabilitiesBreakdown.length > 0) {
+          liabSection.classList.remove('hidden');
+          liabList.innerHTML = data.liabilitiesBreakdown.map(function(l) {
+            var amt = parseFloat(l.amount || 0);
+            return '<div class="flex justify-between text-sm"><span class="text-gray-600">' + (l.label || l.category || 'Item') + '</span><span class="font-medium text-red-600">$' + amt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span></div>';
+          }).join('');
+        } else {
+          liabSection.classList.add('hidden');
+        }
+
+        // Pay URL
+        var paySection = document.getElementById('modal-pay-section');
+        if (data.payUrl) {
+          paySection.classList.remove('hidden');
+          document.getElementById('modal-pay-url').href = data.payUrl;
+        } else {
+          paySection.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    // Close modal
+    document.getElementById('close-lead-modal')?.addEventListener('click', closeLeadModal);
+    document.getElementById('lead-modal-overlay')?.addEventListener('click', closeLeadModal);
+
+    function closeLeadModal() {
+      document.getElementById('lead-detail-modal')?.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  </script>
+</AdminLayout>

@@ -163,7 +163,7 @@ const nisabSilverGrams = 595;
                 </svg>
                 Assets
               </h2>
-              <span class="text-lg font-bold" id="total-assets-header">$0.00</span>
+              <span class="text-lg font-bold" id="total-assets-header">$0</span>
             </div>
 
             <div class="p-4 space-y-5">
@@ -391,7 +391,7 @@ const nisabSilverGrams = 595;
                 </svg>
                 Liabilities (Deductions)
               </h2>
-              <span class="text-lg font-bold" id="total-liabilities-header">-$0.00</span>
+              <span class="text-lg font-bold" id="total-liabilities-header">-$0</span>
             </div>
 
             <div class="p-4">
@@ -638,6 +638,11 @@ const nisabSilverGrams = 595;
       return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
+    // Format currency without decimals (for section headers)
+    const formatCurrencyShort = (amount: number) => {
+      return '$' + Math.round(amount).toLocaleString('en-US');
+    };
+
     // Fetch live metal prices
     async function fetchMetalPrices() {
       try {
@@ -739,9 +744,9 @@ const nisabSilverGrams = 595;
 
       // Update displays
       document.getElementById('total-assets')!.textContent = formatCurrency(totalAssets);
-      document.getElementById('total-assets-header')!.textContent = formatCurrency(totalAssets);
+      document.getElementById('total-assets-header')!.textContent = formatCurrencyShort(totalAssets);
       document.getElementById('total-liabilities')!.textContent = `-${formatCurrency(totalLiabilities)}`;
-      document.getElementById('total-liabilities-header')!.textContent = `-${formatCurrency(totalLiabilities)}`;
+      document.getElementById('total-liabilities-header')!.textContent = `-${formatCurrencyShort(totalLiabilities)}`;
       document.getElementById('net-wealth')!.textContent = formatCurrency(netWealth);
       document.getElementById('nisab-threshold')!.textContent = `${formatCurrency(selectedNisab)} (silver)`;
       document.getElementById('zakat-status')!.textContent = zakatStatus;
@@ -801,7 +806,7 @@ const nisabSilverGrams = 595;
             <div class="row"><span class="label">Nisab Threshold</span><span class="value">${nisabThreshold}</span></div>
             <p class="status">${zakatStatus}</p>
             <p class="total">${zakatAmount}</p>
-            <p class="footer">Calculated using Qurbani USA Zakat Calculator<br>www.qurbani.com/zakat-calculator</p>
+            <p class="footer">Calculated using Qurbani USA Zakat Calculator<br>www.qurbani.com/zakat/calculator</p>
           </body>
         </html>
       `;
@@ -935,7 +940,7 @@ const nisabSilverGrams = 595;
           quantity: 1,
           type: 'single',
           campaignSlug: 'zakat',
-          image: null,
+          image: '/images/qurbani-foundation-food-distribution.png',
         });
       } else {
         // Fallback: redirect to donate page with amount

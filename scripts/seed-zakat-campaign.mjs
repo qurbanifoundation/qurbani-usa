@@ -167,7 +167,7 @@ async function seedZakatCampaign() {
       heroBadges: ['100% Zakat Policy', 'Shariah Compliant', 'Tax Deductible'],
       heroCta: {
         text: 'Calculate My Zakat',
-        link: '/zakat-calculator',
+        link: '/zakat/calculator',
       },
       imageOverlay: 40,
       quickLinksHeading: 'Learn More About Zakat',

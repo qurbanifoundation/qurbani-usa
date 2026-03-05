@@ -250,6 +250,12 @@ export async function trackZakatCalculation(data: {
   lastName?: string;
   zakatAmount: number;
   totalAssets: number;
+  totalLiabilities?: number;
+  netWealth?: number;
+  nisabType?: string;
+  nisabValue?: number;
+  assetsBreakdown?: Array<{ label: string; amount: number }>;
+  liabilitiesBreakdown?: Array<{ label: string; amount: number }>;
   wantsReminder?: boolean;
   phone?: string;
 }) {
@@ -263,11 +269,39 @@ export async function trackZakatCalculation(data: {
   if (data.zakatAmount >= 5000) leadScore += 15;
   if (data.wantsReminder) leadScore += 10;
 
+  // Build detailed calculation summary for the custom field
+  const fmtUsd = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  let calcSummary = `Zakat Due: ${fmtUsd(data.zakatAmount)}\n`;
+  calcSummary += `Total Assets: ${fmtUsd(data.totalAssets)}\n`;
+  calcSummary += `Total Liabilities: ${fmtUsd(data.totalLiabilities || 0)}\n`;
+  calcSummary += `Net Wealth: ${fmtUsd(data.netWealth || 0)}\n`;
+  calcSummary += `Nisab: ${(data.nisabType || 'silver').charAt(0).toUpperCase() + (data.nisabType || 'silver').slice(1)} (${fmtUsd(data.nisabValue || 0)})\n`;
+  calcSummary += `Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}\n`;
+
+  if (data.assetsBreakdown && data.assetsBreakdown.length > 0) {
+    calcSummary += `\nAssets:\n`;
+    data.assetsBreakdown.forEach(item => {
+      calcSummary += `  ${item.label}: ${fmtUsd(item.amount)}\n`;
+    });
+  }
+  if (data.liabilitiesBreakdown && data.liabilitiesBreakdown.length > 0) {
+    calcSummary += `\nLiabilities:\n`;
+    data.liabilitiesBreakdown.forEach(item => {
+      calcSummary += `  ${item.label}: ${fmtUsd(item.amount)}\n`;
+    });
+  }
+
+  // Round monetary values to 2 decimal places before sending to GHL
+  // (GHL workflows use these raw values in email templates)
+  const roundedZakat = Math.round(data.zakatAmount * 100) / 100;
+  const roundedAssets = Math.round(data.totalAssets * 100) / 100;
+
   const customFields = [
-    { key: 'calculated_zakat', field_value: data.zakatAmount.toString() },
-    { key: 'total_zakatable_assets', field_value: data.totalAssets.toString() },
+    { key: 'calculated_zakat', field_value: roundedZakat.toFixed(2) },
+    { key: 'total_zakatable_assets', field_value: roundedAssets.toFixed(2) },
     { key: 'zakat_calculation_date', field_value: new Date().toISOString().split('T')[0] },
-    { key: 'zakat_remaining', field_value: data.zakatAmount.toString() },
+    { key: 'zakat_remaining', field_value: roundedZakat.toFixed(2) },
+    { key: 'zakat_calculation', field_value: calcSummary },
     { key: 'lead_score', field_value: leadScore.toString() },
     { key: 'lead_stage', field_value: 'qualified' },
     { key: 'lead_source', field_value: 'Zakat Calculator' },
@@ -309,12 +343,81 @@ export async function trackZakatCalculation(data: {
       return { success: false, error: 'Contact saved but no ID returned', leadScore };
     }
 
+    // Build detailed note
+    let noteBody = `📊 ZAKAT CALCULATED\n\n`;
+    noteBody += `Zakat Due: ${fmtUsd(data.zakatAmount)}\n`;
+    noteBody += `Total Assets: ${fmtUsd(data.totalAssets)}\n`;
+    noteBody += `Total Liabilities: ${fmtUsd(data.totalLiabilities || 0)}\n`;
+    noteBody += `Net Wealth: ${fmtUsd(data.netWealth || 0)}\n`;
+    noteBody += `Nisab Standard: ${(data.nisabType || 'Silver').charAt(0).toUpperCase() + (data.nisabType || 'silver').slice(1)} (${fmtUsd(data.nisabValue || 0)})\n`;
+    noteBody += `Lead Score: ${leadScore}/100\n`;
+
+    if (data.assetsBreakdown && data.assetsBreakdown.length > 0) {
+      noteBody += `\n── Assets ──\n`;
+      data.assetsBreakdown.forEach(item => {
+        noteBody += `• ${item.label}: ${fmtUsd(item.amount)}\n`;
+      });
+    }
+    if (data.liabilitiesBreakdown && data.liabilitiesBreakdown.length > 0) {
+      noteBody += `\n── Liabilities ──\n`;
+      data.liabilitiesBreakdown.forEach(item => {
+        noteBody += `• ${item.label}: ${fmtUsd(item.amount)}\n`;
+      });
+    }
+
+    noteBody += `\n→ High intent lead - follow up!`;
+
     await ghlFetch(`/contacts/${contactId}/notes`, {
       method: 'POST',
-      body: JSON.stringify({
-        body: `📊 ZAKAT CALCULATED\n\nTotal Assets: $${data.totalAssets.toLocaleString()}\nZakat Due: $${data.zakatAmount.toLocaleString()}\nLead Score: ${leadScore}/100\nNisab Alert: ${data.wantsReminder ? 'Yes' : 'No'}\n\n→ High intent lead - follow up!`
-      }),
+      body: JSON.stringify({ body: noteBody }),
     });
+
+    // Create pipeline opportunity in "Zakat Lead" stage
+    try {
+      const pipelineLoaded = await loadPipelineConfig();
+      if (pipelineLoaded && cachedPipelineId) {
+        const zakatStageId = getStageId('zakat lead');
+        if (zakatStageId) {
+          // Check for existing open opportunities to avoid duplicates
+          const existingRes = await ghlFetch(
+            `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${contactId}&status=open`
+          );
+          let hasExisting = false;
+          if (existingRes.ok) {
+            const existingData = await existingRes.json();
+            hasExisting = (existingData.opportunities?.length || 0) > 0;
+          }
+
+          if (!hasExisting) {
+            const oppRes = await ghlFetch('/opportunities/', {
+              method: 'POST',
+              body: JSON.stringify({
+                pipelineId: cachedPipelineId,
+                locationId,
+                name: `Zakat Lead — ${fmtUsd(data.zakatAmount)} (${data.firstName || data.email})`,
+                pipelineStageId: zakatStageId,
+                status: 'open',
+                contactId,
+                monetaryValue: roundedZakat,
+                source: 'Zakat Calculator',
+              }),
+            }, { action: 'zakat_lead_opportunity', email: data.email });
+
+            if (oppRes.ok) {
+              console.log(`GHL Zakat Lead opportunity created for ${data.email} — ${fmtUsd(data.zakatAmount)}`);
+            } else {
+              const errBody = await oppRes.text();
+              console.error('GHL Zakat Lead opportunity failed:', oppRes.status, errBody);
+            }
+          } else {
+            console.log(`GHL Zakat Lead opportunity already exists for ${data.email} — skipping`);
+          }
+        }
+      }
+    } catch (oppErr) {
+      // Don't fail the whole request if pipeline creation fails
+      console.error('GHL Zakat Lead opportunity error (non-fatal):', oppErr);
+    }
 
     return { success: true, contactId, leadScore };
   } catch (error: unknown) {

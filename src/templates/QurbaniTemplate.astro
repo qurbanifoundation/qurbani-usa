@@ -1028,6 +1028,7 @@ const testimonials = [
                   data-country={country.id}
                   data-country-name={country.name}
                   data-flag={country.flag}
+                  data-image={country.image}
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -1047,6 +1048,16 @@ const testimonials = [
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
           </svg>
+        </button>
+      </div>
+
+      <!-- View All Countries (shown only when deep-linked to a specific country) -->
+      <div class="text-center mt-10 hidden" id="view-all-container">
+        <button id="view-all-btn" class="inline-flex items-center gap-2 px-8 py-3 border-2 border-[#01534d] text-[#01534d] rounded-full font-semibold hover:bg-[#01534d] hover:text-white transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          <span>View All Countries</span>
         </button>
       </div>
     </div>
@@ -1383,6 +1394,7 @@ const testimonials = [
             type: 'single',
             campaign: 'qurbani',
             label: `${flag} ${countryName}`,
+            image: btn.dataset.image || '',
             metadata: {
               country: countryName,
               countryCode: btn.dataset.country,
@@ -1443,6 +1455,17 @@ const testimonials = [
       });
     }
 
+    // "View All Countries" button (appears when deep-linked via ?country=)
+    const viewAllBtn = document.getElementById('view-all-btn');
+    if (viewAllBtn) {
+      viewAllBtn.addEventListener('click', () => {
+        // Show all countries
+        const allTab = document.querySelector('[data-category="all"]');
+        if (allTab) allTab.click();
+        viewAllBtn.closest('#view-all-container').classList.add('hidden');
+      });
+    }
+
     // Initially show only first 6 countries in most-needed
     const cards = document.querySelectorAll('.country-card');
     cards.forEach((card, index) => {
@@ -1451,6 +1474,60 @@ const testimonials = [
         card.classList.add('hidden');
       }
     });
+
+    // URL parameter deep-linking: ?country=pakistan or ?country=pakistan,india
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const countryParam = params.get('country');
+      if (!countryParam) return;
+
+      // Support comma-separated countries
+      const targets = countryParam.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+      if (targets.length === 0) return;
+
+      // Find all matching cards
+      const matchedCards = [];
+      document.querySelectorAll('.country-card').forEach(card => {
+        const cardId = (card.dataset.country || '').toLowerCase();
+        const cardName = (card.querySelector('h3')?.textContent || '').toLowerCase().trim();
+        for (const target of targets) {
+          if (cardId === target || cardName === target || cardId.includes(target) || cardName.includes(target)) {
+            matchedCards.push(card);
+            break;
+          }
+        }
+      });
+
+      if (matchedCards.length === 0) return;
+
+      // Hide ALL cards first, then only show matched ones
+      document.querySelectorAll('.country-card').forEach(card => {
+        card.classList.add('hidden');
+      });
+      matchedCards.forEach(card => card.classList.remove('hidden'));
+
+      // Update tabs — deactivate all, activate "All Countries"
+      document.querySelectorAll('.category-tab').forEach(t => {
+        t.classList.remove('active', 'bg-[#01534d]', 'text-white');
+        t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+      });
+      const allTab = document.querySelector('[data-category="all"]');
+      if (allTab) {
+        allTab.classList.add('active', 'bg-[#01534d]', 'text-white');
+        allTab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+      }
+
+      // Hide show-more, show view-all button
+      const showMoreContainer = document.getElementById('show-more-container');
+      if (showMoreContainer) showMoreContainer.classList.add('hidden');
+      const viewAllContainer = document.getElementById('view-all-container');
+      if (viewAllContainer) viewAllContainer.classList.remove('hidden');
+
+      // Scroll to the first matched card
+      setTimeout(() => {
+        matchedCards[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+    })();
   </script>
 
   <style>

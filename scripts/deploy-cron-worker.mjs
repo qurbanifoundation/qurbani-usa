@@ -11,7 +11,9 @@ const CRON_API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 32);
 const workerScript = `
 export default {
   async scheduled(event, env, ctx) {
-    console.log('Fulfillment cron triggered at ' + new Date().toISOString());
+    console.log('Cron triggered at ' + new Date().toISOString());
+
+    // 1. Fulfillment processing
     try {
       const response = await fetch(env.FULFILLMENT_URL, {
         method: 'POST',
@@ -22,21 +24,40 @@ export default {
     } catch (error) {
       console.error('Fulfillment cron error:', error);
     }
+
+    // 2. Zakat drip emails
+    try {
+      const response = await fetch(env.ZAKAT_DRIP_URL, {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + env.CRON_API_KEY },
+      });
+      const result = await response.json();
+      console.log('Zakat drip result:', JSON.stringify(result));
+    } catch (error) {
+      console.error('Zakat drip cron error:', error);
+    }
   },
   async fetch(request, env) {
     if (request.method === 'POST') {
       try {
-        const response = await fetch(env.FULFILLMENT_URL, {
+        const fulfillmentRes = await fetch(env.FULFILLMENT_URL, {
           method: 'POST',
           headers: { 'x-api-key': env.CRON_API_KEY, 'Content-Type': 'application/json' },
         });
-        const result = await response.json();
-        return new Response(JSON.stringify({ triggered: true, result }), { headers: { 'Content-Type': 'application/json' } });
+        const fulfillmentResult = await fulfillmentRes.json();
+
+        const zakatRes = await fetch(env.ZAKAT_DRIP_URL, {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + env.CRON_API_KEY },
+        });
+        const zakatResult = await zakatRes.json();
+
+        return new Response(JSON.stringify({ triggered: true, fulfillment: fulfillmentResult, zakatDrip: zakatResult }), { headers: { 'Content-Type': 'application/json' } });
       } catch (e) {
         return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
     }
-    return new Response(JSON.stringify({ name: 'Qurbani Fulfillment Cron', schedule: 'Every 15 min', status: 'active' }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ name: 'Qurbani Cron Worker', schedule: 'Every 15 min', jobs: ['fulfillment', 'zakat-drip'], status: 'active' }), { headers: { 'Content-Type': 'application/json' } });
   }
 };
 `;
@@ -52,6 +73,7 @@ async function deploy() {
     main_module: 'worker.js',
     bindings: [
       { type: 'plain_text', name: 'FULFILLMENT_URL', text: 'https://www.qurbani.com/api/fulfillment/process' },
+      { type: 'plain_text', name: 'ZAKAT_DRIP_URL', text: 'https://www.qurbani.com/api/cron/send-zakat-drip-emails' },
       { type: 'secret_text', name: 'CRON_API_KEY', text: CRON_API_KEY },
     ],
     compatibility_date: '2024-01-01',
