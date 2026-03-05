@@ -108,6 +108,21 @@ const nisabSilverGrams = 595;
       .mobile-single-col {
         grid-template-columns: 1fr !important;
       }
+      /* Prevent iOS auto-zoom on input focus (requires >= 16px) */
+      #email-results-form input[type="email"],
+      #email-results-form input[type="text"],
+      #email-results-form input[type="tel"] {
+        font-size: 16px;
+      }
+      /* Fix tooltip overflow on mobile — anchor to left edge */
+      .info-tooltip {
+        left: 0 !important;
+        transform: none !important;
+      }
+      .info-tooltip::after {
+        left: 8px !important;
+        transform: none !important;
+      }
     }
   </style>
 
@@ -480,7 +495,7 @@ const nisabSilverGrams = 595;
                     Email My Results
                   </button>
 
-                  <form id="email-results-form" class="hidden mt-3 space-y-3">
+                  <form id="email-results-form" class="hidden mt-3 space-y-3 overflow-hidden">
                     <input
                       type="email"
                       id="zakat-email"
@@ -493,13 +508,13 @@ const nisabSilverGrams = 595;
                         type="text"
                         id="zakat-firstname"
                         placeholder="First name"
-                        class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
+                        class="min-w-0 w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
                       />
                       <input
                         type="text"
                         id="zakat-lastname"
                         placeholder="Last name"
-                        class="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
+                        class="min-w-0 w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 text-sm focus:outline-none focus:border-yellow-400"
                       />
                     </div>
                     <input
