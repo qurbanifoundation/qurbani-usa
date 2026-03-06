@@ -293,16 +293,8 @@ const faqs = [
   <main class="bg-white">
     <!-- Hero Section - Emotional & Compelling -->
     <section class="relative min-h-[90vh] flex items-center overflow-hidden">
-      <!-- Background with Parallax Effect -->
-      <div class="absolute inset-0">
-        <img
-          src="/images/qurbani-foundation-orphan-sponsorship.jpg"
-          alt="Qurbani Foundation helping orphan children with school supplies"
-          class="w-full h-full object-cover"
-          loading="eager"
-        />
-        <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/80 to-black/60"></div>
-      </div>
+      <!-- Background -->
+      <div class="absolute inset-0 bg-gradient-to-r from-[#1a1a2e] via-[#16213e] to-[#0f3460]"></div>
 
       <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -317,11 +309,7 @@ const faqs = [
                 </svg>
                 153 Million Orphans Need Help
               </div>
-              <!-- Live Indicator -->
-              <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full">
-                <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span><strong id="live-sponsors">247</strong> sponsoring now</span>
-              </div>
+              <!-- Live Indicator removed -->
             </div>
 
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
@@ -1263,17 +1251,6 @@ const faqs = [
 
     sponsorBtn?.addEventListener('click', handleSponsorClick);
     mobileSponsorBtn?.addEventListener('click', handleSponsorClick);
-
-    // Live sponsors counter animation
-    const liveSponsors = document.getElementById('live-sponsors');
-    if (liveSponsors) {
-      setInterval(() => {
-        const current = parseInt(liveSponsors.textContent || '247');
-        const change = Math.random() > 0.5 ? 1 : -1;
-        const newVal = Math.max(200, Math.min(300, current + change));
-        liveSponsors.textContent = newVal.toString();
-      }, 5000);
-    }
 
     // ============ RECENT SPONSORS ============
     const recentSponsorsContainer = document.getElementById('recent-sponsors');
