@@ -83,7 +83,7 @@ const blogArticles = [
     title: 'Clean Water Initiative Transforms Communities in South Asia',
     template: 'blog',
     status: 'published',
-    featured_image: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=800&q=80',
+    featured_image: 'https://images.unsplash.com/photo-1541544181051-e46607bc22a4?w=800&q=80',
     meta_title: 'Clean Water Initiative in South Asia | Qurbani Foundation',
     meta_description: 'Discover how Qurbani Foundation\'s clean water projects are providing sustainable access to safe drinking water for thousands of families in South Asia.',
     content: {
@@ -93,7 +93,7 @@ const blogArticles = [
           type: 'hero',
           title: 'Clean Water Initiative Transforms Communities in South Asia',
           subtitle: 'How sustainable water projects are changing lives and building healthier communities across Bangladesh, Pakistan, and India.',
-          backgroundImage: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=1200&q=80'
+          backgroundImage: 'https://images.unsplash.com/photo-1541544181051-e46607bc22a4?w=1200&q=80'
         },
         {
           id: 'content-1',
@@ -113,7 +113,7 @@ const blogArticles = [
         {
           id: 'image-1',
           type: 'image',
-          imageUrl: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=1200&q=80',
+          imageUrl: 'https://images.unsplash.com/photo-1541544181051-e46607bc22a4?w=1200&q=80',
           caption: 'A newly installed clean water well serving a community of 300 families in rural Bangladesh.',
           alt: 'Clean water well installation in South Asia'
         },
