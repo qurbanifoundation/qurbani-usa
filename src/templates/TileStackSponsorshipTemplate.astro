@@ -982,11 +982,11 @@ const benefits = [
           // Desktop styles reset
           b.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]');
           b.classList.add('border-gray-200');
-          // Mobile styles reset
-          b.classList.remove('border-l-[#d97706]');
-          b.classList.add('border-l-transparent');
+          // Mobile styles reset (only apply to mobile buttons that have a radio indicator)
           const radio = b.querySelector('.country-radio');
           if (radio) {
+            b.classList.remove('border-l-[#d97706]');
+            b.classList.add('border-l-transparent');
             radio.innerHTML = '';
             radio.classList.remove('border-[#d97706]');
             radio.classList.add('border-gray-300');
@@ -996,11 +996,11 @@ const benefits = [
         // Highlight selected — desktop styles
         btn.classList.remove('border-gray-200');
         btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]');
-        // Highlight selected — mobile styles
-        btn.classList.remove('border-l-transparent');
-        btn.classList.add('border-l-[#d97706]');
+        // Highlight selected — mobile styles (only if this is a mobile button)
         const radio = btn.querySelector('.country-radio');
         if (radio) {
+          btn.classList.remove('border-l-transparent');
+          btn.classList.add('border-l-[#d97706]');
           radio.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></div>';
           radio.classList.remove('border-gray-300');
           radio.classList.add('border-[#d97706]');
