@@ -1243,10 +1243,28 @@ const faqs = [
       }
       const baseAmount = isMonthly ? selectedMonthly : selectedYearly;
       const totalAmount = baseAmount * quantity;
-      const frequency = isMonthly ? 'monthly' : 'single';
-      const url = `/donate?cause=orphan-sponsorship&amount=${totalAmount}&frequency=${frequency}&country=${selectedCountry}&quantity=${quantity}`;
-      console.log('Redirecting to:', url);
-      window.location.href = url;
+      const itemType = isMonthly ? 'monthly' : 'single';
+      const periodLabel = isMonthly ? '/mo' : '';
+      const childLabel = quantity === 1 ? '1 Child' : `${quantity} Children`;
+
+      // Add directly to cart with correct type
+      if (window.addToCart) {
+        window.addToCart({
+          id: `orphan-sponsorship-${selectedCountry}-${itemType}`,
+          name: `Orphan Sponsorship - ${selectedCountry} (${childLabel})`,
+          amount: totalAmount,
+          type: itemType,
+          recurringInterval: isMonthly ? 'monthly' : 'single',
+          quantity: 1,
+          campaign: 'Orphan Sponsorship',
+          campaignSlug: 'sponsor-an-orphan',
+          image: '/images/qurbani-foundation-orphan-sponsorship.jpg'
+        });
+        // Open the cart
+        if (window.donationCart?.openCart) {
+          window.donationCart.openCart();
+        }
+      }
     };
 
     sponsorBtn?.addEventListener('click', handleSponsorClick);
