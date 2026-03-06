@@ -1,0 +1,320 @@
+---
+/**
+ * Blog Article Page
+ * Renders articles from the `pages` table where template = 'blog'
+ */
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/media', 302);
+}
+
+// Fetch article by slug
+let page: any = null;
+try {
+  // Try with /blog/ prefix first (how seeds store it)
+  const { data } = await supabaseAdmin
+    .from('pages')
+    .select('*')
+    .eq('slug', `/blog/${slug}`)
+    .eq('status', 'published')
+    .single();
+  page = data;
+} catch (e) {
+  // Fallback: try just the slug
+  try {
+    const { data } = await supabaseAdmin
+      .from('pages')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single();
+    page = data;
+  } catch (e2) {
+    // Not found
+  }
+}
+
+if (!page) {
+  return Astro.redirect('/media', 302);
+}
+
+// Parse content JSON
+let sections: any[] = [];
+try {
+  const content = typeof page.content === 'string' ? JSON.parse(page.content) : page.content;
+  sections = content?.sections || [];
+} catch (e) {
+  sections = [];
+}
+
+// Get hero section data
+const heroSection = sections.find((s: any) => s.type === 'hero');
+const heroImage = heroSection?.backgroundImage || page.featured_image || '/images/qurbani-hero.jpg';
+const heroSubtitle = heroSection?.subtitle || page.meta_description || '';
+
+// Format date
+const publishDate = new Date(page.created_at).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+
+// Get recent articles for sidebar (excluding current)
+let recentArticles: any[] = [];
+try {
+  const { data } = await supabaseAdmin
+    .from('pages')
+    .select('id, title, slug, featured_image, created_at')
+    .eq('status', 'published')
+    .eq('template', 'blog')
+    .neq('id', page.id)
+    .order('created_at', { ascending: false })
+    .limit(3);
+  recentArticles = data || [];
+} catch (e) {
+  recentArticles = [];
+}
+---
+
+<Layout
+  title={page.meta_title || `${page.title} | Qurbani Foundation`}
+  description={page.meta_description || ''}
+>
+  <Navbar />
+
+  <main>
+    <!-- Hero Banner -->
+    <section class="relative min-h-[400px] md:min-h-[500px] flex items-end overflow-hidden">
+      <div class="absolute inset-0">
+        <img
+          src={heroImage}
+          alt={page.title}
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-40 w-full">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-white/60 mb-4" style="font-family: 'Lato', sans-serif;">
+          <a href="/" class="hover:text-white transition">Home</a>
+          <span>/</span>
+          <a href="/media" class="hover:text-white transition">Media</a>
+          <span>/</span>
+          <span class="text-white/80 truncate max-w-[200px]">{page.title}</span>
+        </nav>
+
+        <!-- Category badge -->
+        <span class="inline-block bg-[#D97706] text-white text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wide" style="font-family: 'Signika', sans-serif;">
+          Qurbani Foundation
+        </span>
+
+        <!-- Title -->
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4" style="font-family: 'Signika', sans-serif;">
+          {page.title}
+        </h1>
+
+        <!-- Subtitle -->
+        {heroSubtitle && (
+          <p class="text-lg text-white/80 max-w-3xl leading-relaxed mb-4" style="font-family: 'Lato', sans-serif;">
+            {heroSubtitle}
+          </p>
+        )}
+
+        <!-- Meta -->
+        <div class="flex items-center gap-4 text-sm text-white/60" style="font-family: 'Lato', sans-serif;">
+          <time>{publishDate}</time>
+          <span class="w-1 h-1 rounded-full bg-white/40"></span>
+          <span>Qurbani Foundation</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Article Content -->
+    <section class="py-12 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-3 gap-12">
+
+          <!-- Main Content -->
+          <article class="lg:col-span-2">
+            {sections.map((section: any) => {
+              if (section.type === 'content') {
+                return (
+                  <div
+                    class="prose prose-lg max-w-none mb-8
+                      prose-headings:font-bold prose-headings:text-[#333]
+                      prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
+                      prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+                      prose-p:text-gray-700 prose-p:leading-relaxed
+                      prose-li:text-gray-700
+                      prose-strong:text-[#024139]
+                      prose-a:text-[#D97706] prose-a:no-underline hover:prose-a:underline"
+                    style="font-family: 'Lato', sans-serif;"
+                    set:html={section.content}
+                  />
+                );
+              }
+
+              if (section.type === 'image') {
+                return (
+                  <figure class="my-10">
+                    <img
+                      src={section.imageUrl}
+                      alt={section.alt || ''}
+                      class="w-full rounded-xl shadow-lg"
+                      loading="lazy"
+                    />
+                    {section.caption && (
+                      <figcaption class="text-center text-sm text-gray-500 mt-3 italic" style="font-family: 'Lato', sans-serif;">
+                        {section.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              }
+
+              if (section.type === 'cta') {
+                return (
+                  <div class="bg-gradient-to-br from-[#024139] to-[#01302b] rounded-xl p-8 my-10 text-center">
+                    <h3 class="text-2xl font-bold text-white mb-3" style="font-family: 'Signika', sans-serif;">
+                      {section.title}
+                    </h3>
+                    <p class="text-white/80 mb-6 max-w-lg mx-auto" style="font-family: 'Lato', sans-serif;">
+                      {section.description}
+                    </p>
+                    <a
+                      href={section.buttonLink}
+                      class="inline-block bg-[#D97706] hover:bg-[#c46a14] text-white font-bold px-8 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl"
+                      style="font-family: 'Signika', sans-serif;"
+                    >
+                      {section.buttonText}
+                    </a>
+                  </div>
+                );
+              }
+
+              // Skip hero sections (already rendered in banner)
+              return null;
+            })}
+
+            <!-- Share section -->
+            <div class="border-t border-gray-200 pt-8 mt-12">
+              <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4" style="font-family: 'Signika', sans-serif;">Share This Article</p>
+              <div class="flex items-center gap-3">
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${Astro.url}`} target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-[#1877F2] hover:text-white text-gray-500 flex items-center justify-center transition">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+                </a>
+                <a href={`https://twitter.com/intent/tweet?url=${Astro.url}&text=${encodeURIComponent(page.title)}`} target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-black hover:text-white text-gray-500 flex items-center justify-center transition">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                </a>
+                <a href={`https://wa.me/?text=${encodeURIComponent(page.title + ' ' + Astro.url)}`} target="_blank" rel="noopener" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-[#25D366] hover:text-white text-gray-500 flex items-center justify-center transition">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg>
+                </a>
+                <a href={`mailto:?subject=${encodeURIComponent(page.title)}&body=${encodeURIComponent('Read this article from Qurbani Foundation: ' + Astro.url)}`} class="w-10 h-10 rounded-full bg-gray-100 hover:bg-[#D97706] hover:text-white text-gray-500 flex items-center justify-center transition">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Sidebar -->
+          <aside class="lg:col-span-1">
+            <div class="lg:sticky lg:top-24 space-y-6">
+
+              <!-- Donate CTA Card -->
+              <div class="bg-gradient-to-br from-[#024139] to-[#01302b] rounded-xl p-6 text-white">
+                <h3 class="text-lg font-bold mb-2" style="font-family: 'Signika', sans-serif;">Support Our Mission</h3>
+                <p class="text-white/70 text-sm mb-4" style="font-family: 'Lato', sans-serif;">
+                  100% of your donation goes directly to families in need. Make a difference today.
+                </p>
+                <a
+                  href="/appeals"
+                  class="block w-full bg-[#D97706] hover:bg-[#c46a14] text-white font-bold py-3 rounded-lg text-center text-sm transition"
+                  style="font-family: 'Signika', sans-serif;"
+                >
+                  Donate Now
+                </a>
+              </div>
+
+              <!-- Recent Articles -->
+              {recentArticles.length > 0 && (
+                <div class="bg-gray-50 rounded-xl p-6">
+                  <h3 class="text-lg font-bold text-[#333] mb-4" style="font-family: 'Signika', sans-serif;">Recent Articles</h3>
+                  <div class="space-y-4">
+                    {recentArticles.map((article: any) => {
+                      const articleSlug = article.slug.startsWith('/blog/')
+                        ? article.slug
+                        : `/blog/${article.slug.replace(/^\//, '')}`;
+                      const articleDate = new Date(article.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      });
+                      return (
+                        <a href={articleSlug} class="flex gap-3 group">
+                          {article.featured_image && (
+                            <div class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-200">
+                              <img
+                                src={article.featured_image}
+                                alt={article.title}
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-semibold text-gray-800 group-hover:text-[#D97706] transition line-clamp-2" style="font-family: 'Signika', sans-serif;">
+                              {article.title}
+                            </h4>
+                            <p class="text-xs text-gray-400 mt-1" style="font-family: 'Lato', sans-serif;">
+                              {articleDate}
+                            </p>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <!-- Contact Card -->
+              <div class="bg-white border border-gray-200 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">Media Inquiries</h3>
+                <p class="text-sm text-gray-500 mb-3" style="font-family: 'Lato', sans-serif;">
+                  For press and media requests, contact us:
+                </p>
+                <a href="mailto:info@qurbani.com" class="text-sm text-[#D97706] font-medium hover:underline">
+                  info@qurbani.com
+                </a>
+                <p class="text-sm text-gray-500 mt-1" style="font-family: 'Lato', sans-serif;">
+                  1-800-900-0027
+                </p>
+              </div>
+
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Back to Media -->
+    <section class="py-8 bg-gray-50 border-t border-gray-200">
+      <div class="max-w-5xl mx-auto px-4 text-center">
+        <a href="/media" class="inline-flex items-center gap-2 text-[#024139] hover:text-[#D97706] font-medium transition" style="font-family: 'Signika', sans-serif;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          Back to Media Center
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
