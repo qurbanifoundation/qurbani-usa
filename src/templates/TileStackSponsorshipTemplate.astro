@@ -106,7 +106,7 @@ const benefits = [
       <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-6">
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
-            How Many Lives Will <span class="text-[#fdc448]">You Change?</span>
+            How Many Lives Will <span class="text-[#ef7c01]">You Change?</span>
           </h1>
 
           <p class="text-xl text-white/90 max-w-2xl mx-auto mb-2">
@@ -141,7 +141,7 @@ const benefits = [
               <div class="md:hidden">
                 <div class="px-5 pt-5 pb-3">
                   <div class="flex items-center justify-between">
-                    <h2 class="text-base font-bold text-gray-900" style="font-family: 'Signika', sans-serif;">Where would you like to help?</h2>
+                    <h2 class="text-base font-bold text-gray-900" style="font-family: 'Signika', sans-serif;">Where would you like to Sponsor?</h2>
                     <span class="text-[10px] text-gray-400 uppercase tracking-wider">Step 1</span>
                   </div>
                 </div>
@@ -346,7 +346,31 @@ const benefits = [
                   <span class="text-sm text-gray-600">I want to sponsor a different number of children</span>
                 </label>
                 <div id="custom-qty-input" class="mt-4 hidden">
-                  <div class="flex items-center gap-4">
+                  <!-- Mobile: stacked layout -->
+                  <div class="md:hidden space-y-3">
+                    <div class="flex items-center justify-center">
+                      <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
+                        <button type="button" class="custom-decrease-btn px-5 py-3.5 bg-gray-50 active:bg-gray-200 transition">
+                          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>
+                          </svg>
+                        </button>
+                        <input type="number" class="custom-qty-field w-20 py-3.5 text-center text-2xl font-bold text-gray-800 border-0 focus:ring-0" value="4" min="1" max="100" inputmode="numeric" />
+                        <button type="button" class="custom-increase-btn px-5 py-3.5 bg-gray-50 active:bg-gray-200 transition">
+                          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="text-center bg-[#d97706]/5 rounded-xl py-3 px-4 border border-[#d97706]/10">
+                      <span class="text-gray-500 text-sm">children × $45 = </span>
+                      <span class="custom-total-display text-2xl font-bold text-[#d97706]">$180</span>
+                      <span class="text-gray-400 text-sm">/mo</span>
+                    </div>
+                  </div>
+                  <!-- Desktop: inline layout -->
+                  <div class="hidden md:flex items-center gap-4">
                     <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
                       <button type="button" id="custom-decrease" class="px-4 py-3 bg-gray-50 hover:bg-gray-100 transition">
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -602,6 +626,11 @@ const benefits = [
     const customDecrease = document.getElementById('custom-decrease');
     const customIncrease = document.getElementById('custom-increase');
     const customTotal = document.getElementById('custom-total');
+    // Mobile custom qty elements (class-based since they duplicate the desktop ones)
+    const mobileCustomQty = document.querySelector('.custom-qty-field');
+    const mobileCustomDecrease = document.querySelector('.custom-decrease-btn');
+    const mobileCustomIncrease = document.querySelector('.custom-increase-btn');
+    const mobileCustomTotal = document.querySelector('.custom-total-display');
     const freqMonthly = document.getElementById('freq-monthly');
     const freqYearly = document.getElementById('freq-yearly');
     const sponsorBtn = document.getElementById('sponsor-btn');
@@ -707,6 +736,28 @@ const benefits = [
       }
     };
 
+    // Show a brief toast message when country isn't selected
+    const showSelectCountryToast = () => {
+      // Remove any existing toast
+      document.getElementById('country-toast')?.remove();
+      const toast = document.createElement('div');
+      toast.id = 'country-toast';
+      toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#d97706] text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium transition-all duration-300';
+      toast.innerHTML = `
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+        </svg>
+        Please select a country first
+      `;
+      document.body.appendChild(toast);
+      // Auto-dismiss after 2.5s
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, -10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    };
+
     // Attach click listener to visual stack link
     const attachVisualStackListener = () => {
       const link = document.querySelector('.visual-stack-link');
@@ -725,6 +776,10 @@ const benefits = [
     const updateButtonState = () => {
       const complete = isSelectionComplete();
 
+      // Remove continuous highlight classes first (re-applied below if needed)
+      sponsorBtn?.classList.remove('animate-highlight-continuous');
+      mobileSponsorBtn?.classList.remove('animate-highlight-continuous');
+
       if (complete) {
         // Enable desktop button
         sponsorBtn?.removeAttribute('disabled');
@@ -733,8 +788,18 @@ const benefits = [
 
         // Mobile button shows ready state - hide arrow
         if (mobileArrow) mobileArrow.classList.add('hidden');
+      } else if (selectedQty > 0 && !selectedCountry) {
+        // Children selected but no country — make button orange + continuous pulse to draw attention
+        sponsorBtn?.removeAttribute('disabled');
+        sponsorBtn?.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        sponsorBtn?.classList.add('bg-[#d97706]', 'hover:bg-[#b45309]', 'text-white', 'shadow-lg', 'hover:shadow-xl', 'transform', 'hover:-translate-y-0.5');
+        sponsorBtn?.classList.add('animate-highlight-continuous');
+        mobileSponsorBtn?.classList.add('animate-highlight-continuous');
+
+        // Mobile arrow pointing up to indicate "go select country"
+        if (mobileArrow) mobileArrow.classList.remove('hidden');
       } else {
-        // Desktop button stays disabled
+        // Nothing selected or only country selected
         sponsorBtn?.setAttribute('disabled', 'true');
         sponsorBtn?.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
         sponsorBtn?.classList.remove('bg-[#d97706]', 'hover:bg-[#b45309]', 'text-white', 'shadow-lg', 'hover:shadow-xl', 'transform', 'hover:-translate-y-0.5');
@@ -882,8 +947,10 @@ const benefits = [
       }
 
       // Custom total
-      if (customTotal && isCustom) {
-        customTotal.textContent = `$${monthlyTotal.toFixed(0)}`;
+      if (isCustom) {
+        const totalText = `$${monthlyTotal.toFixed(0)}`;
+        if (customTotal) customTotal.textContent = totalText;
+        if (mobileCustomTotal) mobileCustomTotal.textContent = totalText;
       }
 
       // Mobile price summary
@@ -1005,15 +1072,35 @@ const benefits = [
         selectedQty = parseInt(tile.dataset.qty || '2');
         updateUI();
 
-        // If selection is complete, scroll to the sponsor button and pulse it
         if (isSelectionComplete()) {
+          // Both selections made - scroll to sponsor button and pulse it
           setTimeout(() => {
             scrollToSection(sponsorBtn?.closest('.bg-white.rounded-2xl') || sponsorBtn, false);
             pulseButton();
           }, 300);
+        } else if (!selectedCountry) {
+          // Children selected but no country yet - nudge user to pick a country
+          setTimeout(() => {
+            scrollToSection(regionSection, true);
+            // Flash the Step 1 header to draw attention
+            const step1Header = regionSection?.querySelector('h2, h3, .step-header');
+            if (step1Header) {
+              step1Header.classList.add('text-[#d97706]');
+              setTimeout(() => step1Header.classList.remove('text-[#d97706]'), 2000);
+            }
+            // Show a brief toast-style message
+            showSelectCountryToast();
+          }, 300);
         }
       });
     });
+
+    // Sync both mobile and desktop custom qty fields
+    const syncCustomQtyFields = (newVal) => {
+      const val = newVal.toString();
+      if (customQty) customQty.value = val;
+      if (mobileCustomQty) mobileCustomQty.value = val;
+    };
 
     // Custom toggle
     customToggle?.addEventListener('change', () => {
@@ -1032,32 +1119,55 @@ const benefits = [
           if (num) { num.classList.remove('text-white'); num.classList.add('text-gray-700'); }
           if (lbl) { lbl.classList.remove('text-white/90'); lbl.classList.add('text-gray-400'); }
         });
-        selectedQty = parseInt(customQty?.value || '4');
+        selectedQty = parseInt(customQty?.value || mobileCustomQty?.value || '4');
+        syncCustomQtyFields(selectedQty);
         updateUI();
+        // Nudge to country selection if not yet chosen
+        if (!selectedCountry) {
+          setTimeout(() => {
+            scrollToSection(regionSection, true);
+            showSelectCountryToast();
+          }, 300);
+        }
       }
     });
 
-    // Custom quantity controls
-    customDecrease?.addEventListener('click', () => {
-      if (customQty && parseInt(customQty.value) > 1) {
-        customQty.value = (parseInt(customQty.value) - 1).toString();
-        selectedQty = parseInt(customQty.value);
+    // Shared decrease/increase logic
+    const handleCustomDecrease = () => {
+      const current = parseInt(customQty?.value || mobileCustomQty?.value || '4');
+      if (current > 1) {
+        const newVal = current - 1;
+        syncCustomQtyFields(newVal);
+        selectedQty = newVal;
         updateUI();
       }
-    });
+    };
 
-    customIncrease?.addEventListener('click', () => {
-      if (customQty && parseInt(customQty.value) < 100) {
-        customQty.value = (parseInt(customQty.value) + 1).toString();
-        selectedQty = parseInt(customQty.value);
+    const handleCustomIncrease = () => {
+      const current = parseInt(customQty?.value || mobileCustomQty?.value || '4');
+      if (current < 100) {
+        const newVal = current + 1;
+        syncCustomQtyFields(newVal);
+        selectedQty = newVal;
         updateUI();
       }
-    });
+    };
 
-    customQty?.addEventListener('input', () => {
-      selectedQty = parseInt(customQty.value) || 1;
+    const handleCustomInput = (inputEl) => {
+      selectedQty = parseInt(inputEl.value) || 1;
+      syncCustomQtyFields(selectedQty);
       updateUI();
-    });
+    };
+
+    // Desktop custom quantity controls
+    customDecrease?.addEventListener('click', handleCustomDecrease);
+    customIncrease?.addEventListener('click', handleCustomIncrease);
+    customQty?.addEventListener('input', () => handleCustomInput(customQty));
+
+    // Mobile custom quantity controls
+    mobileCustomDecrease?.addEventListener('click', handleCustomDecrease);
+    mobileCustomIncrease?.addEventListener('click', handleCustomIncrease);
+    mobileCustomQty?.addEventListener('input', () => handleCustomInput(mobileCustomQty));
 
     // Frequency toggle
     freqMonthly?.addEventListener('click', () => {
@@ -1497,5 +1607,15 @@ const benefits = [
 
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out;
+  }
+
+  /* Continuous highlight pulse when children selected but no country */
+  @keyframes highlight-continuous {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.6); }
+    50% { box-shadow: 0 0 18px 6px rgba(217, 119, 6, 0.35); }
+  }
+
+  .animate-highlight-continuous {
+    animation: highlight-continuous 1.5s ease-in-out infinite;
   }
 </style>
