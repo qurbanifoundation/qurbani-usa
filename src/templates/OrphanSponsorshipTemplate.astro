@@ -40,6 +40,17 @@ const { campaign, donationBoxTemplate } = Astro.props;
 // Country-specific sponsorship options
 const countries = [
   {
+    id: 'general',
+    name: 'Greatest Need',
+    flag: '🌍',
+    monthlyAmount: 35,
+    yearlyAmount: 420,
+    description: 'Support orphans in the region with greatest need',
+    features: ['Flexible allocation', 'Combined reports', 'Maximum impact', '100% Zakat eligible'],
+    urgency: 'Help us decide',
+    badge: 'Popular',
+  },
+  {
     id: 'pakistan',
     name: 'Pakistan',
     flag: '🇵🇰',
@@ -99,17 +110,6 @@ const countries = [
     description: 'Help Rohingya refugees and local orphans',
     features: ['Individual child profile', 'Quarterly updates', 'Refugee support', 'Skills training'],
     urgency: '1,500+ children in need',
-  },
-  {
-    id: 'general',
-    name: 'Where Most Needed',
-    flag: '🌍',
-    monthlyAmount: 35,
-    yearlyAmount: 420,
-    description: 'Support orphans in the region with greatest need',
-    features: ['Flexible allocation', 'Combined reports', 'Maximum impact', '100% Zakat eligible'],
-    urgency: 'Help us decide',
-    badge: 'Best Value',
   },
 ];
 
@@ -251,7 +251,7 @@ const testimonials = [
 const faqs = [
   {
     q: 'How much does it cost to sponsor an orphan?',
-    a: 'Sponsorship starts at just $35/month (Where Most Needed) or $45/month for specific countries like Pakistan, Palestine, or Syria. This works out to less than $1.50 a day - less than a cup of coffee.',
+    a: 'Sponsorship starts at just $35/month (Greatest Need) or $45/month for specific countries like Pakistan, Palestine, or Syria. This works out to less than $1.50 a day - less than a cup of coffee.',
   },
   {
     q: 'Is orphan sponsorship Zakat eligible?',
@@ -353,7 +353,7 @@ const faqs = [
           </div>
 
           <!-- Right - Country Selection Card -->
-          <div id="donate" class="lg:justify-self-end w-full max-w-md" data-mobile-donate>
+          <div id="donate" class="lg:justify-self-end w-full max-w-md">
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
               <!-- Card Header -->
               <div class="bg-gradient-to-r from-[#01534d] to-[#024a45] p-6">
@@ -391,8 +391,8 @@ const faqs = [
                           <span class="text-lg">{country.flag}</span>
                           <span class="text-gray-700">{country.name}</span>
                           {country.badge && (
-                            <span class={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${country.badge === 'Most Needed' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
-                              {country.badge === 'Most Needed' ? 'URGENT' : 'BEST'}
+                            <span class={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${country.badge === 'Most Needed' ? 'bg-red-500 text-white' : country.badge === 'Popular' ? 'bg-[#ef7c01] text-white' : 'bg-green-500 text-white'}`}>
+                              {country.badge === 'Most Needed' ? 'URGENT' : country.badge === 'Popular' ? 'POPULAR' : 'BEST'}
                             </span>
                           )}
                         </button>
@@ -418,7 +418,7 @@ const faqs = [
                               <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
                                 {country.name}
                                 {country.badge && (
-                                  <span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
+                                  <span class={`text-xs px-2 py-0.5 rounded-full ${country.badge === 'Most Needed' ? 'bg-red-100 text-red-600' : country.badge === 'Popular' ? 'bg-orange-100 text-[#ef7c01]' : 'bg-green-100 text-green-600'}`}>{country.badge}</span>
                                 )}
                               </div>
                               <div class="text-xs text-gray-500">{country.urgency}</div>
@@ -453,7 +453,7 @@ const faqs = [
                               <div class="font-bold text-gray-800 flex items-center gap-2" style="font-family: 'Signika', sans-serif;">
                                 {country.name}
                                 {country.badge && (
-                                  <span class="bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">{country.badge}</span>
+                                  <span class={`text-xs px-2 py-0.5 rounded-full ${country.badge === 'Most Needed' ? 'bg-red-100 text-red-600' : country.badge === 'Popular' ? 'bg-orange-100 text-[#ef7c01]' : 'bg-green-100 text-green-600'}`}>{country.badge}</span>
                                 )}
                               </div>
                               <div class="text-xs text-gray-500">{country.urgency}</div>
@@ -497,24 +497,48 @@ const faqs = [
                     <span class="font-semibold text-gray-800" style="font-family: 'Signika', sans-serif;">How Many Children?</span>
                   </div>
 
-                  <div class="flex items-center justify-center gap-6 bg-gray-50 rounded-xl p-4">
-                    <button
-                      type="button"
-                      class="mobile-qty-decrease w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-[#01534d] transition disabled:opacity-50 text-xl font-bold"
-                    >−</button>
-                    <div class="text-center">
-                      <span class="mobile-qty-value text-4xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">1</span>
-                      <span class="mobile-qty-label block text-sm text-gray-500">child</span>
+                  <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="flex items-center justify-center gap-6">
+                      <button
+                        type="button"
+                        class="mobile-qty-decrease w-12 h-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:border-[#01534d] transition disabled:opacity-50 text-xl font-bold"
+                      >−</button>
+                      <div class="text-center">
+                        <span class="mobile-qty-value text-4xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">1</span>
+                        <span class="mobile-qty-label block text-sm text-gray-500">child</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="mobile-qty-increase w-12 h-12 rounded-full bg-[#01534d] border-2 border-[#01534d] flex items-center justify-center text-white hover:bg-[#024a45] transition text-xl font-bold"
+                      >+</button>
                     </div>
-                    <button
-                      type="button"
-                      class="mobile-qty-increase w-12 h-12 rounded-full bg-[#01534d] border-2 border-[#01534d] flex items-center justify-center text-white hover:bg-[#024a45] transition text-xl font-bold"
-                    >+</button>
+
+                    <!-- Total Calculation - shows when region selected -->
+                    <div id="mobile-total-row" class="hidden mt-3 pt-3 border-t border-gray-200">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Total</span>
+                        <span id="mobile-qty-total" class="text-xl font-bold text-[#01534d]" style="font-family: 'Signika', sans-serif;">$45/mo</span>
+                      </div>
+                    </div>
                   </div>
 
                   <p class="text-center text-sm text-gray-500 mt-2">
                     Most sponsors choose <span class="text-[#01534d] font-semibold">2-3 children</span>
                   </p>
+
+                  <!-- Trust Badges - Mobile (below the qty box) -->
+                  <div class="flex items-center justify-center gap-2 mt-3">
+                    <div class="flex items-center gap-1 text-xs text-gray-500">
+                      <svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                      </svg>
+                      Secure
+                    </div>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-xs text-gray-500">Tax Deductible</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-xs text-[#01534d] font-semibold">100% Zakat Eligible</span>
+                  </div>
                 </div>
 
                 <!-- Payment Frequency Toggle -->
@@ -578,8 +602,8 @@ const faqs = [
                   <span id="sponsor-btn-text">Select a Country Above</span>
                 </button>
 
-                <!-- Trust Badges -->
-                <div class="flex items-center justify-center gap-3 mt-4">
+                <!-- Trust Badges - Desktop only (inside card) -->
+                <div class="hidden lg:flex items-center justify-center gap-3 mt-4">
                   <div class="flex items-center gap-1 text-xs text-gray-500">
                     <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
@@ -607,6 +631,7 @@ const faqs = [
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -996,6 +1021,8 @@ const faqs = [
     const qtyMessage = document.getElementById('qty-message');
     const mobileSponsorBtn = document.getElementById('mobile-sponsor-btn') as HTMLButtonElement;
     const mobileBtnText = document.getElementById('mobile-btn-text');
+    const mobileTotalRow = document.getElementById('mobile-total-row');
+    const mobileQtyTotal = document.getElementById('mobile-qty-total');
 
     let selectedCountry: string | null = null;
     let selectedMonthly = 45;
@@ -1064,9 +1091,17 @@ const faqs = [
         if (label) label.textContent = quantity === 1 ? 'child' : 'children';
       }
 
-      // Update total
+      // Update total - Desktop
       if (qtyTotal) {
         qtyTotal.textContent = `$${totalAmount}/${period}`;
+      }
+
+      // Update total - Mobile
+      if (mobileQtyTotal) {
+        mobileQtyTotal.textContent = `$${totalAmount}/${period}`;
+      }
+      if (mobileTotalRow) {
+        mobileTotalRow.classList.toggle('hidden', !selectedCountry);
       }
 
       // Show/hide message for multiple children
@@ -1143,7 +1178,7 @@ const faqs = [
             const flagEmoji = pill.querySelector('span:first-child')?.textContent || '🌍';
             const countryName = el.dataset.country ? el.dataset.country.charAt(0).toUpperCase() + el.dataset.country.slice(1) : 'Selected';
             selectedFlag.textContent = flagEmoji;
-            selectedName.textContent = countryName === 'General' ? 'Where Most Needed' : countryName;
+            selectedName.textContent = countryName === 'General' ? 'Greatest Need' : countryName;
             selectedPrice.textContent = `$${selectedMonthly}/mo`;
           }
 

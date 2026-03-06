@@ -53,11 +53,21 @@ const quantityTiles = [
 
 // Countries available — derive multipliers from saved pricing
 const countries = [
+  { id: 'general', name: 'Greatest Need', flag: '🌍', priceMultiplier: (savedOrphanPricing?.general?.monthly || defaultBasePrice) / effectiveBasePrice, popular: true },
   { id: 'pakistan', name: 'Pakistan', flag: '🇵🇰', priceMultiplier: (savedOrphanPricing?.pakistan?.monthly || defaultBasePrice) / effectiveBasePrice },
   { id: 'palestine', name: 'Palestine', flag: '🇵🇸', priceMultiplier: (savedOrphanPricing?.palestine?.monthly || defaultBasePrice) / effectiveBasePrice, urgent: true },
   { id: 'yemen', name: 'Yemen', flag: '🇾🇪', priceMultiplier: (savedOrphanPricing?.yemen?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
   { id: 'syria', name: 'Syria', flag: '🇸🇾', priceMultiplier: (savedOrphanPricing?.syria?.monthly || defaultBasePrice) / effectiveBasePrice },
   { id: 'afghanistan', name: 'Afghanistan', flag: '🇦🇫', priceMultiplier: (savedOrphanPricing?.afghanistan?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'iraq', name: 'Iraq', flag: '🇮🇶', priceMultiplier: (savedOrphanPricing?.iraq?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'lebanon', name: 'Lebanon', flag: '🇱🇧', priceMultiplier: (savedOrphanPricing?.lebanon?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'macedonia', name: 'Macedonia', flag: '🇲🇰', priceMultiplier: (savedOrphanPricing?.macedonia?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'morocco', name: 'Morocco', flag: '🇲🇦', priceMultiplier: (savedOrphanPricing?.morocco?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'somalia', name: 'Somalia', flag: '🇸🇴', priceMultiplier: (savedOrphanPricing?.somalia?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'sri-lanka', name: 'Sri Lanka', flag: '🇱🇰', priceMultiplier: (savedOrphanPricing?.['sri-lanka']?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'sudan', name: 'Sudan', flag: '🇸🇩', priceMultiplier: (savedOrphanPricing?.sudan?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'tunisia', name: 'Tunisia', flag: '🇹🇳', priceMultiplier: (savedOrphanPricing?.tunisia?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
+  { id: 'turkey', name: 'Türkiye (Turkey)', flag: '🇹🇷', priceMultiplier: (savedOrphanPricing?.turkey?.monthly || Math.round(defaultBasePrice * 0.89)) / effectiveBasePrice },
 ];
 
 // What each sponsorship provides
@@ -81,12 +91,12 @@ const benefits = [
 
   <main class="bg-gray-50 min-h-screen">
     <!-- Hero Section -->
-    <section class="relative pt-24 pb-16 md:pt-28 md:pb-20 overflow-hidden min-h-[450px] md:min-h-[520px]">
+    <section class="relative pt-36 pb-16 md:pt-40 md:pb-20 overflow-hidden min-h-[450px] md:min-h-[520px]">
       <!-- Background Image -->
       <div class="absolute inset-0">
         <img
-          src="/images/qurbani-foundation-orphan-sponsorship.jpg"
-          alt="Qurbani Foundation helping orphan children with school supplies"
+          src="/images/palestine-orphan-sponsorship-qurbani-foundation.png"
+          alt="Palestine orphan sponsorship - Qurbani Foundation"
           class="w-full h-full object-cover object-[center_25%]"
           loading="eager"
         />
@@ -108,124 +118,231 @@ const benefits = [
           </p>
         </div>
 
-        <!-- Live Activity Ticker -->
-        <div class="flex justify-center mb-4">
-          <div class="bg-white/10 backdrop-blur-sm rounded-full px-6 py-2.5 flex items-center gap-4">
-            <span class="flex items-center gap-2">
-              <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span class="text-white text-sm"><strong id="live-count">23</strong> people sponsoring right now</span>
-            </span>
-          </div>
-        </div>
-
         <!-- Sponsor Button with Down Arrow -->
         <div class="flex justify-center">
-          <a href="#region-section" class="group inline-flex items-center gap-3 bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl">
+          <button type="button" id="hero-cta-btn" class="group inline-flex items-center gap-3 bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl">
             <span class="text-base" style="font-family: 'Signika', sans-serif;">Give an Orphan Hope This Ramadan</span>
             <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
             </svg>
-          </a>
+          </button>
         </div>
       </div>
     </section>
 
     <!-- Main Selection Area -->
-    <section id="donate" class="py-12 -mt-8" data-mobile-donate>
+    <section id="donate" class="py-12 -mt-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid lg:grid-cols-3 gap-8">
 
-          <!-- Left Column: Selection -->
-          <div class="lg:col-span-2 space-y-8">
-
             <!-- Step 1: Choose Country -->
-            <div id="region-section" class="bg-white rounded-2xl shadow-sm p-6 transition-all duration-300">
-              <div class="flex items-center gap-3 mb-4">
-                <div id="step-1-badge" class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300">1</div>
-                <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Choose a Region</h2>
+            <div id="region-section" class="lg:col-span-2 bg-white rounded-2xl shadow-sm transition-all duration-300 overflow-hidden">
+              <!-- Mobile: Clean card with radio-style list -->
+              <div class="md:hidden">
+                <div class="px-5 pt-5 pb-3">
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-gray-900" style="font-family: 'Signika', sans-serif;">Where would you like to help?</h2>
+                    <span class="text-[10px] text-gray-400 uppercase tracking-wider">Step 1</span>
+                  </div>
+                </div>
+                <div class="divide-y divide-gray-100">
+                  {countries.slice(0, 3).map((country) => (
+                    <button
+                      type="button"
+                      class="country-btn w-full flex items-center gap-3.5 px-5 py-3.5 transition-all text-left active:bg-gray-50 border-l-4 border-l-transparent"
+                      data-country={country.id}
+                      data-multiplier={country.priceMultiplier}
+                      data-name={country.name}
+                      data-flag={country.flag}
+                    >
+                      <span class="text-[26px] leading-none">{country.flag}</span>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <span class="text-[15px] font-semibold text-gray-900">{country.name}</span>
+                          {country.popular && <span class="bg-[#ef7c01] text-white text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Popular</span>}
+                          {country.urgent && <span class="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Urgent</span>}
+                        </div>
+                        <span class="text-[11px] text-gray-400">from ${Math.round(effectiveBasePrice * country.priceMultiplier)}/mo per child</span>
+                      </div>
+                      <div class="w-5 h-5 rounded-full border-2 border-gray-300 shrink-0 flex items-center justify-center country-radio transition-all">
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <!-- More countries -->
+                <div id="more-countries-mobile" class="hidden divide-y divide-gray-100 border-t border-gray-100">
+                  {countries.slice(3).map((country) => (
+                    <button
+                      type="button"
+                      class="country-btn w-full flex items-center gap-3.5 px-5 py-3.5 transition-all text-left active:bg-gray-50 border-l-4 border-l-transparent"
+                      data-country={country.id}
+                      data-multiplier={country.priceMultiplier}
+                      data-name={country.name}
+                      data-flag={country.flag}
+                    >
+                      <span class="text-[26px] leading-none">{country.flag}</span>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <span class="text-[15px] font-semibold text-gray-900">{country.name}</span>
+                          {country.popular && <span class="bg-[#ef7c01] text-white text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Popular</span>}
+                          {country.urgent && <span class="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Urgent</span>}
+                        </div>
+                        <span class="text-[11px] text-gray-400">from ${Math.round(effectiveBasePrice * country.priceMultiplier)}/mo per child</span>
+                      </div>
+                      <div class="w-5 h-5 rounded-full border-2 border-gray-300 shrink-0 flex items-center justify-center country-radio transition-all">
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  class="show-more-countries-btn w-full flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[#d97706] py-3 border-t border-gray-100 transition-colors active:bg-gray-50"
+                >
+                  <span class="more-text">+{countries.length - 3} more countries</span>
+                  <svg class="more-icon w-3.5 h-3.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
               </div>
 
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="country-selector">
-                {countries.map((country, i) => (
-                  <button
-                    type="button"
-                    class="country-btn relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md border-gray-200 hover:border-[#d97706] hover:bg-[#d97706]/5"
-                    data-country={country.id}
-                    data-multiplier={country.priceMultiplier}
-                  >
-                    {country.urgent && (
-                      <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">URGENT</span>
-                    )}
-                    <div class="text-2xl mb-1">{country.flag}</div>
-                    <div class="text-xs font-medium text-gray-700">{country.name}</div>
-                  </button>
-                ))}
+              <!-- Desktop -->
+              <div class="hidden md:block p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <div id="step-1-badge" class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300">1</div>
+                  <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Choose a Region</h2>
+                </div>
+                <div class="grid grid-cols-5 gap-3" id="country-selector-desktop">
+                  {countries.slice(0, 5).map((country) => (
+                    <button
+                      type="button"
+                      class="country-btn relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md border-gray-200 hover:border-[#d97706] hover:bg-[#d97706]/5 text-center"
+                      data-country={country.id}
+                      data-multiplier={country.priceMultiplier}
+                      data-name={country.name}
+                      data-flag={country.flag}
+                    >
+                      {country.urgent && <span class="absolute -top-2 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">URGENT</span>}
+                      {country.popular && <span class="absolute -top-2 -right-1 bg-[#ef7c01] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">POPULAR</span>}
+                      <div class="text-2xl mb-1">{country.flag}</div>
+                      <div class="text-xs font-medium text-gray-700">{country.name}</div>
+                    </button>
+                  ))}
+                </div>
+                <div id="more-countries" class="hidden md:grid-cols-5 md:gap-3 mt-3">
+                  {countries.slice(5).map((country) => (
+                    <button
+                      type="button"
+                      class="country-btn relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md border-gray-200 hover:border-[#d97706] hover:bg-[#d97706]/5 text-center"
+                      data-country={country.id}
+                      data-multiplier={country.priceMultiplier}
+                      data-name={country.name}
+                      data-flag={country.flag}
+                    >
+                      {country.urgent && <span class="absolute -top-2 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">URGENT</span>}
+                      {country.popular && <span class="absolute -top-2 -right-1 bg-[#ef7c01] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">POPULAR</span>}
+                      <div class="text-2xl mb-1">{country.flag}</div>
+                      <div class="text-xs font-medium text-gray-700">{country.name}</div>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  id="show-more-countries"
+                  class="mt-3 w-full flex items-center justify-center gap-2 text-sm font-medium text-[#d97706] hover:text-[#b45309] py-2 transition-colors"
+                >
+                  <span class="more-text">More countries</span>
+                  <svg class="more-icon w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
               </div>
             </div>
 
-            <!-- Step 2: Choose Quantity (Tile Stack) -->
-            <div id="quantity-section" class="bg-white rounded-2xl shadow-sm p-6 transition-all duration-300">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
-                  <div id="step-2-badge" class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300">2</div>
-                  <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">How Many Children?</h2>
+            <!-- Step 2: How Many Children -->
+            <div id="quantity-section" class="lg:col-span-2 bg-white rounded-2xl shadow-sm transition-all duration-300 overflow-hidden">
+              <!-- Mobile: Number selector circles + dynamic summary -->
+              <div class="md:hidden">
+                <div class="px-5 pt-5 pb-3">
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-gray-900" style="font-family: 'Signika', sans-serif;">How many children?</h2>
+                    <span class="text-[10px] text-gray-400 uppercase tracking-wider">Step 2</span>
+                  </div>
+                  <p class="text-[11px] text-gray-400 mt-0.5">Most sponsors choose <strong class="text-[#d97706]">2 children</strong></p>
                 </div>
-                <div class="text-sm text-gray-500">
-                  <span class="text-[#d97706] font-semibold">45%</span> choose 2 children
+                <!-- Number circles -->
+                <div class="flex justify-center gap-3 px-5 pb-4">
+                  {quantityTiles.map((tile) => (
+                    <button
+                      type="button"
+                      class="qty-tile w-14 h-14 rounded-full border-2 border-gray-200 bg-white flex flex-col items-center justify-center transition-all active:scale-95 relative"
+                      data-qty={tile.qty}
+                      data-monthly={tile.monthly}
+                    >
+                      {tile.badge === 'Most Popular' && (
+                        <span class="absolute -top-1.5 left-1/2 -translate-x-1/2 bg-[#fdc448] text-[#61470e] text-[7px] px-1 py-0 rounded font-bold whitespace-nowrap leading-tight">POPULAR</span>
+                      )}
+                      <span class="text-lg font-bold text-gray-700 leading-none qty-number">{tile.qty}</span>
+                      <span class="text-[8px] text-gray-400 leading-none mt-0.5 qty-label">{tile.qty === 1 ? 'child' : 'children'}</span>
+                    </button>
+                  ))}
+                </div>
+                <!-- Dynamic price summary -->
+                <div id="mobile-price-summary" class="mx-5 mb-4 bg-gradient-to-r from-[#d97706]/5 to-[#fdc448]/5 rounded-xl p-4 text-center border border-[#d97706]/10 hidden">
+                  <div class="text-2xl font-bold text-[#d97706]" id="mobile-total-price" style="font-family: 'Signika', sans-serif;">$90/mo</div>
+                  <div class="text-xs text-gray-500 mt-0.5" id="mobile-price-detail">2 children × $45/mo</div>
+                  <div class="text-[11px] text-gray-400 mt-1" id="mobile-daily-price">That's just $1.50/day per child</div>
                 </div>
               </div>
 
-              <!-- Quantity Tiles -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4" id="quantity-tiles">
-                {quantityTiles.map((tile, i) => (
-                  <button
-                    type="button"
-                    class="qty-tile relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 border-gray-200 hover:border-[#d97706] hover:bg-[#d97706]/5"
-                    data-qty={tile.qty}
-                    data-monthly={tile.monthly}
-                  >
-                    {tile.badge && (
-                      <span class={`absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap ${tile.badge === 'Most Popular' ? 'bg-[#fdc448] text-[#61470e]' : tile.badge === 'Best Impact' ? 'bg-[#d97706] text-white' : 'bg-purple-500 text-white'}`}>
-                        {tile.badge}
-                      </span>
-                    )}
-
-                    <!-- Child Icons -->
-                    <div class="flex justify-center items-end mb-2 h-12 gap-0.5">
-                      {Array.from({ length: Math.min(tile.qty, 5) }).map((_, idx) => (
-                        <svg
-                          class="w-6 h-10 text-gray-700"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                          style={`opacity: ${1 - idx * 0.12};`}
-                        >
-                          <circle cx="12" cy="4" r="3"/>
-                          <path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
-                        </svg>
-                      ))}
-                      {tile.qty > 5 && (
-                        <span class="ml-1 text-sm font-semibold text-gray-700">+{tile.qty - 5}</span>
+              <!-- Desktop -->
+              <div class="hidden md:block p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div id="step-2-badge" class="w-8 h-8 bg-[#d97706] rounded-full flex items-center justify-center text-white font-bold text-sm transition-all duration-300">2</div>
+                    <h2 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">How Many Children?</h2>
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    <span class="text-[#d97706] font-semibold">45%</span> choose 2 children
+                  </div>
+                </div>
+                <div class="grid grid-cols-5 gap-3" id="quantity-tiles">
+                  {quantityTiles.map((tile, i) => (
+                    <button
+                      type="button"
+                      class="qty-tile relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 border-gray-200 hover:border-[#d97706] hover:bg-[#d97706]/5"
+                      data-qty={tile.qty}
+                      data-monthly={tile.monthly}
+                    >
+                      {tile.badge && (
+                        <span class={`absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap ${tile.badge === 'Most Popular' ? 'bg-[#fdc448] text-[#61470e]' : tile.badge === 'Best Impact' ? 'bg-[#d97706] text-white' : 'bg-purple-500 text-white'}`}>
+                          {tile.badge}
+                        </span>
                       )}
-                    </div>
-
-                    <div class="text-center">
-                      <div class="font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">{tile.label}</div>
-                      <div class="text-lg font-bold text-[#d97706]">${tile.monthly}<span class="text-xs text-gray-400">/mo</span></div>
-                    </div>
-
-                    <!-- Popularity bar -->
-                    <div class="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div class="h-full bg-[#fdc448] rounded-full" style={`width: ${tile.popularity}%`}></div>
-                    </div>
-                    <div class="text-[10px] text-gray-400 mt-1">{tile.popularity}% choose this</div>
-                  </button>
-                ))}
+                      <div class="flex justify-center items-end mb-2 h-12 gap-0.5">
+                        {Array.from({ length: Math.min(tile.qty, 5) }).map((_, idx) => (
+                          <svg class="w-6 h-10 text-gray-700" fill="currentColor" viewBox="0 0 24 24" style={`opacity: ${1 - idx * 0.12};`}>
+                            <circle cx="12" cy="4" r="3"/><path d="M12 8c-3.5 0-6 2.5-6 6v6h3v-4h6v4h3v-6c0-3.5-2.5-6-6-6z"/>
+                          </svg>
+                        ))}
+                        {tile.qty > 5 && <span class="ml-1 text-sm font-semibold text-gray-700">+{tile.qty - 5}</span>}
+                      </div>
+                      <div class="text-center">
+                        <div class="font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">{tile.label}</div>
+                        <div class="text-lg font-bold text-[#d97706]">${tile.monthly}<span class="text-xs text-gray-400">/mo</span></div>
+                      </div>
+                      <div class="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-[#fdc448] rounded-full" style={`width: ${tile.popularity}%`}></div>
+                      </div>
+                      <div class="text-[10px] text-gray-400 mt-1">{tile.popularity}% choose this</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <!-- Custom Amount -->
-              <div class="mt-6 pt-6 border-t border-gray-100">
+              <div class="mx-5 md:mx-6 mt-4 md:mt-6 pt-4 md:pt-6 pb-5 md:pb-6 border-t border-gray-100">
                 <label class="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" id="custom-toggle" class="w-5 h-5 rounded border-gray-300 text-[#d97706] focus:ring-[#d97706]" />
+                  <input type="checkbox" id="custom-toggle" class="w-5 h-5 shrink-0 rounded border-gray-300 text-[#d97706] focus:ring-[#d97706]" />
                   <span class="text-sm text-gray-600">I want to sponsor a different number of children</span>
                 </label>
                 <div id="custom-qty-input" class="mt-4 hidden">
@@ -253,8 +370,20 @@ const benefits = [
               </div>
             </div>
 
+            <!-- Mobile trust badges (below the card) -->
+            <div class="md:hidden lg:col-span-2 flex items-center justify-center gap-3 text-[11px] text-gray-500 -mt-2 mb-1">
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                Secure
+              </span>
+              <span class="text-gray-300">|</span>
+              <span>Tax Deductible</span>
+              <span class="text-gray-300">|</span>
+              <span class="font-semibold text-[#61470e]">100% Zakat Eligible</span>
+            </div>
+
             <!-- What Sponsorship Provides -->
-            <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div class="lg:col-span-2 order-2 lg:order-none bg-white rounded-2xl shadow-sm p-6">
               <h3 class="text-lg font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
                 Each Child Receives
               </h3>
@@ -276,7 +405,7 @@ const benefits = [
             </div>
 
             <!-- Recent Sponsors (Social Proof) -->
-            <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div class="lg:col-span-2 order-3 lg:order-none bg-white rounded-2xl shadow-sm p-6">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">
                   Recent Sponsors
@@ -290,11 +419,10 @@ const benefits = [
                 <!-- Populated by JavaScript -->
               </div>
             </div>
-          </div>
 
-          <!-- Right Column: Summary & Checkout -->
-          <div class="lg:col-span-1">
-            <div class="sticky top-24">
+          <!-- Your Impact (desktop only — sticky right sidebar) -->
+          <div class="hidden lg:block lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:row-span-5">
+            <div class="lg:sticky lg:top-24">
               <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <!-- Header -->
                 <div class="bg-gradient-to-r from-[#d97706] to-[#b45309] p-6 text-white text-center">
@@ -489,6 +617,55 @@ const benefits = [
     const btnText = document.getElementById('btn-text');
     const mobileBtnText = document.getElementById('mobile-btn-text');
 
+    // Show More Countries toggle (both mobile and desktop)
+    let countriesExpanded = false;
+    const toggleMoreCountries = (btn) => {
+      countriesExpanded = !countriesExpanded;
+      // Toggle desktop
+      const desktopMore = document.getElementById('more-countries');
+      if (desktopMore) {
+        if (countriesExpanded) {
+          desktopMore.classList.remove('hidden');
+          desktopMore.classList.add('md:grid');
+        } else {
+          desktopMore.classList.add('hidden');
+          desktopMore.classList.remove('md:grid');
+        }
+      }
+      // Toggle mobile
+      const mobileMore = document.getElementById('more-countries-mobile');
+      if (mobileMore) mobileMore.classList.toggle('hidden', !countriesExpanded);
+      // Update all button texts/icons
+      document.querySelectorAll('.more-text').forEach(t => t.textContent = countriesExpanded ? 'Show less' : 'More countries');
+      document.querySelectorAll('.more-icon').forEach(i => i.style.transform = countriesExpanded ? 'rotate(180deg)' : 'rotate(0deg)');
+    };
+    document.getElementById('show-more-countries')?.addEventListener('click', function() { toggleMoreCountries(this); });
+    document.querySelector('.show-more-countries-btn')?.addEventListener('click', function() { toggleMoreCountries(this); });
+
+    // Show More Quantities toggle (mobile)
+    let qtyExpanded = false;
+    const showMoreQtyBtn = document.querySelector('.show-more-qty-btn');
+    showMoreQtyBtn?.addEventListener('click', () => {
+      qtyExpanded = !qtyExpanded;
+      const moreQty = document.getElementById('more-quantities-mobile');
+      if (moreQty) moreQty.classList.toggle('hidden', !qtyExpanded);
+      const txt = document.querySelector('.more-qty-text');
+      if (txt) txt.textContent = qtyExpanded ? 'Show less' : 'More options';
+      const icon = document.querySelector('.more-qty-icon');
+      if (icon) icon.style.transform = qtyExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+    });
+
+    // Hero CTA button - scroll to region on click
+    const heroCta = document.getElementById('hero-cta-btn');
+    heroCta?.addEventListener('click', () => {
+      const region = document.getElementById('region-section');
+      if (region) {
+        const offset = 100;
+        const pos = region.getBoundingClientRect().top + window.pageYOffset;
+        window.scrollTo({ top: pos - offset, behavior: 'smooth' });
+      }
+    });
+
     // State - nothing pre-selected
     let selectedCountry = null;
     let selectedQty = 0;
@@ -602,6 +779,9 @@ const benefits = [
         }
         if (btnText) btnText.textContent = 'Sponsor an Orphan';
         if (mobileBtnText) mobileBtnText.textContent = 'Sponsor an Orphan';
+        // Hide mobile price summary
+        const mps = document.getElementById('mobile-price-summary');
+        if (mps) mps.classList.add('hidden');
         updateButtonState();
         return;
       }
@@ -706,26 +886,64 @@ const benefits = [
         customTotal.textContent = `$${monthlyTotal.toFixed(0)}`;
       }
 
+      // Mobile price summary
+      const mobilePriceSummary = document.getElementById('mobile-price-summary');
+      const mobileTotalPrice = document.getElementById('mobile-total-price');
+      const mobilePriceDetail = document.getElementById('mobile-price-detail');
+      const mobileDailyPrice = document.getElementById('mobile-daily-price');
+
+      if (mobilePriceSummary && selectedQty > 0 && selectedCountry) {
+        mobilePriceSummary.classList.remove('hidden');
+        const perChild = Math.round(basePrice * (selectedCountry.multiplier || 1));
+        const total = perChild * selectedQty;
+        const dailyPerChild = (perChild / 30).toFixed(2);
+        if (mobileTotalPrice) mobileTotalPrice.textContent = isMonthly ? `$${total}/mo` : `$${(total * 12).toLocaleString()}/yr`;
+        if (mobilePriceDetail) mobilePriceDetail.textContent = `${selectedQty} ${selectedQty === 1 ? 'child' : 'children'} × $${perChild}/mo`;
+        if (mobileDailyPrice) mobileDailyPrice.textContent = `That's just $${dailyPerChild}/day per child`;
+      } else if (mobilePriceSummary) {
+        mobilePriceSummary.classList.add('hidden');
+      }
+
       updateButtonState();
     };
 
     // Country selection
     countryBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        // Reset all country buttons (both mobile and desktop)
         countryBtns.forEach(b => {
+          // Desktop styles reset
           b.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
           b.classList.add('border-gray-200');
+          // Mobile styles reset
+          b.classList.remove('border-l-[#d97706]');
+          b.classList.add('border-l-transparent');
+          const radio = b.querySelector('.country-radio');
+          if (radio) {
+            radio.innerHTML = '';
+            radio.classList.remove('border-[#d97706]');
+            radio.classList.add('border-gray-300');
+          }
         });
+
+        // Highlight selected — desktop styles
         btn.classList.remove('border-gray-200');
         btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
+        // Highlight selected — mobile styles
+        btn.classList.remove('border-l-transparent');
+        btn.classList.add('border-l-[#d97706]');
+        const radio = btn.querySelector('.country-radio');
+        if (radio) {
+          radio.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></div>';
+          radio.classList.remove('border-gray-300');
+          radio.classList.add('border-[#d97706]');
+        }
 
-        const el = btn;
-        const wasFirstSelection = selectedCountry === null;
         selectedCountry = {
-          id: el.dataset.country || 'pakistan',
-          name: el.querySelector('div:last-child')?.textContent || 'Pakistan',
-          flag: el.querySelector('div:first-child')?.textContent || '🇵🇰',
-          multiplier: parseFloat(el.dataset.multiplier || '1')
+          id: btn.dataset.country || 'pakistan',
+          name: btn.dataset.name || 'Pakistan',
+          flag: btn.dataset.flag || '🇵🇰',
+          multiplier: parseFloat(btn.dataset.multiplier || '1')
         };
         updateUI();
 
@@ -754,11 +972,35 @@ const benefits = [
         if (customQtyInput) customQtyInput.classList.add('hidden');
 
         qtyTiles.forEach(t => {
-          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          const isMobileCircle = t.classList.contains('rounded-full');
+          // Reset desktop styles
+          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'bg-[#d97706]', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
           t.classList.add('border-gray-200');
+          if (isMobileCircle) {
+            t.classList.add('bg-white');
+          }
+          // Reset mobile text colors
+          const num = t.querySelector('.qty-number');
+          const lbl = t.querySelector('.qty-label');
+          if (num) { num.classList.remove('text-white'); num.classList.add('text-gray-700'); }
+          if (lbl) { lbl.classList.remove('text-white/90'); lbl.classList.add('text-gray-400'); }
         });
+
+        const isMobileCircle = tile.classList.contains('rounded-full');
         tile.classList.remove('border-gray-200');
-        tile.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+
+        if (isMobileCircle) {
+          // Mobile: filled orange circle with white text
+          tile.classList.remove('bg-white');
+          tile.classList.add('border-[#d97706]', 'bg-[#d97706]');
+          const num = tile.querySelector('.qty-number');
+          const lbl = tile.querySelector('.qty-label');
+          if (num) { num.classList.remove('text-gray-700'); num.classList.add('text-white'); }
+          if (lbl) { lbl.classList.remove('text-gray-400'); lbl.classList.add('text-white/90'); }
+        } else {
+          // Desktop: bordered highlight with scale
+          tile.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+        }
 
         selectedQty = parseInt(tile.dataset.qty || '2');
         updateUI();
@@ -781,8 +1023,14 @@ const benefits = [
       }
       if (isCustom) {
         qtyTiles.forEach(t => {
-          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          const isMobileCircle = t.classList.contains('rounded-full');
+          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'bg-[#d97706]', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
           t.classList.add('border-gray-200');
+          if (isMobileCircle) t.classList.add('bg-white');
+          const num = t.querySelector('.qty-number');
+          const lbl = t.querySelector('.qty-label');
+          if (num) { num.classList.remove('text-white'); num.classList.add('text-gray-700'); }
+          if (lbl) { lbl.classList.remove('text-white/90'); lbl.classList.add('text-gray-400'); }
         });
         selectedQty = parseInt(customQty?.value || '4');
         updateUI();
@@ -845,24 +1093,22 @@ const benefits = [
 
       // Use the global addToCart function
       if (typeof window.addToCart === 'function') {
+        const childLabel = selectedQty === 1 ? '1 Child' : selectedQty + ' Children';
         window.addToCart({
-          id: `orphan-sponsorship-${selectedCountry.id}-${selectedQty}-${frequency}-${Date.now()}`,
-          type: 'orphan-sponsorship',
-          name: `Orphan Sponsorship (${selectedCountry.name})`,
+          id: `orphan-sponsorship-${selectedCountry.id}-${frequency}`,
+          type: frequency,
+          recurringInterval: frequency,
+          name: `Orphan Sponsorship - ${selectedCountry.name} (${childLabel})`,
           amount: amount,
-          quantity: selectedQty,
-          description: `${selectedCountry.flag} ${selectedCountry.name} • ${selectedQty} ${childText} • ${isMonthly ? 'Monthly: $' + monthlyTotal + '/mo' : 'Yearly: $' + amount}`,
-          frequency: frequency,
-          country: selectedCountry.name,
-          countryCode: selectedCountry.id,
-          childrenCount: selectedQty,
-          pricePerChild: basePrice * selectedCountry.multiplier
+          quantity: 1,
+          campaign: 'Orphan Sponsorship',
+          campaignSlug: 'sponsor-an-orphan',
+          image: '/images/qurbani-foundation-orphan-sponsorship.jpg'
         });
-      }
-
-      // Add to recent sponsors feed
-      if (typeof window.addRealSponsor === 'function') {
-        window.addRealSponsor('Your Donation', selectedCountry.name, selectedQty);
+        // Open the cart
+        if (window.donationCart?.openCart) {
+          window.donationCart.openCart();
+        }
       }
 
       // Show success feedback on button
@@ -913,33 +1159,7 @@ const benefits = [
       }
     });
 
-    // Live counter animation - realistic simulation (1-20 range, updates every minute)
-    const liveCount = document.getElementById('live-count');
-    if (liveCount) {
-      let currentCount = Math.floor(Math.random() * 10) + 8; // Start between 8-17
-
-      liveCount.textContent = currentCount.toString();
-
-      setInterval(() => {
-        // Determine change: max +3 up, max -3 down
-        const rand = Math.random();
-        let change = 0;
-
-        if (rand < 0.4) {
-          // 40% chance: go up (1 to 3)
-          change = Math.floor(Math.random() * 3) + 1;
-        } else if (rand < 0.8) {
-          // 40% chance: go down (1 to 3)
-          change = -(Math.floor(Math.random() * 3) + 1);
-        }
-        // 20% chance: no change
-
-        // Apply change with bounds (1-20)
-        currentCount = Math.max(1, Math.min(20, currentCount + change));
-
-        liveCount.textContent = currentCount.toString();
-      }, 60000); // Update every 60 seconds (1 minute)
-    }
+    // Live counter removed
 
     // ============ RECENT SPONSORS ============
     const recentSponsorsContainer = document.getElementById('recent-sponsors');
@@ -1232,6 +1452,15 @@ const benefits = [
 </script>
 
 <style>
+  /* Hide scrollbar for horizontal scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   details summary::-webkit-details-marker {
     display: none;
   }
