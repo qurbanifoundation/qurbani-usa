@@ -136,7 +136,7 @@ const benefits = [
         <div class="grid lg:grid-cols-3 gap-8">
 
             <!-- Step 1: Choose Country -->
-            <div id="region-section" class="lg:col-span-2 bg-white rounded-2xl shadow-sm transition-all duration-300">
+            <div id="region-section" class="lg:col-span-2 bg-white rounded-2xl shadow-sm transition-all duration-300 overflow-hidden">
               <!-- Mobile: Clean card with radio-style list -->
               <div class="md:hidden">
                 <div class="px-5 pt-5 pb-3">
@@ -729,9 +729,9 @@ const benefits = [
 
       if (highlight) {
         // Add subtle highlight
-        element.classList.add('ring-2', 'ring-[#d97706]', 'ring-opacity-60');
+        element.classList.add('outline', 'outline-2', 'outline-[#d97706]/60');
         setTimeout(() => {
-          element.classList.remove('ring-2', 'ring-[#d97706]', 'ring-opacity-60');
+          element.classList.remove('outline', 'outline-2', 'outline-[#d97706]/60');
         }, 1500);
       }
     };
@@ -980,7 +980,7 @@ const benefits = [
         // Reset all country buttons (both mobile and desktop)
         countryBtns.forEach(b => {
           // Desktop styles reset
-          b.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
+          b.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]');
           b.classList.add('border-gray-200');
           // Mobile styles reset
           b.classList.remove('border-l-[#d97706]');
@@ -995,7 +995,7 @@ const benefits = [
 
         // Highlight selected — desktop styles
         btn.classList.remove('border-gray-200');
-        btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20');
+        btn.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]');
         // Highlight selected — mobile styles
         btn.classList.remove('border-l-transparent');
         btn.classList.add('border-l-[#d97706]');
@@ -1041,7 +1041,7 @@ const benefits = [
         qtyTiles.forEach(t => {
           const isMobileCircle = t.classList.contains('rounded-full');
           // Reset desktop styles
-          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'bg-[#d97706]', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'bg-[#d97706]', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]', 'scale-105');
           t.classList.add('border-gray-200');
           if (isMobileCircle) {
             t.classList.add('bg-white');
@@ -1066,7 +1066,7 @@ const benefits = [
           if (lbl) { lbl.classList.remove('text-gray-400'); lbl.classList.add('text-white/90'); }
         } else {
           // Desktop: bordered highlight with scale
-          tile.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          tile.classList.add('border-[#d97706]', 'bg-[#d97706]/5', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]', 'scale-105');
         }
 
         selectedQty = parseInt(tile.dataset.qty || '2');
@@ -1111,7 +1111,7 @@ const benefits = [
       if (isCustom) {
         qtyTiles.forEach(t => {
           const isMobileCircle = t.classList.contains('rounded-full');
-          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'bg-[#d97706]', 'ring-2', 'ring-[#d97706]/20', 'scale-105');
+          t.classList.remove('border-[#d97706]', 'bg-[#d97706]/5', 'bg-[#d97706]', 'shadow-[inset_0_0_0_3px_rgba(217,119,6,0.2)]', 'scale-105');
           t.classList.add('border-gray-200');
           if (isMobileCircle) t.classList.add('bg-white');
           const num = t.querySelector('.qty-number');
