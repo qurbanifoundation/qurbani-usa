@@ -1571,24 +1571,34 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
         }, 150);
       }
 
-      function toggleMegaMenu(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isOpen) {
-          closeMegaMenu();
-        } else {
-          openMegaMenu();
-        }
-      }
+      // Track if menu was opened by hover (vs click)
+      let openedByHover = false;
 
       // Hover handlers
-      triggerEl.addEventListener('mouseenter', openMegaMenu);
+      triggerEl.addEventListener('mouseenter', () => {
+        openedByHover = true;
+        openMegaMenu();
+      });
       triggerEl.addEventListener('mouseleave', closeMegaMenu);
       menuEl.addEventListener('mouseenter', () => clearTimeout(closeTimer));
       menuEl.addEventListener('mouseleave', closeMegaMenu);
 
-      // Click handler as fallback
-      btnEl?.addEventListener('click', toggleMegaMenu);
+      // Click handler — first click after hover keeps it open, second click closes
+      btnEl?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen && openedByHover) {
+          // First click after hover — absorb click, keep open
+          openedByHover = false;
+        } else if (isOpen) {
+          // Second click — close
+          closeMegaMenu();
+        } else {
+          // Menu was closed — open it
+          openedByHover = false;
+          openMegaMenu();
+        }
+      });
     });
 
     // Setup Dynamic/Extra Menus (created by admin)
@@ -1626,21 +1636,34 @@ const campaignsJson = JSON.stringify(campaignsByCategory);
         }, 150);
       }
 
-      function toggleMegaMenu(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isOpen) closeMegaMenu();
-        else openMegaMenu();
-      }
+      // Track if menu was opened by hover (vs click)
+      let openedByHover = false;
 
       // Hover handlers
-      triggerEl.addEventListener('mouseenter', openMegaMenu);
+      triggerEl.addEventListener('mouseenter', () => {
+        openedByHover = true;
+        openMegaMenu();
+      });
       triggerEl.addEventListener('mouseleave', closeMegaMenu);
       menuEl.addEventListener('mouseenter', () => clearTimeout(closeTimer));
       menuEl.addEventListener('mouseleave', closeMegaMenu);
 
-      // Click handler
-      btn.addEventListener('click', toggleMegaMenu);
+      // Click handler — first click after hover keeps it open, second click closes
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isOpen && openedByHover) {
+          // First click after hover — absorb click, keep open
+          openedByHover = false;
+        } else if (isOpen) {
+          // Second click — close
+          closeMegaMenu();
+        } else {
+          // Menu was closed — open it
+          openedByHover = false;
+          openMegaMenu();
+        }
+      });
     });
 
     // Mega menu amount buttons
