@@ -1905,8 +1905,14 @@ function updateCartUI() {
   const hasSingle = singleItems.length > 0;
   const hasRecurring = hasWeekly || hasMonthly || hasAnnual || hasYearly || hasDaily;
 
+  // Detect mixed recurring frequencies
+  const cartFreqCount = [hasWeekly, hasMonthly || hasAnnual, hasYearly, hasDaily].filter(Boolean).length;
+  const cartMixedFreqs = cartFreqCount > 1;
+
   let paymentLabel = 'One-time Payment';
-  if (hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
+  if (cartMixedFreqs && !hasSingle) {
+    paymentLabel = 'Total due today:';
+  } else if (hasWeekly && !hasMonthly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
     paymentLabel = 'Weekly Total';
   } else if (hasMonthly && !hasWeekly && !hasAnnual && !hasYearly && !hasDaily && !hasSingle) {
     paymentLabel = 'Monthly Total';
@@ -1930,13 +1936,43 @@ function updateCartUI() {
   if (cartTotalEl) cartTotalEl.textContent = '$' + total.toFixed(2);
   if (paymentLabelEl) paymentLabelEl.textContent = paymentLabel;
 
-  // Show monthly total row when there are recurring items
+  // Remove any previously injected extra frequency rows
+  if (monthlyTotalRow) {
+    var prevCartExtra = monthlyTotalRow.parentNode.querySelectorAll('.cart-extra-freq-row');
+    prevCartExtra.forEach(function(el) { el.remove(); });
+  }
+
+  // Show recurring total row(s)
   if (monthlyTotalRow && monthlyTotalEl) {
-    if (hasRecurring) {
+    if (hasRecurring && (hasSingle || cartMixedFreqs)) {
+      // Build per-frequency groups
+      var cartFreqGroups = [
+        { label: 'Monthly Total', suffix: '/mo', items: recurringItems.filter(i => (i.recurringInterval || i.type) === 'monthly') },
+        { label: 'Weekly Total', suffix: '/wk', items: recurringItems.filter(i => (i.recurringInterval || i.type) === 'weekly') },
+        { label: 'Daily Total', suffix: '/day', items: recurringItems.filter(i => (i.recurringInterval || i.type) === 'daily') },
+        { label: 'Yearly Total', suffix: '/yr', items: recurringItems.filter(i => { var f = i.recurringInterval || i.type; return f === 'yearly' || f === 'annual'; }) }
+      ].filter(g => g.items.length > 0);
+
+      // First group uses existing row
+      monthlyTotalRow.style.display = 'flex';
+      monthlyTotalRow.querySelector('span:first-child').textContent = cartFreqGroups[0].label;
+      monthlyTotalEl.textContent = '$' + cartFreqGroups[0].items.reduce((s, i) => s + (i.amount * i.quantity), 0).toFixed(2) + cartFreqGroups[0].suffix;
+
+      // Additional groups get injected rows
+      for (let gi = 1; gi < cartFreqGroups.length; gi++) {
+        const g = cartFreqGroups[gi];
+        const extraRow = document.createElement('div');
+        extraRow.className = 'cart-extra-freq-row flex justify-between text-sm font-semibold text-gray-500 mt-1';
+        const gTotal = g.items.reduce((s, i) => s + (i.amount * i.quantity), 0);
+        extraRow.innerHTML = '<span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + g.label + '</span><span>$' + gTotal.toFixed(2) + g.suffix + '</span>';
+        monthlyTotalRow.parentNode.insertBefore(extraRow, monthlyTotalRow.nextSibling);
+      }
+    } else if (hasRecurring) {
       var recurLabel = hasWeekly ? 'Weekly Total' : hasDaily ? 'Daily Total' : hasYearly || hasAnnual ? 'Yearly Total' : 'Monthly Total';
+      var recurSuffix = hasWeekly ? '/wk' : hasDaily ? '/day' : (hasYearly || hasAnnual) ? '/yr' : '/mo';
       monthlyTotalRow.style.display = 'flex';
       monthlyTotalRow.querySelector('span:first-child').textContent = recurLabel;
-      monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2);
+      monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2) + recurSuffix;
     } else {
       monthlyTotalRow.style.display = 'none';
     }
@@ -2481,10 +2517,16 @@ function updateModalTotal() {
   const hasSingle = singleItems.length > 0;
   const recurringTotal = recurringItems.reduce((sum, i) => sum + (i.amount * i.quantity), 0);
 
+  // Detect mixed recurring frequencies
+  const step2FreqCount = [hasWeekly, hasMonthly, hasYearly, hasDaily].filter(Boolean).length;
+  const step2MixedFreqs = step2FreqCount > 1;
+
   // Dynamic total label
   const step2Label = document.getElementById('step2-total-label');
   if (step2Label) {
-    if (hasRecurring && !hasSingle) {
+    if (step2MixedFreqs) {
+      step2Label.textContent = 'Total due today';
+    } else if (hasRecurring && !hasSingle) {
       step2Label.textContent = hasWeekly ? 'Weekly Total' : hasDaily ? 'Daily Total' : hasYearly ? 'Yearly Total' : 'Monthly Total';
     } else if (hasRecurring && hasSingle) {
       step2Label.textContent = 'Total due today';
@@ -2493,15 +2535,34 @@ function updateModalTotal() {
     }
   }
 
-  // Monthly total row (only when mixed single + recurring)
+  // Monthly total row — show when mixed single+recurring OR mixed frequencies
   const step2MonthlyRow = document.getElementById('step2-monthly-row');
   const step2MonthlyTotal = document.getElementById('step2-monthly-total');
+  // Remove any previously injected extra frequency rows
+  if (step2MonthlyRow) {
+    step2MonthlyRow.parentNode.querySelectorAll('.step2-extra-freq-row').forEach(el => el.remove());
+  }
   if (step2MonthlyRow && step2MonthlyTotal) {
-    if (hasRecurring && hasSingle) {
-      const recurLabel = hasWeekly ? 'Weekly Total' : hasDaily ? 'Daily Total' : hasYearly ? 'Yearly Total' : 'Monthly Total';
-      step2MonthlyRow.querySelector('span:first-child').textContent = recurLabel;
-      step2MonthlyTotal.textContent = '$' + recurringTotal.toFixed(2);
+    if (hasRecurring && (hasSingle || step2MixedFreqs)) {
+      const s2FreqGroups = [
+        { label: 'Monthly Total', suffix: '/mo', items: recurringItems.filter(i => (i.recurringInterval || i.type) === 'monthly') },
+        { label: 'Weekly Total', suffix: '/wk', items: recurringItems.filter(i => (i.recurringInterval || i.type) === 'weekly') },
+        { label: 'Daily Total', suffix: '/day', items: recurringItems.filter(i => (i.recurringInterval || i.type) === 'daily') },
+        { label: 'Yearly Total', suffix: '/yr', items: recurringItems.filter(i => { const f = i.recurringInterval || i.type; return f === 'yearly' || f === 'annual'; }) }
+      ].filter(g => g.items.length > 0);
+
+      step2MonthlyRow.querySelector('span:first-child').textContent = s2FreqGroups[0].label;
+      step2MonthlyTotal.textContent = '$' + s2FreqGroups[0].items.reduce((s, i) => s + (i.amount * i.quantity), 0).toFixed(2) + s2FreqGroups[0].suffix;
       step2MonthlyRow.style.display = 'flex';
+
+      for (let gi = 1; gi < s2FreqGroups.length; gi++) {
+        const g = s2FreqGroups[gi];
+        const extraRow = document.createElement('div');
+        extraRow.className = 'step2-extra-freq-row flex justify-between text-sm font-semibold text-gray-500 mt-1';
+        const gTotal = g.items.reduce((s, i) => s + (i.amount * i.quantity), 0);
+        extraRow.innerHTML = '<span class="uppercase tracking-wide text-xs">' + g.label + '</span><span>$' + gTotal.toFixed(2) + g.suffix + '</span>';
+        step2MonthlyRow.parentNode.insertBefore(extraRow, step2MonthlyRow.nextSibling);
+      }
     } else {
       step2MonthlyRow.style.display = 'none';
     }
@@ -3152,13 +3213,20 @@ function updateTwoStepTotals() {
   var hasRecurring = recurringItems.length > 0;
   var hasSingle = singleItems.length > 0;
 
+  // Determine frequency flags and mixed state
+  var hasWeekly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; });
+  var hasDaily = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; });
+  var hasYearly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; });
+  var hasMonthly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'monthly'; });
+  var tsFreqCount = [hasWeekly, hasMonthly, hasYearly, hasDaily].filter(Boolean).length;
+  var tsMixedFreqs = tsFreqCount > 1;
+
   // Determine total label
   var totalLabel = document.getElementById('ts-total-label');
   if (totalLabel) {
-    if (hasRecurring && !hasSingle) {
-      var hasWeekly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; });
-      var hasDaily = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; });
-      var hasYearly = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; });
+    if (tsMixedFreqs) {
+      totalLabel.textContent = 'Total due today';
+    } else if (hasRecurring && !hasSingle) {
       totalLabel.textContent = hasWeekly ? 'Weekly Total' : hasDaily ? 'Daily Total' : hasYearly ? 'Yearly Total' : 'Monthly Total';
     } else if (hasRecurring && hasSingle) {
       totalLabel.textContent = 'Total due today';
@@ -3171,17 +3239,35 @@ function updateTwoStepTotals() {
   document.getElementById('ts-total').textContent = '$' + total.toFixed(2);
   document.getElementById('ts-cart-total-badge').textContent = '$' + total.toFixed(2);
 
-  // Monthly total row (shown when both single + recurring exist)
+  // Monthly total row — show when mixed single+recurring OR mixed frequencies
   var monthlyRow = document.getElementById('ts-monthly-total-row');
   var monthlyTotalEl = document.getElementById('ts-monthly-total');
+  // Remove any previously injected extra frequency rows
+  if (monthlyRow) {
+    var tsPrevExtra = monthlyRow.parentNode.querySelectorAll('.ts-extra-freq-row');
+    tsPrevExtra.forEach(function(el) { el.remove(); });
+  }
   if (monthlyRow && monthlyTotalEl) {
-    if (hasRecurring && hasSingle) {
-      var recurLabel = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; }) ? 'Weekly Total' :
-                       recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; }) ? 'Daily Total' :
-                       recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; }) ? 'Yearly Total' : 'Monthly Total';
-      monthlyRow.querySelector('span:first-child').textContent = recurLabel;
-      monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2);
+    if (hasRecurring && (hasSingle || tsMixedFreqs)) {
+      var tsFreqGroups = [
+        { label: 'Monthly Total', suffix: '/mo', items: recurringItems.filter(function(i) { return (i.recurringInterval || i.type) === 'monthly'; }) },
+        { label: 'Weekly Total', suffix: '/wk', items: recurringItems.filter(function(i) { return (i.recurringInterval || i.type) === 'weekly'; }) },
+        { label: 'Daily Total', suffix: '/day', items: recurringItems.filter(function(i) { return (i.recurringInterval || i.type) === 'daily'; }) },
+        { label: 'Yearly Total', suffix: '/yr', items: recurringItems.filter(function(i) { var f = i.recurringInterval || i.type; return f === 'yearly' || f === 'annual'; }) }
+      ].filter(function(g) { return g.items.length > 0; });
+
+      monthlyRow.querySelector('span:first-child').textContent = tsFreqGroups[0].label;
+      monthlyTotalEl.textContent = '$' + tsFreqGroups[0].items.reduce(function(s, i) { return s + (i.amount * i.quantity); }, 0).toFixed(2) + tsFreqGroups[0].suffix;
       monthlyRow.style.display = 'flex';
+
+      for (var tgi = 1; tgi < tsFreqGroups.length; tgi++) {
+        var tg = tsFreqGroups[tgi];
+        var tsExtraRow = document.createElement('div');
+        tsExtraRow.className = 'ts-extra-freq-row flex justify-between text-sm font-semibold text-gray-500 mt-1';
+        var tgTotal = tg.items.reduce(function(s, i) { return s + (i.amount * i.quantity); }, 0);
+        tsExtraRow.innerHTML = '<span class="uppercase tracking-wide text-xs">' + tg.label + '</span><span>$' + tgTotal.toFixed(2) + tg.suffix + '</span>';
+        monthlyRow.parentNode.insertBefore(tsExtraRow, monthlyRow.nextSibling);
+      }
     } else {
       monthlyRow.style.display = 'none';
     }
@@ -3894,18 +3980,53 @@ function updateGGCart() {
   var hasWeeklyItems = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'weekly'; });
   var hasDailyItems = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'daily'; });
   var hasYearlyItems = recurringItems.some(function(i) { return (i.recurringInterval || i.type) === 'yearly'; });
+  var hasMonthlyItems = recurringItems.some(function(i) { var f = i.recurringInterval || i.type; return f === 'monthly'; });
   var recurLabel = hasWeeklyItems ? 'Weekly' : hasDailyItems ? 'Daily' : hasYearlyItems ? 'Yearly' : 'Monthly';
   var recurSuffix = hasWeeklyItems ? '/wk' : hasDailyItems ? '/day' : hasYearlyItems ? '/yr' : '/mo';
   var recurFreqText = hasWeeklyItems ? '/ week' : hasDailyItems ? '/ day' : hasYearlyItems ? '/ year' : '/ month';
 
+  // Check for mixed recurring frequencies (e.g. monthly + weekly in same cart)
+  var freqCount = [hasWeeklyItems, hasDailyItems, hasYearlyItems, hasMonthlyItems].filter(Boolean).length;
+  var hasMixedFrequencies = freqCount > 1;
+
+  // Remove any previously injected extra frequency rows
+  var prevExtra = monthlyRow.parentNode.querySelectorAll('.gg-extra-freq-row');
+  prevExtra.forEach(function(el) { el.remove(); });
+
   // Cart totals include fee when coverFees is checked
-  if (hasMixed) {
+  if (hasMixed || hasMixedFrequencies) {
+    // Mixed single+recurring OR mixed recurring frequencies → show "Total due today" + breakdown per frequency
     totalLabel.textContent = 'Total due today:';
-    totalEl.textContent = '$' + (singleTotal + recurringTotal + feeAmount).toFixed(2);
+    totalEl.textContent = '$' + (total).toFixed(2);
     totalFreq.textContent = '';
-    monthlyRow.style.display = 'flex';
-    monthlyRow.querySelector('span:first-child').textContent = recurLabel.toUpperCase() + ' TOTAL';
-    monthlyTotalEl.textContent = '$' + recurringTotal.toFixed(2) + recurSuffix;
+
+    // Build per-frequency breakdown rows
+    var freqGroups = [
+      { key: 'monthly', label: 'MONTHLY TOTAL', suffix: '/mo', items: recurringItems.filter(function(i) { return (i.recurringInterval || i.type) === 'monthly'; }) },
+      { key: 'weekly', label: 'WEEKLY TOTAL', suffix: '/wk', items: recurringItems.filter(function(i) { return (i.recurringInterval || i.type) === 'weekly'; }) },
+      { key: 'daily', label: 'DAILY TOTAL', suffix: '/day', items: recurringItems.filter(function(i) { return (i.recurringInterval || i.type) === 'daily'; }) },
+      { key: 'yearly', label: 'YEARLY TOTAL', suffix: '/yr', items: recurringItems.filter(function(i) { var f = i.recurringInterval || i.type; return f === 'yearly' || f === 'annual'; }) }
+    ].filter(function(g) { return g.items.length > 0; });
+
+    if (freqGroups.length === 1) {
+      // Single frequency — use the existing row
+      monthlyRow.style.display = 'flex';
+      monthlyRow.querySelector('span:first-child').textContent = freqGroups[0].label;
+      monthlyTotalEl.textContent = '$' + freqGroups[0].items.reduce(function(s, i) { return s + (i.amount * (i.quantity || 1)); }, 0).toFixed(2) + freqGroups[0].suffix;
+    } else {
+      // Multiple frequencies — use first row for first group, inject extra rows for the rest
+      monthlyRow.style.display = 'flex';
+      monthlyRow.querySelector('span:first-child').textContent = freqGroups[0].label;
+      monthlyTotalEl.textContent = '$' + freqGroups[0].items.reduce(function(s, i) { return s + (i.amount * (i.quantity || 1)); }, 0).toFixed(2) + freqGroups[0].suffix;
+      for (var gi = 1; gi < freqGroups.length; gi++) {
+        var g = freqGroups[gi];
+        var extraRow = document.createElement('div');
+        extraRow.className = 'gg-extra-freq-row flex justify-between text-sm font-semibold text-gray-500 mt-1';
+        var gTotal = g.items.reduce(function(s, i) { return s + (i.amount * (i.quantity || 1)); }, 0);
+        extraRow.innerHTML = '<span class="uppercase tracking-wide text-xs">' + g.label + '</span><span>$' + gTotal.toFixed(2) + g.suffix + '</span>';
+        monthlyRow.parentNode.insertBefore(extraRow, monthlyRow.nextSibling);
+      }
+    }
   } else if (hasRecurring) {
     totalLabel.textContent = recurLabel + ' Total:';
     totalEl.textContent = '$' + total.toFixed(2);
@@ -3939,13 +4060,29 @@ function updateGGCart() {
   var mobMonthlyAmount = document.getElementById('gg-mobile-monthly-amount');
   // Mobile cart totals include fee when coverFees is checked
   if (mobTotalLabel && mobTotalAmount) {
-    if (hasMixed) {
+    // Remove any previously injected extra frequency rows (mobile)
+    if (mobMonthlyRow) {
+      var prevMobExtra = mobMonthlyRow.parentNode.querySelectorAll('.gg-mob-extra-freq-row');
+      prevMobExtra.forEach(function(el) { el.remove(); });
+    }
+    if (hasMixed || hasMixedFrequencies) {
       mobTotalLabel.textContent = 'Total due today:';
-      mobTotalAmount.textContent = '$' + (singleTotal + recurringTotal + feeAmount).toFixed(2);
+      mobTotalAmount.textContent = '$' + total.toFixed(2);
       if (mobTotalFreq) mobTotalFreq.textContent = '';
-      if (mobMonthlyRow) mobMonthlyRow.style.display = 'flex';
-      if (mobMonthlyLabel) mobMonthlyLabel.textContent = recurLabel.toUpperCase() + ' TOTAL';
-      if (mobMonthlyAmount) mobMonthlyAmount.textContent = '$' + recurringTotal.toFixed(2) + recurSuffix;
+      // Reuse freqGroups from desktop calculation above
+      if (mobMonthlyRow && freqGroups && freqGroups.length > 0) {
+        mobMonthlyRow.style.display = 'flex';
+        if (mobMonthlyLabel) mobMonthlyLabel.textContent = freqGroups[0].label;
+        if (mobMonthlyAmount) mobMonthlyAmount.textContent = '$' + freqGroups[0].items.reduce(function(s, i) { return s + (i.amount * (i.quantity || 1)); }, 0).toFixed(2) + freqGroups[0].suffix;
+        for (var mi = 1; mi < freqGroups.length; mi++) {
+          var mg = freqGroups[mi];
+          var mobExtraRow = document.createElement('div');
+          mobExtraRow.className = 'gg-mob-extra-freq-row flex justify-between items-center px-4 pb-2';
+          var mgTotal = mg.items.reduce(function(s, i) { return s + (i.amount * (i.quantity || 1)); }, 0);
+          mobExtraRow.innerHTML = '<span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">' + mg.label + '</span><span class="text-sm font-semibold text-gray-500">$' + mgTotal.toFixed(2) + mg.suffix + '</span>';
+          mobMonthlyRow.parentNode.insertBefore(mobExtraRow, mobMonthlyRow.nextSibling);
+        }
+      }
     } else if (hasRecurring) {
       mobTotalLabel.textContent = recurLabel + ' Total:';
       mobTotalAmount.textContent = '$' + total.toFixed(2);
@@ -3965,14 +4102,25 @@ function updateGGCart() {
     recurringInfo.style.display = hasRecurring ? 'block' : 'none';
     if (hasRecurring) {
       var bodyEl = document.getElementById('gg-recurring-body');
-      var freqWord = hasWeeklyItems ? 'weekly' : hasDailyItems ? 'daily' : hasYearlyItems ? 'yearly' : 'monthly';
-      var freqPhrase = hasWeeklyItems ? 'each Friday' : hasDailyItems ? 'each day' : hasYearlyItems ? 'each year' : 'each month';
-      // Calculate today's charge and recurring charge
       var todayTotal = total; // total already includes fees if checked
-      var recurringCharge = hasMixed
-        ? (recurringTotal + (coverFees ? Math.round(recurringTotal * feePct * 100) / 100 : 0))
-        : total;
-      if (bodyEl) {
+
+      if (hasMixedFrequencies && bodyEl) {
+        // Mixed frequencies — describe each separately
+        var parts = [];
+        if (freqGroups) {
+          freqGroups.forEach(function(g) {
+            var gAmt = g.items.reduce(function(s, i) { return s + (i.amount * (i.quantity || 1)); }, 0);
+            var word = g.key === 'weekly' ? 'each Friday' : g.key === 'daily' ? 'each day' : g.key === 'yearly' ? 'each year' : 'each month';
+            parts.push('<strong>$' + gAmt.toFixed(2) + '</strong> ' + word);
+          });
+        }
+        bodyEl.innerHTML = '<strong>Your recurring support ensures families receive continuous aid during crisis.</strong> Your credit card will be charged <strong>$' + todayTotal.toFixed(2) + '</strong> today. After that, you will be charged ' + parts.join(' and ') + ' until you cancel your donation. You can edit your recurring donation at any time.';
+      } else if (bodyEl) {
+        var freqWord = hasWeeklyItems ? 'weekly' : hasDailyItems ? 'daily' : hasYearlyItems ? 'yearly' : 'monthly';
+        var freqPhrase = hasWeeklyItems ? 'each Friday' : hasDailyItems ? 'each day' : hasYearlyItems ? 'each year' : 'each month';
+        var recurringCharge = hasMixed
+          ? (recurringTotal + (coverFees ? Math.round(recurringTotal * feePct * 100) / 100 : 0))
+          : total;
         bodyEl.innerHTML = '<strong>Your ' + freqWord + ' support ensures families receive continuous aid during crisis.</strong> Your credit card will be charged <strong>$' + todayTotal.toFixed(2) + '</strong> today. Starting next ' + freqPhrase.replace('each ', '') + ', your credit card will be charged <strong>$' + recurringCharge.toFixed(2) + '</strong> ' + freqPhrase + ' until you cancel your donation. You can edit your recurring donation at any time.';
       }
     }
