@@ -10,6 +10,7 @@ import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTe
 import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
 import ZakatCalculatorTemplate from '../../templates/ZakatCalculatorTemplate.astro';
 import ZakatHubTemplate from '../../templates/ZakatHubTemplate.astro';
+import FoodAidTemplate from '../../templates/FoodAidTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -94,15 +95,14 @@ const campaignProps = {
   template_config: campaign.template_config || {},
 };
 
-// Determine which templates to use (campaign override > site default > fallback)
-// Auto-detect orphan sponsorship pages by slug or category
-const isOrphanSponsorship = slug?.includes('orphan') || campaign.category === 'orphan-sponsorship';
-const orphanTemplate = siteSettings?.orphan_sponsorship_template || 'orphan-sponsorship';
-const pageTemplate = campaign.page_template || (isOrphanSponsorship ? orphanTemplate : null) || siteSettings?.default_campaign_page_template || 'green-with-yellow';
+// Determine which templates to use — page_template is set directly on each campaign in the database
+const pageTemplate = campaign.page_template || siteSettings?.default_campaign_page_template || 'green-with-yellow';
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
 ---
 
-{pageTemplate === 'zakat-hub' ? (
+{pageTemplate === 'food-aid' ? (
+  <FoodAidTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'zakat-hub' ? (
   <ZakatHubTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : pageTemplate === 'zakat-calculator' ? (
   <ZakatCalculatorTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />

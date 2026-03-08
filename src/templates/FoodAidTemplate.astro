@@ -1,0 +1,1007 @@
+---
+/**
+ * FOOD AID LANDING PAGE TEMPLATE
+ *
+ * A high-converting, Google Ads-optimized campaign landing page template.
+ * Designed for maximum conversion with:
+ *   - Hero with embedded donation box (above the fold)
+ *   - Animated impact counters
+ *   - Clickable donation tier cards
+ *   - Crisis/urgency section
+ *   - What's included breakdown
+ *   - How it works 3-step flow
+ *   - Testimonials
+ *   - FAQ accordion with Schema.org markup
+ *   - Sticky mobile CTA bar
+ *   - Final CTA section
+ *
+ * REUSABLE: All content comes from campaign data — not hardcoded.
+ * Can be applied to ANY campaign via the admin template selector.
+ *
+ * Usage: Select "Food Aid Landing Page" from page template dropdown in campaign admin
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import CWDonationBox from '../components/donation/CWDonationBox.astro';
+import TealYellowDonationBox from '../components/donation/TealYellowDonationBox.astro';
+import UrgentAppealDonationBox from '../components/donation/UrgentAppealDonationBox.astro';
+import HomeDonationBox from '../components/donation/HomeDonationBox.astro';
+import { formatTextToHtml } from '../lib/textFormatting';
+
+interface Props {
+  campaign: {
+    id?: string;
+    title: string;
+    hero_title?: string;
+    subtitle?: string;
+    subtitle2?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: Array<{ title?: string; content?: string; image?: string }>;
+    donation_options?: Array<{ amount: number; label?: string }>;
+    gallery_images?: string[];
+    goal_amount?: number;
+    raised_amount?: number;
+    country?: string;
+    category?: string;
+    is_zakat_eligible?: boolean;
+    impact_stats?: Array<{ value: string; label: string }> | Record<string, string>;
+    template_config?: Record<string, any>;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign, donationBoxTemplate = 'cw-donation' } = Astro.props;
+
+// Template config
+const config = campaign.template_config || {};
+const cwConfig = config.cwDonation || {};
+
+// Detect donation box type
+const isCWDonation = donationBoxTemplate === 'cw-donation';
+const isTealYellow = donationBoxTemplate === 'teal-yellow' || donationBoxTemplate === 'dark-teal';
+const isUrgentAppeal = donationBoxTemplate === 'urgent-appeal';
+const isHomeDonation = donationBoxTemplate === 'home-donation';
+
+// Colors (configurable via template_config)
+const colors = config.colors || {};
+const heroBg = colors.heroBg || '#1b4332';
+const heroBgEnd = colors.heroBgEnd || '#2d6a4f';
+const accentColor = colors.accent || '#ef7c01';
+const accentColorLight = colors.accentLight || '#fbbf24';
+const darkSection = colors.darkSection || '#0f2419';
+const ctaBg = colors.ctaBg || '#1b4332';
+
+// Hero content
+const heroTitle = campaign.hero_title || campaign.title || 'Make a Difference Today';
+const heroSubtitle = campaign.subtitle || campaign.description || 'Your generosity can transform lives. Every donation brings hope to families in need.';
+const heroImage = campaign.featured_image || campaign.image_url || '';
+
+// Impact stats
+let impactStats: Array<{ value: string; label: string }> = [];
+if (Array.isArray(campaign.impact_stats) && campaign.impact_stats.length > 0) {
+  impactStats = campaign.impact_stats;
+} else if (campaign.impact_stats && typeof campaign.impact_stats === 'object') {
+  impactStats = Object.entries(campaign.impact_stats).map(([key, value]) => ({
+    value: String(value),
+    label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+  }));
+}
+// Fallback stats if none provided
+if (impactStats.length === 0) {
+  impactStats = config.defaultStats || [
+    { value: '100,000+', label: 'People Served' },
+    { value: '50+', label: 'Countries' },
+    { value: '100%', label: 'Donation Policy' },
+    { value: '25+', label: 'Years of Service' },
+  ];
+}
+
+// Donation tiers
+const donationOptions = (campaign.donation_options && campaign.donation_options.length > 0)
+  ? campaign.donation_options
+  : config.defaultTiers || [
+    { amount: 25, label: 'Provides essential supplies for a family' },
+    { amount: 50, label: 'Supports a family for an entire month' },
+    { amount: 100, label: 'Feeds multiple families with full packages' },
+    { amount: 250, label: 'Transforms an entire community' },
+  ];
+
+// Highlight the 2nd tier as "Most Popular" by default
+const popularTierIndex = config.popularTierIndex ?? 1;
+
+// Content sections
+const contentSections = campaign.content_sections || [];
+const crisisSection = contentSections[0] || config.crisisSection || null;
+const includesSection = contentSections[1] || config.includesSection || null;
+const storiesSection = contentSections[2] || config.storiesSection || null;
+
+// How it works steps
+const steps = config.steps || [
+  { icon: '💝', title: 'Choose Your Impact', desc: 'Select a donation amount that fits your budget' },
+  { icon: '📦', title: 'We Deliver Aid', desc: 'Your donation is used to purchase and deliver supplies' },
+  { icon: '🤲', title: 'Lives Are Changed', desc: 'Families receive the support they desperately need' },
+];
+
+// Testimonials
+const testimonials = config.testimonials || [];
+
+// FAQ items
+const faqItems = config.faqItems || [
+  { question: 'How is my donation used?', answer: 'Your entire donation goes directly to providing aid. We maintain a strict policy ensuring maximum impact for every dollar given.' },
+  { question: 'Is my donation tax-deductible?', answer: 'Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. Your donation is fully tax-deductible to the extent allowed by law.' },
+  { question: 'Can I set up a recurring donation?', answer: 'Absolutely! Monthly giving allows us to plan ahead and provide consistent support. You can set up monthly donations directly through our donation form.' },
+  { question: 'Where does the aid go?', answer: 'We operate in over 50 countries worldwide, reaching communities with the greatest need across Africa, Asia, and the Middle East.' },
+  { question: 'Is this Zakat-eligible?', answer: campaign.is_zakat_eligible ? 'Yes, this campaign is Zakat-eligible. Your Zakat contributions are distributed to qualifying recipients according to Islamic guidelines.' : 'Please check with a scholar regarding Zakat eligibility for this specific campaign. We also offer dedicated Zakat funds.' },
+];
+
+// Gallery images
+const galleryImages = campaign.gallery_images || [];
+
+// Tier icons (can be overridden via template_config)
+const tierIcons = config.tierIcons || ['🍽️', '📦', '🏠', '🌍'];
+
+// Package items — visual grid of what's inside a donation package
+// Each category has a name, icon, color, and list of items
+const packageCategories = config.packageCategories || [
+  {
+    name: 'Staple Grains',
+    icon: '🌾',
+    color: '#d97706',
+    items: ['Rice (10 kg)', 'Flour (10 kg)', 'Lentils (3 kg)', 'Pasta (2 kg)'],
+  },
+  {
+    name: 'Proteins',
+    icon: '🥩',
+    color: '#dc2626',
+    items: ['Chickpeas (3 kg)', 'Beans (3 kg)', 'Canned Meat (3 cans)', 'Eggs (1 tray)'],
+  },
+  {
+    name: 'Cooking Essentials',
+    icon: '🫒',
+    color: '#16a34a',
+    items: ['Cooking Oil (2L)', 'Salt (1 kg)', 'Sugar (2 kg)', 'Tomato Paste (4 cans)'],
+  },
+  {
+    name: 'Nutritious Extras',
+    icon: '🥛',
+    color: '#2563eb',
+    items: ['Powdered Milk (1 kg)', 'Tea (250g)', 'Ghee / Butter (500g)', 'Spices & Seasoning'],
+  },
+];
+
+// Package summary stats (shown above the grid)
+const packageStats = config.packageStats || [
+  { value: '20+', label: 'Essential Items' },
+  { value: '30 Days', label: 'Full Month Supply' },
+  { value: '5-7', label: 'Family Members Fed' },
+];
+
+// Zakat badge
+const isZakatEligible = campaign.is_zakat_eligible || false;
+
+// Serialized config for client-side JS
+const clientConfig = JSON.stringify({
+  slug: campaign.slug,
+  title: campaign.title,
+  accentColor,
+  donationOptions,
+});
+---
+
+<Layout
+  title={campaign.meta_title || `${heroTitle} | Qurbani USA`}
+  description={campaign.meta_description || heroSubtitle}
+>
+  <Navbar />
+
+  <style>
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes countUp {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 124, 1, 0.4); }
+      50% { box-shadow: 0 0 20px 8px rgba(239, 124, 1, 0.15); }
+    }
+    @keyframes slideInMobile {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .fat-fade-in { animation: fadeInUp 0.6s ease-out both; }
+    .fat-fade-in-delay-1 { animation: fadeInUp 0.6s ease-out 0.1s both; }
+    .fat-fade-in-delay-2 { animation: fadeInUp 0.6s ease-out 0.2s both; }
+    .fat-fade-in-delay-3 { animation: fadeInUp 0.6s ease-out 0.3s both; }
+
+    .fat-counter-animate {
+      animation: countUp 0.5s ease-out both;
+    }
+
+    .fat-tier-card {
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .fat-tier-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    .fat-tier-card.popular {
+      border-color: var(--accent-color, #ef7c01);
+      position: relative;
+    }
+    .fat-tier-pulse {
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    /* FAQ Accordion */
+    .fat-faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.35s ease;
+    }
+    .fat-faq-answer.open {
+      max-height: 500px;
+    }
+    .fat-faq-chevron {
+      transition: transform 0.3s ease;
+    }
+    .fat-faq-chevron.open {
+      transform: rotate(180deg);
+    }
+
+    /* Sticky mobile CTA */
+    .fat-sticky-bar {
+      animation: slideInMobile 0.3s ease-out both;
+    }
+
+    /* Smooth scroll target offset */
+    .fat-scroll-target {
+      scroll-margin-top: 80px;
+    }
+
+    /* Counter strip */
+    .fat-stat-value {
+      font-family: 'Signika', sans-serif;
+      font-weight: 700;
+    }
+
+    /* Tier toggle */
+    .fat-toggle-btn {
+      transition: all 0.25s ease;
+    }
+    .fat-toggle-btn.active {
+      background: var(--accent-color, #ef7c01);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(239, 124, 1, 0.3);
+    }
+
+    /* Testimonial card */
+    .fat-testimonial {
+      position: relative;
+    }
+    .fat-testimonial::before {
+      content: '"';
+      position: absolute;
+      top: -8px;
+      left: 16px;
+      font-size: 4rem;
+      line-height: 1;
+      color: var(--accent-color, #ef7c01);
+      opacity: 0.15;
+      font-family: 'Playfair Display', serif;
+    }
+  </style>
+
+  <!-- ===== HERO SECTION ===== -->
+  <section class="relative overflow-hidden" style={`background: linear-gradient(135deg, ${heroBg} 0%, ${heroBgEnd} 100%);`}>
+    {/* Background image overlay */}
+    {heroImage && (
+      <div class="absolute inset-0 z-0">
+        <img src={heroImage} alt="" class="w-full h-full object-cover opacity-20" loading="eager" />
+        <div class="absolute inset-0 bg-gradient-to-r from-[#1b4332]/90 via-[#1b4332]/70 to-[#2d6a4f]/60"></div>
+      </div>
+    )}
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 pt-28 sm:pt-36 pb-12 sm:pb-16">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
+        <!-- Left: Hero Content (3 cols) -->
+        <div class="lg:col-span-3 text-center lg:text-left">
+          {/* Badges */}
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-4 fat-fade-in">
+            {isZakatEligible && (
+              <span class="bg-green-500/20 text-green-300 text-xs font-bold px-3 py-1.5 rounded-full border border-green-500/30">
+                ✓ Zakat Eligible
+              </span>
+            )}
+            <span class="bg-white/10 text-white/90 text-xs font-medium px-3 py-1.5 rounded-full border border-white/20">
+              100% Donation Policy
+            </span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-white leading-tight mb-4 fat-fade-in" style="font-family: 'Signika', sans-serif;">
+            {heroTitle}
+          </h1>
+
+          <p class="text-base sm:text-lg text-white/80 mb-6 max-w-xl mx-auto lg:mx-0 fat-fade-in-delay-1" style="font-family: 'Lato', sans-serif; line-height: 1.7;">
+            {heroSubtitle}
+          </p>
+
+          {campaign.subtitle2 && (
+            <p class="text-sm text-white/60 mb-6 max-w-lg mx-auto lg:mx-0 fat-fade-in-delay-2" style="font-family: 'Lato', sans-serif;">
+              {campaign.subtitle2}
+            </p>
+          )}
+
+          {/* Trust Badges */}
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 mt-6 fat-fade-in-delay-2">
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">Secure Payment</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">501(c)(3) Nonprofit</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">Tax-Deductible</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">50+ Countries</span>
+            </div>
+          </div>
+
+          {/* Mobile: scroll CTA */}
+          <div class="mt-8 lg:hidden fat-fade-in-delay-3">
+            <button onclick="document.getElementById('fat-donation-box-mobile')?.scrollIntoView({behavior:'smooth', block:'center'})" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-white font-bold text-lg transition-all hover:scale-105" style={`background: ${accentColor}; font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(239,124,1,0.4);`}>
+              Donate Now
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Donation Box (2 cols) — desktop only -->
+        <div class="lg:col-span-2 fat-fade-in-delay-2 hidden lg:block" id="fat-donation-box-desktop">
+          {isCWDonation && (
+            <CWDonationBox
+              campaignSlug={campaign.slug}
+              campaignTitle={campaign.title}
+              campaignImage={heroImage}
+              frequencies={cwConfig.frequencies}
+              monthlyAmounts={cwConfig.monthlyAmounts}
+              oneTimeAmounts={cwConfig.oneTimeAmounts}
+              impactTexts={cwConfig.impactTexts}
+              upsellBody={cwConfig.upsellBody}
+              skipUpsell={cwConfig.skipUpsell}
+              colors={cwConfig.colors || { accentColor }}
+              className="shadow-2xl"
+              {...cwConfig}
+            />
+          )}
+          {isTealYellow && (
+            <TealYellowDonationBox
+              campaignSlug={campaign.slug}
+              campaignTitle={campaign.title}
+              donationOptions={donationOptions}
+            />
+          )}
+          {isUrgentAppeal && (
+            <UrgentAppealDonationBox
+              campaignSlug={campaign.slug}
+              campaignTitle={campaign.title}
+              donationOptions={donationOptions}
+            />
+          )}
+          {isHomeDonation && (
+            <HomeDonationBox
+              campaignSlug={campaign.slug}
+              campaignTitle={campaign.title}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== IMPACT COUNTER STRIP ===== -->
+  <section class="py-5 sm:py-6" style={`background: ${darkSection};`} id="fat-counter-strip">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class={`grid grid-cols-2 ${impactStats.length >= 4 ? 'md:grid-cols-4' : impactStats.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 sm:gap-6`}>
+        {impactStats.map((stat, i) => (
+          <div class="text-center">
+            <div class="fat-stat-value text-2xl sm:text-3xl text-white mb-1" data-counter={stat.value}>
+              {stat.value}
+            </div>
+            <div class="text-xs sm:text-sm text-white/50 uppercase tracking-wider" style="font-family: 'Lato', sans-serif;">
+              {stat.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MOBILE DONATION BOX ===== -->
+  <section class="lg:hidden py-8 bg-gray-50" id="fat-donation-box-mobile">
+    <div class="max-w-md mx-auto px-4">
+      {isCWDonation && (
+        <CWDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+          campaignImage={heroImage}
+          frequencies={cwConfig.frequencies}
+          monthlyAmounts={cwConfig.monthlyAmounts}
+          oneTimeAmounts={cwConfig.oneTimeAmounts}
+          impactTexts={cwConfig.impactTexts}
+          upsellBody={cwConfig.upsellBody}
+          skipUpsell={cwConfig.skipUpsell}
+          colors={cwConfig.colors || { accentColor }}
+          {...cwConfig}
+        />
+      )}
+      {isTealYellow && (
+        <TealYellowDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+          donationOptions={donationOptions}
+        />
+      )}
+      {isUrgentAppeal && (
+        <UrgentAppealDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+          donationOptions={donationOptions}
+        />
+      )}
+      {isHomeDonation && (
+        <HomeDonationBox
+          campaignSlug={campaign.slug}
+          campaignTitle={campaign.title}
+        />
+      )}
+    </div>
+  </section>
+
+  <!-- ===== DONATION TIER CARDS ===== -->
+  {donationOptions.length > 0 && (
+    <section class="py-12 sm:py-16 bg-white fat-scroll-target" id="fat-tiers">
+      <div class="max-w-5xl mx-auto px-4">
+        <div class="text-center mb-10">
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-3" style="font-family: 'Signika', sans-serif;">
+            {config.tiersHeading || 'Your Donation Makes an Impact'}
+          </h2>
+          <p class="text-gray-500 max-w-xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            {config.tiersSubheading || 'Choose an amount and see the difference you can make'}
+          </p>
+        </div>
+
+        {/* Single / Monthly Toggle */}
+        <div class="flex items-center justify-center gap-1 mb-8 bg-gray-100 rounded-full p-1 w-fit mx-auto">
+          <button type="button" class="fat-toggle-btn active px-5 py-2 rounded-full text-sm font-semibold" data-mode="single" style={`font-family: 'Lato', sans-serif; --accent-color: ${accentColor};`}>
+            Give Once
+          </button>
+          <button type="button" class="fat-toggle-btn px-5 py-2 rounded-full text-sm font-semibold text-gray-500" data-mode="monthly" style={`font-family: 'Lato', sans-serif; --accent-color: ${accentColor};`}>
+            Monthly
+          </button>
+        </div>
+
+        <div class={`grid grid-cols-1 sm:grid-cols-2 ${donationOptions.length >= 4 ? 'lg:grid-cols-4' : donationOptions.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4 sm:gap-5`}>
+          {donationOptions.map((tier, i) => (
+            <div
+              class={`fat-tier-card rounded-2xl border-2 p-6 text-center bg-white ${i === popularTierIndex ? 'popular fat-tier-pulse' : 'border-gray-200'}`}
+              data-tier-amount={tier.amount}
+              data-tier-index={i}
+              style={i === popularTierIndex ? `--accent-color: ${accentColor}; border-color: ${accentColor};` : `--accent-color: ${accentColor};`}
+            >
+              {i === popularTierIndex && (
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap" style={`background: ${accentColor};`}>
+                  Most Popular
+                </div>
+              )}
+              <div class="text-3xl mb-3">{tierIcons[i] || '💝'}</div>
+              <div class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">
+                ${tier.amount}
+              </div>
+              <div class="fat-tier-suffix text-xs text-gray-400 mb-3 hidden" style="font-family: 'Lato', sans-serif;">/month</div>
+              <p class="text-sm text-gray-500 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                {tier.label || 'Makes a meaningful difference'}
+              </p>
+              <button
+                type="button"
+                class="mt-4 w-full py-2.5 rounded-lg font-semibold text-sm text-white transition-all hover:opacity-90"
+                style={`background: ${accentColor}; font-family: 'Lato', sans-serif;`}
+              >
+                Donate ${tier.amount}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ===== CRISIS / WHY IT MATTERS SECTION ===== -->
+  {crisisSection && (
+    <section class="py-14 sm:py-20" style={`background: linear-gradient(135deg, ${darkSection} 0%, #1a3a2a 100%);`}>
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            {crisisSection.title && (
+              <h2 class="text-2xl sm:text-3xl font-bold text-white mb-5" style="font-family: 'Signika', sans-serif;">
+                {crisisSection.title}
+              </h2>
+            )}
+            {crisisSection.content && (
+              <div class="text-white/80 leading-relaxed space-y-4 text-sm sm:text-base" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(crisisSection.content)} />
+            )}
+            <button
+              type="button"
+              onclick="document.getElementById('fat-donation-box-mobile')?.scrollIntoView({behavior:'smooth'}); document.getElementById('fat-donation-box-desktop')?.scrollIntoView({behavior:'smooth'});"
+              class="mt-8 inline-flex items-center gap-2 px-7 py-3 rounded-full text-white font-bold text-sm transition-all hover:scale-105"
+              style={`background: ${accentColor}; font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(239,124,1,0.3);`}
+            >
+              Donate Now
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </button>
+          </div>
+          {crisisSection.image && (
+            <div class="rounded-2xl overflow-hidden shadow-2xl">
+              <img src={crisisSection.image} alt={crisisSection.title || 'Impact'} class="w-full h-72 sm:h-80 object-cover" loading="lazy" />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ===== WHAT'S INCLUDED / PACKAGE BREAKDOWN ===== -->
+  {packageCategories.length > 0 && (
+    <section class="py-14 sm:py-20 bg-gray-50 fat-scroll-target" id="fat-includes">
+      <div class="max-w-6xl mx-auto px-4">
+        {/* Section Header */}
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider mb-4" style="font-family: 'Lato', sans-serif;">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            What's Inside
+          </div>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3" style="font-family: 'Signika', sans-serif;">
+            {config.packageHeading || 'Every Package Is Packed With Care'}
+          </h2>
+          <p class="text-gray-500 max-w-2xl mx-auto text-sm sm:text-base" style="font-family: 'Lato', sans-serif;">
+            {config.packageSubheading || 'Each food package is carefully assembled with nutritious, locally-sourced items to sustain an entire family for a full month.'}
+          </p>
+        </div>
+
+        {/* Package summary badges */}
+        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-5 mb-10">
+          {packageStats.map((stat) => (
+            <div class="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-100">
+              <span class="text-lg sm:text-xl font-bold" style={`color: ${accentColor}; font-family: 'Signika', sans-serif;`}>{stat.value}</span>
+              <span class="text-xs sm:text-sm text-gray-500" style="font-family: 'Lato', sans-serif;">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Package Categories Grid */}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-10">
+          {packageCategories.map((cat) => (
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+              {/* Category Header */}
+              <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3" style={`background: linear-gradient(135deg, ${cat.color}08, ${cat.color}12);`}>
+                <span class="text-2xl">{cat.icon}</span>
+                <h3 class="font-bold text-gray-900 text-sm" style="font-family: 'Signika', sans-serif;">{cat.name}</h3>
+              </div>
+              {/* Items List */}
+              <ul class="px-5 py-4 space-y-2.5">
+                {cat.items.map((item) => (
+                  <li class="flex items-start gap-2.5 text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">
+                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0" style={`color: ${cat.color};`} fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom note with image */}
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-5 items-center">
+            {/* Image */}
+            {(includesSection?.image || config.packageImage) && (
+              <div class="lg:col-span-2 h-48 sm:h-56 lg:h-full">
+                <img src={includesSection?.image || config.packageImage} alt="Food package contents" class="w-full h-full object-cover" loading="lazy" />
+              </div>
+            )}
+            {/* Text */}
+            <div class={`${(includesSection?.image || config.packageImage) ? 'lg:col-span-3' : 'lg:col-span-5'} p-6 sm:p-8`}>
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm" style={`background: ${accentColor};`}>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+                <h4 class="font-bold text-gray-900" style="font-family: 'Signika', sans-serif;">
+                  {config.packageNote?.title || 'Tailored to Local Needs'}
+                </h4>
+              </div>
+              <p class="text-sm text-gray-500 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                {config.packageNote?.text || 'Every package is customized based on local dietary needs and cultural preferences. We work with local suppliers to source fresh, high-quality ingredients — ensuring families receive food they know and love. Items may vary by region to maximize nutritional value and minimize waste.'}
+              </p>
+              <button
+                type="button"
+                onclick="document.getElementById('fat-donation-box-mobile')?.scrollIntoView({behavior:'smooth'}); document.getElementById('fat-donation-box-desktop')?.scrollIntoView({behavior:'smooth'});"
+                class="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-white font-bold text-sm transition-all hover:scale-105"
+                style={`background: ${accentColor}; font-family: 'Lato', sans-serif;`}
+              >
+                Send a Food Package
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="py-12 sm:py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-3" style="font-family: 'Signika', sans-serif;">
+          {config.howItWorksHeading || 'How It Works'}
+        </h2>
+        <p class="text-gray-500" style="font-family: 'Lato', sans-serif;">
+          {config.howItWorksSubheading || 'Three simple steps to make a difference'}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+        {steps.map((step, i) => (
+          <div class="text-center">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 bg-gray-50 border border-gray-100">
+              {step.icon}
+            </div>
+            <div class="text-xs font-bold uppercase tracking-widest mb-2" style={`color: ${accentColor}; font-family: 'Lato', sans-serif;`}>
+              Step {i + 1}
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">
+              {step.title}
+            </h3>
+            <p class="text-sm text-gray-500 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              {step.desc}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ADDITIONAL CONTENT SECTIONS ===== -->
+  {contentSections.slice(3).map((section, idx) => (
+    <section class={`py-12 sm:py-16 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+      <div class="max-w-5xl mx-auto px-4">
+        <div class={`grid grid-cols-1 lg:grid-cols-2 gap-10 items-center ${idx % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
+          {section.image && (
+            <div class={`rounded-2xl overflow-hidden shadow-lg ${idx % 2 !== 0 ? 'lg:order-2' : ''}`}>
+              <img src={section.image} alt={section.title || ''} class="w-full h-64 sm:h-80 object-cover" loading="lazy" />
+            </div>
+          )}
+          <div class={idx % 2 !== 0 ? 'lg:order-1' : ''}>
+            {section.title && (
+              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4" style="font-family: 'Signika', sans-serif;">
+                {section.title}
+              </h2>
+            )}
+            {section.content && (
+              <div class="text-gray-600 leading-relaxed space-y-4" style="font-family: 'Lato', sans-serif;" set:html={formatTextToHtml(section.content)} />
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <!-- ===== GALLERY ===== -->
+  {galleryImages.length > 0 && (
+    <section class="py-12 sm:py-16 bg-white">
+      <div class="max-w-6xl mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+          {config.galleryHeading || 'See Our Impact'}
+        </h2>
+        <div class={`grid gap-3 sm:gap-4 ${galleryImages.length >= 4 ? 'grid-cols-2 md:grid-cols-4' : galleryImages.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+          {galleryImages.map((img, i) => (
+            <div class="rounded-xl overflow-hidden shadow-md aspect-[4/3]">
+              <img src={img} alt={`Impact image ${i + 1}`} class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ===== TESTIMONIALS ===== -->
+  {testimonials.length > 0 && (
+    <section class="py-12 sm:py-16 bg-gray-50">
+      <div class="max-w-5xl mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+          {config.testimonialsHeading || 'Stories of Impact'}
+        </h2>
+        <div class={`grid grid-cols-1 ${testimonials.length >= 3 ? 'md:grid-cols-3' : testimonials.length === 2 ? 'md:grid-cols-2' : ''} gap-6`}>
+          {testimonials.map((t) => (
+            <div class="fat-testimonial bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <p class="text-gray-600 text-sm leading-relaxed mb-4 italic" style="font-family: 'Lato', sans-serif;">
+                "{t.quote}"
+              </p>
+              <div class="flex items-center gap-3">
+                {t.image && (
+                  <img src={t.image} alt={t.name || ''} class="w-10 h-10 rounded-full object-cover" loading="lazy" />
+                )}
+                <div>
+                  {t.name && <div class="text-sm font-semibold text-gray-800" style="font-family: 'Lato', sans-serif;">{t.name}</div>}
+                  {t.location && <div class="text-xs text-gray-400">{t.location}</div>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ===== FAQ SECTION ===== -->
+  {faqItems.length > 0 && (
+    <section class="py-12 sm:py-16 bg-white fat-scroll-target" id="fat-faq">
+      <div class="max-w-3xl mx-auto px-4">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+          {config.faqHeading || 'Frequently Asked Questions'}
+        </h2>
+
+        <div class="space-y-3" id="fat-faq-container">
+          {faqItems.map((faq, i) => (
+            <div class="border border-gray-200 rounded-xl overflow-hidden">
+              <button
+                type="button"
+                class="fat-faq-toggle w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
+                data-faq={i}
+              >
+                <span class="font-semibold text-gray-800 text-sm sm:text-base pr-4" style="font-family: 'Lato', sans-serif;">{faq.question}</span>
+                <svg class="fat-faq-chevron w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div class="fat-faq-answer px-5">
+                <div class="pb-4 text-sm text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">
+                  {faq.answer}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FAQ Schema.org Markup */}
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqItems.map(faq => ({
+          "@type": "Question",
+          "name": faq.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": faq.answer,
+          }
+        }))
+      })} />
+    </section>
+  )}
+
+  <!-- ===== FINAL CTA SECTION ===== -->
+  <section class="py-14 sm:py-20 text-center" style={`background: linear-gradient(135deg, ${heroBg} 0%, ${heroBgEnd} 100%);`}>
+    <div class="max-w-2xl mx-auto px-4">
+      <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+        {config.ctaHeading || 'Every Donation Changes a Life'}
+      </h2>
+      <p class="text-white/70 mb-8 text-sm sm:text-base" style="font-family: 'Lato', sans-serif;">
+        {config.ctaSubtext || 'Join thousands of donors making a difference. Your generosity brings hope to families in need around the world.'}
+      </p>
+      <button
+        type="button"
+        id="fat-final-cta"
+        class="inline-flex items-center gap-2 px-10 py-4 rounded-full text-white font-bold text-lg transition-all hover:scale-105"
+        style={`background: ${accentColor}; font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(239,124,1,0.4);`}
+      >
+        Donate Now
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== STICKY MOBILE CTA BAR ===== -->
+  <div id="fat-sticky-bar" class="fixed bottom-0 left-0 right-0 z-40 lg:hidden hidden" style={`background: ${heroBg};`}>
+    <div class="fat-sticky-bar flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
+      <div>
+        <div class="text-white font-bold text-sm" style="font-family: 'Signika', sans-serif;">{campaign.title}</div>
+        <div class="text-white/60 text-xs" style="font-family: 'Lato', sans-serif;">100% goes to those in need</div>
+      </div>
+      <button
+        type="button"
+        id="fat-sticky-donate-btn"
+        class="px-6 py-2.5 rounded-full text-white font-bold text-sm transition-all hover:scale-105 flex-shrink-0"
+        style={`background: ${accentColor}; font-family: 'Signika', sans-serif;`}
+      >
+        Donate
+      </button>
+    </div>
+  </div>
+
+  <Footer />
+
+  <!-- ===== CLIENT-SIDE JAVASCRIPT ===== -->
+  <script is:inline define:vars={{ clientConfig }}>
+    (function() {
+      var cfg = JSON.parse(clientConfig);
+
+      // ===== ANIMATED COUNTERS =====
+      var counterObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+          var el = entry.target;
+          var elms = el.querySelectorAll('[data-counter]');
+          elms.forEach(function(counter) {
+            if (counter.dataset.animated) return;
+            counter.dataset.animated = 'true';
+            var target = counter.dataset.counter;
+            // If it contains non-numeric characters (like "100,000+"), animate the numeric part
+            var numMatch = target.replace(/,/g, '').match(/(\d+)/);
+            if (numMatch) {
+              var num = parseInt(numMatch[1]);
+              var prefix = target.substring(0, target.indexOf(numMatch[0]));
+              var suffix = target.substring(target.indexOf(numMatch[0]) + numMatch[0].length);
+              var hasCommas = target.includes(',');
+              var duration = 1500;
+              var start = performance.now();
+
+              function animate(now) {
+                var elapsed = now - start;
+                var progress = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                var eased = 1 - Math.pow(1 - progress, 3);
+                var current = Math.floor(eased * num);
+                var formatted = hasCommas ? current.toLocaleString() : String(current);
+                counter.textContent = prefix + formatted + suffix;
+                if (progress < 1) requestAnimationFrame(animate);
+              }
+              requestAnimationFrame(animate);
+            }
+            counter.classList.add('fat-counter-animate');
+          });
+          counterObserver.unobserve(el);
+        });
+      }, { threshold: 0.3 });
+
+      var counterStrip = document.getElementById('fat-counter-strip');
+      if (counterStrip) counterObserver.observe(counterStrip);
+
+      // ===== TIER CARD CLICKS =====
+      var tierMode = 'single'; // 'single' or 'monthly'
+
+      document.querySelectorAll('.fat-tier-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var amount = parseInt(card.dataset.tierAmount);
+          if (!amount) return;
+          if (typeof window.addToCart === 'function') {
+            window.addToCart({
+              id: cfg.slug + '-' + amount + '-' + tierMode,
+              name: cfg.title,
+              amount: amount,
+              type: tierMode === 'monthly' ? 'monthly' : 'single',
+              campaign: cfg.slug,
+            });
+          }
+        });
+      });
+
+      // ===== SINGLE / MONTHLY TOGGLE =====
+      document.querySelectorAll('.fat-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          tierMode = btn.dataset.mode;
+          document.querySelectorAll('.fat-toggle-btn').forEach(function(b) {
+            b.classList.toggle('active', b.dataset.mode === tierMode);
+          });
+          // Show/hide monthly suffix on tier cards
+          document.querySelectorAll('.fat-tier-suffix').forEach(function(suf) {
+            if (tierMode === 'monthly') {
+              suf.classList.remove('hidden');
+            } else {
+              suf.classList.add('hidden');
+            }
+          });
+        });
+      });
+
+      // ===== FAQ ACCORDION =====
+      document.querySelectorAll('.fat-faq-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var answer = btn.nextElementSibling;
+          var chevron = btn.querySelector('.fat-faq-chevron');
+          var isOpen = answer.classList.contains('open');
+
+          // Close all others
+          document.querySelectorAll('.fat-faq-answer.open').forEach(function(a) {
+            a.classList.remove('open');
+            a.style.maxHeight = '0';
+          });
+          document.querySelectorAll('.fat-faq-chevron.open').forEach(function(c) {
+            c.classList.remove('open');
+          });
+
+          // Toggle current
+          if (!isOpen) {
+            answer.classList.add('open');
+            answer.style.maxHeight = answer.scrollHeight + 'px';
+            chevron.classList.add('open');
+          }
+        });
+      });
+
+      // ===== STICKY MOBILE CTA BAR =====
+      var stickyBar = document.getElementById('fat-sticky-bar');
+      var heroEnd = document.getElementById('fat-counter-strip');
+
+      if (stickyBar && heroEnd) {
+        var stickyObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              stickyBar.classList.add('hidden');
+            } else {
+              // Only show when scrolled past the counter strip (i.e., below it)
+              if (entry.boundingClientRect.top < 0) {
+                stickyBar.classList.remove('hidden');
+              }
+            }
+          });
+        }, { threshold: 0 });
+        stickyObserver.observe(heroEnd);
+      }
+
+      // Sticky bar donate click → scroll to mobile donation box
+      var stickyDonateBtn = document.getElementById('fat-sticky-donate-btn');
+      if (stickyDonateBtn) {
+        stickyDonateBtn.addEventListener('click', function() {
+          var mobileBox = document.getElementById('fat-donation-box-mobile');
+          if (mobileBox) {
+            mobileBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      }
+
+      // Final CTA → scroll to appropriate donation box
+      var finalCta = document.getElementById('fat-final-cta');
+      if (finalCta) {
+        finalCta.addEventListener('click', function() {
+          var isDesktop = window.innerWidth >= 1024;
+          if (isDesktop) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            var mobileBox = document.getElementById('fat-donation-box-mobile');
+            if (mobileBox) mobileBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      }
+
+    })();
+  </script>
+</Layout>

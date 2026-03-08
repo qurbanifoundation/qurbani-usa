@@ -118,6 +118,10 @@ try {
   console.error('Error fetching default templates:', e);
 }
 
+// Build template key → label lookup maps for display in the table
+const templateLabelMap: Record<string, string> = {};
+pageTemplatesData.forEach(t => { templateLabelMap[t.template_key] = t.template_label; });
+
 // Find default template labels
 const defaultPageLabel = pageTemplatesData.find(t => t.template_key === defaultPageTemplate)?.template_label || defaultPageTemplate;
 const defaultDonationLabel = donationBoxTemplatesData.find(t => t.template_key === defaultDonationBoxTemplate)?.template_label || defaultDonationBoxTemplate;
@@ -468,7 +472,7 @@ if (totalPages <= maxVisiblePages) {
                   </div>
                 </td>
                 <td class="px-4 py-4">
-                  <span class="text-sm text-gray-700">{campaign.page_template || 'Default'}</span>
+                  <span class="text-sm text-gray-700">{templateLabelMap[campaign.page_template] || campaign.page_template || 'Default'}</span>
                 </td>
                 <td class="px-4 py-4">
                   <span class="text-sm text-gray-700">{campaign.donation_box_template || 'Default'}</span>
