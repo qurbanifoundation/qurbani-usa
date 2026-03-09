@@ -11,9 +11,28 @@ import Footer from '../../components/Footer.astro';
 
 // Google Places API key
 const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
+
+// Configurable props (defaults to 30-night version)
+interface Props {
+  nights?: number;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  pageTitle?: string;
+  pageDescription?: string;
+  ctaText?: string;
+}
+
+const {
+  nights = 30,
+  heroTitle = "Don't Miss a<br>Single Blessed Night",
+  heroSubtitle = 'Automate your giving across the 30 nights of Ramadan<br>and secure the reward of Laylatul Qadr.',
+  pageTitle = "30 Days of Ramadan - Don't Miss a Single Blessed Night | Qurbani Foundation",
+  pageDescription = 'Automate your Sadaqah across all 30 nights of Ramadan. Set it once, and we\'ll donate on your behalf every night.',
+  ctaText = `Start My ${nights === 10 ? '10 Nights' : '30 Nights'} Giving`,
+} = Astro.props;
 ---
 
-<Layout title="30 Days of Ramadan - Don't Miss a Single Blessed Night | Qurbani Foundation" description="Automate your Sadaqah across all 30 nights of Ramadan. Set it once, and we'll donate on your behalf every night.">
+<Layout title={pageTitle} description={pageDescription}>
   <Navbar />
 
   <!-- Google Places Autocomplete Dropdown Fix -->
@@ -2008,12 +2027,12 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
     <!-- Hero Section - Always visible -->
     <section class="hero-section">
       <div class="hero-content">
-        <h1 class="hero-title">Don't Miss a<br>Single Blessed Night</h1>
-        <p class="hero-subtitle">Automate your giving across the 30 nights of Ramadan<br>and secure the reward of Laylatul Qadr.</p>
+        <h1 class="hero-title" set:html={heroTitle} />
+        <p class="hero-subtitle" set:html={heroSubtitle} />
 
         <div class="hero-stats">
           <div class="stat-item">
-            <div class="stat-value">30</div>
+            <div class="stat-value">{nights}</div>
             <div class="stat-label">Blessed Nights</div>
           </div>
           <div class="stat-item">
@@ -2027,7 +2046,7 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
         </div>
 
         <button class="hero-cta" onclick="window.goToStep(2)">
-          Start My 30 Nights Giving
+          {ctaText}
         </button>
 
         <div>
@@ -2110,47 +2129,97 @@ const googlePlacesApiKey = import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY || '';
         <p class="step-subtitle">Some nights carry the blessings of a lifetime</p>
 
         <div class="schedule-options">
-          <label class="schedule-option selected" data-schedule="all">
-            <input type="radio" name="schedule" value="all" checked>
-            <div class="schedule-checkbox"></div>
-            <div class="schedule-info">
-              <span class="schedule-badge badge-recommended">Recommended</span>
-              <div class="schedule-title">All Remaining Nights</div>
-              <div class="schedule-desc">Don't miss a single blessed night</div>
-            </div>
-            <div class="schedule-nights">
-              <div class="nights-number" id="all-nights-count">30</div>
-              <div class="nights-label">Nights</div>
-            </div>
-          </label>
+          {nights === 10 ? (
+            <!-- 10 Nights version: Last 10 first, Last 5 Odd second, All Remaining last -->
+            <>
+            <label class="schedule-option selected" data-schedule="last10">
+              <input type="radio" name="schedule" value="last10" checked>
+              <div class="schedule-checkbox"></div>
+              <div class="schedule-info">
+                <span class="schedule-badge badge-recommended">Recommended</span>
+                <div class="schedule-title">Last 10 Nights</div>
+                <div class="schedule-desc">Catch Laylatul Qadr with certainty</div>
+              </div>
+              <div class="schedule-nights">
+                <div class="nights-number">10</div>
+                <div class="nights-label">Nights</div>
+              </div>
+            </label>
 
-          <label class="schedule-option" data-schedule="last10">
-            <input type="radio" name="schedule" value="last10">
-            <div class="schedule-checkbox"></div>
-            <div class="schedule-info">
-              <span class="schedule-badge badge-popular">Popular</span>
-              <div class="schedule-title">Last 10 Nights</div>
-              <div class="schedule-desc">Catch Laylatul Qadr with certainty</div>
-            </div>
-            <div class="schedule-nights">
-              <div class="nights-number">10</div>
-              <div class="nights-label">Nights</div>
-            </div>
-          </label>
+            <label class="schedule-option" data-schedule="last5odd">
+              <input type="radio" name="schedule" value="last5odd">
+              <div class="schedule-checkbox"></div>
+              <div class="schedule-info">
+                <span class="schedule-badge badge-sunnah">Sunnah</span>
+                <div class="schedule-title">Last 5 Odd Nights</div>
+                <div class="schedule-desc">The most sacred nights of Ramadan</div>
+              </div>
+              <div class="schedule-nights">
+                <div class="nights-number">5</div>
+                <div class="nights-label">Nights</div>
+              </div>
+            </label>
 
-          <label class="schedule-option" data-schedule="last5odd">
-            <input type="radio" name="schedule" value="last5odd">
-            <div class="schedule-checkbox"></div>
-            <div class="schedule-info">
-              <span class="schedule-badge badge-sunnah">Sunnah</span>
-              <div class="schedule-title">Last 5 Odd Nights</div>
-              <div class="schedule-desc">The most sacred nights of Ramadan</div>
-            </div>
-            <div class="schedule-nights">
-              <div class="nights-number">5</div>
-              <div class="nights-label">Nights</div>
-            </div>
-          </label>
+            <label class="schedule-option" data-schedule="all">
+              <input type="radio" name="schedule" value="all">
+              <div class="schedule-checkbox"></div>
+              <div class="schedule-info">
+                <span class="schedule-badge badge-popular">Popular</span>
+                <div class="schedule-title">All Remaining Nights</div>
+                <div class="schedule-desc">Don't miss a single blessed night</div>
+              </div>
+              <div class="schedule-nights">
+                <div class="nights-number" id="all-nights-count">30</div>
+                <div class="nights-label">Nights</div>
+              </div>
+            </label>
+            </>
+          ) : (
+            <!-- 30 Nights version: All Remaining first (default) -->
+            <>
+            <label class="schedule-option selected" data-schedule="all">
+              <input type="radio" name="schedule" value="all" checked>
+              <div class="schedule-checkbox"></div>
+              <div class="schedule-info">
+                <span class="schedule-badge badge-recommended">Recommended</span>
+                <div class="schedule-title">All Remaining Nights</div>
+                <div class="schedule-desc">Don't miss a single blessed night</div>
+              </div>
+              <div class="schedule-nights">
+                <div class="nights-number" id="all-nights-count">30</div>
+                <div class="nights-label">Nights</div>
+              </div>
+            </label>
+
+            <label class="schedule-option" data-schedule="last10">
+              <input type="radio" name="schedule" value="last10">
+              <div class="schedule-checkbox"></div>
+              <div class="schedule-info">
+                <span class="schedule-badge badge-popular">Popular</span>
+                <div class="schedule-title">Last 10 Nights</div>
+                <div class="schedule-desc">Catch Laylatul Qadr with certainty</div>
+              </div>
+              <div class="schedule-nights">
+                <div class="nights-number">10</div>
+                <div class="nights-label">Nights</div>
+              </div>
+            </label>
+
+            <label class="schedule-option" data-schedule="last5odd">
+              <input type="radio" name="schedule" value="last5odd">
+              <div class="schedule-checkbox"></div>
+              <div class="schedule-info">
+                <span class="schedule-badge badge-sunnah">Sunnah</span>
+                <div class="schedule-title">Last 5 Odd Nights</div>
+                <div class="schedule-desc">The most sacred nights of Ramadan</div>
+              </div>
+              <div class="schedule-nights">
+                <div class="nights-number">5</div>
+                <div class="nights-label">Nights</div>
+              </div>
+            </label>
+            </>
+          )}
         </div>
 
         <button class="main-cta" onclick="window.goToStep(3)">
