@@ -94,11 +94,15 @@ src/
 - **NEVER commit or push directly to `main`** — `main` is production-only
 - **Always work on the `dev` branch** — commit and push code to `dev`
 - **Deployments are manual** (not auto-deploy on push) — CI was disabled because GitHub Actions secrets don't get properly inlined by Astro/Vite at build time
-- Deploy preview: `npm run deploy:preview` → deploys to `dev.qurbani-usa.pages.dev`
-- Deploy production: `npm run deploy:production` → deploys to `www.qurbani.com`
-- Always deploy to preview first, verify it works, then deploy to production
 - A pre-push hook blocks accidental pushes to `main` from other branches
 - Run `npm run verify` before production deploy — it builds and tests under the actual Workers runtime
+
+### Deployment Workflow (ALWAYS FOLLOW THIS ORDER)
+1. **Local first** — test on `localhost:4321` (`npm run dev`)
+2. **Deploy to preview** — `npm run deploy:preview` → verify on `dev.qurbani-usa.pages.dev`
+3. **Deploy to production** — ONLY when the user explicitly says to → `npm run deploy:production` → `www.qurbani.com`
+- **NEVER skip steps** — always go local → dev → production in order
+- **NEVER deploy to production** unless the user explicitly asks for it
 
 ## Common Commands
 ```bash
