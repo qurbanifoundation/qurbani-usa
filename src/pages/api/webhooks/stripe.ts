@@ -376,45 +376,21 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       .catch(err => console.error('GHL pipeline move to Receipt Sent error:', err));
   }
 
-  // Server-side GA4 tracking via Measurement Protocol
-  // This is the bulletproof backup — fires even if client-side tracking fails (ad blockers, etc.)
-  // GA4 deduplicates by transaction_id so this won't double-count
-  try {
-    const GA4_MEASUREMENT_ID = 'G-0WC0W1PBKC';
-    const GA4_API_SECRET = import.meta.env.GA4_API_SECRET;
-
-    if (GA4_API_SECRET) {
-      const mpPayload = {
-        client_id: donation?.donor_email || paymentIntent.id, // Use email as client_id for server-side
-        events: [{
-          name: 'purchase',
-          params: {
-            transaction_id: paymentIntent.id,
-            currency: 'USD',
-            value: parseFloat(donation?.amount || '0'),
-            items: items.map((item: { name: string; amount: number }) => ({
-              item_id: (item.name || 'donation').toLowerCase().replace(/\s+/g, '-'),
-              item_name: item.name || 'Donation',
-              price: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount,
-              quantity: 1,
-            })),
-          }
-        }]
-      };
-
-      await fetch(
-        `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_MEASUREMENT_ID}&api_secret=${GA4_API_SECRET}`,
-        {
-          method: 'POST',
-          body: JSON.stringify(mpPayload),
-        }
-      );
-      console.log('GA4 server-side purchase event sent:', paymentIntent.id);
-    }
-  } catch (ga4Error) {
-    // Non-critical — don't let GA4 errors break payment processing
-    console.error('GA4 Measurement Protocol error:', ga4Error);
-  }
+  // PRIMARY GA4 tracking via Measurement Protocol (server-side)
+  // This is the ONLY GA4 tracking — client-side was removed for reliability.
+  // Fires only on confirmed payments from Stripe webhook, preventing phantom conversions.
+  // Uses the real GA4 client_id from the donor's browser session to preserve user journey attribution.
+  await sendGA4PurchaseEvent({
+    transactionId: paymentIntent.id,
+    value: parseFloat(donation?.amount || '0'),
+    currency: donation?.currency || 'USD',
+    donorEmail: donation?.donor_email || '',
+    gaClientId: donation?.metadata?.ga_client_id || paymentIntent.metadata?.ga_client_id || '',
+    gaSessionId: donation?.metadata?.ga_session_id || paymentIntent.metadata?.ga_session_id || '',
+    items: items,
+    campaignName: donation?.campaign_name || 'General Donation',
+    donationType: donation?.donation_type || 'single',
+  });
 
   // Detect and mark recovered abandoned checkouts
   await detectAndMarkRecovery(
@@ -874,6 +850,28 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
     }
   }
 
+  // GA4 server-side tracking for recurring payments
+  if (donation) {
+    let recurringItems: Array<{ name: string; amount: number; quantity?: number }> = [];
+    if (subscriptionRecord.items) {
+      recurringItems = typeof subscriptionRecord.items === 'string'
+        ? JSON.parse(subscriptionRecord.items)
+        : subscriptionRecord.items;
+    }
+
+    await sendGA4PurchaseEvent({
+      transactionId: paymentIntentId || invoice.id,
+      value: parseFloat(subscriptionRecord.amount),
+      currency: subscriptionRecord.currency || 'USD',
+      donorEmail: subscriptionRecord.donor_email || '',
+      gaClientId: donation?.metadata?.ga_client_id || subscriptionRecord.metadata?.ga_client_id || '',
+      gaSessionId: donation?.metadata?.ga_session_id || subscriptionRecord.metadata?.ga_session_id || '',
+      items: recurringItems.length > 0 ? recurringItems : [{ name: 'Recurring Donation', amount: parseFloat(subscriptionRecord.amount) }],
+      campaignName: recurringItems.length > 0 ? recurringItems[0].name : (isWeekly ? 'Jummah Donation' : 'Monthly Donation'),
+      donationType: donationType,
+    });
+  }
+
   // Detect and mark recovered abandoned checkouts (for first recurring payment)
   if (invoice.billing_reason === 'subscription_cycle' || invoice.billing_reason === 'subscription_create') {
     await detectAndMarkRecovery(
@@ -1142,4 +1140,96 @@ async function detectAndMarkRecovery(
     recoveryStep: checkoutData.recovery_step_last_sent as number,
     checkoutId: checkoutId,
   }).catch(err => console.error('[Recovery] GHL sync error:', err));
+}
+
+// ============================================
+// GA4 MEASUREMENT PROTOCOL (SERVER-SIDE)
+// ============================================
+
+/**
+ * Send purchase event to GA4 via Measurement Protocol.
+ * This is the PRIMARY and ONLY GA4 tracking — all purchase events
+ * are sent server-side from the Stripe webhook for maximum reliability.
+ *
+ * - No ad blocker interference
+ * - No sessionStorage dependency
+ * - Only fires for confirmed payments
+ * - GA4 deduplicates by transaction_id
+ */
+interface GA4PurchaseParams {
+  transactionId: string;
+  value: number;
+  currency: string;
+  donorEmail: string;
+  gaClientId?: string;  // Real GA4 client_id from donor's browser _ga cookie — links to same user
+  gaSessionId?: string; // Real GA4 session_id — links purchase to the correct session (Google Ads click, organic, etc.)
+  items: Array<{ name: string; amount: number; quantity?: number }>;
+  campaignName: string;
+  donationType: string;
+}
+
+async function sendGA4PurchaseEvent(params: GA4PurchaseParams): Promise<void> {
+  try {
+    const GA4_MEASUREMENT_ID = 'G-0WC0W1PBKC';
+    const GA4_API_SECRET = import.meta.env.GA4_API_SECRET;
+
+    if (!GA4_API_SECRET) {
+      console.warn('[GA4] GA4_API_SECRET not configured — skipping server-side tracking for:', params.transactionId);
+      return;
+    }
+
+    if (!params.transactionId || params.value <= 0) {
+      console.warn('[GA4] Invalid transaction data, skipping:', params.transactionId, params.value);
+      return;
+    }
+
+    // Use the real GA4 client_id from the donor's browser session when available.
+    // This links the server-side purchase event to the same user journey (page views, add_to_cart, etc.)
+    // Fallback: generate a deterministic ID from email (won't link to browsing session but avoids errors)
+    const clientId = params.gaClientId
+      || (params.donorEmail ? params.donorEmail.replace(/[^a-zA-Z0-9]/g, '_') : params.transactionId);
+
+    const mpPayload = {
+      client_id: clientId,
+      events: [{
+        name: 'purchase',
+        params: {
+          transaction_id: params.transactionId,
+          currency: params.currency || 'USD',
+          value: params.value,
+          // Session ID links the purchase to the correct session (Google Ads click, organic search, etc.)
+          ...(params.gaSessionId ? { session_id: params.gaSessionId } : {}),
+          // Custom dimensions for reporting
+          campaign_name: params.campaignName,
+          donation_type: params.donationType,
+          items: params.items.map((item) => ({
+            item_id: (item.name || 'donation').toLowerCase().replace(/\s+/g, '-'),
+            item_name: item.name || 'Donation',
+            item_category: params.donationType === 'single' ? 'one-time' : 'recurring',
+            price: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount,
+            quantity: item.quantity || 1,
+          })),
+        },
+      }],
+    };
+
+    const response = await fetch(
+      `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_MEASUREMENT_ID}&api_secret=${GA4_API_SECRET}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mpPayload),
+      }
+    );
+
+    // Measurement Protocol returns 204 on success, 2xx on any accepted request
+    if (response.ok || response.status === 204) {
+      console.log('[GA4] Purchase event sent:', params.transactionId, '| $' + params.value, '|', params.donationType, '| client_id:', params.gaClientId ? 'real' : 'fallback');
+    } else {
+      console.error('[GA4] Measurement Protocol error:', response.status, await response.text());
+    }
+  } catch (ga4Error) {
+    // Non-critical — never let GA4 errors break payment processing
+    console.error('[GA4] Measurement Protocol error:', ga4Error);
+  }
 }

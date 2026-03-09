@@ -11,15 +11,15 @@ const paymentIntentId = Astro.url.searchParams.get('payment_intent') || '';
 const donationId = Astro.url.searchParams.get('donation_id') || '';
 
 // Try to fetch donation details server-side (for 3D Secure redirects where sessionStorage is empty)
-let serverDonation: { amount: string; campaign_name: string; donor_email: string; stripe_payment_intent_id: string; is_recurring: boolean; items: any; } | null = null;
+let serverDonation: { amount: string; campaign_name: string; donor_email: string; stripe_payment_intent_id: string; is_recurring: boolean; items: any; status: string; } | null = null;
 let serverSubscription: { id: string; amount: string; interval: string; next_billing_date: string; management_token: string; } | null = null;
 
 if (donationId || paymentIntentId) {
   try {
-    // Fetch donation by ID or payment intent
+    // Fetch donation by ID or payment intent (include status for tracking validation)
     const query = donationId
-      ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items').eq('id', donationId).single()
-      : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items').eq('stripe_payment_intent_id', paymentIntentId).single();
+      ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items, status').eq('id', donationId).single()
+      : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items, status').eq('stripe_payment_intent_id', paymentIntentId).single();
 
     const { data } = await query;
     if (data) {
@@ -216,6 +216,9 @@ function getFreqLabel(type: string): string {
     </div>
   </main>
 
+  <!-- Hidden element for server-side donation status (used by tracking validation) -->
+  <div id="donation-status" data-status={serverDonation?.status || ''} data-pi={serverDonation?.stripe_payment_intent_id || ''} class="hidden"></div>
+
   <Footer />
 </Layout>
 
@@ -337,54 +340,59 @@ function getFreqLabel(type: string): string {
       }
     }
 
-    // --- FIRE GA4 + GOOGLE ADS TRACKING ---
-    // Wait for gtag to be available, then fire
-    function fireTracking() {
+    // --- GOOGLE ADS CONVERSION TRACKING (client-side) ---
+    // GA4 purchase events are tracked SERVER-SIDE via Stripe webhook → Measurement Protocol.
+    // Only Google Ads conversion tracking remains client-side here.
+    function fireAdsTracking(retryCount) {
+      retryCount = retryCount || 0;
+
       if (typeof window.gtag !== 'function') {
-        // Wait and retry
-        setTimeout(fireTracking, 200);
+        if (retryCount < 75) {
+          setTimeout(function() { fireAdsTracking(retryCount + 1); }, 200);
+        }
         return;
       }
 
-      var transactionId, value, gaItems;
+      var transactionId, value;
 
       if (purchaseData) {
-        // Normal flow: data from sessionStorage
         transactionId = purchaseData.transaction_id;
         value = purchaseData.total;
-        gaItems = purchaseData.items.map(function(item) {
-          return {
-            item_id: item.id,
-            item_name: item.name,
-            item_category: item.category || 'donation',
-            price: item.amount,
-            quantity: item.quantity || 1
-          };
-        });
       } else {
-        // 3D Secure flow: get payment_intent from URL, use server-rendered amount
+        // 3D Secure fallback: get from URL params + server-rendered amount
         var urlParams = new URLSearchParams(window.location.search);
         transactionId = urlParams.get('payment_intent');
         var amountText = document.getElementById('success-amount')?.textContent || '0';
         value = parseFloat(amountText.replace('$', '')) || 0;
-        gaItems = [{ item_id: 'donation', item_name: 'Donation', price: value, quantity: 1 }];
       }
 
-      if (!transactionId) {
-        console.log('[Tracking] No transaction ID found, skipping tracking');
+      if (!transactionId || value <= 0) {
+        console.log('[Tracking] No valid transaction data for Ads tracking');
+        sessionStorage.removeItem('qurbani_purchase');
         return;
       }
 
-      // GA4 Purchase Event
-      window.gtag('event', 'purchase', {
-        transaction_id: transactionId,
-        currency: 'USD',
-        value: value,
-        items: gaItems,
-        send_to: 'G-0WC0W1PBKC'
-      });
+      // Validate: check server-rendered donation status
+      var statusEl = document.getElementById('donation-status');
+      var donationStatus = statusEl ? statusEl.getAttribute('data-status') : '';
 
-      // Google Ads Conversion
+      if (donationStatus === 'failed' || donationStatus === 'refunded' || donationStatus === 'disputed') {
+        console.log('[Tracking] Donation status is ' + donationStatus + ', skipping Ads tracking');
+        sessionStorage.removeItem('qurbani_purchase');
+        return;
+      }
+
+      // Reject stale sessionStorage (older than 30 minutes)
+      if (purchaseData && purchaseData.timestamp) {
+        var ageMinutes = (Date.now() - purchaseData.timestamp) / 60000;
+        if (ageMinutes > 30) {
+          console.log('[Tracking] Stale sessionStorage (' + Math.round(ageMinutes) + ' min), skipping');
+          sessionStorage.removeItem('qurbani_purchase');
+          return;
+        }
+      }
+
+      // Google Ads Conversion (client-side only)
       window.gtag('event', 'conversion', {
         'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
         'value': value,
@@ -392,13 +400,12 @@ function getFreqLabel(type: string): string {
         'transaction_id': transactionId
       });
 
-      console.log('[Tracking] Purchase event fired — transaction:', transactionId, 'value:', value);
+      console.log('[Tracking] Google Ads conversion fired — transaction:', transactionId, 'value: $' + value);
 
       // Clear sessionStorage to prevent duplicate tracking on refresh
       sessionStorage.removeItem('qurbani_purchase');
     }
 
-    // Fire tracking after a short delay to ensure gtag is loaded
-    setTimeout(fireTracking, 100);
+    setTimeout(fireAdsTracking, 100);
   })();
 </script>

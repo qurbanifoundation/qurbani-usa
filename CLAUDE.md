@@ -55,7 +55,8 @@ src/
 `campaigns`, `categories`, `site_settings`, `donations`, `donation_subscriptions`,
 `subscription_payments`, `webhook_events`, `donor_notifications`, `template_options`,
 `leads`, `ghl_tokens`, `ghl_webhook_logs`, `orders`, `order_items`, `packages`,
-`donation_disputes`, `admin_notifications`, `mega_menus`, `menu_widgets`
+`donation_disputes`, `admin_notifications`, `mega_menus`, `menu_widgets`,
+`woo_customers`, `woo_orders`
 
 ## API Endpoints
 | Endpoint | Purpose |
@@ -85,6 +86,7 @@ src/
 | `scripts/setup-categories.mjs` | Categories table + seed |
 | `scripts/seed-emergency-campaigns.mjs` | Seed emergency campaigns |
 | `scripts/run-migration.mjs` | Run generic migrations |
+| `scripts/import-woocommerce.mjs` | Import WooCommerce customers & orders from CSV into Supabase + GHL sync |
 
 **Always check `scripts/` before creating new migration scripts.**
 
@@ -117,6 +119,8 @@ PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 GHL_API_KEY, GHL_LOCATION_ID=W0zaxipAVHwutqUazGwL
 # Google Places
 PUBLIC_GOOGLE_PLACES_API_KEY
+# Google Analytics (GA4 server-side)
+GA4_API_SECRET, GA4_MEASUREMENT_ID=G-0WC0W1PBKC
 # Resend
 RESEND_API_KEY, ADMIN_EMAIL=qurbanifoundation@gmail.com
 # Cloudflare
@@ -128,6 +132,35 @@ I am the Senior Developer with **FULL ADMIN ACCESS** to the entire stack (Databa
 
 ## Timezone
 - Server: UTC | Display: Eastern Time (America/New_York)
+
+## GA4 Server-Side Tracking
+- **Architecture**: Stripe webhook → GA4 Measurement Protocol (no client-side `purchase` event)
+- **Flow**: DonationCart.astro captures `client_id` (from `_ga` cookie) + `session_id` (from `_ga_0WC0W1PBKC` cookie) → passed as Stripe metadata → webhook reads metadata and sends `purchase` event server-side
+- **Measurement ID**: `G-0WC0W1PBKC`
+- **API Secret**: Set in `.env` and Cloudflare Pages dashboard as `GA4_API_SECRET`
+- **Key files**: `src/components/DonationCart.astro` (cookie capture), `src/pages/api/webhooks/stripe.ts` (sends GA4 event), `src/pages/api/payments/create-intent.ts` & `create-subscription.ts` (pass metadata)
+- **Why server-side**: Prevents phantom conversions from client-side firing without payment validation
+
+## WooCommerce Import System
+- **Purpose**: Imported 992 customers and 1,154 orders from old WordPress/WooCommerce site for remarketing
+- **Data source**: `data/woocommerce-orders.csv` (1,646 rows, multi-row per order)
+- **Script**: `scripts/import-woocommerce.mjs` — parses CSV, deduplicates, categorizes, imports to Supabase, optionally syncs to GHL
+  - Flags: `--dry-run` (analyze only), `--sync-ghl` (sync to GoHighLevel)
+- **Tables**: `woo_customers` (992 rows) and `woo_orders` (1,154 rows) in Supabase
+- **Admin page**: `/admin/woo-customers` — Customers tab (search, filter by category/tier) + Orders tab + click-through customer detail view
+- **GHL sync**: 981 contacts synced with structured prefix-based tags
+
+## GHL Tag Architecture (Structured / Prefix-Based)
+All GHL tags for WooCommerce imports use prefix-based structure (NOT flat tags):
+- `source:woocommerce`, `migration:woocommerce`, `donor:existing`, `donor:repeat`, `donor:major`
+- Campaign tags: `campaign:qurbani`, `campaign:aqiqah`, `campaign:zakat`, `campaign:ramadan`, `campaign:orphan`, `campaign:education`, `campaign:emergency`, `campaign:palestine`, `campaign:water`, `campaign:healthcare`, `campaign:sadaqah`, `campaign:general`
+- Tier tags: `tier:platinum` (≥$5K), `tier:gold` (≥$1K), `tier:silver` (≥$250), `tier:bronze` (<$250)
+- Custom fields: `total_lifetime_giving`, `donation_count`, `first_donation_date`, `last_donation_date`, `largest_donation`, `campaigns_donated`, `donor_tier`
+
+## Email Architecture
+- **Resend** = Transactional emails ONLY (donation receipts, subscription confirmations, password resets)
+- **GoHighLevel** = Marketing / relationship emails (re-introduction campaigns, newsletters, appeals, follow-ups)
+- Re-marketing campaigns (e.g., WooCommerce donor re-introduction) go through GHL, NOT Resend
 
 ## Detailed Documentation
 For deep-dive reference on specific systems, see:

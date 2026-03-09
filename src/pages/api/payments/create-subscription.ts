@@ -62,6 +62,8 @@ export const POST: APIRoute = async ({ request }) => {
       feeAmount = 0,
       baseAmount,
       resumeToken,
+      ga_client_id,
+      ga_session_id,
     } = body;
 
     // Validate required fields
@@ -216,6 +218,14 @@ export const POST: APIRoute = async ({ request }) => {
       subMetadata.customer_phone = customer.phone || '';
     }
 
+    // GA4 tracking IDs for server-side Measurement Protocol (preserves user journey + session attribution)
+    if (ga_client_id) {
+      subMetadata.ga_client_id = ga_client_id;
+    }
+    if (ga_session_id) {
+      subMetadata.ga_session_id = ga_session_id;
+    }
+
     // Create subscription with the saved payment method
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
@@ -351,6 +361,8 @@ export const POST: APIRoute = async ({ request }) => {
           is_jummah: isWeekly,
           subscription_id: subscriptionRecord?.id,
           ...(resumeToken ? { resume_token: resumeToken } : {}),
+          ...(ga_client_id ? { ga_client_id } : {}),
+          ...(ga_session_id ? { ga_session_id } : {}),
         },
       })
       .select()
@@ -390,6 +402,12 @@ export const POST: APIRoute = async ({ request }) => {
         singleMetadata.customer_email = customer.email;
         singleMetadata.customer_name = `${customer.firstName} ${customer.lastName}`;
         singleMetadata.customer_phone = customer.phone || '';
+      }
+      if (ga_client_id) {
+        singleMetadata.ga_client_id = ga_client_id;
+      }
+      if (ga_session_id) {
+        singleMetadata.ga_session_id = ga_session_id;
       }
 
       // Create and confirm PaymentIntent using the saved payment method (off-session)
@@ -450,6 +468,8 @@ export const POST: APIRoute = async ({ request }) => {
             is_recurring: false,
             linked_subscription_id: subscription.id,
             ...(resumeToken ? { resume_token: resumeToken } : {}),
+            ...(ga_client_id ? { ga_client_id } : {}),
+            ...(ga_session_id ? { ga_session_id } : {}),
           },
         })
         .select()

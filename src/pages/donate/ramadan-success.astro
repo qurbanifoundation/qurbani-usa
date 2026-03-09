@@ -161,44 +161,28 @@ const managementUrl = token ? `/manage-donation/${token}` : null;
 </script>
 
 <script is:inline>
-  // GA4 + Google Ads Conversion Tracking for Ramadan 30-Days donations
+  // Google Ads Conversion Tracking for Ramadan 30-Days donations (client-side only)
+  // GA4 purchase events are tracked SERVER-SIDE via Stripe webhook → Measurement Protocol
   (function() {
-    function fireTracking() {
+    function fireAdsTracking() {
       if (typeof window.gtag !== 'function') {
-        setTimeout(fireTracking, 200);
+        setTimeout(fireAdsTracking, 200);
         return;
       }
 
       var purchaseDataStr = sessionStorage.getItem('qurbani_purchase');
-      if (!purchaseDataStr) {
-        console.log('[Tracking] No Ramadan purchase data found in sessionStorage');
-        return;
-      }
+      if (!purchaseDataStr) return;
 
       try {
         var purchase = JSON.parse(purchaseDataStr);
 
-        // Only fire if recent (within 5 minutes)
-        if (Date.now() - purchase.timestamp > 300000) return;
+        // Only fire if recent (within 5 minutes) and has transaction_id
+        if (Date.now() - purchase.timestamp > 300000 || !purchase.transaction_id) {
+          sessionStorage.removeItem('qurbani_purchase');
+          return;
+        }
 
-        // GA4 Purchase Event
-        window.gtag('event', 'purchase', {
-          transaction_id: purchase.transaction_id,
-          currency: 'USD',
-          value: purchase.total,
-          items: purchase.items.map(function(item) {
-            return {
-              item_id: item.id,
-              item_name: item.name,
-              item_category: item.category || '30-days-of-ramadan',
-              price: item.amount,
-              quantity: item.quantity || 1
-            };
-          }),
-          send_to: 'G-0WC0W1PBKC'
-        });
-
-        // Google Ads Conversion
+        // Google Ads Conversion only (GA4 handled server-side)
         window.gtag('event', 'conversion', {
           'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
           'value': purchase.total,
@@ -206,15 +190,13 @@ const managementUrl = token ? `/manage-donation/${token}` : null;
           'transaction_id': purchase.transaction_id
         });
 
-        console.log('[Tracking] Ramadan purchase event fired — transaction:', purchase.transaction_id, 'value:', purchase.total);
-
-        // Clear to prevent duplicate on refresh
+        console.log('[Tracking] Ramadan Google Ads conversion fired — transaction:', purchase.transaction_id, 'value: $' + purchase.total);
         sessionStorage.removeItem('qurbani_purchase');
       } catch(e) {
         console.error('[Tracking] Error:', e);
       }
     }
 
-    setTimeout(fireTracking, 100);
+    setTimeout(fireAdsTracking, 100);
   })();
 </script>

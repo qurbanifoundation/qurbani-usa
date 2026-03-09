@@ -1428,6 +1428,41 @@ function loadGooglePlaces() {
   window.donationCart.placesLoaded = true;
 }
 
+// Get GA4 client_id from _ga cookie for server-side Measurement Protocol tracking
+// The _ga cookie format is: GA1.1.XXXXXXXXXX.XXXXXXXXXX — we need the last two parts
+function getGA4ClientId() {
+  try {
+    var match = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/);
+    if (match && match[1]) return match[1];
+    // Fallback: try gtag API
+    if (typeof window.gtag === 'function') {
+      var cid = null;
+      window.gtag('get', 'G-0WC0W1PBKC', 'client_id', function(id) { cid = id; });
+      if (cid) return cid;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// Get GA4 session_id for server-side Measurement Protocol tracking
+// Without session_id, the purchase event won't link to the correct session
+// (e.g. Google Ads click session) and may show as "direct" in attribution reports
+function getGA4SessionId() {
+  try {
+    // Session cookie: _ga_<STREAM_ID> where STREAM_ID = measurement ID minus "G-"
+    // For G-0WC0W1PBKC → _ga_0WC0W1PBKC
+    var match = document.cookie.match(/_ga_0WC0W1PBKC=GS\d+\.\d+\.(\d+)/);
+    if (match && match[1]) return match[1];
+    // Fallback: try gtag API
+    if (typeof window.gtag === 'function') {
+      var sid = null;
+      window.gtag('get', 'G-0WC0W1PBKC', 'session_id', function(id) { sid = id; });
+      if (sid) return String(sid);
+    }
+  } catch(e) {}
+  return null;
+}
+
 // Initialize Places Autocomplete
 window.initPlacesAutocomplete = function() {
   console.log('=== initPlacesAutocomplete called ===');
@@ -2882,6 +2917,8 @@ async function handlePayment() {
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          ga_client_id: getGA4ClientId(),
+          ga_session_id: getGA4SessionId(),
         }),
       });
 
@@ -2949,6 +2986,8 @@ async function handlePayment() {
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          ga_client_id: getGA4ClientId(),
+          ga_session_id: getGA4SessionId(),
         }),
       });
 
@@ -3364,6 +3403,7 @@ async function mountTwoStepPaymentElement() {
         coverFees: coverFees,
         feeAmount: feeAmount,
         baseAmount: total - feeAmount,
+        ga_client_id: getGA4ClientId(),
       }),
     });
 
@@ -4350,6 +4390,8 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          ga_client_id: getGA4ClientId(),
+          ga_session_id: getGA4SessionId(),
         }),
       });
       var subData = await subResponse.json();
@@ -4396,6 +4438,8 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          ga_client_id: getGA4ClientId(),
+          ga_session_id: getGA4SessionId(),
         }),
       });
       var data = await response.json();

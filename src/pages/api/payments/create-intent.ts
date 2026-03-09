@@ -23,7 +23,7 @@ const STRIPE_INTERVALS: Record<string, string> = {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken } = body;
+    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken, ga_client_id, ga_session_id } = body;
 
     // Validate amount
     if (!amount || amount < 1) {
@@ -169,6 +169,14 @@ export const POST: APIRoute = async ({ request }) => {
       metadata.customer_phone = customer.phone || '';
     }
 
+    // GA4 tracking IDs for server-side Measurement Protocol (preserves user journey + session attribution)
+    if (ga_client_id) {
+      metadata.ga_client_id = ga_client_id;
+    }
+    if (ga_session_id) {
+      metadata.ga_session_id = ga_session_id;
+    }
+
     // Abandoned checkout recovery token
     if (resumeToken) {
       metadata.resume_token = resumeToken;
@@ -251,6 +259,8 @@ export const POST: APIRoute = async ({ request }) => {
         metadata: {
           stripe_customer_id: stripeCustomerId,
           billing_address: billingAddress || null,
+          ...(ga_client_id ? { ga_client_id } : {}),
+          ...(ga_session_id ? { ga_session_id } : {}),
         },
       })
       .select()

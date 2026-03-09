@@ -4,7 +4,7 @@
  * Smart-trigger upsell popup — shows once every 3 days to engaged users.
  * Triggers after 8s on page AND user has scrolled ≥30% of the page.
  * Uses localStorage with 3-day cooldown so returning visitors aren't pestered.
- * Directs users to /ramadan-giving to schedule their 30-night Ramadan donations.
+ * Directs users to /ramadan/my30days to schedule their 30-night Ramadan donations.
  */
 ---
 
@@ -89,7 +89,7 @@
         </div>
 
         <!-- CTA Button -->
-        <a href="/ramadan-giving" id="ramadan-popup-cta" class="block w-full text-center py-3.5 px-6 rounded-xl font-bold text-[15px] text-[#1a1a1a] bg-[#fdc448] hover:bg-[#efb000] active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg" style="font-family: 'Signika', sans-serif;">
+        <a href="/ramadan/my30days" id="ramadan-popup-cta" class="block w-full text-center py-3.5 px-6 rounded-xl font-bold text-[15px] text-[#1a1a1a] bg-[#fdc448] hover:bg-[#efb000] active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg" style="font-family: 'Signika', sans-serif;">
           Schedule Your Ramadan Giving
           <span class="inline-block ml-1 transition-transform group-hover:translate-x-1">→</span>
         </a>
@@ -119,7 +119,7 @@
   var MIN_SCROLL_PERCENT = 30; // User must scroll 30% of the page
 
   // Don't show on the ramadan-giving page itself
-  if (window.location.pathname.indexOf('/ramadan-giving') === 0) return;
+  if (window.location.pathname.indexOf('/ramadan/my30days') === 0) return;
 
   // Check localStorage cooldown — don't show if dismissed within last 3 days
   var lastShown = localStorage.getItem(COOLDOWN_KEY);

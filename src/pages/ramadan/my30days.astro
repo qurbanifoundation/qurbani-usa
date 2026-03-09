@@ -11,11 +11,11 @@
  */
 export const prerender = false;
 
-import { supabaseAdmin } from '../lib/supabase';
+import { supabaseAdmin } from '../../lib/supabase';
 
 // Import available templates
-import AmanahTemplate from '../templates/ramadan/AmanahTemplate.astro';
-import PennyAppealTemplate from '../templates/ramadan/PennyAppealTemplate.astro';
+import AmanahTemplate from '../../templates/ramadan/AmanahTemplate.astro';
+import PennyAppealTemplate from '../../templates/ramadan/PennyAppealTemplate.astro';
 
 // Fetch current template setting from database
 let currentTemplate = 'amanah'; // Default to amanah

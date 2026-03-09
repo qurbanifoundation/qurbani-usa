@@ -32,8 +32,14 @@
 # Ramadan related
 /ramadan-donation*   /ramadan 301
 /ramadan-appeal*     /ramadan 301
-/ramadan-amanah*     /ramadan-giving 301
-/30-days-of-ramadan* /ramadan-giving 301
+/ramadan-amanah*     /ramadan/my30days 301
+/30-days-of-ramadan* /ramadan/my30days 301
+/ramadan/30days      /ramadan/my30days 301
+/ramadan/30days/     /ramadan/my30days 301
+/ramadan-giving      /ramadan/my30days 301
+/ramadan-giving/     /ramadan/my30days 301
+/my30days            /ramadan/my30days 301
+/my30days/           /ramadan/my30days 301
 /iftar-donation*     /iftar 301
 /feed-fasting*       /iftar 301
 /fidyah*             /fidya 301
@@ -60,10 +66,13 @@
 /contact-us*         /contact 301
 /get-in-touch*       /contact 301
 
-# Legal
-/privacy*            /privacy-policy 301
-/terms*              /terms-of-service 301
-/cookies*            /cookie-policy 301
+# Legal (exact matches only — wildcards would catch the target pages themselves)
+/privacy             /privacy-policy 301
+/privacy/            /privacy-policy 301
+/terms               /terms-of-service 301
+/terms/              /terms-of-service 301
+/cookies             /cookie-policy 301
+/cookies/            /cookie-policy 301
 
 # Campaigns/Appeals
 /campaign/*          /appeals/:splat 301
