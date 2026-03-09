@@ -209,8 +209,8 @@ export async function getRamadanTenNightsTemplates(): Promise<TemplateOption[]> 
   if (error || !data || data.length === 0) {
     console.error('Error fetching Ramadan Ten Nights templates:', error);
     return [
-      { id: 1, template_type: 'ramadan_tennights' as any, template_key: 'pennyappeal', template_label: 'PennyAppeal Style', description: 'Original 30 Days of Ramadan wizard with green theme, daily giving automation, multipliers, and Night 27 options', is_active: true, sort_order: 1 },
-      { id: 2, template_type: 'ramadan_tennights' as any, template_key: 'amanah', template_label: 'Amanah Style', description: 'Modern mobile-first 6-step wizard with cloud background, amplify options, and streamlined checkout', is_active: true, sort_order: 2 },
+      { id: 1, template_type: 'ramadan_tennights' as any, template_key: 'pennyappeal', template_label: 'My Ten Nights - PennyAppeal', description: 'Green-themed wizard adapted for Last 10 Nights of Ramadan giving', is_active: true, sort_order: 1 },
+      { id: 2, template_type: 'ramadan_tennights' as any, template_key: 'amanah', template_label: 'My Ten Nights - Amanah', description: 'Modern 6-step wizard configured for Last 10 Nights with "Never Miss Laylatul Qadr" hero, reordered schedule options, and 10-night pricing', is_active: true, sort_order: 2 },
     ];
   }
 
