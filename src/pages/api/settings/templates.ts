@@ -29,6 +29,9 @@ export const PUT: APIRoute = async ({ request }) => {
     if (data.ramadan_page_template !== undefined) {
       updateData.ramadan_page_template = data.ramadan_page_template;
     }
+    if (data.ramadan_tennights_template !== undefined) {
+      updateData.ramadan_tennights_template = data.ramadan_tennights_template;
+    }
     if (data.checkout_template !== undefined) {
       updateData.checkout_template = data.checkout_template;
     }
@@ -71,6 +74,7 @@ export const PUT: APIRoute = async ({ request }) => {
           orphan_sponsorship_template: data.orphan_sponsorship_template || 'orphan-sponsorship',
           homepage_template: data.homepage_template || 'pennybill',
           ramadan_page_template: data.ramadan_page_template || 'pennyappeal',
+          ramadan_tennights_template: data.ramadan_tennights_template || 'amanah',
           checkout_template: data.checkout_template || 'three-step',
         });
 
@@ -102,7 +106,7 @@ export const GET: APIRoute = async () => {
   try {
     const { data, error } = await supabaseAdmin
       .from('site_settings')
-      .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template, checkout_template')
+      .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template, ramadan_tennights_template, checkout_template')
       .limit(1)
       .single();
 
@@ -115,6 +119,7 @@ export const GET: APIRoute = async () => {
         orphan_sponsorship_template: 'orphan-sponsorship',
         homepage_template: 'pennybill',
         ramadan_page_template: 'pennyappeal',
+        ramadan_tennights_template: 'amanah',
         checkout_template: 'three-step',
       }), {
         status: 200,
@@ -129,6 +134,7 @@ export const GET: APIRoute = async () => {
       orphan_sponsorship_template: data.orphan_sponsorship_template || 'orphan-sponsorship',
       homepage_template: data.homepage_template || 'pennybill',
       ramadan_page_template: data.ramadan_page_template || 'pennyappeal',
+      ramadan_tennights_template: data.ramadan_tennights_template || 'amanah',
       checkout_template: data.checkout_template || 'three-step',
     }), {
       status: 200,
@@ -143,6 +149,7 @@ export const GET: APIRoute = async () => {
       orphan_sponsorship_template: 'orphan-sponsorship',
       homepage_template: 'pennybill',
       ramadan_page_template: 'pennyappeal',
+      ramadan_tennights_template: 'amanah',
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

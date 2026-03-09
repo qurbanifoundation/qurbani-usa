@@ -3,7 +3,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SettingsTabs from '../../../components/admin/SettingsTabs.astro';
 import TemplateColorEditor from '../../../components/admin/TemplateColorEditor.astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates, getRamadanPageTemplates, getCheckoutTemplates } from '../../../lib/templates';
+import { getPageTemplates, getDonationBoxTemplates, getAppealsPageTemplates, getOrphanSponsorshipTemplates, getHomepageTemplates, getRamadanPageTemplates, getRamadanTenNightsTemplates, getCheckoutTemplates } from '../../../lib/templates';
 
 export const prerender = false;
 
@@ -14,6 +14,7 @@ const appealsPageTemplates = await getAppealsPageTemplates();
 const orphanSponsorshipTemplates = await getOrphanSponsorshipTemplates();
 const homepageTemplates = await getHomepageTemplates();
 const ramadanPageTemplates = await getRamadanPageTemplates();
+const ramadanTenNightsTemplates = await getRamadanTenNightsTemplates();
 const checkoutTemplates = await getCheckoutTemplates();
 
 // Fetch current settings
@@ -21,7 +22,7 @@ let settings: any = null;
 try {
   const { data, error } = await supabaseAdmin
     .from('site_settings')
-    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template, checkout_template')
+    .select('default_donation_box_template, default_campaign_page_template, default_appeals_page_template, orphan_sponsorship_template, homepage_template, ramadan_page_template, ramadan_tennights_template, checkout_template')
     .limit(1);
 
   if (data && data.length > 0) {
@@ -37,6 +38,7 @@ const currentAppealsPageTemplate = settings?.default_appeals_page_template || 'g
 const currentOrphanSponsorshipTemplate = settings?.orphan_sponsorship_template || 'orphan-sponsorship';
 const currentHomepageTemplate = settings?.homepage_template || 'pennybill';
 const currentRamadanPageTemplate = settings?.ramadan_page_template || 'pennyappeal';
+const currentRamadanTenNightsTemplate = settings?.ramadan_tennights_template || 'amanah';
 const currentCheckoutTemplate = settings?.checkout_template || 'three-step';
 
 // Default colors for each donation box template
@@ -250,6 +252,24 @@ const allSections = [
       filePath: filePathMap[t.template_key] || 'Unknown',
       isDefault: currentRamadanPageTemplate === t.template_key,
       settingsKey: 'ramadan_page_template',
+      hasColorEditor: false,
+      category: 'ramadan',
+    })),
+  },
+  {
+    id: 'ramadan-tennights',
+    title: 'Ramadan Ten Nights Templates',
+    subtitle: 'Template for the My Ten Nights page (/ramadan/mytennights). Independent from My 30 Days.',
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>`,
+    settingsKey: 'ramadan_tennights_template',
+    currentDefault: currentRamadanTenNightsTemplate,
+    templates: ramadanTenNightsTemplates.map(t => ({
+      key: t.template_key,
+      label: t.template_label,
+      description: t.description,
+      filePath: filePathMap[t.template_key] || 'Unknown',
+      isDefault: currentRamadanTenNightsTemplate === t.template_key,
+      settingsKey: 'ramadan_tennights_template',
       hasColorEditor: false,
       category: 'ramadan',
     })),
