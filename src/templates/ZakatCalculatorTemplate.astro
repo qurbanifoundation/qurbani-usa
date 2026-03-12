@@ -327,12 +327,12 @@ const impactItems = calcConfig.impactItems || [
       }
     }
 
-    /* Sticky bottom CTA bars on mobile */
+    /* Sticky bottom CTA bar on mobile — only for Step 4 (Pay/Email) */
     .zw-sticky-bar, .zw-sticky-continue {
       display: none;
     }
     @media (max-width: 768px) {
-      .zw-sticky-bar, .zw-sticky-continue {
+      .zw-sticky-bar {
         display: flex;
         position: fixed;
         bottom: 0;
@@ -345,7 +345,7 @@ const impactItems = calcConfig.impactItems || [
         box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
         border-top: 1px solid #e5e7eb;
       }
-      .zw-sticky-bar button, .zw-sticky-continue button {
+      .zw-sticky-bar button {
         flex: 1;
         font-weight: 700;
         font-size: 0.875rem;
@@ -369,18 +369,8 @@ const impactItems = calcConfig.impactItems || [
         color: #fff;
       }
       .zw-sticky-save:hover { background: #01302b; }
-      .zw-sticky-continue-btn {
-        background: #024139;
-        color: #fff;
-        font-size: 1rem !important;
-        padding: 1rem 0.5rem !important;
-      }
-      .zw-sticky-continue-btn:hover { background: #01302b; }
-      /* Add bottom padding so content isn't hidden behind sticky bar */
-      #zw-step-1, #zw-step-2, #zw-step-3 { padding-bottom: 80px; }
+      /* Bottom padding on Step 4 for sticky pay bar */
       #zw-step-4 { padding-bottom: 80px; }
-      /* Hide inline nav buttons on mobile (sticky bar handles it) — but keep Step 1 Continue visible */
-      .zw-inline-nav { display: none; }
     }
 
     /* Hide no-print in print */
@@ -1696,19 +1686,9 @@ const impactItems = calcConfig.impactItems || [
     const arrowSvg = '<svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>';
     function updateStickyBar() {
       if (window.innerWidth <= 768) {
-        // Steps 1-3: show continue bar; Step 4: show pay/email bar
+        // Only show sticky pay/email bar on Step 4 — inline buttons handle Steps 1-3
         if (stickyBar) stickyBar.style.display = currentStep === 4 ? 'flex' : 'none';
-        if (stickyContBar) stickyContBar.style.display = currentStep <= 3 ? 'flex' : 'none';
-        // Update continue button label and action per step
-        if (stickyContBtn) {
-          if (currentStep === 3) {
-            stickyContBtn.innerHTML = 'Calculate My Zakat ' + arrowSvg;
-            stickyContBtn.onclick = function() { goToStep(4); };
-          } else {
-            stickyContBtn.innerHTML = 'Continue ' + arrowSvg;
-            stickyContBtn.onclick = function() { goToStep(currentStep + 1); };
-          }
-        }
+        if (stickyContBar) stickyContBar.style.display = 'none'; // no longer needed
       } else {
         if (stickyBar) stickyBar.style.display = 'none';
         if (stickyContBar) stickyContBar.style.display = 'none';
