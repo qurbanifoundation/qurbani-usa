@@ -885,9 +885,13 @@ const impactItems = calcConfig.impactItems || [
     cash: {
       title: 'My Cash',
       accentColor: '#16a34a', accentBg: '#f0fdf4', accentBorder: '#bbf7d0',
-      description: 'Cash in hand, bank, savings, money owed to you',
       fields: [
-        { label: 'Cash value', tip: 'Total cash in hand, bank accounts, savings, and money owed to you', cat: 'cash' },
+        { label: 'Cash in hand', tip: 'Physical cash, money at home, in your wallet, or safe', cat: 'cash' },
+        { label: 'Cash in bank', tip: 'Checking accounts, savings accounts, CDs, money market accounts', cat: 'cash' },
+        { label: 'Cash tied up in a business or businesses', tip: 'Cash reserves held within your business accounts', cat: 'cash' },
+        { label: 'Rental income', tip: 'Accumulated rental income you have saved or received', cat: 'cash' },
+        { label: 'Dividends / cash from investments', tip: 'Dividend payouts, interest income, or cash returns from investments', cat: 'cash' },
+        { label: 'Money owed to me', tip: 'Loans you have given to others that you expect to be repaid', cat: 'cash' },
       ]
     },
     metals: {
