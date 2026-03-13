@@ -103,18 +103,20 @@ const isInteractive = config.interactive === true;
 {/* Quick Form Widget */}
 {widget_type === 'quick-form' && (
   <div class="widget-quick-form">
-    <div class="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-      {config.subtitle && <p class="text-[15px] italic text-center mb-0.5" style={`color: ${config.buttonColor || menuColor}; font-family: 'Playfair Display', serif;`}>{config.subtitle}</p>}
-      {(title || config.title) && <h4 class="text-lg font-bold text-[#333] text-center mb-3">{title || config.title}</h4>}
+    <div class="bg-white rounded-xl p-5 shadow-lg border border-gray-100" data-quick-donate data-fund-type={config.fundType || 'donation'} data-campaign-slug={config.campaignSlug || ''} data-item-name={config.itemName || title || config.title || 'Donation'}>
+      {(title || config.title) && <h4 class="text-xl font-bold text-[#333] text-center mb-1" style="font-family: 'Signika', sans-serif;">{title || config.title}</h4>}
+      {config.subtitle && <p class="text-[13px] text-gray-500 text-center mb-4">{config.subtitle}</p>}
       {config.amounts && config.amounts.length > 0 && (
-        <div class="grid grid-cols-3 gap-1.5 mb-3">
+        <div class="grid grid-cols-3 gap-2 mb-4">
           {config.amounts.slice(0, 3).map((amount: number, index: number) => (
             <button
               class:list={[
-                'amount-btn py-2 border rounded bg-white text-[#333] font-bold text-[15px] transition',
-                index === 1 ? 'border-2' : 'border-gray-300 hover:border-current'
+                'zakat-amount-btn py-3 border-2 rounded-lg bg-white font-bold text-lg transition cursor-pointer',
+                amount === (config.defaultAmount || config.amounts[config.amounts.length - 1])
+                  ? 'border-[#0096D6] bg-blue-50 text-[#0096D6]'
+                  : 'border-gray-200 text-[#333] hover:border-[#0096D6] hover:bg-blue-50'
               ]}
-              style={index === 1 ? `border-color: ${config.buttonColor || menuColor}` : ''}
+              style={amount === (config.defaultAmount || config.amounts[config.amounts.length - 1]) ? `border-color: ${config.buttonColor || menuColor}; color: ${config.buttonColor || menuColor}` : ''}
               data-amount={amount}
             >
               ${amount}
@@ -122,14 +124,14 @@ const isInteractive = config.interactive === true;
           ))}
         </div>
       )}
-      <div class="relative mb-3">
-        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-        <input type="number" placeholder={config.placeholder || 'Enter amount'} class="w-full pl-6 pr-2 py-2 border border-gray-300 rounded bg-[#f5f3ef] text-sm focus:outline-none" style={`--focus-color: ${config.buttonColor || menuColor}`} />
+      <div class="relative mb-4">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-semibold">$</span>
+        <input type="number" placeholder={config.placeholder || 'Other amount'} class="quick-donate-input w-full pl-8 pr-3 py-3 border-2 border-gray-200 rounded-lg bg-[#f9f9f9] text-base font-semibold text-[#333] focus:outline-none focus:bg-white transition" style={`--focus-color: ${config.buttonColor || menuColor}`} />
       </div>
-      <a href={config.button?.href || config.buttonLink || '#'} class="block w-full text-white font-bold py-2.5 rounded transition text-[15px] text-center" style={`background-color: ${config.button?.color || config.buttonColor || menuColor}`}>
-        {config.button?.label || config.buttonText || 'Donate Now'}
-      </a>
-      {config.footnote && <p class="text-xs text-gray-500 text-center mt-2">{config.footnote}</p>}
+      <button type="button" class="quick-donate-pay block w-full text-white font-bold py-3.5 rounded-lg transition text-base text-center cursor-pointer border-none" style={`background-color: ${config.button?.color || config.buttonColor || menuColor}; font-family: 'Signika', sans-serif; letter-spacing: 0.02em;`}>
+        {config.button?.label || config.buttonText || 'Donate Now'} &rarr;
+      </button>
+      {config.footnote && <p class="text-xs text-gray-400 text-center mt-3 leading-relaxed">{config.footnote}</p>}
     </div>
   </div>
 )}
