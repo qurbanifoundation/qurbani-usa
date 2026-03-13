@@ -55,18 +55,15 @@ const upsellHeadingDesktop = upsellsConfig.heading_desktop;
 const upsellHeadingMobile = upsellsConfig.heading_mobile;
 ---
 
-<!-- Stripe.js -->
-<script is:inline src="https://js.stripe.com/v3/"></script>
-
-<!-- Caveat font for handwritten style -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+<!-- Stripe.js - loaded async, initialized when cart opens -->
+<script is:inline>
+(function(){var s=document.createElement('script');s.src='https://js.stripe.com/v3/';s.async=true;document.head.appendChild(s);})();
+</script>
 
 <!-- Google Places Autocomplete Dropdown Fix -->
 <style is:global>
   .pac-container {
-    z-index: 10000 !important;
+    z-index: 100000 !important;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -505,7 +502,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
                 <div class="bg-gray-50 rounded-xl p-4 mb-4">
                   <div class="flex gap-4">
-                    <img src="/images/campaigns/prophetic-qurbani.jpg" alt="Prophetic Qurbani" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1545167496-5a24ed2d68b4?w=200&q=80'" />
+                    <img src="/images/campaigns/prophetic-qurbani.webp" alt="Prophetic Qurbani" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1545167496-5a24ed2d68b4?w=200&q=80'" />
                     <div>
                       <p class="font-bold text-gray-800 text-sm">I WANT TO GIVE $50 TO PROPHETIC QURBANI</p>
                       <p class="text-xs text-gray-600 mt-2 leading-relaxed">The Prophet (&#65018;) used to give his Qurbani and then give a second Qurbani for those in his Ummah who were unable to do so themselves. This act of generous giving is for those who cannot. Follow in the footsteps of The Prophet (&#65018;) and give today!</p>
@@ -524,7 +521,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
                 <div class="bg-gray-50 rounded-xl p-4">
                   <div class="flex gap-4">
-                    <img src="/images/campaigns/feed-family.jpg" alt="Feed a Family" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80'" />
+                    <img src="/images/campaigns/feed-family.webp" alt="Feed a Family" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1593113598332-cd288d649433?w=200&q=80'" />
                     <div>
                       <p class="font-bold text-gray-800 text-sm">I WANT TO GIVE $25 TO FEED A FAMILY</p>
                       <p class="text-xs text-gray-600 mt-2 leading-relaxed">Provide 21 nutritious meals for a family in need. Your generosity ensures they have food on the table for an entire week. Be the reason a family doesn't go hungry.</p>
@@ -1276,11 +1273,11 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
           <h3 class="text-base font-bold text-gray-800 mb-3" style="font-family: 'Signika', sans-serif;">Your Details</h3>
           <div class="space-y-4 mb-6">
             <div class="grid grid-cols-2 gap-3">
-              <input type="text" id="gg-firstName" placeholder="First Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
-              <input type="text" id="gg-lastName" placeholder="Last Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
+              <input type="text" id="gg-firstName" placeholder="First Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
+              <input type="text" id="gg-lastName" placeholder="Last Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
             </div>
-            <input type="email" id="gg-email" placeholder="Email" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
-            <input type="tel" id="gg-phone" placeholder="Phone Number" class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
+            <input type="email" id="gg-email" placeholder="Email" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
+            <input type="tel" id="gg-phone" placeholder="Phone Number" class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
           </div>
 
           <!-- Card Element -->
@@ -1294,13 +1291,13 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
           <!-- Billing Address -->
           <div class="space-y-4 mb-6">
             <div>
-              <input type="text" id="gg-address" autocomplete="off" placeholder="Billing Address" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm bg-white" />
+              <input type="text" id="gg-address" autocomplete="off" placeholder="Billing Address" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <input type="text" id="gg-city" placeholder="City" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />
-              <input type="text" id="gg-state" placeholder="State" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />
-              <input type="text" id="gg-zip" placeholder="ZIP" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />
-              <select id="gg-country" required class="w-full px-2 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-sm">
+              <input type="text" id="gg-city" placeholder="City" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
+              <input type="text" id="gg-state" placeholder="State" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
+              <input type="text" id="gg-zip" placeholder="ZIP" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
+              <select id="gg-country" required class="w-full px-2 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-base">
                 <option value="US" selected>United States</option>
                 <option value="CA">Canada</option>
                 <option value="GB">United Kingdom</option>
@@ -1463,6 +1460,21 @@ function getGA4SessionId() {
   return null;
 }
 
+// Build enriched journey with checkout context for donation attribution
+function buildDonationJourney(checkoutTotal, checkoutItems, checkoutType) {
+  var journey = window.getStoredJourney ? window.getStoredJourney() : null;
+  if (!journey) return undefined;
+  // Stamp checkout context
+  journey.checkout = {
+    amount: checkoutTotal,
+    frequency: checkoutType || 'single',
+    items: (checkoutItems || []).map(function(i) { return i.name || i.title || 'Donation'; }).join(', '),
+    last_page_before_checkout: journey.pages && journey.pages.length > 1 ? journey.pages[journey.pages.length - 2].p : journey.pages && journey.pages.length === 1 ? journey.pages[0].p : '/',
+    donation_started_at: Date.now()
+  };
+  return JSON.stringify(journey);
+}
+
 // Initialize Places Autocomplete
 window.initPlacesAutocomplete = function() {
   console.log('=== initPlacesAutocomplete called ===');
@@ -1559,10 +1571,17 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {}
   }
 
-  // Initialize Stripe
-  if (stripeEnabled && stripePublishableKey && typeof Stripe !== 'undefined') {
-    window.donationCart.stripe = Stripe(stripePublishableKey);
-    initializeStripeElements();
+  // Initialize Stripe (with retry for async script loading race condition)
+  function tryInitStripe(attempts) {
+    if (typeof Stripe !== 'undefined') {
+      window.donationCart.stripe = Stripe(stripePublishableKey);
+      initializeStripeElements();
+    } else if (attempts < 50) {
+      setTimeout(function() { tryInitStripe(attempts + 1); }, 100);
+    }
+  }
+  if (stripeEnabled && stripePublishableKey) {
+    tryInitStripe(0);
   }
 
   // Load Google Places API
@@ -2209,13 +2228,13 @@ function openCheckoutModal() {
         '<div class="space-y-3 mb-5">' +
           // First Name + Last Name
           '<div class="grid grid-cols-2 gap-3">' +
-            '<input type="text" id="ts-info-firstName" placeholder="First Name *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
-            '<input type="text" id="ts-info-lastName" placeholder="Last Name *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+            '<input type="text" id="ts-info-firstName" placeholder="First Name *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base" />' +
+            '<input type="text" id="ts-info-lastName" placeholder="Last Name *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base" />' +
           '</div>' +
           // Email + Phone
           '<div class="grid grid-cols-2 gap-3">' +
-            '<input type="email" id="ts-info-email" placeholder="Email Address *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
-            '<input type="tel" id="ts-info-phone" placeholder="Phone Number" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+            '<input type="email" id="ts-info-email" placeholder="Email Address *" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base" />' +
+            '<input type="tel" id="ts-info-phone" placeholder="Phone Number" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base" />' +
           '</div>' +
         '</div>' +
 
@@ -2232,14 +2251,14 @@ function openCheckoutModal() {
           '<label class="block text-sm font-medium text-gray-700">Billing Address</label>' +
           // Address search (Google Places autocomplete)
           '<div>' +
-            '<input type="text" id="modal-address" autocomplete="off" placeholder="Search address..." class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-sm" />' +
+            '<input type="text" id="modal-address" autocomplete="off" placeholder="Search address..." class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base" />' +
           '</div>' +
           // City, State, Zip, Country — compact row, auto-populated
           '<div class="grid grid-cols-4 gap-2">' +
-            '<input type="text" id="modal-city" placeholder="City" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />' +
-            '<input type="text" id="modal-state" placeholder="State" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />' +
-            '<input type="text" id="modal-zip" placeholder="ZIP" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-sm" />' +
-            '<select id="modal-country" required class="w-full px-2 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-sm">' +
+            '<input type="text" id="modal-city" placeholder="City" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />' +
+            '<input type="text" id="modal-state" placeholder="State" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />' +
+            '<input type="text" id="modal-zip" placeholder="ZIP" required class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />' +
+            '<select id="modal-country" required class="w-full px-2 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-base">' +
               '<option value="US" selected>US</option>' +
               '<option value="CA">CA</option>' +
               '<option value="GB">UK</option>' +
@@ -2725,8 +2744,9 @@ function captureAbandonedCheckout(force) {
   var hasSingle = items.some(function(it) { return !it.type || it.type === 'single'; });
   var campaignType = hasRecurring && hasSingle ? 'mixed' : hasRecurring ? 'recurring' : 'single';
 
-  // Read UTMs from URL
+  // Read UTMs from URL or localStorage (persisted from landing page)
   var params = new URLSearchParams(window.location.search);
+  var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
 
   var payload = {
     email: email,
@@ -2738,10 +2758,12 @@ function captureAbandonedCheckout(force) {
     campaign_type: campaignType,
     campaign_slug: campaignSlug,
     country: country,
-    utm_source: params.get('utm_source') || undefined,
-    utm_medium: params.get('utm_medium') || undefined,
-    utm_campaign: params.get('utm_campaign') || undefined,
-    utm_term: params.get('utm_term') || undefined,
+    utm_source: params.get('utm_source') || (storedUtm && storedUtm.utm_source) || undefined,
+    utm_medium: params.get('utm_medium') || (storedUtm && storedUtm.utm_medium) || undefined,
+    utm_campaign: params.get('utm_campaign') || (storedUtm && storedUtm.utm_campaign) || undefined,
+    utm_content: params.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
+    utm_term: params.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
+    checkout_source: 'donation-cart',
   };
 
   fetch('/api/abandoned-checkout/capture', {
@@ -2771,6 +2793,33 @@ function captureAbandonedCheckout(force) {
 //   2. POST /api/payments/create-subscription — create Subscription with saved PM
 //   3. Subscription charges immediately with the saved payment method
 //
+// Map Stripe decline codes to user-friendly messages with solutions
+function getDeclineMessage(error) {
+  if (!error) return 'Payment failed. Please try again.';
+
+  var code = error.decline_code || error.code || '';
+  var messages = {
+    'insufficient_funds': '💳 Insufficient funds on this card. Please try a different card or add funds to your account.',
+    'do_not_honor': '🏦 Your bank declined this transaction. Please call the number on the back of your card to authorize it, or try a different card.',
+    'card_velocity_exceeded': '⏳ Too many attempts on this card. Please wait 15-30 minutes before trying again, or use a different card.',
+    'lost_card': '🚫 This card cannot be used for transactions. Please try a different card.',
+    'stolen_card': '🚫 This card cannot be used for transactions. Please try a different card.',
+    'expired_card': '📅 This card has expired. Please use a card with a valid expiration date.',
+    'incorrect_cvc': '🔒 The security code (CVV) is incorrect. Please check the 3-digit number on the back of your card and try again.',
+    'incorrect_zip': '📍 The ZIP code doesn\'t match your card on file. Please verify your billing address and try again.',
+    'processing_error': '⚙️ A temporary processing error occurred. Please wait a moment and try again.',
+    'card_declined': '💳 Your card was declined. Please try a different card or contact your bank at the number on the back of your card.',
+    'generic_decline': '💳 Your card was declined. Please try a different card or contact your bank for more information.',
+    'fraudulent': '🏦 Your bank flagged this as suspicious. Please call your bank to authorize the charge, then try again.',
+    'transaction_not_allowed': '🏦 Your bank does not allow this type of transaction. Please contact your bank or try a different card.',
+    'currency_not_supported': '💱 This card does not support USD transactions. Please try a different card.',
+    'card_not_supported': '💳 This card type is not supported. Please try a Visa, Mastercard, or American Express.',
+    'try_again_later': '⏳ A temporary issue occurred. Please wait a few minutes and try again.',
+  };
+
+  return messages[code] || (error.message || 'Your card was declined. Please try a different card or contact your bank.');
+}
+
 async function handlePayment() {
   const payBtn = document.getElementById('pay-btn');
   const payText = document.getElementById('pay-btn-text');
@@ -2891,7 +2940,7 @@ async function handlePayment() {
       });
 
       if (setupResult2.error) {
-        throw new Error(setupResult2.error.message);
+        throw { _stripeError: setupResult2.error };
       }
 
       var setupIntent = setupResult2.setupIntent;
@@ -2917,8 +2966,14 @@ async function handlePayment() {
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          checkout_source: 'three-step-checkout',
           ga_client_id: getGA4ClientId(),
           ga_session_id: getGA4SessionId(),
+          utm_source: (window.getStoredUTM && window.getStoredUTM() || {}).utm_source || undefined,
+          utm_medium: (window.getStoredUTM && window.getStoredUTM() || {}).utm_medium || undefined,
+          utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
+          utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
+          journey: buildDonationJourney(total, items, donationType),
         }),
       });
 
@@ -2986,8 +3041,14 @@ async function handlePayment() {
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          checkout_source: 'three-step-checkout',
           ga_client_id: getGA4ClientId(),
           ga_session_id: getGA4SessionId(),
+          utm_source: (window.getStoredUTM && window.getStoredUTM() || {}).utm_source || undefined,
+          utm_medium: (window.getStoredUTM && window.getStoredUTM() || {}).utm_medium || undefined,
+          utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
+          utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
+          journey: buildDonationJourney(total, items, donationType),
         }),
       });
 
@@ -3016,7 +3077,7 @@ async function handlePayment() {
         redirect: 'if_required',
       });
 
-      if (result.error) throw new Error(result.error.message);
+      if (result.error) throw { _stripeError: result.error };
 
       const paymentIntent = result.paymentIntent;
       if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
@@ -3059,7 +3120,8 @@ async function handlePayment() {
 
   } catch (err) {
     errorDiv.classList.remove('hidden');
-    document.getElementById('payment-error-text').textContent = err.message;
+    var errMsg = err._stripeError ? getDeclineMessage(err._stripeError) : (err.message || 'Payment failed. Please try again.');
+    document.getElementById('payment-error-text').textContent = errMsg;
   } finally {
     payBtn.disabled = false;
     payText.textContent = 'Complete Donation';
@@ -3403,7 +3465,13 @@ async function mountTwoStepPaymentElement() {
         coverFees: coverFees,
         feeAmount: feeAmount,
         baseAmount: total - feeAmount,
+        checkout_source: 'two-step-checkout',
         ga_client_id: getGA4ClientId(),
+        utm_source: (window.getStoredUTM && window.getStoredUTM() || {}).utm_source || undefined,
+        utm_medium: (window.getStoredUTM && window.getStoredUTM() || {}).utm_medium || undefined,
+        utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
+        utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
+        journey: buildDonationJourney(total, items, donationType),
       }),
     });
 
@@ -3528,7 +3596,7 @@ document.getElementById('ts-pay-btn')?.addEventListener('click', async function(
       redirect: 'if_required',
     });
 
-    if (result.error) throw new Error(result.error.message);
+    if (result.error) throw { _stripeError: result.error };
 
     var paymentIntent = result.paymentIntent;
     if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
@@ -3567,7 +3635,8 @@ document.getElementById('ts-pay-btn')?.addEventListener('click', async function(
     }
   } catch (err) {
     errorDiv.classList.remove('hidden');
-    errorDiv.textContent = err.message;
+    var errMsg = err._stripeError ? getDeclineMessage(err._stripeError) : (err.message || 'Payment failed. Please try again.');
+    errorDiv.textContent = errMsg;
   } finally {
     payBtn.disabled = false;
     payText.classList.remove('hidden');
@@ -3655,7 +3724,8 @@ function openGGCheckout() {
   setTimeout(function() { mountGGPaymentElement(); }, 100);
 
   // Init Google Places for GG address field
-  setTimeout(function() { initGGPlaces(); }, 200);
+  _ggPlacesRetries = 0; // reset retries for fresh attempt
+  setTimeout(function() { initGGPlaces(); }, 300);
 }
 
 function closeGGCheckout() {
@@ -3901,7 +3971,7 @@ function updateGGCart() {
       var freqSuffix = isRecurring ? (itemInterval === 'weekly' ? '/wk' : itemInterval === 'yearly' ? '/yr' : itemInterval === 'daily' ? '/day' : '/mo') : '';
       var freqLabel = freqSuffix;
       // Use zakat hero image for zakat items that have no image
-      var zakatFallbackImg = '/images/qurbani-foundation-food-distribution.png';
+      var zakatFallbackImg = '/images/qurbani-foundation-food-distribution.webp';
       var effectiveImage = item.image || ((item.campaignSlug === 'zakat' || (item.name && item.name.toLowerCase().indexOf('zakat') !== -1)) ? zakatFallbackImg : null);
       var imgSrc = effectiveImage || fallbackImg;
       var itemName = item.name || item.campaign || 'Donation';
@@ -4294,7 +4364,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
 
   if (payBtn.disabled && payText.classList.contains('hidden')) return;
   payBtn.disabled = true;
-  payText.classList.add('hidden');
+  payText.textContent = 'Processing...';
   spinner.classList.remove('hidden');
   errorDiv.classList.add('hidden');
 
@@ -4368,7 +4438,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
         },
         redirect: 'if_required',
       });
-      if (setupResult2.error) throw new Error(setupResult2.error.message);
+      if (setupResult2.error) throw { _stripeError: setupResult2.error };
 
       var setupIntent = setupResult2.setupIntent;
       if (!setupIntent || !setupIntent.payment_method) throw new Error('Payment setup failed. Please try again.');
@@ -4390,8 +4460,14 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          checkout_source: 'gg-one-step-checkout',
           ga_client_id: getGA4ClientId(),
           ga_session_id: getGA4SessionId(),
+          utm_source: (window.getStoredUTM && window.getStoredUTM() || {}).utm_source || undefined,
+          utm_medium: (window.getStoredUTM && window.getStoredUTM() || {}).utm_medium || undefined,
+          utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
+          utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
+          journey: buildDonationJourney(total, items, donationType),
         }),
       });
       var subData = await subResponse.json();
@@ -4425,6 +4501,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
       // ═══════════════════════════════════════════════════════════
       // ONE-TIME FLOW (PaymentIntent → confirmPayment)
       // ═══════════════════════════════════════════════════════════
+      payText.textContent = 'Securing payment...';
       var response = await fetch('/api/payments/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4438,13 +4515,20 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           feeAmount: feeAmount,
           baseAmount: total - feeAmount,
           resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+          checkout_source: 'gg-one-step-checkout',
           ga_client_id: getGA4ClientId(),
           ga_session_id: getGA4SessionId(),
+          utm_source: (window.getStoredUTM && window.getStoredUTM() || {}).utm_source || undefined,
+          utm_medium: (window.getStoredUTM && window.getStoredUTM() || {}).utm_medium || undefined,
+          utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
+          utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
+          journey: buildDonationJourney(total, items, donationType),
         }),
       });
       var data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to create payment');
 
+      payText.textContent = 'Confirming payment...';
       var result = await window.donationCart.stripe.confirmPayment({
         elements: ggStripeElements,
         clientSecret: data.clientSecret,
@@ -4461,7 +4545,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
         },
         redirect: 'if_required',
       });
-      if (result.error) throw new Error(result.error.message);
+      if (result.error) throw { _stripeError: result.error };
 
       var paymentIntent = result.paymentIntent;
       if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
@@ -4494,24 +4578,36 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
     }
   } catch (err) {
     errorDiv.classList.remove('hidden');
-    errorDiv.textContent = err.message;
+    var errMsg = err._stripeError ? getDeclineMessage(err._stripeError) : (err.message || 'Payment failed. Please try again.');
+    errorDiv.textContent = errMsg;
   } finally {
     payBtn.disabled = false;
-    payText.classList.remove('hidden');
+    payText.textContent = 'Complete Secure Donation';
     spinner.classList.add('hidden');
   }
 });
 
 // Google Places for GG checkout
+var _ggPlacesRetries = 0;
 function initGGPlaces() {
   var addressInput = document.getElementById('gg-address');
-  if (!addressInput || !window.google?.maps?.places) return;
+  if (!addressInput) return;
   if (addressInput._placesInit) return;
+
+  // Retry if Google Places API hasn't loaded yet (max 10 retries = ~5 seconds)
+  if (!window.google?.maps?.places) {
+    if (_ggPlacesRetries < 10) {
+      _ggPlacesRetries++;
+      setTimeout(initGGPlaces, 500);
+    }
+    return;
+  }
   addressInput._placesInit = true;
 
   var autocomplete = new window.google.maps.places.Autocomplete(addressInput, {
     types: ['address'],
     componentRestrictions: { country: ['us', 'ca', 'gb', 'au', 'pk', 'in', 'bd'] },
+    fields: ['address_components', 'formatted_address'],
   });
 
   autocomplete.addListener('place_changed', function() {
