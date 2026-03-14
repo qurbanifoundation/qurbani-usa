@@ -766,34 +766,31 @@ function getMobileIconHtml(iconKey: string): string {
   </div>
 
   <!-- Mobile Menu - Slide Navigation Style -->
-  <div class="lg:hidden bg-[#f8f6f2] shadow-lg" id="mobile-menu" style="height: calc(100vh - 68px); display: none; position: relative;">
+  <div class="lg:hidden shadow-lg" id="mobile-menu" style="height: calc(100dvh - 68px); display: none; position: relative; background-color: #f8f6f2;">
     <div class="mobile-menu-container" style="position: relative; height: 100%; overflow: hidden;">
 
       {/* ===== MAIN MENU PANEL ===== */}
-      <div class="mobile-panel mobile-panel-main" id="mobile-panel-main" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column;">
-        <div class="flex-1 overflow-y-auto px-4 pt-4 pb-2">
+      <div class="mobile-panel mobile-panel-main" id="mobile-panel-main" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;">
+        <div class="px-5 pt-5 pb-2">
           {allMenusSorted.map(menu => (
             menu.id === 'appeals' ? null : (
               menu.id === 'our-work' ? (
-                /* Our Work — has categories, so it opens submenu */
-                <button type="button" class="mobile-menu-item w-full flex items-center justify-between py-4 border-b border-gray-200 text-[#333]" data-submenu="our-work">
-                  <span class="text-base font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
+                <button type="button" class="mobile-menu-item w-full flex items-center justify-between py-5 border-b border-gray-200/80 text-[#333]" data-submenu="our-work">
+                  <span class="text-lg font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
                   <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
                 </button>
               ) : mobileLinks[menu.id] && mobileLinks[menu.id].length > 0 ? (
-                /* Dynamic menu with links — opens submenu */
-                <button type="button" class="mobile-menu-item w-full flex items-center justify-between py-4 border-b border-gray-200 text-[#333]" data-submenu={menu.id}>
-                  <span class="text-base font-semibold" style={`font-family: 'Oswald', sans-serif; letter-spacing: 0.5px; ${menu.color === '#024139' ? 'color: #024139;' : ''}`}>{menu.name.toUpperCase()}</span>
+                <button type="button" class="mobile-menu-item w-full flex items-center justify-between py-5 border-b border-gray-200/80 text-[#333]" data-submenu={menu.id}>
+                  <span class="text-lg font-semibold" style={`font-family: 'Oswald', sans-serif; letter-spacing: 0.5px; ${menu.color === '#024139' ? 'color: #024139;' : ''}`}>{menu.name.toUpperCase()}</span>
                   <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
                 </button>
               ) : (
-                /* Simple link — no submenu */
-                <a href={`/${menu.id}`} class="mobile-menu-item flex items-center justify-between py-4 border-b border-gray-200 text-[#333]">
-                  <span class="text-base font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
+                <a href={`/${menu.id}`} class="mobile-menu-item flex items-center justify-between py-5 border-b border-gray-200/80 text-[#333]">
+                  <span class="text-lg font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
                   <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
@@ -803,24 +800,24 @@ function getMobileIconHtml(iconKey: string): string {
           ))}
 
           {/* Extra quick links */}
-          <div class="mt-4 flex flex-wrap gap-2">
-            <a href="/contact" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
+          <div class="mt-5 flex flex-wrap gap-2">
+            <a href="/contact" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-200/60 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
               Contact Us
             </a>
-            <a href="/zakat/calculator" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
+            <a href="/zakat/calculator" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-200/60 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7z"></path></svg>
               Zakat Calculator
             </a>
-            <a href="/appeals" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
+            <a href="/appeals" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-200/60 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
               All Appeals
             </a>
           </div>
         </div>
 
-        {/* Quick Donate at bottom of main panel */}
-        <div class="px-4 pb-4 pt-2 flex-shrink-0">
+        {/* Quick Donate — flows right after links, not pushed to bottom */}
+        <div class="px-5 pb-5 pt-4" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
           <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4" id="mobile-quick-donate">
             <p class="text-white font-extrabold text-lg mb-3 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
             <div class="grid grid-cols-4 gap-2 mb-3">
@@ -866,34 +863,32 @@ function getMobileIconHtml(iconKey: string): string {
       {/* ===== SUBMENU PANELS (same beige theme as main menu) ===== */}
 
       {/* Our Work Submenu — Level 2: categories only */}
-      <div class="mobile-panel mobile-panel-sub bg-[#f8f6f2]" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; transform: translateX(100%);" id="mobile-sub-our-work">
-        <div class="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+      <div class="mobile-panel mobile-panel-sub" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto; background-color: #f8f6f2; transform: translateX(100%);" id="mobile-sub-our-work">
+        <div class="px-5 pt-4 pb-2 border-b border-gray-200">
           <button type="button" class="mobile-back-btn flex items-center gap-2 text-[#D97718] font-semibold text-sm py-1 transition" data-back="main">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             Back to menu
           </button>
           <h3 class="text-xl font-bold text-[#333] mt-2 mb-1" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">OUR WORK</h3>
         </div>
-        <div class="flex-1 overflow-y-auto px-4 py-2">
+        <div class="px-5 py-2">
           {categories.map(cat => {
             const catCampaigns = (campaignsByCategory[cat.id] || []).slice(0, 6);
             return catCampaigns.length > 0 ? (
-              /* Category with campaigns → opens Level 3 */
-              <button type="button" class="mobile-menu-item mobile-cat-btn w-full flex items-center gap-3 py-4 border-b border-gray-200 text-[#333] text-left" data-category={cat.id}>
-                <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
-                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+              <button type="button" class="mobile-menu-item mobile-cat-btn w-full flex items-center gap-3 py-4 border-b border-gray-200/80 text-[#333] text-left" data-category={cat.id}>
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
                 </div>
-                <span class="text-[15px] font-semibold flex-1">{cat.label}</span>
-                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                <span class="text-[16px] font-semibold flex-1">{cat.label}</span>
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
               </button>
             ) : (
-              /* Category without campaigns → direct link */
-              <a href={`/appeals?category=${cat.id}`} class="mobile-menu-item flex items-center gap-3 py-4 border-b border-gray-200 text-[#333] hover:text-[#D97718] transition">
-                <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
-                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+              <a href={`/appeals?category=${cat.id}`} class="mobile-menu-item flex items-center gap-3 py-4 border-b border-gray-200/80 text-[#333] hover:text-[#D97718] transition">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
                 </div>
-                <span class="text-[15px] font-semibold flex-1">{cat.label}</span>
-                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                <span class="text-[16px] font-semibold flex-1">{cat.label}</span>
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
               </a>
             );
           })}
@@ -901,8 +896,8 @@ function getMobileIconHtml(iconKey: string): string {
             View All Appeals →
           </a>
         </div>
-        <div class="flex-shrink-0 px-4 pb-4 pt-2">
-          <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mb-2">
+        <div class="px-5 pb-5 pt-3" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
+          <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4">
             <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
             <div class="grid grid-cols-4 gap-2 mb-2">
               <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
@@ -927,32 +922,32 @@ function getMobileIconHtml(iconKey: string): string {
       {categories.map(cat => {
         const catCampaigns = (campaignsByCategory[cat.id] || []).slice(0, 8);
         return catCampaigns.length > 0 ? (
-          <div class="mobile-panel mobile-panel-l3 bg-[#f8f6f2]" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; transform: translateX(100%);" id={`mobile-cat-${cat.id}`}>
-            <div class="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+          <div class="mobile-panel mobile-panel-l3" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto; background-color: #f8f6f2; transform: translateX(100%);" id={`mobile-cat-${cat.id}`}>
+            <div class="px-5 pt-4 pb-2 border-b border-gray-200">
               <button type="button" class="mobile-back-btn flex items-center gap-2 text-[#D97718] font-semibold text-sm py-1 transition" data-back="our-work">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 Back to Our Work
               </button>
               <div class="flex items-center gap-3 mt-2 mb-1">
-                <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
-                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                  <svg class="w-4.5 h-4.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
                 </div>
                 <h3 class="text-xl font-bold text-[#333]" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{cat.label.toUpperCase()}</h3>
               </div>
             </div>
-            <div class="flex-1 overflow-y-auto px-4 py-2">
+            <div class="px-5 py-2">
               {catCampaigns.map(campaign => (
-                <a href={campaign.slug} class="flex items-center justify-between py-4 border-b border-gray-200 text-[#333] hover:text-[#D97718] transition">
-                  <span class="text-[15px] font-medium">{campaign.name}</span>
-                  <svg class="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                <a href={campaign.slug} class="flex items-center justify-between py-4 border-b border-gray-200/80 text-[#333] hover:text-[#D97718] transition">
+                  <span class="text-[16px] font-medium">{campaign.name}</span>
+                  <svg class="w-5 h-5 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
               ))}
               <a href={`/appeals?category=${cat.id}`} class="flex items-center gap-2 py-3 text-[#D97718] hover:text-[#c46a14] transition font-semibold text-sm mt-1">
                 View All {cat.label} →
               </a>
             </div>
-            <div class="flex-shrink-0 px-4 pb-4 pt-2">
-              <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mb-2">
+            <div class="px-5 pb-5 pt-3" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
+              <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4">
                 <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
                 <div class="grid grid-cols-4 gap-2 mb-2">
                   <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
@@ -977,29 +972,26 @@ function getMobileIconHtml(iconKey: string): string {
 
       {/* Dynamic submenus for other menus with mobile_links */}
       {allMenusSorted.filter(menu => menu.id !== 'our-work' && menu.id !== 'appeals' && mobileLinks[menu.id] && mobileLinks[menu.id].length > 0).map(menu => (
-        <div class="mobile-panel mobile-panel-sub bg-[#f8f6f2]" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; transform: translateX(100%);" id={`mobile-sub-${menu.id}`}>
-          {/* Top: ← Back to menu */}
-          <div class="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+        <div class="mobile-panel mobile-panel-sub" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto; background-color: #f8f6f2; transform: translateX(100%);" id={`mobile-sub-${menu.id}`}>
+          <div class="px-5 pt-4 pb-2 border-b border-gray-200">
             <button type="button" class="mobile-back-btn flex items-center gap-2 text-[#D97718] font-semibold text-sm py-1 transition" data-back="main">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
               Back to menu
             </button>
             <h3 class="text-xl font-bold text-[#333] mt-2 mb-1" style={`font-family: 'Oswald', sans-serif; letter-spacing: 0.5px; ${menu.color === '#024139' ? 'color: #024139;' : ''}`}>{menu.name.toUpperCase()}</h3>
           </div>
-          {/* Links */}
-          <div class="flex-1 overflow-y-auto px-4 py-2">
+          <div class="px-5 py-2">
             {mobileLinks[menu.id].map(link => (
-              <a href={link.url} class="flex items-center gap-3 py-3 border-b border-gray-200 text-[#333] hover:text-[#D97718] transition">
-                <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color}`}>
-                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getMobileIconHtml(link.icon)} />
+              <a href={link.url} class="flex items-center gap-3 py-4 border-b border-gray-200/80 text-[#333] hover:text-[#D97718] transition">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color}`}>
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getMobileIconHtml(link.icon)} />
                 </div>
-                <span class="text-[15px] font-medium">{link.label}</span>
+                <span class="text-[16px] font-medium">{link.label}</span>
               </a>
             ))}
           </div>
-          {/* Bottom: Donate Box */}
-          <div class="flex-shrink-0 px-4 pb-4 pt-2">
-            <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mb-2">
+          <div class="px-5 pb-5 pt-3" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
+            <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4">
               <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
               <div class="grid grid-cols-4 gap-2 mb-2">
                 <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
