@@ -4,6 +4,7 @@ import { trackDonation, markReceiptSent, moveDonationThroughPipeline } from '../
 import { notifyDonationReceived } from '../../../lib/notifications';
 import { sendDonationReceipt } from '../../../lib/donor-emails';
 import Stripe from 'stripe';
+import { getStripe } from '../../../lib/stripe-cache';
 
 export const prerender = false;
 
@@ -62,8 +63,14 @@ export const POST: APIRoute = async ({ request }) => {
       feeAmount = 0,
       baseAmount,
       resumeToken,
+      checkout_source,
       ga_client_id,
       ga_session_id,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      journey,
     } = body;
 
     // Validate required fields
@@ -86,22 +93,16 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Get Stripe secret key
-    const { data: settings } = await supabaseAdmin
-      .from('site_settings')
-      .select('stripe_secret_key, stripe_enabled')
-      .single();
-
-    if (!settings?.stripe_enabled || !settings?.stripe_secret_key) {
-      return new Response(JSON.stringify({ error: 'Stripe is not configured' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    // Parse journey once for first/last touch extraction (reused in Supabase inserts + admin email)
+    let journeyObj: any = null;
+    if (journey) {
+      try { journeyObj = typeof journey === 'string' ? JSON.parse(journey) : journey; } catch {}
     }
+    const ftTouch = journeyObj?.first_touch;
+    const ltTouch = journeyObj?.last_touch;
 
-    const stripe = new Stripe(settings.stripe_secret_key, {
-      apiVersion: '2023-10-16',
-    });
+    // Get cached Stripe instance
+    const stripe = await getStripe();
 
     // Attach payment method to customer and set as default
     await stripe.paymentMethods.attach(paymentMethodId, {
@@ -224,6 +225,62 @@ export const POST: APIRoute = async ({ request }) => {
     }
     if (ga_session_id) {
       subMetadata.ga_session_id = ga_session_id;
+    }
+
+    // Checkout source tracking
+    if (checkout_source) subMetadata.checkout_source = String(checkout_source).substring(0, 500);
+
+    // UTM tracking for email/ad campaign attribution
+    if (utm_source) subMetadata.utm_source = String(utm_source).substring(0, 500);
+    if (utm_medium) subMetadata.utm_medium = String(utm_medium).substring(0, 500);
+    if (utm_campaign) subMetadata.utm_campaign = String(utm_campaign).substring(0, 500);
+    if (utm_content) subMetadata.utm_content = String(utm_content).substring(0, 500);
+
+    // Journey data — extract first-touch + last-touch attribution, drop verbose page history
+    // Stripe metadata values max 500 chars; full journey is preserved in Supabase donations.metadata
+    if (journey) {
+      try {
+        const j = typeof journey === 'string' ? JSON.parse(journey) : journey;
+        const compact: Record<string, any> = {};
+        if (j.device) compact.device = j.device;
+        if (j.browser) compact.browser = j.browser;
+        if (j.session_started) compact.session_started = j.session_started;
+
+        // First-touch attribution (how the donor originally found us)
+        if (j.first_touch) {
+          const ft = j.first_touch;
+          if (ft.utm?.utm_source) compact.first_source = ft.utm.utm_source;
+          if (ft.utm?.utm_medium) compact.first_medium = ft.utm.utm_medium;
+          if (ft.utm?.utm_campaign) compact.first_campaign = ft.utm.utm_campaign;
+          if (ft.utm?.utm_term) compact.first_term = ft.utm.utm_term;
+          if (ft.landing_page) compact.first_landing = ft.landing_page;
+          if (ft.referrer && ft.referrer !== 'direct') compact.first_referrer = ft.referrer;
+          if (ft.gclid) compact.first_gclid = ft.gclid;
+          if (ft.fbclid) compact.first_fbclid = ft.fbclid;
+          if (ft.matchtype) compact.first_matchtype = ft.matchtype;
+          if (ft.network) compact.first_network = ft.network;
+        }
+
+        // Last-touch attribution (what brought them back to donate)
+        if (j.last_touch) {
+          const lt = j.last_touch;
+          if (lt.utm?.utm_source) compact.last_source = lt.utm.utm_source;
+          if (lt.utm?.utm_medium) compact.last_medium = lt.utm.utm_medium;
+          if (lt.utm?.utm_campaign) compact.last_campaign = lt.utm.utm_campaign;
+          if (lt.utm?.utm_term) compact.last_term = lt.utm.utm_term;
+          if (lt.landing_page) compact.last_landing = lt.landing_page;
+          if (lt.referrer && lt.referrer !== 'direct') compact.last_referrer = lt.referrer;
+          if (lt.gclid) compact.last_gclid = lt.gclid;
+          if (lt.fbclid) compact.last_fbclid = lt.fbclid;
+          if (lt.matchtype) compact.last_matchtype = lt.matchtype;
+          if (lt.network) compact.last_network = lt.network;
+        }
+
+        if (j.checkout?.last_page_before_checkout) compact.last_page = j.checkout.last_page_before_checkout;
+        subMetadata.journey = JSON.stringify(compact).substring(0, 500);
+      } catch {
+        subMetadata.journey = String(journey).substring(0, 500);
+      }
     }
 
     // Create subscription with the saved payment method
@@ -361,8 +418,25 @@ export const POST: APIRoute = async ({ request }) => {
           is_jummah: isWeekly,
           subscription_id: subscriptionRecord?.id,
           ...(resumeToken ? { resume_token: resumeToken } : {}),
+          ...(checkout_source ? { checkout_source } : {}),
           ...(ga_client_id ? { ga_client_id } : {}),
           ...(ga_session_id ? { ga_session_id } : {}),
+          // Last-touch UTMs (what brought them back to donate)
+          ...(utm_source ? { utm_source } : {}),
+          ...(utm_medium ? { utm_medium } : {}),
+          ...(utm_campaign ? { utm_campaign } : {}),
+          ...(utm_content ? { utm_content } : {}),
+          // Explicit first-touch & last-touch source for easy querying
+          ...(ftTouch?.utm?.utm_source ? { first_source: ftTouch.utm.utm_source } : {}),
+          ...(ftTouch?.utm?.utm_medium ? { first_medium: ftTouch.utm.utm_medium } : {}),
+          ...(ftTouch?.utm?.utm_campaign ? { first_campaign: ftTouch.utm.utm_campaign } : {}),
+          ...(ftTouch?.landing_page ? { first_landing: ftTouch.landing_page } : {}),
+          ...(ltTouch?.utm?.utm_source ? { last_source: ltTouch.utm.utm_source } : {}),
+          ...(ltTouch?.utm?.utm_medium ? { last_medium: ltTouch.utm.utm_medium } : {}),
+          ...(ltTouch?.utm?.utm_campaign ? { last_campaign: ltTouch.utm.utm_campaign } : {}),
+          ...(ltTouch?.landing_page ? { last_landing: ltTouch.landing_page } : {}),
+          // Full journey preserved for detailed attribution reports
+          ...(journeyObj ? { journey: journeyObj } : {}),
         },
       })
       .select()
@@ -468,8 +542,25 @@ export const POST: APIRoute = async ({ request }) => {
             is_recurring: false,
             linked_subscription_id: subscription.id,
             ...(resumeToken ? { resume_token: resumeToken } : {}),
+            ...(checkout_source ? { checkout_source } : {}),
             ...(ga_client_id ? { ga_client_id } : {}),
             ...(ga_session_id ? { ga_session_id } : {}),
+            // Last-touch UTMs
+            ...(utm_source ? { utm_source } : {}),
+            ...(utm_medium ? { utm_medium } : {}),
+            ...(utm_campaign ? { utm_campaign } : {}),
+            ...(utm_content ? { utm_content } : {}),
+            // Explicit first-touch & last-touch source for easy querying
+            ...(ftTouch?.utm?.utm_source ? { first_source: ftTouch.utm.utm_source } : {}),
+            ...(ftTouch?.utm?.utm_medium ? { first_medium: ftTouch.utm.utm_medium } : {}),
+            ...(ftTouch?.utm?.utm_campaign ? { first_campaign: ftTouch.utm.utm_campaign } : {}),
+            ...(ftTouch?.landing_page ? { first_landing: ftTouch.landing_page } : {}),
+            ...(ltTouch?.utm?.utm_source ? { last_source: ltTouch.utm.utm_source } : {}),
+            ...(ltTouch?.utm?.utm_medium ? { last_medium: ltTouch.utm.utm_medium } : {}),
+            ...(ltTouch?.utm?.utm_campaign ? { last_campaign: ltTouch.utm.utm_campaign } : {}),
+            ...(ltTouch?.landing_page ? { last_landing: ltTouch.landing_page } : {}),
+            // Full journey
+            ...(journeyObj ? { journey: journeyObj } : {}),
           },
         })
         .select()
@@ -600,6 +691,26 @@ export const POST: APIRoute = async ({ request }) => {
         type: i.type || 'single',
       }));
 
+      // Query donor lifetime stats for admin notification
+      let donorHistory = { donation_count: 0, lifetime_total: 0, first_donation: null as string | null, last_donation: null as string | null };
+      try {
+        const { data: historyData } = await supabaseAdmin
+          .from('donations')
+          .select('amount, created_at')
+          .eq('donor_email', donorEmail)
+          .eq('status', 'completed');
+        if (historyData && historyData.length > 0) {
+          donorHistory.donation_count = historyData.length;
+          donorHistory.lifetime_total = historyData.reduce((sum: number, d: any) => sum + (parseFloat(d.amount) || 0), 0);
+          const dates = historyData.map((d: any) => d.created_at).sort();
+          donorHistory.first_donation = dates[0];
+          donorHistory.last_donation = dates[dates.length - 1];
+        }
+      } catch (historyError) {
+        console.error('[create-subscription] Error fetching donor history:', historyError);
+      }
+
+      // Build attribution from the full journey data for the admin email
       await notifyDonationReceived({
         amount: subscriptionAmount + oneTimeAmount,
         donorName,
@@ -608,6 +719,15 @@ export const POST: APIRoute = async ({ request }) => {
         type: singleItems.length > 0 ? 'mixed' : interval,
         recurringAmount: subscriptionAmount,
         onetimeAmount: oneTimeAmount,
+        attribution: {
+          utm_source: utm_source || '',
+          utm_medium: utm_medium || '',
+          utm_campaign: utm_campaign || '',
+          utm_content: utm_content || '',
+          checkout_source: checkout_source || '',
+          journey: journeyObj,
+        },
+        donorHistory,
       }).catch(err => console.error('[create-subscription] Admin notification error:', err));
 
       // --- Donor receipt email ---
@@ -647,6 +767,13 @@ export const POST: APIRoute = async ({ request }) => {
           .from('donations')
           .update({ receipt_sent: true })
           .eq('id', recurringDonation.id);
+      }
+      // Also mark one-time donation as receipt sent (prevents duplicate email from webhook)
+      if (singleDonationId) {
+        await supabaseAdmin
+          .from('donations')
+          .update({ receipt_sent: true })
+          .eq('id', singleDonationId);
       }
       await markReceiptSent(donorEmail).catch(err =>
         console.error('[create-subscription] GHL markReceiptSent error:', err)

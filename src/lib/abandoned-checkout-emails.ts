@@ -6,6 +6,8 @@
  * All emails include List-Unsubscribe headers for compliance.
  */
 
+import { buildPreferencesUrls } from './email-preferences';
+
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 
 // ============================================
@@ -26,7 +28,7 @@ export interface RecoveryEmailData {
 // EMAIL WRAPPER (recovery-specific footer with unsubscribe)
 // ============================================
 
-function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribeUrl: string): string {
+function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribeUrl: string, prefUrls?: { manage: string; unsubscribe: string }): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -73,20 +75,28 @@ function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribe
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td style="text-align: center;">
-                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
-                      <strong>Qurbani Foundation</strong><br>
-                      A 501(c)(3) Tax-Exempt Organization
+                    <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 14px; font-weight: 600;">
+                      Qurbani Foundation USA
                     </p>
-                    <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                      EIN: 38-4109716
+                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
+                      4245 N Central Expy, Dallas, TX 75205
                     </p>
-                    <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                      <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
-                      <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
+                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
+                      1-800-900-0027 · +1 989-QURBANI (787-2265)
                     </p>
-                    <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
+                      EIN: 38-4109716 · A 501(c)(3) Tax-Exempt Organization
+                    </p>
+                    <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px;">
+                      Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.
+                    </p>
+                    ${prefUrls ? `<p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px;">
+                      Want to change how you receive these emails?
+                      <a href="${prefUrls.manage}" style="color: #d97706; text-decoration: underline;">Update your preferences</a> or
+                      <a href="${prefUrls.unsubscribe}" style="color: #9ca3af; text-decoration: underline;">unsubscribe from this list</a>.
+                    </p>` : `<p style="margin: 0; color: #9ca3af; font-size: 11px;">
                       <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe from reminders</a>
-                    </p>
+                    </p>`}
                   </td>
                 </tr>
               </table>
@@ -163,7 +173,7 @@ function formatCampaign(slug: string | null): string {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-function buildStep1Email(data: RecoveryEmailData): { subject: string; html: string; plainText: string } {
+async function buildStep1Email(data: RecoveryEmailData): Promise<{ subject: string; html: string; plainText: string }> {
   const name = data.firstName || 'Friend';
   const amountText = formatAmount(data.amount);
   const campaign = formatCampaign(data.campaignSlug);
@@ -183,16 +193,16 @@ function buildStep1Email(data: RecoveryEmailData): { subject: string; html: stri
     ${trustSignals()}
   `;
 
-  const plainText = `Assalamu Alaikum ${name},\n\nIt looks like you started a ${campaign} checkout for ${amountText} but didn't complete it.\n\nComplete your donation: ${data.resumeUrl}\n\nIf you need help, contact us at donorcare@qurbani.com\n\nUnsubscribe: ${data.unsubscribeUrl}`;
+  const plainText = `Assalamu Alaikum ${name},\n\nIt looks like you started a ${campaign} checkout for ${amountText} but didn't complete it.\n\nComplete your donation: ${data.resumeUrl}\n\nIf you need help, contact us at donorcare@us.qurbani.com\n\nUnsubscribe: ${data.unsubscribeUrl}`;
 
   return {
     subject: `${name}, you left something behind`,
-    html: getRecoveryEmailWrapper(content, `Your ${campaign} donation is waiting for you.`, data.unsubscribeUrl),
+    html: getRecoveryEmailWrapper(content, `Your ${campaign} donation is waiting for you.`, data.unsubscribeUrl, await buildPreferencesUrls(data.email)),
     plainText,
   };
 }
 
-function buildStep2Email(data: RecoveryEmailData): { subject: string; html: string; plainText: string } {
+async function buildStep2Email(data: RecoveryEmailData): Promise<{ subject: string; html: string; plainText: string }> {
   const name = data.firstName || 'Friend';
   const amountText = formatAmount(data.amount);
   const campaign = formatCampaign(data.campaignSlug);
@@ -218,12 +228,12 @@ function buildStep2Email(data: RecoveryEmailData): { subject: string; html: stri
 
   return {
     subject: `Your ${campaign} donation is still waiting`,
-    html: getRecoveryEmailWrapper(content, `Complete your ${amountText} donation and change lives.`, data.unsubscribeUrl),
+    html: getRecoveryEmailWrapper(content, `Complete your ${amountText} donation and change lives.`, data.unsubscribeUrl, await buildPreferencesUrls(data.email)),
     plainText,
   };
 }
 
-function buildStep3Email(data: RecoveryEmailData): { subject: string; html: string; plainText: string } {
+async function buildStep3Email(data: RecoveryEmailData): Promise<{ subject: string; html: string; plainText: string }> {
   const name = data.firstName || 'Friend';
   const amountText = formatAmount(data.amount);
   const campaign = formatCampaign(data.campaignSlug);
@@ -257,12 +267,12 @@ function buildStep3Email(data: RecoveryEmailData): { subject: string; html: stri
 
   return {
     subject: `Still thinking about it, ${name}?`,
-    html: getRecoveryEmailWrapper(content, `See the impact donors like you are making.`, data.unsubscribeUrl),
+    html: getRecoveryEmailWrapper(content, `See the impact donors like you are making.`, data.unsubscribeUrl, await buildPreferencesUrls(data.email)),
     plainText,
   };
 }
 
-function buildStep4Email(data: RecoveryEmailData): { subject: string; html: string; plainText: string } {
+async function buildStep4Email(data: RecoveryEmailData): Promise<{ subject: string; html: string; plainText: string }> {
   const name = data.firstName || 'Friend';
   const amountText = formatAmount(data.amount);
   const campaign = formatCampaign(data.campaignSlug);
@@ -288,12 +298,12 @@ function buildStep4Email(data: RecoveryEmailData): { subject: string; html: stri
 
   return {
     subject: `Last chance to make an impact, ${name}`,
-    html: getRecoveryEmailWrapper(content, `Your saved checkout expires soon.`, data.unsubscribeUrl),
+    html: getRecoveryEmailWrapper(content, `Your saved checkout expires soon.`, data.unsubscribeUrl, await buildPreferencesUrls(data.email)),
     plainText,
   };
 }
 
-function buildStep5Email(data: RecoveryEmailData): { subject: string; html: string; plainText: string } {
+async function buildStep5Email(data: RecoveryEmailData): Promise<{ subject: string; html: string; plainText: string }> {
   const name = data.firstName || 'Friend';
   const amountText = formatAmount(data.amount);
   const campaign = formatCampaign(data.campaignSlug);
@@ -317,7 +327,7 @@ function buildStep5Email(data: RecoveryEmailData): { subject: string; html: stri
 
   return {
     subject: `We'd hate to see you go, ${name}`,
-    html: getRecoveryEmailWrapper(content, `Last chance to complete your donation.`, data.unsubscribeUrl),
+    html: getRecoveryEmailWrapper(content, `Last chance to complete your donation.`, data.unsubscribeUrl, await buildPreferencesUrls(data.email)),
     plainText,
   };
 }
@@ -336,7 +346,7 @@ export async function sendRecoveryEmail(
     return { success: false, error: `Invalid step: ${step}` };
   }
 
-  const { subject, html, plainText } = TEMPLATES[step - 1](data);
+  const { subject, html, plainText } = await TEMPLATES[step - 1](data);
 
   if (!RESEND_API_KEY) {
     console.log(`[Recovery Email] Resend not configured, skipping step ${step} for ${data.email}`);
@@ -352,7 +362,7 @@ export async function sendRecoveryEmail(
       },
       body: JSON.stringify({
         from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-        reply_to: 'donorcare@qurbani.com',
+        reply_to: 'donorcare@us.qurbani.com',
         to: data.email,
         subject,
         html,

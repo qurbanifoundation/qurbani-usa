@@ -4,314 +4,1153 @@ import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
 
-// Get query params for filtering
+// ─── Query Params ───
 const url = new URL(Astro.request.url);
+const search = url.searchParams.get('search') || '';
 const statusFilter = url.searchParams.get('status') || 'all';
+const typeFilter = url.searchParams.get('type') || 'all';
+const dateRange = url.searchParams.get('range') || 'all';
+const tierFilter = url.searchParams.get('tier') || 'all';
+const donationId = url.searchParams.get('donation') || '';
 const page = parseInt(url.searchParams.get('page') || '1');
 const perPage = 25;
 
-// Build query
-let query = supabaseAdmin
-  .from('donations')
-  .select('*', { count: 'exact' })
-  .order('created_at', { ascending: false });
-
-if (statusFilter !== 'all') {
-  query = query.eq('status', statusFilter);
+// ─── Helpers ───
+function formatDate(dateStr: string | null | undefined, includeTime = true) {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  const opts: Intl.DateTimeFormatOptions = {
+    month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+  };
+  if (includeTime) { opts.hour = '2-digit'; opts.minute = '2-digit'; }
+  return date.toLocaleDateString('en-US', opts);
 }
 
-// Pagination
-const { data: donations, count, error } = await query
-  .range((page - 1) * perPage, page * perPage - 1);
+function formatAmount(amount: number | string | null | undefined) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+}
 
-const totalPages = Math.ceil((count || 0) / perPage);
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'completed': return 'bg-green-100 text-green-800';
+    case 'pending': return 'bg-yellow-100 text-yellow-800';
+    case 'failed': return 'bg-red-100 text-red-800';
+    case 'refunded': return 'bg-purple-100 text-purple-800';
+    case 'disputed': return 'bg-orange-100 text-orange-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
 
-// Get stats
+function getTypeBadge(donation: Record<string, any>) {
+  const meta = donation.metadata || {};
+  if (meta.is_jummah) return { label: 'Jummah', cls: 'bg-indigo-100 text-indigo-800' };
+  if (donation.donation_type === 'monthly' || meta.is_recurring || donation.stripe_subscription_id)
+    return { label: 'Monthly', cls: 'bg-blue-100 text-blue-800' };
+  return { label: 'One-Time', cls: 'bg-gray-100 text-gray-700' };
+}
+
+function getTierBadge(tier: string) {
+  switch (tier) {
+    case 'platinum': return 'bg-purple-100 text-purple-800';
+    case 'gold': return 'bg-yellow-100 text-yellow-800';
+    case 'silver': return 'bg-gray-200 text-gray-700';
+    default: return 'bg-orange-100 text-orange-700';
+  }
+}
+
+function computeTier(totalAmount: number): string {
+  if (totalAmount >= 5000) return 'platinum';
+  if (totalAmount >= 1000) return 'gold';
+  if (totalAmount >= 250) return 'silver';
+  return 'bronze';
+}
+
+function getDeclineMessage(errorMsg: string | null | undefined): string | null {
+  if (!errorMsg) return null;
+  const lower = (errorMsg || '').toLowerCase();
+  const messages: Record<string, string> = {
+    'insufficient_funds': 'Insufficient funds. Donor should try a different card or add funds.',
+    'do_not_honor': 'Bank declined (do_not_honor). Donor should call their bank to authorize, or use a different card.',
+    'card_velocity_exceeded': 'Too many attempts. Donor should wait 15-30 min or use a different card.',
+    'lost_card': 'Card reported lost/stolen. Donor must use a different card.',
+    'stolen_card': 'Card reported lost/stolen. Donor must use a different card.',
+    'expired_card': 'Card expired. Donor needs a card with valid expiration.',
+    'incorrect_cvc': 'Incorrect CVC/CVV code. Donor should re-enter the security code.',
+    'incorrect_zip': 'ZIP code mismatch. Donor should verify billing address.',
+    'processing_error': 'Temporary processing error. Donor can try again shortly.',
+    'card_declined': 'Generic card decline. Donor should try a different card or contact bank.',
+    'generic_decline': 'Generic decline. Donor should try a different card or contact bank.',
+    'fraudulent': 'Bank flagged as suspicious. Donor should call bank first, then retry.',
+    'transaction_not_allowed': 'Bank does not allow this transaction type. Donor should contact bank.',
+    'currency_not_supported': 'Card does not support USD. Donor should use a different card.',
+    'card_not_supported': 'Card type not supported. Donor should use Visa, MC, or Amex.',
+    'try_again_later': 'Temporary issue. Donor can retry in a few minutes.',
+  };
+  for (const [code, msg] of Object.entries(messages)) {
+    if (lower.includes(code)) return msg;
+  }
+  if (lower.includes('declined') || lower.includes('denied'))
+    return 'Card was declined. Donor should try a different card or contact their bank.';
+  return errorMsg;
+}
+
+function parseItems(donation: Record<string, any>) {
+  try {
+    return typeof donation.items === 'string' ? JSON.parse(donation.items) : (donation.items || []);
+  } catch { return []; }
+}
+
+function getItemNames(donation: Record<string, any>) {
+  return parseItems(donation).map((i: Record<string, any>) => i.name || i.label || 'Donation').join(', ');
+}
+
+function getCampaignName(donation: Record<string, any>) {
+  if (donation.campaign_name) return donation.campaign_name;
+  const items = parseItems(donation);
+  if (items.length > 0 && items[0].campaign)
+    return items[0].campaign.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+  return null;
+}
+
+function getBillingAddress(donation: Record<string, any>) {
+  const addr = (donation.metadata || {}).billing_address;
+  if (!addr) return null;
+  return [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', ');
+}
+
+function getDateCutoff(range: string): string | null {
+  if (range === 'all') return null;
+  const days = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : 0;
+  if (!days) return null;
+  const now = new Date();
+  now.setDate(now.getDate() - days);
+  return now.toISOString();
+}
+
+function buildFilterParams(overrides: Record<string, string> = {}) {
+  const params = new URLSearchParams();
+  const s = overrides.status ?? statusFilter;
+  const t = overrides.type ?? typeFilter;
+  const r = overrides.range ?? dateRange;
+  const q = overrides.search ?? search;
+  const p = overrides.page ?? String(page);
+  const tr = overrides.tier ?? tierFilter;
+  if (s !== 'all') params.set('status', s);
+  if (t !== 'all') params.set('type', t);
+  if (r !== 'all') params.set('range', r);
+  if (q) params.set('search', q);
+  if (p !== '1') params.set('page', p);
+  if (tr !== 'all') params.set('tier', tr);
+  const str = params.toString();
+  return str ? `?${str}` : '';
+}
+
+// ─── Donor Tier Lookup (computed from completed donations) ───
+const { data: donorTotals } = await supabaseAdmin
+  .from('donations')
+  .select('donor_email, amount')
+  .eq('status', 'completed')
+  .not('donor_email', 'is', null);
+
+const tierMap = new Map<string, { total: number; tier: string }>();
+if (donorTotals) {
+  for (const d of donorTotals) {
+    if (!d.donor_email) continue;
+    const email = d.donor_email.toLowerCase();
+    const existing = tierMap.get(email) || { total: 0, tier: 'bronze' };
+    existing.total += parseFloat(d.amount) || 0;
+    tierMap.set(email, existing);
+  }
+  for (const [email, data] of tierMap) {
+    data.tier = computeTier(data.total);
+    tierMap.set(email, data);
+  }
+}
+
+function getDonorTier(email: string | null | undefined): string {
+  if (!email) return 'bronze';
+  return tierMap.get(email.toLowerCase())?.tier || 'bronze';
+}
+
+function getDonorTotal(email: string | null | undefined): number {
+  if (!email) return 0;
+  return tierMap.get(email.toLowerCase())?.total || 0;
+}
+
+// ─── Stats ───
 const { data: statsData } = await supabaseAdmin
   .from('donations')
-  .select('status, amount');
+  .select('status, amount, donation_type, stripe_subscription_id, metadata');
 
 const stats = {
   total: statsData?.length || 0,
-  completed: statsData?.filter(d => d.status === 'completed').length || 0,
-  pending: statsData?.filter(d => d.status === 'pending').length || 0,
-  failed: statsData?.filter(d => d.status === 'failed').length || 0,
-  totalAmount: statsData?.filter(d => d.status === 'completed').reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0,
+  completed: statsData?.filter((d: Record<string, any>) => d.status === 'completed').length || 0,
+  pending: statsData?.filter((d: Record<string, any>) => d.status === 'pending').length || 0,
+  failed: statsData?.filter((d: Record<string, any>) => d.status === 'failed').length || 0,
+  refunded: statsData?.filter((d: Record<string, any>) => d.status === 'refunded').length || 0,
+  recurring: statsData?.filter((d: Record<string, any>) => d.donation_type === 'monthly' || d.stripe_subscription_id || (d.metadata as Record<string, any>)?.is_recurring).length || 0,
+  totalAmount: statsData?.filter((d: Record<string, any>) => d.status === 'completed').reduce((sum: number, d: Record<string, any>) => sum + (parseFloat(d.amount) || 0), 0) || 0,
 };
 
-// Format date helper (Eastern Time for admin display)
-function formatDate(dateStr: string) {
-  if (!dateStr) return 'N/A';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/New_York',
-  });
+// Tier stats
+const tierCounts = { platinum: 0, gold: 0, silver: 0, bronze: 0 };
+for (const [, data] of tierMap) {
+  if (data.tier in tierCounts) tierCounts[data.tier as keyof typeof tierCounts]++;
 }
 
-// Format amount helper
-function formatAmount(amount: number | string) {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
-}
+// ─── Donation Detail View ───
+let donationDetail: Record<string, any> | null = null;
+let subscription: Record<string, any> | null = null;
+let disputes: Record<string, any>[] = [];
+let subPayments: Record<string, any>[] = [];
 
-// Status badge colors
-function getStatusBadge(status: string) {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'failed':
-      return 'bg-red-100 text-red-800';
-    case 'refunded':
-      return 'bg-purple-100 text-purple-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
+if (donationId) {
+  const { data: det } = await supabaseAdmin.from('donations').select('*').eq('id', donationId).single();
+  donationDetail = det;
+
+  if (donationDetail?.stripe_subscription_id) {
+    const { data: sub } = await supabaseAdmin.from('donation_subscriptions').select('*')
+      .eq('stripe_subscription_id', donationDetail.stripe_subscription_id).single();
+    subscription = sub;
+    if (sub) {
+      const { data: payments } = await supabaseAdmin.from('subscription_payments').select('*')
+        .eq('subscription_id', sub.id).order('created_at', { ascending: false });
+      subPayments = payments || [];
+    }
+  }
+
+  if (donationDetail) {
+    const { data: disp } = await supabaseAdmin.from('donation_disputes').select('*')
+      .eq('donation_id', donationId).order('created_at', { ascending: false });
+    disputes = disp || [];
   }
 }
+
+// ─── Donations List ───
+let donations: Record<string, any>[] = [];
+let donationCount = 0;
+
+if (!donationId) {
+  let query = supabaseAdmin.from('donations').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+
+  if (search) {
+    const s = search.replace(/'/g, "''");
+    query = query.or(`donor_name.ilike.%${s}%,donor_email.ilike.%${s}%,donor_phone.ilike.%${s}%,campaign_name.ilike.%${s}%,campaign_slug.ilike.%${s}%`);
+  }
+  if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+  if (typeFilter === 'monthly') query = query.eq('donation_type', 'monthly');
+  else if (typeFilter === 'single') query = query.eq('donation_type', 'single');
+
+  const cutoff = getDateCutoff(dateRange);
+  if (cutoff) query = query.gte('created_at', cutoff);
+
+  const { data, count } = await query.range((page - 1) * perPage, page * perPage - 1);
+  donations = data || [];
+  donationCount = count || 0;
+
+  // Apply tier filter client-side (since tier is computed, not a DB column)
+  if (tierFilter !== 'all') {
+    donations = donations.filter(d => getDonorTier(d.donor_email) === tierFilter);
+    donationCount = donations.length; // Note: pagination will be approximate for tier filter
+  }
+}
+
+const totalPages = Math.ceil(donationCount / perPage);
+const hasActiveFilters = search || statusFilter !== 'all' || typeFilter !== 'all' || dateRange !== 'all' || tierFilter !== 'all';
 ---
 
-<AdminLayout title="Donations" activeNav="donations">
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p class="text-sm text-gray-500 mb-1">Total Donations</p>
-      <p class="text-2xl font-bold text-gray-800">{stats.total}</p>
-    </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p class="text-sm text-gray-500 mb-1">Completed</p>
-      <p class="text-2xl font-bold text-green-600">{stats.completed}</p>
-    </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p class="text-sm text-gray-500 mb-1">Pending</p>
-      <p class="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-    </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p class="text-sm text-gray-500 mb-1">Failed</p>
-      <p class="text-2xl font-bold text-red-600">{stats.failed}</p>
-    </div>
-    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p class="text-sm text-gray-500 mb-1">Total Revenue</p>
-      <p class="text-2xl font-bold text-[#01534d]">{formatAmount(stats.totalAmount)}</p>
-    </div>
-  </div>
+<AdminLayout title={donationDetail ? `Donation - ${donationDetail.donor_name || 'Anonymous'}` : 'Donations'} activeNav="donations">
 
-  <!-- Filters & Actions -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-    <div class="p-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-500">Filter by status:</span>
-        <div class="flex gap-2">
-          <a
-            href="/admin/donations?status=all"
-            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'all' ? 'bg-[#01534d] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            All
-          </a>
-          <a
-            href="/admin/donations?status=completed"
-            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'completed' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            Completed
-          </a>
-          <a
-            href="/admin/donations?status=pending"
-            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            Pending
-          </a>
-          <a
-            href="/admin/donations?status=failed"
-            class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'failed' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            Failed
-          </a>
+  {donationDetail ? (
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DETAIL VIEW                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div>
+      <!-- Back button -->
+      <a href={`/admin/donations${buildFilterParams()}`} class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Back to Donations
+      </a>
+
+      <!-- Error Banner (failed) -->
+      {donationDetail.status === 'failed' && (
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+            <div>
+              <h3 class="text-sm font-bold text-red-800">Payment Failed</h3>
+              {donationDetail.error_message ? (
+                <div>
+                  <p class="text-sm text-red-700 mt-1">{getDeclineMessage(donationDetail.error_message)}</p>
+                  <p class="text-xs text-red-500 mt-1 font-mono">Raw: {donationDetail.error_message}</p>
+                </div>
+              ) : (
+                <p class="text-sm text-red-700 mt-1">
+                  The payment was declined. Check Stripe for the specific decline reason.
+                  {donationDetail.stripe_payment_intent_id && (
+                    <a href={`https://dashboard.stripe.com/payments/${donationDetail.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" class="ml-1 text-red-800 underline hover:text-red-900 font-medium">
+                      View in Stripe Dashboard &rarr;
+                    </a>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- Header Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="p-6">
+          <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <!-- Left: Donor Info -->
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-[#01534d] flex items-center justify-center text-white text-lg font-bold">
+                  {(donationDetail.donor_name || 'A').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h1 class="text-xl font-bold text-gray-900">{donationDetail.donor_name || 'Anonymous'}</h1>
+                  <p class="text-sm text-gray-500">{donationDetail.donor_email || 'No email'}</p>
+                </div>
+                <!-- Tier badge -->
+                <span class={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${getTierBadge(getDonorTier(donationDetail.donor_email))}`}>
+                  {getDonorTier(donationDetail.donor_email)}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                {donationDetail.donor_phone && (
+                  <div>
+                    <span class="text-gray-400 text-xs uppercase tracking-wider">Phone</span>
+                    <p class="text-gray-800 font-medium">{donationDetail.donor_phone}</p>
+                  </div>
+                )}
+                {getBillingAddress(donationDetail) && (
+                  <div>
+                    <span class="text-gray-400 text-xs uppercase tracking-wider">Billing Address</span>
+                    <p class="text-gray-800">{getBillingAddress(donationDetail)}</p>
+                  </div>
+                )}
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Date</span>
+                  <p class="text-gray-800">{formatDate(donationDetail.created_at)}</p>
+                </div>
+                {donationDetail.completed_at && (
+                  <div>
+                    <span class="text-gray-400 text-xs uppercase tracking-wider">Completed</span>
+                    <p class="text-gray-800">{formatDate(donationDetail.completed_at)}</p>
+                  </div>
+                )}
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Lifetime Total</span>
+                  <p class="text-gray-800 font-medium">{formatAmount(getDonorTotal(donationDetail.donor_email))}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Amount, Status, Actions -->
+            <div class="lg:min-w-[240px]">
+              <div class="text-right">
+                <p class="text-3xl font-bold text-gray-900">{formatAmount(donationDetail.amount)}</p>
+                {donationDetail.covers_fees && donationDetail.fee_amount > 0 && (
+                  <p class="text-xs text-gray-500 mt-1">Base: {formatAmount(donationDetail.base_amount)} + Fee: {formatAmount(donationDetail.fee_amount)}</p>
+                )}
+                <div class="flex items-center justify-end gap-2 mt-3">
+                  <span class={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusBadge(donationDetail.status)}`}>
+                    {donationDetail.status || 'unknown'}
+                  </span>
+                  <span class={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getTypeBadge(donationDetail).cls}`}>
+                    {getTypeBadge(donationDetail).label}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex flex-col gap-2 mt-5 border-t border-gray-100 pt-4">
+                <!-- Status Dropdown -->
+                <div class="flex items-center gap-2">
+                  <label class="text-xs text-gray-400 whitespace-nowrap">Status:</label>
+                  <select id="detail-status-select" class="flex-1 text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-[#01534d]/30">
+                    <option value="pending" selected={donationDetail.status === 'pending'}>Pending</option>
+                    <option value="completed" selected={donationDetail.status === 'completed'}>Completed</option>
+                    <option value="failed" selected={donationDetail.status === 'failed'}>Failed</option>
+                    <option value="refunded" selected={donationDetail.status === 'refunded'}>Refunded</option>
+                  </select>
+                  <button id="detail-status-btn" class="px-3 py-1.5 text-xs bg-[#01534d] text-white rounded-lg hover:bg-[#01534d]/90 transition font-medium">
+                    Save
+                  </button>
+                </div>
+
+                {donationDetail.donor_email && donationDetail.status === 'completed' && (
+                  <button id="resend-receipt-btn" class="w-full px-3 py-2 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition font-medium text-center">
+                    Resend Receipt
+                  </button>
+                )}
+
+                {donationDetail.donor_email && (
+                  <button id="open-email-modal-btn" class="w-full px-3 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition font-medium text-center">
+                    Send Custom Email
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <button
-        id="export-btn"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition text-sm"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-        </svg>
-        Export CSV
-      </button>
+
+      <!-- Email Modal (hidden by default) -->
+      <div id="email-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-gray-900">Send Email</h3>
+            <button id="close-email-modal" class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">To</label>
+              <p class="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">{donationDetail.donor_email || 'No email'}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+              <input id="email-subject" type="text" value={`Regarding your donation - Qurbani Foundation`} class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/30 focus:border-[#01534d]" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+              <textarea id="email-message" rows="6" placeholder="Write your message here..." class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/30 focus:border-[#01534d] resize-y"></textarea>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+            <button id="cancel-email-btn" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+            <button id="send-email-btn" class="px-5 py-2 text-sm text-white bg-[#01534d] rounded-lg hover:bg-[#01534d]/90 transition font-medium">Send Email</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      {parseItems(donationDetail).length > 0 && (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Donation Items</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Item</th>
+                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Campaign</th>
+                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Qty</th>
+                  <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
+                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Notes</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {parseItems(donationDetail).map((item: any) => (
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-3">
+                      <p class="text-sm font-medium text-gray-800">{item.name || item.label || 'Donation'}</p>
+                      {item.type && <p class="text-xs text-gray-400 capitalize">{item.type}</p>}
+                    </td>
+                    <td class="px-6 py-3">
+                      {item.campaign ? (
+                        <a href={`/appeals/${item.campaign}`} target="_blank" class="text-sm text-blue-600 hover:underline">
+                          {item.campaign.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                        </a>
+                      ) : <span class="text-xs text-gray-400">General</span>}
+                    </td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{item.quantity || 1}</td>
+                    <td class="px-6 py-3 text-right text-sm font-semibold text-gray-800">{formatAmount(item.amount * (item.quantity || 1))}</td>
+                    <td class="px-6 py-3">
+                      <div class="space-y-0.5">
+                        {item.childName && <p class="text-xs text-gray-600"><span class="text-gray-400">Child:</span> {item.childName}</p>}
+                        {item.aqiqahFor && <p class="text-xs text-gray-600"><span class="text-gray-400">Aqiqah for:</span> {item.aqiqahFor}</p>}
+                        {item.notes && <p class="text-xs text-gray-600">{item.notes}</p>}
+                        {item.packageType && <p class="text-xs text-gray-600"><span class="text-gray-400">Package:</span> {item.packageType}</p>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {donationDetail.covers_fees && donationDetail.fee_amount > 0 && (
+                  <tr class="bg-gray-50">
+                    <td class="px-6 py-3 text-sm text-gray-500 italic" colspan="3">Processing fee (donor covered)</td>
+                    <td class="px-6 py-3 text-right text-sm text-gray-500">{formatAmount(donationDetail.fee_amount)}</td>
+                    <td></td>
+                  </tr>
+                )}
+                <tr class="bg-gray-50 font-semibold">
+                  <td class="px-6 py-3 text-sm text-gray-800" colspan="3">Total</td>
+                  <td class="px-6 py-3 text-right text-sm text-gray-800">{formatAmount(donationDetail.amount)}</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <!-- Subscription Section -->
+      {subscription && (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Subscription Details</h2>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Status</span>
+                <p class="mt-0.5"><span class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${subscription.status === 'active' ? 'bg-green-100 text-green-800' : subscription.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{subscription.status}</span></p>
+              </div>
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Interval</span>
+                <p class="text-gray-800 font-medium capitalize">{subscription.interval || 'Monthly'}</p>
+              </div>
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Amount</span>
+                <p class="text-gray-800 font-medium">{formatAmount(subscription.amount)}/mo</p>
+              </div>
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Next Billing</span>
+                <p class="text-gray-800 font-medium">{subscription.next_billing_date ? formatDate(subscription.next_billing_date, false) : 'N/A'}</p>
+              </div>
+              {(subscription.card_brand || subscription.card_last4) && (
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Card</span>
+                  <p class="text-gray-800 font-medium">{subscription.card_brand || 'Card'} ****{subscription.card_last4 || '????'}</p>
+                </div>
+              )}
+              {subscription.failure_count > 0 && (
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Failures</span>
+                  <p class="text-red-600 font-medium">{subscription.failure_count} failed</p>
+                  {subscription.last_failure_reason && <p class="text-xs text-red-400 mt-0.5">{subscription.last_failure_reason}</p>}
+                </div>
+              )}
+              {subscription.cancelled_at && (
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Cancelled</span>
+                  <p class="text-gray-800">{formatDate(subscription.cancelled_at, false)}</p>
+                </div>
+              )}
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Stripe</span>
+                <p><a href={`https://dashboard.stripe.com/subscriptions/${subscription.stripe_subscription_id}`} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-sm">View Subscription &rarr;</a></p>
+              </div>
+            </div>
+            {subPayments.length > 0 && (
+              <div class="mt-6">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Payment History</h3>
+                <table class="w-full"><thead class="bg-gray-50"><tr>
+                  <th class="text-left text-xs text-gray-500 px-4 py-2">Date</th>
+                  <th class="text-left text-xs text-gray-500 px-4 py-2">Amount</th>
+                  <th class="text-left text-xs text-gray-500 px-4 py-2">Status</th>
+                  <th class="text-left text-xs text-gray-500 px-4 py-2">Invoice</th>
+                </tr></thead><tbody class="divide-y divide-gray-100">
+                  {subPayments.map((p: any) => (
+                    <tr>
+                      <td class="px-4 py-2 text-sm text-gray-800">{formatDate(p.paid_at || p.created_at)}</td>
+                      <td class="px-4 py-2 text-sm font-medium text-gray-800">{formatAmount(p.amount)}</td>
+                      <td class="px-4 py-2"><span class={`text-xs font-medium capitalize ${p.status === 'paid' ? 'text-green-600' : p.status === 'failed' ? 'text-red-600' : 'text-gray-600'}`}>{p.status}</span></td>
+                      <td class="px-4 py-2">{p.stripe_invoice_id ? <a href={`https://dashboard.stripe.com/invoices/${p.stripe_invoice_id}`} target="_blank" class="text-xs text-blue-600 hover:underline">View</a> : <span class="text-xs text-gray-400">-</span>}</td>
+                    </tr>
+                  ))}
+                </tbody></table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <!-- Disputes -->
+      {disputes.length > 0 && (
+        <div class="bg-white rounded-xl shadow-sm border border-orange-200 mb-6">
+          <div class="px-6 py-4 border-b border-orange-200 bg-orange-50 rounded-t-xl">
+            <h2 class="text-sm font-semibold text-orange-800 uppercase tracking-wider">Disputes</h2>
+          </div>
+          <div class="p-6">
+            {disputes.map((d: any) => (
+              <div class="flex items-start justify-between gap-4 py-3 border-b border-gray-100 last:border-0">
+                <div>
+                  <p class="text-sm font-medium text-gray-800 capitalize">{(d.reason || 'Unknown').replace(/_/g, ' ')}</p>
+                  <p class="text-xs text-gray-500">Amount: {formatAmount(d.amount)} | Status: <span class="capitalize font-medium">{d.status}</span></p>
+                  <p class="text-xs text-gray-400">Opened: {formatDate(d.created_at)}</p>
+                </div>
+                {d.stripe_dispute_id && <a href={`https://dashboard.stripe.com/disputes/${d.stripe_dispute_id}`} target="_blank" class="text-sm text-blue-600 hover:underline whitespace-nowrap">View in Stripe &rarr;</a>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Technical Details -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+          <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Technical Details</h2>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span class="text-gray-400 text-xs uppercase tracking-wider">Donation ID</span>
+              <p class="text-gray-600 font-mono text-xs break-all">{donationDetail.id}</p>
+            </div>
+            {donationDetail.stripe_payment_intent_id && (
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Payment Intent</span>
+                <p><a href={`https://dashboard.stripe.com/payments/${donationDetail.stripe_payment_intent_id}`} target="_blank" class="text-blue-600 hover:underline text-xs font-mono break-all">{donationDetail.stripe_payment_intent_id}</a></p>
+              </div>
+            )}
+            {donationDetail.stripe_charge_id && (
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Charge ID</span>
+                <p class="text-gray-600 font-mono text-xs break-all">{donationDetail.stripe_charge_id}</p>
+              </div>
+            )}
+            {donationDetail.stripe_subscription_id && (
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Subscription</span>
+                <p><a href={`https://dashboard.stripe.com/subscriptions/${donationDetail.stripe_subscription_id}`} target="_blank" class="text-blue-600 hover:underline text-xs font-mono break-all">{donationDetail.stripe_subscription_id}</a></p>
+              </div>
+            )}
+            {getCampaignName(donationDetail) && (
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Campaign</span>
+                <p class="text-gray-800">{getCampaignName(donationDetail)}</p>
+              </div>
+            )}
+            <div>
+              <span class="text-gray-400 text-xs uppercase tracking-wider">Fulfillment</span>
+              <p class="text-gray-800 capitalize">{donationDetail.fulfillment_status || 'pending'}</p>
+            </div>
+            <div>
+              <span class="text-gray-400 text-xs uppercase tracking-wider">Receipt Sent</span>
+              <p class={donationDetail.receipt_sent ? 'text-green-600' : 'text-gray-400'}>{donationDetail.receipt_sent ? 'Yes' : 'No'}</p>
+            </div>
+          </div>
+          {donationDetail.metadata && Object.keys(donationDetail.metadata).length > 0 && (
+            <details class="mt-6">
+              <summary class="cursor-pointer text-xs text-gray-400 hover:text-gray-600 uppercase tracking-wider font-semibold">Raw Metadata</summary>
+              <pre class="mt-2 bg-gray-50 rounded-lg p-4 text-xs text-gray-600 overflow-x-auto max-h-64">{JSON.stringify(donationDetail.metadata, null, 2)}</pre>
+            </details>
+          )}
+        </div>
+      </div>
     </div>
 
-    <!-- Donations Table -->
-    <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-100">
-          <tr>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Date</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Donor</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Items</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
-            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Stripe</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {donations && donations.length > 0 ? (
-            donations.map((donation: any) => {
-              const items = typeof donation.items === 'string'
-                ? JSON.parse(donation.items)
-                : (donation.items || []);
-              const itemNames = items.map((i: any) => i.name || i.label || 'Donation').join(', ');
+  ) : (
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- LIST VIEW                                              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div>
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <p class="text-xs text-gray-500 mb-0.5">Total</p>
+          <p class="text-xl font-bold text-gray-800">{stats.total}</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <p class="text-xs text-gray-500 mb-0.5">Completed</p>
+          <p class="text-xl font-bold text-green-600">{stats.completed}</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <p class="text-xs text-gray-500 mb-0.5">Pending</p>
+          <p class="text-xl font-bold text-yellow-600">{stats.pending}</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <p class="text-xs text-gray-500 mb-0.5">Failed</p>
+          <p class="text-xl font-bold text-red-600">{stats.failed}</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <p class="text-xs text-gray-500 mb-0.5">Recurring</p>
+          <p class="text-xl font-bold text-blue-600">{stats.recurring}</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+          <p class="text-xs text-gray-500 mb-0.5">Revenue</p>
+          <p class="text-lg font-bold text-[#01534d]">{formatAmount(stats.totalAmount)}</p>
+        </div>
+        <!-- Tier Stats -->
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 col-span-2">
+          <p class="text-xs text-gray-500 mb-1">Donors by Tier</p>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-400"></span> {tierCounts.platinum} Plat</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-400"></span> {tierCounts.gold} Gold</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-400"></span> {tierCounts.silver} Silver</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-400"></span> {tierCounts.bronze} Bronze</span>
+          </div>
+        </div>
+      </div>
 
-              return (
-                <tr class="hover:bg-gray-50 transition">
-                  <td class="px-6 py-4">
-                    <p class="text-sm text-gray-800">{formatDate(donation.created_at)}</p>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div>
-                      <p class="text-sm font-medium text-gray-800">{donation.donor_name || 'Anonymous'}</p>
-                      <p class="text-xs text-gray-500">{donation.donor_email || 'No email'}</p>
-                      {donation.donor_phone && (
-                        <p class="text-xs text-gray-400">{donation.donor_phone}</p>
+      <!-- Search & Filters -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="p-4 border-b border-gray-100">
+          <form method="GET" action="/admin/donations" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="text" name="search" value={search} placeholder="Search by name, email, phone, campaign..." class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#01534d]/30 focus:border-[#01534d]" />
+            </div>
+            <select name="type" class="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#01534d]/30">
+              <option value="all" selected={typeFilter === 'all'}>All Types</option>
+              <option value="single" selected={typeFilter === 'single'}>One-Time</option>
+              <option value="monthly" selected={typeFilter === 'monthly'}>Monthly</option>
+            </select>
+            <select name="range" class="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#01534d]/30">
+              <option value="all" selected={dateRange === 'all'}>All Time</option>
+              <option value="7d" selected={dateRange === '7d'}>Last 7 Days</option>
+              <option value="30d" selected={dateRange === '30d'}>Last 30 Days</option>
+              <option value="90d" selected={dateRange === '90d'}>Last 90 Days</option>
+            </select>
+            <select name="tier" class="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#01534d]/30">
+              <option value="all" selected={tierFilter === 'all'}>All Tiers</option>
+              <option value="platinum" selected={tierFilter === 'platinum'}>Platinum ($5K+)</option>
+              <option value="gold" selected={tierFilter === 'gold'}>Gold ($1K+)</option>
+              <option value="silver" selected={tierFilter === 'silver'}>Silver ($250+)</option>
+              <option value="bronze" selected={tierFilter === 'bronze'}>Bronze</option>
+            </select>
+            {statusFilter !== 'all' && <input type="hidden" name="status" value={statusFilter} />}
+            <button type="submit" class="px-5 py-2.5 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#01534d]/90 transition">Search</button>
+            {hasActiveFilters && <a href="/admin/donations" class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition text-center">Clear</a>}
+          </form>
+        </div>
+
+        <!-- Status Tabs + Bulk Actions -->
+        <div class="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <a href={`/admin/donations${buildFilterParams({ status: 'all', page: '1' })}`} class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'all' ? 'bg-[#01534d] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>All</a>
+            <a href={`/admin/donations${buildFilterParams({ status: 'completed', page: '1' })}`} class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'completed' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Completed</a>
+            <a href={`/admin/donations${buildFilterParams({ status: 'pending', page: '1' })}`} class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Pending</a>
+            <a href={`/admin/donations${buildFilterParams({ status: 'failed', page: '1' })}`} class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'failed' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Failed</a>
+            <a href={`/admin/donations${buildFilterParams({ status: 'refunded', page: '1' })}`} class={`px-3 py-1.5 text-sm rounded-lg transition ${statusFilter === 'refunded' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>Refunded</a>
+          </div>
+          <button id="export-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Export CSV
+          </button>
+        </div>
+
+        <!-- Donations Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full" id="donations-table">
+            <thead class="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th class="w-10 px-4 py-3">
+                  <input type="checkbox" id="select-all-cb" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+                </th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Date</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Donor</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Tier</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Type</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Items / Campaign</th>
+                <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Amount</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Status</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Stripe</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              {donations.length > 0 ? (
+                donations.map((donation: any) => {
+                  const itemNames = getItemNames(donation);
+                  const campaign = getCampaignName(donation);
+                  const typeBadge = getTypeBadge(donation);
+                  const tier = getDonorTier(donation.donor_email);
+
+                  return (
+                    <tr class="hover:bg-gray-50 transition" data-id={donation.id}>
+                      <td class="px-4 py-4">
+                        <input type="checkbox" class="row-cb rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" data-id={donation.id} />
+                      </td>
+                      <td class="px-4 py-4">
+                        <p class="text-sm text-gray-800 whitespace-nowrap">{formatDate(donation.created_at)}</p>
+                      </td>
+                      <td class="px-4 py-4">
+                        <div>
+                          <a href={`/admin/donations?donation=${donation.id}`} class="text-sm font-medium text-amber-700 hover:text-amber-900 hover:underline">
+                            {donation.donor_name || 'Anonymous'}
+                          </a>
+                          <p class="text-xs text-gray-500">{donation.donor_email || 'No email'}</p>
+                          {donation.donor_phone && <p class="text-xs text-gray-400">{donation.donor_phone}</p>}
+                        </div>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getTierBadge(tier)}`}>{tier}</span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <span class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeBadge.cls}`}>{typeBadge.label}</span>
+                      </td>
+                      <td class="px-4 py-4">
+                        <p class="text-sm text-gray-700 max-w-[180px] truncate" title={itemNames}>{itemNames || 'General Donation'}</p>
+                        {campaign && <p class="text-xs text-gray-400 truncate max-w-[180px]">{campaign}</p>}
+                      </td>
+                      <td class="px-4 py-4 text-right">
+                        <p class="text-sm font-semibold text-gray-800">{formatAmount(donation.amount)}</p>
+                        {donation.covers_fees && donation.fee_amount > 0 && <p class="text-xs text-gray-400">+{formatAmount(donation.fee_amount)} fee</p>}
+                      </td>
+                      <td class="px-4 py-4">
+                        <div class="relative group inline-block">
+                          <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusBadge(donation.status)} ${donation.status === 'failed' && donation.error_message ? 'cursor-help' : ''}`}>{donation.status || 'unknown'}</span>
+                          {donation.status === 'failed' && donation.error_message && (
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-30 w-72 pointer-events-none">
+                              <div class="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg">
+                                <p class="font-semibold text-red-300 mb-1">Decline message shown to donor:</p>
+                                <p class="text-gray-200 leading-relaxed">{getDeclineMessage(donation.error_message)}</p>
+                                <p class="text-gray-500 mt-1 font-mono text-[10px]">{donation.error_message}</p>
+                              </div>
+                              <div class="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[6px] border-t-gray-900"></div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td class="px-4 py-4">
+                        {donation.stripe_payment_intent_id ? (
+                          <a href={`https://dashboard.stripe.com/payments/${donation.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap">View</a>
+                        ) : <span class="text-xs text-gray-400">N/A</span>}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colspan="9" class="px-6 py-12 text-center">
+                    <div class="flex flex-col items-center">
+                      <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                      {hasActiveFilters ? (
+                        <div><p class="text-gray-500 font-medium">No donations match your filters</p><a href="/admin/donations" class="text-sm text-[#01534d] hover:underline mt-1 inline-block">Clear all filters</a></div>
+                      ) : (
+                        <div><p class="text-gray-500 font-medium">No donations found</p><p class="text-gray-400 text-sm">Donations will appear here once customers complete checkout</p></div>
                       )}
                     </div>
                   </td>
-                  <td class="px-6 py-4">
-                    <p class="text-sm text-gray-600 max-w-xs truncate" title={itemNames}>
-                      {itemNames || 'General Donation'}
-                    </p>
-                  </td>
-                  <td class="px-6 py-4">
-                    <p class="text-sm font-semibold text-gray-800">{formatAmount(donation.amount)}</p>
-                    <p class="text-xs text-gray-400 uppercase">{donation.currency || 'USD'}</p>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusBadge(donation.status)}`}>
-                      {donation.status || 'unknown'}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4">
-                    {donation.stripe_payment_intent_id ? (
-                      <a
-                        href={`https://dashboard.stripe.com/payments/${donation.stripe_payment_intent_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        View in Stripe
-                      </a>
-                    ) : (
-                      <span class="text-xs text-gray-400">N/A</span>
-                    )}
-                  </td>
                 </tr>
-              );
-            })
-          ) : (
-            <tr>
-              <td colspan="6" class="px-6 py-12 text-center">
-                <div class="flex flex-col items-center">
-                  <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                  <p class="text-gray-500 font-medium">No donations found</p>
-                  <p class="text-gray-400 text-sm">Donations will appear here once customers complete checkout</p>
-                </div>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    {totalPages > 1 && (
-      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-        <p class="text-sm text-gray-500">
-          Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, count || 0)} of {count} donations
-        </p>
-        <div class="flex gap-2">
-          {page > 1 && (
-            <a
-              href={`/admin/donations?status=${statusFilter}&page=${page - 1}`}
-              class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-            >
-              Previous
-            </a>
-          )}
-          {page < totalPages && (
-            <a
-              href={`/admin/donations?status=${statusFilter}&page=${page + 1}`}
-              class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-            >
-              Next
-            </a>
-          )}
+              )}
+            </tbody>
+          </table>
         </div>
+
+        <!-- Pagination -->
+        {totalPages > 1 && (
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, donationCount)} of {donationCount} donations</p>
+            <div class="flex gap-2">
+              {page > 1 && <a href={`/admin/donations${buildFilterParams({ page: String(page - 1) })}`} class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Previous</a>}
+              {page < totalPages && <a href={`/admin/donations${buildFilterParams({ page: String(page + 1) })}`} class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">Next</a>}
+            </div>
+          </div>
+        )}
       </div>
-    )}
+    </div>
+  )}
+
+  <!-- Bulk Action Bar (fixed bottom, hidden by default) -->
+  <div id="bulk-bar" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 px-6 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span id="bulk-count" class="text-sm font-semibold text-gray-800">0 selected</span>
+        <button id="bulk-deselect" class="text-xs text-gray-500 hover:text-gray-700 underline">Deselect all</button>
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="bulk-status-select" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white">
+          <option value="">Update Status...</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+          <option value="refunded">Refunded</option>
+        </select>
+        <button id="bulk-update-btn" class="px-4 py-1.5 text-sm bg-[#01534d] text-white rounded-lg hover:bg-[#01534d]/90 transition font-medium disabled:opacity-50" disabled>
+          Apply
+        </button>
+        <button id="bulk-export-btn" class="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+          Export Selected
+        </button>
+        <button id="bulk-delete-btn" class="px-4 py-1.5 text-sm bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition font-medium">
+          Delete
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Info Box -->
-  <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-    <div class="flex items-start gap-3">
-      <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-      <div>
-        <p class="text-sm font-medium text-blue-800">About Donation Status</p>
-        <ul class="text-sm text-blue-700 mt-1 space-y-1">
-          <li><span class="font-medium">Pending:</span> Payment initiated but not yet completed</li>
-          <li><span class="font-medium">Completed:</span> Payment successful, donation confirmed</li>
-          <li><span class="font-medium">Failed:</span> Payment was declined or error occurred</li>
-          <li><span class="font-medium">Refunded:</span> Donation was refunded to the donor</li>
-        </ul>
-      </div>
-    </div>
+  <!-- Toast notification -->
+  <div id="toast" class="hidden fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium transition-all transform translate-y-[-20px] opacity-0">
   </div>
 </AdminLayout>
 
-<script define:vars={{ donations: donations || [] }}>
-  // Export CSV functionality
-  document.getElementById('export-btn')?.addEventListener('click', function() {
-    if (!donations || donations.length === 0) {
-      alert('No donations to export');
-      return;
+<script define:vars={{ donations: donationId ? [] : (donations || []), donationId: donationId || '', donationDetailId: donationDetail?.id || '' }}>
+  // ═══════════════════════════════════════════════
+  // TOAST
+  // ═══════════════════════════════════════════════
+  function showToast(message, type) {
+    var toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.className = 'fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium transition-all transform';
+    if (type === 'success') toast.className += ' bg-green-600 text-white';
+    else if (type === 'error') toast.className += ' bg-red-600 text-white';
+    else toast.className += ' bg-gray-800 text-white';
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    setTimeout(function() {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-20px)';
+      setTimeout(function() { toast.className = 'hidden'; }, 300);
+    }, 3500);
+  }
+
+  // ═══════════════════════════════════════════════
+  // DETAIL VIEW: Status Update, Resend Receipt, Custom Email
+  // ═══════════════════════════════════════════════
+  if (donationDetailId) {
+    // Status update
+    var statusBtn = document.getElementById('detail-status-btn');
+    var statusSelect = document.getElementById('detail-status-select');
+    if (statusBtn && statusSelect) {
+      statusBtn.addEventListener('click', function() {
+        var newStatus = statusSelect.value;
+        statusBtn.disabled = true;
+        statusBtn.textContent = 'Saving...';
+        fetch('/api/admin/donations/bulk-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [donationDetailId], updates: { status: newStatus } })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            showToast('Status updated to ' + newStatus, 'success');
+            setTimeout(function() { location.reload(); }, 1000);
+          } else {
+            showToast(data.error || 'Failed to update', 'error');
+          }
+        })
+        .catch(function() { showToast('Network error', 'error'); })
+        .finally(function() { statusBtn.disabled = false; statusBtn.textContent = 'Save'; });
+      });
     }
 
-    // Build CSV
-    const headers = ['Date', 'Donor Name', 'Email', 'Phone', 'Amount', 'Currency', 'Status', 'Items', 'Stripe ID'];
-    const rows = donations.map(d => {
-      const items = typeof d.items === 'string' ? JSON.parse(d.items) : (d.items || []);
-      const itemNames = items.map(i => i.name || i.label || 'Donation').join('; ');
-      return [
-        new Date(d.created_at).toISOString(),
-        d.donor_name || 'Anonymous',
-        d.donor_email || '',
-        d.donor_phone || '',
-        d.amount,
-        d.currency || 'USD',
-        d.status,
-        itemNames,
-        d.stripe_payment_intent_id || ''
-      ];
+    // Resend receipt
+    var receiptBtn = document.getElementById('resend-receipt-btn');
+    if (receiptBtn) {
+      receiptBtn.addEventListener('click', function() {
+        receiptBtn.disabled = true;
+        receiptBtn.textContent = 'Sending...';
+        fetch('/api/admin/donations/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ donation_id: donationDetailId, action: 'resend_receipt' })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) showToast(data.message || 'Receipt sent!', 'success');
+          else showToast(data.error || 'Failed to send', 'error');
+        })
+        .catch(function() { showToast('Network error', 'error'); })
+        .finally(function() { receiptBtn.disabled = false; receiptBtn.textContent = 'Resend Receipt'; });
+      });
+    }
+
+    // Email modal
+    var openModalBtn = document.getElementById('open-email-modal-btn');
+    var modal = document.getElementById('email-modal');
+    var closeModalBtn = document.getElementById('close-email-modal');
+    var cancelBtn = document.getElementById('cancel-email-btn');
+    var sendBtn = document.getElementById('send-email-btn');
+
+    function openModal() { if (modal) modal.classList.remove('hidden'); }
+    function closeModal() { if (modal) modal.classList.add('hidden'); }
+
+    if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    if (modal) modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function() {
+        var subjectEl = document.getElementById('email-subject');
+        var messageEl = document.getElementById('email-message');
+        var subjectVal = subjectEl ? subjectEl.value.trim() : '';
+        var messageVal = messageEl ? messageEl.value.trim() : '';
+
+        if (!subjectVal) { showToast('Subject is required', 'error'); return; }
+        if (!messageVal) { showToast('Message is required', 'error'); return; }
+
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending...';
+
+        fetch('/api/admin/donations/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ donation_id: donationDetailId, action: 'custom', subject: subjectVal, message: messageVal })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            showToast(data.message || 'Email sent!', 'success');
+            closeModal();
+            if (messageEl) messageEl.value = '';
+          } else {
+            showToast(data.error || 'Failed to send', 'error');
+          }
+        })
+        .catch(function() { showToast('Network error', 'error'); })
+        .finally(function() { sendBtn.disabled = false; sendBtn.textContent = 'Send Email'; });
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // LIST VIEW: Checkboxes & Bulk Actions
+  // ═══════════════════════════════════════════════
+  if (!donationId && donations.length > 0) {
+    var selectedIds = new Set();
+    var bulkBar = document.getElementById('bulk-bar');
+    var bulkCount = document.getElementById('bulk-count');
+    var selectAllCb = document.getElementById('select-all-cb');
+    var rowCbs = document.querySelectorAll('.row-cb');
+
+    function updateBulkBar() {
+      if (!bulkBar || !bulkCount) return;
+      if (selectedIds.size > 0) {
+        bulkBar.classList.remove('hidden');
+        bulkCount.textContent = selectedIds.size + ' selected';
+      } else {
+        bulkBar.classList.add('hidden');
+      }
+      // Update select-all state
+      if (selectAllCb) selectAllCb.checked = rowCbs.length > 0 && selectedIds.size === rowCbs.length;
+    }
+
+    // Row checkboxes
+    rowCbs.forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var id = cb.getAttribute('data-id');
+        if (cb.checked) selectedIds.add(id);
+        else selectedIds.delete(id);
+        updateBulkBar();
+      });
     });
 
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
+    // Select all
+    if (selectAllCb) {
+      selectAllCb.addEventListener('change', function() {
+        rowCbs.forEach(function(cb) {
+          cb.checked = selectAllCb.checked;
+          var id = cb.getAttribute('data-id');
+          if (selectAllCb.checked) selectedIds.add(id);
+          else selectedIds.delete(id);
+        });
+        updateBulkBar();
+      });
+    }
 
-    // Download
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    // Deselect all
+    var deselectBtn = document.getElementById('bulk-deselect');
+    if (deselectBtn) {
+      deselectBtn.addEventListener('click', function() {
+        selectedIds.clear();
+        rowCbs.forEach(function(cb) { cb.checked = false; });
+        if (selectAllCb) selectAllCb.checked = false;
+        updateBulkBar();
+      });
+    }
+
+    // Bulk status update
+    var bulkStatusSelect = document.getElementById('bulk-status-select');
+    var bulkUpdateBtn = document.getElementById('bulk-update-btn');
+    if (bulkStatusSelect && bulkUpdateBtn) {
+      bulkStatusSelect.addEventListener('change', function() {
+        bulkUpdateBtn.disabled = !bulkStatusSelect.value;
+      });
+      bulkUpdateBtn.addEventListener('click', function() {
+        if (!bulkStatusSelect.value || selectedIds.size === 0) return;
+        var ids = Array.from(selectedIds);
+        bulkUpdateBtn.disabled = true;
+        bulkUpdateBtn.textContent = 'Updating...';
+
+        fetch('/api/admin/donations/bulk-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ids, updates: { status: bulkStatusSelect.value } })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            showToast('Updated ' + data.updatedCount + ' donation(s)', 'success');
+            setTimeout(function() { location.reload(); }, 800);
+          } else {
+            showToast(data.error || 'Update failed', 'error');
+          }
+        })
+        .catch(function() { showToast('Network error', 'error'); })
+        .finally(function() { bulkUpdateBtn.disabled = false; bulkUpdateBtn.textContent = 'Apply'; });
+      });
+    }
+
+    // Bulk delete
+    var bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    if (bulkDeleteBtn) {
+      bulkDeleteBtn.addEventListener('click', function() {
+        if (selectedIds.size === 0) return;
+        if (!confirm('Are you sure you want to delete ' + selectedIds.size + ' donation(s)? This cannot be undone.')) return;
+
+        var ids = Array.from(selectedIds);
+        bulkDeleteBtn.disabled = true;
+        bulkDeleteBtn.textContent = 'Deleting...';
+
+        fetch('/api/admin/donations/bulk-update', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ids })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            showToast('Deleted ' + data.deletedCount + ' donation(s)', 'success');
+            setTimeout(function() { location.reload(); }, 800);
+          } else {
+            showToast(data.error || 'Delete failed', 'error');
+          }
+        })
+        .catch(function() { showToast('Network error', 'error'); })
+        .finally(function() { bulkDeleteBtn.disabled = false; bulkDeleteBtn.textContent = 'Delete'; });
+      });
+    }
+
+    // Bulk export selected
+    var bulkExportBtn = document.getElementById('bulk-export-btn');
+    if (bulkExportBtn) {
+      bulkExportBtn.addEventListener('click', function() {
+        if (selectedIds.size === 0) return;
+        var selectedDonations = donations.filter(function(d) { return selectedIds.has(d.id); });
+        exportCSV(selectedDonations);
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // CSV EXPORT
+  // ═══════════════════════════════════════════════
+  function exportCSV(donationList) {
+    if (!donationList || donationList.length === 0) { alert('No donations to export'); return; }
+    var headers = ['Date', 'Donor Name', 'Email', 'Phone', 'Type', 'Amount', 'Base Amount', 'Fee Amount', 'Covers Fees', 'Currency', 'Status', 'Campaign', 'Items', 'Error', 'Stripe ID', 'Subscription ID'];
+    var rows = donationList.map(function(d) {
+      var items = typeof d.items === 'string' ? JSON.parse(d.items) : (d.items || []);
+      var itemNames = items.map(function(i) { return i.name || i.label || 'Donation'; }).join('; ');
+      var meta = d.metadata || {};
+      var type = meta.is_jummah ? 'Jummah' : d.donation_type === 'monthly' ? 'Monthly' : 'One-Time';
+      var campaign = d.campaign_name || (items[0] && items[0].campaign ? items[0].campaign : '');
+      return [new Date(d.created_at).toISOString(), d.donor_name || 'Anonymous', d.donor_email || '', d.donor_phone || '', type, d.amount, d.base_amount || d.amount, d.fee_amount || 0, d.covers_fees ? 'Yes' : 'No', d.currency || 'USD', d.status, campaign, itemNames, d.error_message || '', d.stripe_payment_intent_id || '', d.stripe_subscription_id || ''];
+    });
+    var csv = [headers.join(',')].concat(rows.map(function(row) { return row.map(function(cell) { return '"' + String(cell).replace(/"/g, '""') + '"'; }).join(','); })).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `donations-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = 'donations-' + new Date().toISOString().split('T')[0] + '.csv';
     a.click();
     URL.revokeObjectURL(url);
-  });
+  }
+
+  // Export All button
+  var exportBtn = document.getElementById('export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() { exportCSV(donations); });
+  }
 </script>

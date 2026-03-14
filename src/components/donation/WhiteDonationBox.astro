@@ -100,9 +100,10 @@ const progressPercent = goalAmount > 0 ? Math.min((progressAmount / goalAmount) 
     <div class="relative">
       <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-bold">$</span>
       <input
-        type="number"
+        type="text"
+        inputmode="decimal"
+        pattern="[0-9]*\.?[0-9]*"
         class="custom-amount w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-300 bg-white text-gray-800 font-bold focus:outline-none focus:border-[#01534d] text-lg"
-        min="1"
         placeholder="Custom amount"
       />
     </div>

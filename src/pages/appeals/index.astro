@@ -1,33 +1,72 @@
 ---
 /**
  * Appeals Listing Page
- * Dynamically loads template based on site settings
+ * Dynamically loads template based on:
+ * 1. Category-specific template (if 'appeals' category has page_template set)
+ * 2. Site-wide default appeals template (from site_settings)
+ * 3. Fallback to 'green'
  */
 import GreenAppealTemplate from '../../templates/appeals/GreenAppealTemplate.astro';
 import OrangeAppealTemplate from '../../templates/appeals/OrangeAppealTemplate.astro';
+import EmergencyAppealsTemplate from '../../templates/categories/EmergencyAppealsTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
+import { getCategoryBySlug } from '../../lib/categories';
 
 export const prerender = false;
 
-// Fetch site settings for appeals page template
-let appealsPageTemplate = 'green'; // Default
+// Check if the 'appeals' category has a custom template assigned
+const category = await getCategoryBySlug('appeals');
+let templateKey = 'green'; // Default
+let campaigns: any[] | undefined = undefined;
 
-try {
-  const { data, error } = await supabaseAdmin
-    .from('site_settings')
-    .select('default_appeals_page_template')
-    .limit(1);
+if (category?.page_template) {
+  // Category has a custom template — use it with filtered campaigns
+  templateKey = category.page_template;
 
-  if (!error && data && data.length > 0) {
-    appealsPageTemplate = data[0].default_appeals_page_template || 'green';
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('category', 'appeals')
+      .eq('is_active', true)
+      .order('is_featured', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      campaigns = data;
+    }
+  } catch (e) {
+    console.error('Error fetching campaigns:', e);
   }
-} catch (e) {
-  console.error('Error fetching site settings:', e);
+} else {
+  // No category template — use site-wide default (shows ALL campaigns)
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('site_settings')
+      .select('default_appeals_page_template')
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      templateKey = data[0].default_appeals_page_template || 'green';
+    }
+  } catch (e) {
+    console.error('Error fetching site settings:', e);
+  }
 }
+
+const categoryProps = category ? {
+  label: category.label,
+  slug: category.slug,
+  color: category.color,
+  description: category.description,
+} : undefined;
 ---
 
-{appealsPageTemplate === 'orange' ? (
-  <OrangeAppealTemplate />
+{templateKey === 'emergency-appeals' ? (
+  <EmergencyAppealsTemplate campaigns={campaigns} category={categoryProps} />
+) : templateKey === 'orange' ? (
+  <OrangeAppealTemplate campaigns={campaigns} category={categoryProps} />
 ) : (
-  <GreenAppealTemplate />
+  <GreenAppealTemplate campaigns={campaigns} category={categoryProps} />
 )}

@@ -173,6 +173,42 @@ export async function getAppealsPageTemplates(): Promise<TemplateOption[]> {
 }
 
 /**
+ * Fetch category page template options from database
+ * Used for per-category listing pages (e.g., Emergency Appeals, Water Aid)
+ */
+export async function getCategoryPageTemplates(): Promise<TemplateOption[]> {
+  const { data, error } = await supabaseAdmin
+    .from('template_options')
+    .select('*')
+    .eq('template_type', 'category_page')
+    .eq('is_active', true)
+    .order('sort_order');
+
+  if (error) {
+    console.error('Error fetching category page templates:', error);
+    return [
+      { id: 1, template_type: 'category_page' as any, template_key: 'green', template_label: 'Green (Default)', description: 'Filtered version of green appeals template', is_active: true, sort_order: 1 },
+      { id: 2, template_type: 'category_page' as any, template_key: 'orange', template_label: 'Orange', description: 'Filtered version of orange appeals template', is_active: true, sort_order: 2 },
+      { id: 3, template_type: 'category_page' as any, template_key: 'emergency-appeals', template_label: 'Emergency Appeals', description: 'High-conversion emergency appeals template', is_active: true, sort_order: 3 },
+      { id: 4, template_type: 'category_page' as any, template_key: 'food-aid', template_label: 'Food Aid', description: 'Food aid themed category template', is_active: true, sort_order: 4 },
+      { id: 5, template_type: 'category_page' as any, template_key: 'ramadan', template_label: 'Ramadan', description: 'Ramadan hub page', is_active: true, sort_order: 5 },
+    ];
+  }
+
+  if (!data || data.length === 0) {
+    return [
+      { id: 1, template_type: 'category_page' as any, template_key: 'green', template_label: 'Green (Default)', description: 'Filtered version of green appeals template', is_active: true, sort_order: 1 },
+      { id: 2, template_type: 'category_page' as any, template_key: 'orange', template_label: 'Orange', description: 'Filtered version of orange appeals template', is_active: true, sort_order: 2 },
+      { id: 3, template_type: 'category_page' as any, template_key: 'emergency-appeals', template_label: 'Emergency Appeals', description: 'High-conversion emergency appeals template', is_active: true, sort_order: 3 },
+      { id: 4, template_type: 'category_page' as any, template_key: 'food-aid', template_label: 'Food Aid', description: 'Food aid themed category template', is_active: true, sort_order: 4 },
+      { id: 5, template_type: 'category_page' as any, template_key: 'ramadan', template_label: 'Ramadan', description: 'Ramadan hub page', is_active: true, sort_order: 5 },
+    ];
+  }
+
+  return data || [];
+}
+
+/**
  * Fetch Ramadan page template options from database
  */
 export async function getRamadanPageTemplates(): Promise<TemplateOption[]> {

@@ -23,7 +23,7 @@ if (slides.length === 0) {
     id: 'default',
     title: 'A Muslim Charity Serving Humanity',
     subtitle: '100% of your Zakat reaches those in need',
-    image_url: '/images/Qurbani-hero-section-img-1.jpg',
+    image_url: '/images/Qurbani-hero-section-img-1.webp',
     overlay_color: 'rgba(37, 87, 100, 0.7)'
   }];
 }
@@ -41,7 +41,10 @@ if (slides.length === 0) {
           src={slide.image_url}
           alt={slide.title || 'Hero image'}
           class="w-full h-full object-cover"
+          width="1920"
+          height="1080"
           loading={index === 0 ? 'eager' : 'lazy'}
+          fetchpriority={index === 0 ? 'high' : 'low'}
         />
         <!-- Subtle Gradient Overlay - Only on left side for text readability -->
         <div

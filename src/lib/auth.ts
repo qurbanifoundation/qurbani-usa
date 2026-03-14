@@ -52,6 +52,7 @@ export const PUBLIC_API_ROUTES = [
   '/api/abandoned-checkout/capture',
   '/api/abandoned-checkout/heartbeat',
   '/api/abandoned-checkout/unsubscribe',
+  '/api/email-preferences/',
 ];
 
 // Routes where GET is public but all other methods require admin auth
@@ -64,6 +65,7 @@ export const PUBLIC_GET_ONLY_ROUTES = [
   '/api/mega-menus',            // Frontend needs nav menu data
   '/api/menu-widgets',          // Frontend needs menu widgets
   '/api/pages',                 // Frontend needs CMS pages
+  '/api/social-proof',          // Frontend needs social proof notifications
 ];
 
 // Routes that use their own auth (API key, cron secret, etc.)

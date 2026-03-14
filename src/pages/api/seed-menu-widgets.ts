@@ -203,6 +203,75 @@ const aboutWidgets = [
   }
 ];
 
+// Zakat MM Template - Alternative Zakat mega menu matching competitor design
+// 3-column: grouped links (left) + CTA card (center) + quick donate with trust badges (right)
+const zakatMMWidgets = [
+  // Left Column - Link List with Section Headers
+  {
+    menu_id: 'zakat',
+    position: 'left',
+    widget_type: 'link-list',
+    title: null,
+    config: {
+      hoverColor: '#e6f4fa',
+      links: [
+        { section: 'PAY ZAKAT', label: 'Pay Your Zakat', href: '/zakat', icon: 'money', color: '#0096D6' },
+        { label: 'Pay Zakat ul-Fitr', href: '/zakat-ul-fitr', icon: 'heart', color: '#16a34a' },
+        { section: 'CALCULATE', label: 'Zakat Calculator', href: '/zakat/calculator', icon: 'calculator', color: '#0096D6' },
+        { section: 'LEARN', label: 'What is Zakat?', href: '/what-is-zakat', icon: 'book', color: '#ea580c' },
+        { label: 'Zakat FAQ', href: '/zakat-faq', icon: 'question', color: '#7c3aed' },
+        { label: 'Zakat on Gold & Silver', href: '/zakat-on-gold', icon: 'gold', color: '#eab308' },
+      ]
+    },
+    sort_order: 0,
+    is_active: true
+  },
+  // Center Column - Big CTA Card
+  {
+    menu_id: 'zakat',
+    position: 'center',
+    widget_type: 'info-box',
+    title: null,
+    config: {
+      heading: 'Calculate Your Zakat in 30 Seconds',
+      description: 'Use our easy Zakat calculator to determine your obligation. Simply enter your assets and we\'ll calculate the exact amount you owe.',
+      button: {
+        label: 'Calculate Now',
+        href: '/zakat/calculator',
+        color: '#0096D6'
+      }
+    },
+    sort_order: 0,
+    is_active: true
+  },
+  // Right Column - Quick Donate with Trust Badges
+  {
+    menu_id: 'zakat',
+    position: 'right',
+    widget_type: 'quick-form',
+    title: null,
+    config: {
+      title: 'Pay Your Zakat',
+      subtitle: 'Select an amount or enter your own',
+      amounts: [100, 250, 500],
+      defaultAmount: 500,
+      placeholder: 'Enter Zakat amount',
+      buttonText: 'Pay Zakat Now',
+      buttonColor: '#0096D6',
+      fundType: 'zakat',
+      campaignSlug: 'zakat',
+      itemName: 'Zakat Al Mal',
+      trustBadges: [
+        { text: '100% Zakat Policy' },
+        { text: 'Tax Deductible' },
+        { text: 'Trusted by 50,000+ Donors' }
+      ]
+    },
+    sort_order: 0,
+    is_active: true
+  }
+];
+
 // Ramadan Menu - Exact copy of original static design
 const ramadanWidgets = [
   // Left Column - Link List with Ramadan links
@@ -307,6 +376,7 @@ export const POST: APIRoute = async ({ url }) => {
     const templateColors: Record<string, string> = {
       'our-work': '#D97718',  // Orange
       'zakat': '#0096D6',     // Blue
+      'zakat-mm': '#0096D6',  // Blue (alternative Zakat layout)
       'about': '#D97718',     // Orange
       'ramadan': '#024139',   // Dark teal green (Ramadan-style template)
       'appeals': '#024139',   // Same as ramadan template
@@ -316,6 +386,7 @@ export const POST: APIRoute = async ({ url }) => {
     const templates: Record<string, typeof aboutWidgets> = {
       'our-work': ourWorkWidgets,
       'zakat': zakatWidgets,
+      'zakat-mm': zakatMMWidgets,
       'about': aboutWidgets,
       'ramadan': ramadanWidgets,
       'appeals': ramadanWidgets, // Appeals uses the Ramadan-style template
@@ -424,9 +495,9 @@ export const POST: APIRoute = async ({ url }) => {
 export const GET: APIRoute = async () => {
   return new Response(JSON.stringify({
     message: 'Seed Menu Widgets API',
-    usage: 'POST /api/seed-menu-widgets?menu=our-work|zakat|about|appeals|all',
+    usage: 'POST /api/seed-menu-widgets?menu=our-work|zakat|about|appeals|all or POST /api/seed-menu-widgets?menu=zakat&template=zakat-mm',
     availableMenus: ['our-work', 'zakat', 'about', 'appeals', 'all'],
-    description: 'Seeds the menu_widgets table with widget configurations that exactly match the original static mega menu designs.',
+    description: 'Seeds the menu_widgets table with widget configurations that exactly match the original static mega menu designs. Use the template parameter to apply an alternative template to any menu.',
     menuDetails: {
       'our-work': 'Category Tabs + Campaign Grid + Promo Card (Sponsor an Orphan)',
       'zakat': 'Link List + Info Box (Understanding Zakat) + Quick Form',
@@ -435,7 +506,8 @@ export const GET: APIRoute = async () => {
     },
     templates: {
       'our-work': 'Orange theme with category tabs',
-      'zakat': 'Blue theme with calculator',
+      'zakat': 'Blue theme with calculator info box',
+      'zakat-mm': 'Blue theme with grouped links, CTA card, quick donate + trust badges',
       'about': 'Orange theme with stats and newsletter',
       'ramadan': 'Dark teal theme with Ramadan-style content'
     }

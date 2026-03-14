@@ -222,7 +222,7 @@ const {
 
     /* ===== STEP CONTENT ===== */
     .step-content {
-      background: url('/images/ramadan/ramadan-bg1.png') no-repeat center top;
+      background: url('/images/ramadan/ramadan-bg1.webp') no-repeat center top;
       background-size: cover;
       min-height: 400px;
       padding: 30px 20px 60px;
@@ -2137,11 +2137,11 @@ const {
               <div class="schedule-checkbox"></div>
               <div class="schedule-info">
                 <span class="schedule-badge badge-popular">Popular</span>
-                <div class="schedule-title">Last 10 Nights</div>
+                <div class="schedule-title" id="last10-title">Last 10 Nights</div>
                 <div class="schedule-desc">Catch Laylatul Qadr with certainty</div>
               </div>
               <div class="schedule-nights">
-                <div class="nights-number">10</div>
+                <div class="nights-number" id="last10-nights-count">10</div>
                 <div class="nights-label">Nights</div>
               </div>
             </label>
@@ -2151,11 +2151,11 @@ const {
               <div class="schedule-checkbox"></div>
               <div class="schedule-info">
                 <span class="schedule-badge badge-sunnah">Sunnah</span>
-                <div class="schedule-title">Last 5 Odd Nights</div>
+                <div class="schedule-title" id="last5-title">Last 5 Odd Nights</div>
                 <div class="schedule-desc">The most sacred nights of Ramadan</div>
               </div>
               <div class="schedule-nights">
-                <div class="nights-number">5</div>
+                <div class="nights-number" id="last5-nights-count">5</div>
                 <div class="nights-label">Nights</div>
               </div>
             </label>
@@ -2196,11 +2196,11 @@ const {
               <div class="schedule-checkbox"></div>
               <div class="schedule-info">
                 <span class="schedule-badge badge-popular">Popular</span>
-                <div class="schedule-title">Last 10 Nights</div>
+                <div class="schedule-title" id="last10-title">Last 10 Nights</div>
                 <div class="schedule-desc">Catch Laylatul Qadr with certainty</div>
               </div>
               <div class="schedule-nights">
-                <div class="nights-number">10</div>
+                <div class="nights-number" id="last10-nights-count">10</div>
                 <div class="nights-label">Nights</div>
               </div>
             </label>
@@ -2210,11 +2210,11 @@ const {
               <div class="schedule-checkbox"></div>
               <div class="schedule-info">
                 <span class="schedule-badge badge-sunnah">Sunnah</span>
-                <div class="schedule-title">Last 5 Odd Nights</div>
+                <div class="schedule-title" id="last5-title">Last 5 Odd Nights</div>
                 <div class="schedule-desc">The most sacred nights of Ramadan</div>
               </div>
               <div class="schedule-nights">
-                <div class="nights-number">5</div>
+                <div class="nights-number" id="last5-nights-count">5</div>
                 <div class="nights-label">Nights</div>
               </div>
             </label>
@@ -2717,13 +2717,13 @@ const {
 
   <Footer />
 
-  <script is:inline define:vars={{ googlePlacesApiKey }}>
+  <script is:inline define:vars={{ googlePlacesApiKey, nights }}>
     // State
     let currentStep = 1;
     let state = {
       ramadanStart: '2026-02-18',
-      schedule: 'all',
-      nightsCount: 30,
+      schedule: nights === 10 ? 'last10' : 'all',
+      nightsCount: nights === 10 ? 10 : 30,
       amountPerNight: 10,
       causeMode: 'where-needed', // 'where-needed', 'multi-equal', 'multi-custom'
       selectedCauses: [],
@@ -2753,16 +2753,53 @@ const {
       return 30 - elapsed;
     }
 
+    // Calculate remaining nights for each schedule type
+    function getRemainingForSchedule(remaining) {
+      // Last 10 nights start on night 21 (day index 20)
+      // If remaining <= 10, we're in the last 10 — show actual remaining
+      // If remaining > 10, all 10 are still ahead
+      var last10 = remaining <= 10 ? remaining : 10;
+
+      // Last 5 odd nights: 21, 23, 25, 27, 29 (nights remaining depends on where we are)
+      // Count how many odd nights (21,23,25,27,29) are still remaining
+      var last5 = 0;
+      if (remaining > 0) {
+        var totalNights = 30;
+        var currentNight = totalNights - remaining + 1; // e.g. remaining=8 → night 23
+        var oddNights = [21, 23, 25, 27, 29];
+        last5 = oddNights.filter(function(n) { return n >= currentNight; }).length;
+      }
+
+      return { all: remaining, last10: last10, last5: last5 };
+    }
+
     // Update nights count
     function updateNightsCount() {
-      const remaining = calculateRemainingNights();
+      var remaining = calculateRemainingNights();
+      var counts = getRemainingForSchedule(remaining);
+
       switch(state.schedule) {
-        case 'all': state.nightsCount = remaining; break;
-        case 'last10': state.nightsCount = Math.min(10, remaining); break;
-        case 'last5odd': state.nightsCount = Math.min(5, remaining); break;
+        case 'all': state.nightsCount = counts.all; break;
+        case 'last10': state.nightsCount = counts.last10; break;
+        case 'last5odd': state.nightsCount = counts.last5; break;
       }
-      const el = document.getElementById('all-nights-count');
-      if (el) el.textContent = remaining;
+
+      // Update all schedule option displays
+      var allEl = document.getElementById('all-nights-count');
+      if (allEl) allEl.textContent = counts.all;
+
+      var last10El = document.getElementById('last10-nights-count');
+      if (last10El) last10El.textContent = counts.last10;
+
+      var last10Title = document.getElementById('last10-title');
+      if (last10Title) last10Title.textContent = counts.last10 < 10 ? 'Last ' + counts.last10 + ' Nights' : 'Last 10 Nights';
+
+      var last5El = document.getElementById('last5-nights-count');
+      if (last5El) last5El.textContent = counts.last5;
+
+      var last5Title = document.getElementById('last5-title');
+      if (last5Title) last5Title.textContent = counts.last5 < 5 ? 'Last ' + counts.last5 + ' Odd Nights' : 'Last 5 Odd Nights';
+
       updateImpactDisplay();
     }
 
@@ -2928,10 +2965,12 @@ const {
 
     // Update review section
     function updateReview() {
+      var remaining = calculateRemainingNights();
+      var counts = getRemainingForSchedule(remaining);
       const scheduleLabels = {
-        'all': `All ${state.nightsCount} Nights`,
-        'last10': 'Last 10 Nights',
-        'last5odd': 'Last 5 Odd Nights'
+        'all': `All ${counts.all} Nights`,
+        'last10': `Last ${counts.last10} Nights`,
+        'last5odd': `Last ${counts.last5} Odd Nights`
       };
 
       // Determine starting date for donations
@@ -3365,6 +3404,31 @@ const {
       }
     }
 
+    // Map Stripe decline codes to user-friendly messages with solutions
+    function getDeclineMessage(error) {
+      if (!error) return 'Payment failed. Please try again.';
+      var code = error.decline_code || error.code || '';
+      var messages = {
+        'insufficient_funds': '💳 Insufficient funds on this card. Please try a different card or add funds to your account.',
+        'do_not_honor': '🏦 Your bank declined this transaction. Please call the number on the back of your card to authorize it, or try a different card.',
+        'card_velocity_exceeded': '⏳ Too many attempts on this card. Please wait 15-30 minutes before trying again, or use a different card.',
+        'lost_card': '🚫 This card cannot be used for transactions. Please try a different card.',
+        'stolen_card': '🚫 This card cannot be used for transactions. Please try a different card.',
+        'expired_card': '📅 This card has expired. Please use a card with a valid expiration date.',
+        'incorrect_cvc': '🔒 The security code (CVV) is incorrect. Please check the 3-digit number on the back of your card and try again.',
+        'incorrect_zip': '📍 The ZIP code doesn\'t match your card on file. Please verify your billing address and try again.',
+        'processing_error': '⚙️ A temporary processing error occurred. Please wait a moment and try again.',
+        'card_declined': '💳 Your card was declined. Please try a different card or contact your bank at the number on the back of your card.',
+        'generic_decline': '💳 Your card was declined. Please try a different card or contact your bank for more information.',
+        'fraudulent': '🏦 Your bank flagged this as suspicious. Please call your bank to authorize the charge, then try again.',
+        'transaction_not_allowed': '🏦 Your bank does not allow this type of transaction. Please contact your bank or try a different card.',
+        'currency_not_supported': '💱 This card does not support USD transactions. Please try a different card.',
+        'card_not_supported': '💳 This card type is not supported. Please try a Visa, Mastercard, or American Express.',
+        'try_again_later': '⏳ A temporary issue occurred. Please wait a few minutes and try again.',
+      };
+      return messages[code] || (error.message || 'Your card was declined. Please try a different card or contact your bank.');
+    }
+
     // Process payment — deferred mode: validate card → create PaymentIntent → confirm
     window.processPayment = async function() {
       if (!stripe || !elements) {
@@ -3387,9 +3451,10 @@ const {
       const submitBtn = document.getElementById('submit-payment');
       const btnText = document.getElementById('btn-text');
       const btnSpinner = document.getElementById('btn-spinner');
+      const originalBtnText = btnText.textContent;
 
       submitBtn.disabled = true;
-      btnText.style.display = 'none';
+      btnText.textContent = 'Processing...';
       btnSpinner.style.display = 'inline-block';
       hidePaymentError();
 
@@ -3399,10 +3464,13 @@ const {
         if (submitError) {
           showPaymentError(submitError.message);
           submitBtn.disabled = false;
-          btnText.style.display = 'inline';
+          btnText.textContent = originalBtnText;
           btnSpinner.style.display = 'none';
           return;
         }
+
+        // Update progress text
+        btnText.textContent = 'Securing payment...';
 
         // Step 2: Collect billing info and create PaymentIntent NOW (not before)
         const customer = {
@@ -3441,6 +3509,47 @@ const {
             customer,
             billingAddress,
             resumeToken: localStorage.getItem('qurbani_resume_token') || undefined,
+            // Attribution & journey tracking
+            checkout_source: 'ramadan-30days-amanah',
+            ...(function() {
+              try {
+                var utm = window.getStoredUTM ? window.getStoredUTM() : null;
+                return utm ? {
+                  utm_source: utm.utm_source || undefined,
+                  utm_medium: utm.utm_medium || undefined,
+                  utm_campaign: utm.utm_campaign || undefined,
+                  utm_content: utm.utm_content || undefined,
+                } : {};
+              } catch(e) { return {}; }
+            })(),
+            journey: (function() {
+              try {
+                var j = window.getStoredJourney ? window.getStoredJourney() : null;
+                if (!j) return undefined;
+                j.checkout = {
+                  amount: total,
+                  frequency: 'one-time',
+                  items: ['Ramadan 30 Days - ' + state.nightsCount + ' Nights'],
+                  last_page: window.location.pathname,
+                  donation_started_at: new Date().toISOString()
+                };
+                return JSON.stringify(j);
+              } catch(e) { return undefined; }
+            })(),
+            ga_client_id: (function() {
+              try {
+                var c = document.cookie.split('; ').find(function(c) { return c.startsWith('_ga='); });
+                if (c) { var p = c.split('.'); if (p.length >= 4) return p[2] + '.' + p[3]; }
+                if (typeof window.gtag === 'function') { var cid = null; window.gtag('get', 'G-0WC0W1PBKC', 'client_id', function(id) { cid = id; }); if (cid) return cid; }
+              } catch(e) {} return undefined;
+            })(),
+            ga_session_id: (function() {
+              try {
+                var c = document.cookie.split('; ').find(function(c) { return c.startsWith('_ga_0WC0W1PBKC='); });
+                if (c) { var p = c.split('.'); if (p.length >= 3) return p[2]; }
+                if (typeof window.gtag === 'function') { var sid = null; window.gtag('get', 'G-0WC0W1PBKC', 'session_id', function(id) { sid = id; }); if (sid) return String(sid); }
+              } catch(e) {} return undefined;
+            })(),
           }),
         });
 
@@ -3449,13 +3558,16 @@ const {
         if (data.error) {
           showPaymentError(data.error);
           submitBtn.disabled = false;
-          btnText.style.display = 'inline';
+          btnText.textContent = originalBtnText;
           btnSpinner.style.display = 'none';
           return;
         }
 
         clientSecret = data.clientSecret;
         donationId = data.donationId;
+
+        // Update progress text
+        btnText.textContent = 'Confirming payment...';
 
         // Step 3: Confirm payment with the clientSecret from the server
         const { error, paymentIntent } = await stripe.confirmPayment({
@@ -3476,9 +3588,9 @@ const {
         });
 
         if (error) {
-          showPaymentError(error.message);
+          showPaymentError(getDeclineMessage(error));
           submitBtn.disabled = false;
-          btnText.style.display = 'inline';
+          btnText.textContent = originalBtnText;
           btnSpinner.style.display = 'none';
           return;
         }
@@ -3513,11 +3625,12 @@ const {
           window.location.href = `/ramadan/success?donation_id=${donationId}`;
         }
 
-      } catch (error) {
-        console.error('Payment error:', error);
-        showPaymentError('Payment failed. Please try again.');
+      } catch (err) {
+        console.error('Payment error:', err);
+        var errMsg = err._stripeError ? getDeclineMessage(err._stripeError) : (err.message || 'Payment failed. Please try again.');
+        showPaymentError(errMsg);
         submitBtn.disabled = false;
-        btnText.style.display = 'inline';
+        btnText.textContent = originalBtnText;
         btnSpinner.style.display = 'none';
       }
     };
@@ -3741,6 +3854,8 @@ const {
       var phone = (document.getElementById('phone')?.value || '').trim();
 
       var params = new URLSearchParams(window.location.search);
+      var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
+      var nightsLabel = state.nightsCount <= 10 ? 'last-10-nights' : '30-days';
 
       var payload = {
         email: email,
@@ -3750,12 +3865,14 @@ const {
         amount: total || undefined,
         currency: 'USD',
         campaign_type: 'single',
-        campaign_slug: 'ramadan-30-days',
+        campaign_slug: 'ramadan-' + nightsLabel,
         country: 'US',
-        utm_source: params.get('utm_source') || undefined,
-        utm_medium: params.get('utm_medium') || undefined,
-        utm_campaign: params.get('utm_campaign') || undefined,
-        utm_term: params.get('utm_term') || undefined,
+        checkout_source: 'ramadan-' + nightsLabel + '-amanah',
+        utm_source: params.get('utm_source') || (storedUtm && storedUtm.utm_source) || undefined,
+        utm_medium: params.get('utm_medium') || (storedUtm && storedUtm.utm_medium) || undefined,
+        utm_campaign: params.get('utm_campaign') || (storedUtm && storedUtm.utm_campaign) || undefined,
+        utm_content: params.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
+        utm_term: params.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
       };
 
       fetch('/api/abandoned-checkout/capture', {

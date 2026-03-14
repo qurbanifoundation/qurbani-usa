@@ -47,6 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
         is_active: body.is_active !== false,
         color: body.color || '#01534d',
         icon: body.icon || 'heart',
+        mobile_links: body.mobile_links || [],
       }])
       .select()
       .single();

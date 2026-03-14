@@ -1,0 +1,2880 @@
+---
+/**
+ * Social Proof Popup + Quick Donation Modal
+ * Shows recent donation notifications in the bottom-left corner.
+ * Clicking "Donate" opens a modal with campaign info + CW donation box.
+ * Fetches from /api/social-proof (real + fabricated mix).
+ * Follows RamadanPopup.astro pattern: is:inline script, IIFE, localStorage cooldown.
+ */
+---
+
+<!-- Social Proof Notification Container -->
+<div
+  id="social-proof-popup"
+  class="fixed bottom-4 left-6 right-3 md:right-auto md:left-4 z-40 pointer-events-none"
+  style="opacity: 0; transform: translateX(-120%); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);"
+  role="status"
+  aria-live="polite"
+>
+  <div class="pointer-events-auto bg-white rounded-xl shadow-lg border border-gray-200 w-full md:w-[420px] overflow-hidden hover:shadow-xl transition-shadow relative">
+    <div id="social-proof-content" class="p-3.5"></div>
+    <div class="h-[2px] bg-gray-100">
+      <div id="social-proof-progress" class="h-full bg-[#01534d] transition-all" style="width: 0%; transition: width linear;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Donation Modal -->
+<div
+  id="sp-donate-modal"
+  class="fixed inset-0 z-[65] hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Quick Donation"
+>
+  <div id="sp-modal-backdrop" class="absolute inset-0 bg-black/50" style="opacity:0; transition:opacity .3s ease;"></div>
+
+  <!-- Close button — pinned to top-right of viewport -->
+  <button id="sp-modal-close" class="fixed top-4 right-4 z-[70] w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg hover:bg-gray-100 transition text-gray-600 hover:text-gray-900" aria-label="Close" style="opacity:0; transition:opacity .3s ease;">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+  </button>
+
+  <div class="absolute inset-0 flex flex-col items-center justify-center p-0 md:p-8 overflow-y-auto">
+    <div id="sp-modal-card" class="relative w-full max-w-full md:max-w-[1200px] bg-white rounded-none md:rounded-2xl shadow-2xl overflow-hidden h-full md:h-auto" style="opacity:0; transform:scale(.97); transition:opacity .3s ease, transform .3s ease;">
+
+      <div id="sp-modal-inner" class="flex flex-col-reverse md:flex-row md:min-h-[660px] h-full md:h-auto max-h-[100dvh] md:max-h-[90vh] overflow-y-auto md:overflow-hidden">
+        <!-- RIGHT (visually): CW Donation Box — order-2 on desktop -->
+        <div class="md:w-[48%] md:order-2 border-l border-gray-100 md:max-h-[85vh] flex flex-col flex-1 md:flex-shrink-0 min-h-0 overflow-x-hidden">
+          <div class="bg-white overflow-y-auto overflow-x-hidden md:overflow-hidden w-full h-full flex flex-col min-h-0">
+
+            <!-- Tab header area -->
+            <div class="px-5 pt-5 pb-3 sm:px-8 sm:pt-8 sm:pb-5" style="background-color:#F4F5F0;">
+              <div>
+                <!-- Form tabs -->
+                <div id="sp-cw-form-header" class="grid grid-cols-2 gap-2">
+                  <button type="button" id="sp-cw-tab-monthly" class="sp-cw-toggle flex items-center justify-center gap-1 py-3 rounded text-[13px] font-bold uppercase tracking-wider transition-all border-2" data-type="monthly" style="background-color:#e1861d; color:#fff; border-color:#e1861d;">
+                    MONTHLY <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                  </button>
+                  <button type="button" id="sp-cw-tab-single" class="sp-cw-toggle flex items-center justify-center gap-1 py-3 rounded text-[13px] font-bold uppercase tracking-wider transition-all border-2" data-type="single" style="background-color:transparent; color:#9ca3af; border-color:transparent;">
+                    GIVE ONCE
+                  </button>
+                </div>
+                <!-- Upsell header (replaces tabs in upsell state) -->
+                <div id="sp-cw-upsell-header" class="hidden">
+                  <p class="flex items-center justify-center gap-1.5 text-sm text-gray-500 py-1 whitespace-nowrap">
+                    <span>Giving <strong id="sp-cw-upsell-amount" class="text-gray-800 text-base">$50 USD</strong><span id="sp-cw-upsell-period"></span></span>
+                    <button type="button" id="sp-cw-edit-link" class="text-[11px] font-bold text-gray-800 uppercase tracking-wide hover:text-gray-600 transition-colors flex-shrink-0" style="border-bottom:1.5px solid currentColor;">EDIT</button>
+                  </p>
+                </div>
+                <!-- Checkout header (amount + EDIT — replaces tabs during checkout) -->
+                <div id="sp-cw-checkout-header" class="hidden">
+                  <p class="flex items-center justify-center gap-1.5 text-sm text-gray-500 py-1 whitespace-nowrap">
+                    <span>Giving <strong id="sp-ck-header-amount" class="text-gray-800 text-base">$50 USD</strong><span id="sp-ck-header-period"></span></span>
+                    <button type="button" id="sp-ck-header-back" class="text-[11px] font-bold text-gray-800 uppercase tracking-wide hover:text-gray-600 transition-colors flex-shrink-0" style="border-bottom:1.5px solid currentColor;">EDIT</button>
+                  </p>
+                  <!-- Step indicator (hidden — kept for JS references) -->
+                  <div id="sp-ck-header-steps" class="hidden">
+                    <div class="flex items-center gap-1.5">
+                      <span id="sp-ck-step1-circle"></span>
+                      <span id="sp-ck-step1-label"></span>
+                    </div>
+                    <div id="sp-ck-step-line"></div>
+                    <div class="flex items-center gap-1.5">
+                      <span id="sp-ck-step2-circle"></span>
+                      <span id="sp-ck-step2-label"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-5 pt-4 pb-5 sm:px-8 sm:pt-6 sm:pb-8 flex-1 flex flex-col overflow-y-auto min-h-0">
+              <!-- ═══ FORM VIEW ═══ -->
+              <div id="sp-cw-form-view" class="flex flex-col flex-1">
+                <!-- Monthly grid -->
+                <div id="sp-cw-grid-monthly" class="sp-cw-freq-grid" data-freq-key="monthly"></div>
+                <!-- Single grid -->
+                <div id="sp-cw-grid-single" class="sp-cw-freq-grid hidden" data-freq-key="single"></div>
+
+                <!-- Impact line -->
+                <div class="flex items-start gap-2 mt-4 mb-4">
+                  <span id="sp-cw-impact-emoji" class="text-sm mt-0.5 flex-shrink-0">❤️</span>
+                  <p id="sp-cw-impact-text" class="text-[13px] text-gray-500 leading-relaxed"></p>
+                </div>
+
+                <!-- CTA Button — flush below content on mobile, pushed to bottom on desktop -->
+                <div class="mt-4 md:mt-auto pt-1">
+                  <button type="button" id="sp-cw-donate-btn" class="w-full py-3.5 sm:py-4 rounded font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all active:scale-[0.99]" style="background-color:#e1861d; color:#fff;">
+                    JOIN TODAY
+                  </button>
+                  <p class="text-center text-[11px] text-gray-400 mt-2">Secure donation &middot; Tax deductible &middot; Takes less than 30 seconds</p>
+                </div>
+              </div>
+
+              <!-- ═══ UPSELL VIEW ═══ -->
+              <div id="sp-cw-upsell-view" class="hidden flex flex-col flex-1">
+                <h3 class="text-xl font-bold text-gray-800 text-center mb-3" style="font-family:'Signika',sans-serif;">
+                  Would you consider something?
+                </h3>
+                <p id="sp-cw-upsell-body" class="text-sm text-gray-500 leading-relaxed mb-5 text-center"></p>
+
+                <!-- Monthly toggle card -->
+                <div class="rounded-lg p-4 mb-5 border border-gray-200" style="background-color:#f9f9f7;">
+                  <div class="flex items-center gap-3">
+                    <button type="button" id="sp-cw-upsell-toggle" class="relative w-14 h-7 rounded-full bg-gray-300 transition-colors flex-shrink-0" role="switch" aria-checked="false">
+                      <span id="sp-cw-upsell-toggle-dot" class="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform flex items-center justify-center">
+                        <svg class="sp-toggle-x w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                        <svg class="sp-toggle-check w-3.5 h-3.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </span>
+                    </button>
+                    <span id="sp-cw-upsell-monthly-label" class="text-sm font-semibold text-gray-700">
+                      Give $20 per month instead
+                    </span>
+                  </div>
+                  <p id="sp-cw-upsell-subtext" class="text-xs text-gray-400 mt-2.5 leading-relaxed"></p>
+                </div>
+
+                <!-- Upsell CTA — flush below content on mobile, pushed to bottom on desktop -->
+                <div class="mt-4 md:mt-auto pt-2">
+                  <button type="button" id="sp-cw-upsell-btn" class="w-full py-4 rounded font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all active:scale-[0.99]" style="background-color:#e1861d; color:#fff;">
+                    GIVE $50
+                  </button>
+                </div>
+              </div>
+
+              <!-- ═══ CHECKOUT STEP 1: YOUR DETAILS ═══ -->
+              <div id="sp-checkout-step1" class="hidden flex-col flex-1" style="display:none;">
+
+                <!-- Your Details -->
+                <div class="space-y-3.5 flex-1">
+                  <div class="grid grid-cols-2 gap-2.5">
+                    <input type="text" id="sp-ck-firstName" name="given-name" autocomplete="given-name" placeholder="First Name" required class="w-full px-3 py-3 border border-gray-300 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                    <input type="text" id="sp-ck-lastName" name="family-name" autocomplete="family-name" placeholder="Last Name" required class="w-full px-3 py-3 border border-gray-300 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                  </div>
+                  <input type="email" id="sp-ck-email" name="email" autocomplete="email" placeholder="Email" required class="w-full px-3 py-3 border border-gray-300 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                  <input type="tel" id="sp-ck-phone" name="tel" autocomplete="tel" placeholder="Phone Number" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                </div>
+
+                <!-- Step 1 error -->
+                <div id="sp-ck-step1-error" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p id="sp-ck-step1-error-text" class="text-red-600 text-sm"></p>
+                </div>
+
+                <!-- Continue CTA — pushed to bottom -->
+                <div class="mt-auto pt-5">
+                  <button type="button" id="sp-ck-continue-btn" class="w-full py-4 rounded-lg font-extrabold text-[15px] uppercase tracking-[0.08em] transition-all active:scale-[0.99] shadow-md flex items-center justify-center gap-2" style="background-color:#d97706; color:#fff;">
+                    CONTINUE TO SECURE CHECKOUT
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                  <div class="flex items-center justify-center gap-2 mt-3 text-[11px] text-gray-400">
+                    <svg class="w-3.5 h-3.5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>256-bit SSL encrypted &middot; Your information is safe</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ═══ CHECKOUT STEP 2: SECURE PAYMENT ═══ -->
+              <div id="sp-checkout-step2" class="hidden flex-col flex-1" style="display:none;">
+
+                <!-- Stripe Payment Element -->
+                <div class="mb-4">
+                  <div id="sp-ck-card-element" class="p-3 border border-gray-300 rounded-lg bg-white min-h-[50px]">
+                    <div class="animate-pulse text-gray-400 text-sm text-center py-2">Loading secure payment...</div>
+                  </div>
+                  <div id="sp-ck-card-errors" class="text-red-500 text-xs mt-1.5 hidden" role="alert"></div>
+                </div>
+
+                <!-- Billing Address -->
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Billing Address</h4>
+                <div class="space-y-3 mb-4">
+                  <input type="text" id="sp-ck-address" name="street-address" autocomplete="off" placeholder="Street Address" required class="w-full px-4 py-3 border border-gray-300 rounded-lg text-[15px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <input type="text" id="sp-ck-city" name="address-level2" autocomplete="address-level2" placeholder="City" required class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                    <input type="text" id="sp-ck-state" name="address-level1" autocomplete="address-level1" placeholder="State" required class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                    <input type="text" id="sp-ck-zip" name="postal-code" autocomplete="postal-code" placeholder="ZIP" required class="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent placeholder-gray-400" />
+                    <select id="sp-ck-country" required class="w-full px-2 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent bg-white">
+                      <option value="US" selected>United States</option>
+                      <option value="CA">Canada</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="AU">Australia</option>
+                      <option value="PK">Pakistan</option>
+                      <option value="IN">India</option>
+                      <option value="BD">Bangladesh</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Communication preferences -->
+                <div class="mb-3 space-y-2 bg-white rounded-lg border border-gray-200 p-3">
+                  <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" id="sp-ck-pref-email" checked class="w-4 h-4 mt-0.5 rounded accent-[#d97706]" />
+                    <span class="text-xs text-gray-600 leading-relaxed">Email me periodic reports from the projects I supported.</span>
+                  </label>
+                  <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" id="sp-ck-pref-sms" checked class="w-4 h-4 mt-0.5 rounded accent-[#d97706]" />
+                    <span class="text-xs text-gray-600 leading-relaxed">Plus, email me inspiring stories, exclusive promotions, and donation match opportunities to amplify my impact!</span>
+                  </label>
+                </div>
+
+                <!-- Cover transaction fees -->
+                <div class="mb-4 p-3 bg-white rounded-lg border border-gray-200">
+                  <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" id="sp-ck-cover-fees" class="w-5 h-5 mt-0.5 rounded accent-[#d97706]" />
+                    <div>
+                      <span class="font-semibold text-gray-800 text-sm">Cover transaction fees</span>
+                      <span id="sp-ck-fee-badge" class="ml-1 px-1.5 py-0.5 bg-amber-200 text-amber-800 text-[10px] font-bold rounded-sm">+3%</span>
+                      <p id="sp-ck-fee-desc" class="text-[11px] text-gray-500 mt-0.5">Add $0.00 to ensure 100% of your donation goes directly to families in need.</p>
+                    </div>
+                  </label>
+                </div>
+
+                <!-- Payment error -->
+                <div id="sp-ck-payment-error" class="hidden mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p id="sp-ck-payment-error-text" class="text-red-600 text-sm"></p>
+                </div>
+
+                <!-- CTA -->
+                <button type="button" id="sp-ck-pay-btn" disabled class="w-full py-4 rounded-lg font-extrabold text-[15px] uppercase tracking-[0.08em] transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md" style="background-color:#d97706; color:#fff;">
+                  <span id="sp-ck-pay-btn-text">COMPLETE SECURE DONATION</span>
+                  <span id="sp-ck-pay-btn-spinner" class="hidden"><svg class="animate-spin inline w-5 h-5 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Processing...</span>
+                </button>
+
+                <!-- Terms -->
+                <p class="mt-3 text-[10px] text-gray-400 text-center leading-relaxed">
+                  By making a donation to Qurbani Foundation, you agree to our
+                  <a href="/terms-of-service" target="_blank" class="underline font-semibold hover:text-gray-600">Terms of Service</a>
+                  and <a href="/privacy-policy" target="_blank" class="underline font-semibold hover:text-gray-600">Privacy Policy</a>.
+                </p>
+
+                <!-- Trust signals -->
+                <div class="mt-3 mb-2 bg-white border border-gray-200 rounded-lg p-2.5 flex flex-wrap items-center justify-center gap-3 text-[10px] text-gray-500">
+                  <div class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-[#d97706]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Secure Payment</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-[#d97706]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <span>Tax-Deductible</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-[#d97706]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <span>Cancel anytime</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- LEFT (visually): Full-screen image + FAQ — order-1 on desktop -->
+        <div id="sp-image-col" class="h-[40dvh] md:h-auto md:w-[52%] md:order-1 flex flex-col relative overflow-hidden flex-shrink-0">
+
+          <!-- Campaign View (default) — full image with overlay -->
+          <div id="sp-right-campaign" class="relative h-full min-h-0 md:min-h-[300px]">
+            <div id="sp-modal-image" class="absolute inset-0 bg-gray-200 bg-cover bg-center pointer-events-none"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-center z-10">
+              <h3 id="sp-modal-title" class="text-white text-2xl md:text-3xl font-bold leading-tight drop-shadow-lg" style="font-family:'Signika',sans-serif;"></h3>
+              <p id="sp-modal-desc" class="hidden"></p>
+              <div class="flex items-center justify-center gap-2 mt-3 text-[13px]">
+                <button type="button" id="sp-faq-link" class="text-gray-300 hover:text-white transition cursor-pointer">Frequently asked questions</button>
+                <span class="text-gray-500">&middot;</span>
+                <a id="sp-modal-link" href="#" target="_blank" rel="noopener" class="text-gray-300 hover:text-white transition cursor-pointer">Visit our page</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ View (hidden, shown when FAQ link clicked) -->
+          <div id="sp-right-faq" class="hidden flex flex-col h-full bg-gray-50">
+            <div class="p-5 md:p-6 flex-1">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900" style="font-family:'Signika',sans-serif;">Frequently asked questions</h3>
+                <button type="button" id="sp-faq-close" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition text-gray-500 hover:text-gray-700" aria-label="Back to campaign">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div class="space-y-2">
+                <!-- FAQ 1 -->
+                <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
+                  <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    Is my donation secure?
+                    <svg class="sp-faq-arrow w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="sp-faq-body hidden px-4 pb-3 text-sm text-gray-500 leading-relaxed">
+                    Yes. All donations are processed through Stripe, a PCI-compliant payment processor. Your financial information is encrypted and never stored on our servers.
+                  </div>
+                </div>
+                <!-- FAQ 2 -->
+                <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
+                  <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    Is this donation tax deductible?
+                    <svg class="sp-faq-arrow w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="sp-faq-body hidden px-4 pb-3 text-sm text-gray-500 leading-relaxed">
+                    Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. Your donation is tax-deductible to the extent allowed by law. You will receive a receipt via email.
+                  </div>
+                </div>
+                <!-- FAQ 3 -->
+                <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
+                  <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    Can I cancel my recurring donation?
+                    <svg class="sp-faq-arrow w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="sp-faq-body hidden px-4 pb-3 text-sm text-gray-500 leading-relaxed">
+                    Yes. You can cancel or modify your recurring donation at any time using the link in your confirmation email or by contacting us at info@qurbani.com.
+                  </div>
+                </div>
+                <!-- FAQ 4 -->
+                <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
+                  <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    Where does my donation go?
+                    <svg class="sp-faq-arrow w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="sp-faq-body hidden px-4 pb-3 text-sm text-gray-500 leading-relaxed">
+                    100% of your donation goes directly to the cause you select. We work with trusted local partners on the ground to ensure your contribution reaches those who need it most.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══ LEAD CAPTURE OVERLAY (shown when X clicked) ═══ -->
+      <div id="sp-lead-capture" class="absolute inset-0 z-10 hidden rounded-none md:rounded-2xl overflow-hidden" style="background-color:#f0ece4;">
+        <div class="flex flex-col md:flex-row h-full">
+
+          <!-- LEFT: Campaign image with motivational overlay (matches modal 52% image) -->
+          <div class="md:w-[52%] relative overflow-hidden bg-gray-900 hidden md:block">
+            <div id="sp-lead-image" class="absolute inset-0 bg-cover bg-center opacity-80"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+              <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+              <h3 class="text-white text-xl md:text-2xl font-bold leading-tight" style="font-family:'Signika',sans-serif;">You will make a difference</h3>
+              <p class="text-gray-300 text-sm mt-2 leading-relaxed" style="font-family:'Lato',sans-serif;">Make the world better, kinder, brighter. Any amount you give will create real change.</p>
+            </div>
+          </div>
+
+          <!-- RIGHT: Intent-based lead capture form (matches modal 48% form) -->
+          <div class="md:w-[48%] flex-1 flex flex-col relative border-l border-gray-200" style="background-color:#f0ece4;">
+            <div class="flex items-center px-6 pt-5">
+              <button type="button" id="sp-lead-back" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 transition text-gray-500 hover:text-gray-700" aria-label="Back to donation">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+            </div>
+            <div class="flex-1 flex flex-col px-7 pb-6 sm:px-8 sm:pb-8">
+              <h3 class="text-xl font-bold text-gray-900 mb-1.5" style="font-family:'Signika',sans-serif;">Be the first to know when your help is needed</h3>
+              <p class="text-gray-500 text-[13px] leading-relaxed mb-1.5">We'll notify you when urgent aid is needed so you can make an immediate impact.</p>
+              <p class="text-[12px] text-gray-400 mb-5 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span>Join <strong class="text-gray-500">12,000+</strong> supporters receiving updates</span>
+              </p>
+
+              <!-- Interest checkboxes -->
+              <p class="text-[12px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Select the causes you care about</p>
+              <div class="grid grid-cols-2 gap-2.5 mb-5">
+                <label class="sp-lead-interest flex items-center gap-2.5 px-3 py-2.5 rounded-lg border-2 cursor-pointer hover:border-[#e1861d] hover:bg-orange-50/50 transition-all" style="border-color:#e1861d; background-color:rgba(225,134,29,0.08);">
+                  <input type="checkbox" value="emergency" class="sr-only" checked />
+                  <span class="sp-lead-check w-[18px] h-[18px] flex-shrink-0 rounded border-2 flex items-center justify-center transition-all" style="background-color:#e1861d; border-color:#e1861d;">
+                    <svg class="w-3 h-3 text-white transition-opacity" style="opacity:1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span class="text-[13px] text-gray-700 font-medium leading-tight">Emergency Appeals</span>
+                </label>
+                <label class="sp-lead-interest flex items-center gap-2.5 px-3 py-2.5 rounded-lg border-2 cursor-pointer hover:border-[#e1861d] hover:bg-orange-50/50 transition-all" style="border-color:#c8c1b4; background-color:rgba(255,255,255,0.35);">
+                  <input type="checkbox" value="zakat" class="sr-only" />
+                  <span class="sp-lead-check w-[18px] h-[18px] flex-shrink-0 rounded border-2 flex items-center justify-center transition-all" style="border-color:#b0a898;">
+                    <svg class="w-3 h-3 text-white opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span class="text-[13px] text-gray-700 font-medium leading-tight">Zakat</span>
+                </label>
+                <label class="sp-lead-interest flex items-center gap-2.5 px-3 py-2.5 rounded-lg border-2 cursor-pointer hover:border-[#e1861d] hover:bg-orange-50/50 transition-all" style="border-color:#c8c1b4; background-color:rgba(255,255,255,0.35);">
+                  <input type="checkbox" value="orphan" class="sr-only" />
+                  <span class="sp-lead-check w-[18px] h-[18px] flex-shrink-0 rounded border-2 flex items-center justify-center transition-all" style="border-color:#b0a898;">
+                    <svg class="w-3 h-3 text-white opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span class="text-[13px] text-gray-700 font-medium leading-tight">Orphan Sponsorship</span>
+                </label>
+                <label class="sp-lead-interest flex items-center gap-2.5 px-3 py-2.5 rounded-lg border-2 cursor-pointer hover:border-[#e1861d] hover:bg-orange-50/50 transition-all" style="border-color:#c8c1b4; background-color:rgba(255,255,255,0.35);">
+                  <input type="checkbox" value="water" class="sr-only" />
+                  <span class="sp-lead-check w-[18px] h-[18px] flex-shrink-0 rounded border-2 flex items-center justify-center transition-all" style="border-color:#b0a898;">
+                    <svg class="w-3 h-3 text-white opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span class="text-[13px] text-gray-700 font-medium leading-tight">Water Projects</span>
+                </label>
+                <label class="sp-lead-interest flex items-center gap-2.5 px-3 py-2.5 rounded-lg border-2 cursor-pointer hover:border-[#e1861d] hover:bg-orange-50/50 transition-all" style="border-color:#c8c1b4; background-color:rgba(255,255,255,0.35);">
+                  <input type="checkbox" value="ramadan" class="sr-only" />
+                  <span class="sp-lead-check w-[18px] h-[18px] flex-shrink-0 rounded border-2 flex items-center justify-center transition-all" style="border-color:#b0a898;">
+                    <svg class="w-3 h-3 text-white opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span class="text-[13px] text-gray-700 font-medium leading-tight">Ramadan Campaigns</span>
+                </label>
+                <label class="sp-lead-interest flex items-center gap-2.5 px-3 py-2.5 rounded-lg border-2 cursor-pointer hover:border-[#e1861d] hover:bg-orange-50/50 transition-all" style="border-color:#c8c1b4; background-color:rgba(255,255,255,0.35);">
+                  <input type="checkbox" value="qurbani" class="sr-only" />
+                  <span class="sp-lead-check w-[18px] h-[18px] flex-shrink-0 rounded border-2 flex items-center justify-center transition-all" style="border-color:#b0a898;">
+                    <svg class="w-3 h-3 text-white opacity-0 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span class="text-[13px] text-gray-700 font-medium leading-tight">Qurbani</span>
+                </label>
+              </div>
+
+              <!-- Email + CTA — pushed to bottom -->
+              <div class="mt-auto">
+                <input type="email" id="sp-lead-email" placeholder="Email address" class="w-full border-2 rounded-lg px-4 py-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-[#e1861d] placeholder-gray-400" style="border-color:#c8c1b4; background-color:#faf8f3;" />
+                <p class="text-center text-[11px] text-gray-400 mt-2.5 mb-2.5">We respect your inbox. Unsubscribe anytime.</p>
+                <button type="button" id="sp-lead-submit" class="w-full py-3.5 rounded-lg font-bold text-sm text-white transition-all hover:opacity-90 shadow-sm" style="background-color:#e1861d;">Send Me Updates</button>
+                <button type="button" id="sp-lead-skip" class="w-full py-2 mt-2 text-[13px] text-gray-400 hover:text-gray-600 transition font-medium">No, thanks</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Trust line below the card -->
+    <div id="sp-modal-trust" class="hidden md:flex items-center justify-center mt-4 text-[13px] text-gray-400" style="opacity:0; transition:opacity .3s ease .15s;">
+      <span>501(c)(3) Tax-Deductible</span>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function() {
+  // ─── Config ───
+  var DELAY_BEFORE_FIRST = 5000; // 5s — first popup
+  var SHOW_DURATION = 7000; // how long each notification stays visible
+  var MAX_PER_SESSION = 4;
+  var COOLDOWN_KEY = 'social_proof_dismissed';
+  var SESSION_COUNT_KEY = 'social_proof_count';
+  var INDEX_KEY = 'social_proof_index';
+  var COOLDOWN_MS = 4 * 60 * 60 * 1000;
+  var pageLoadTime = Date.now();
+
+  // ─── Hybrid Triggers (popup 2, 3, 4) ───
+  // Each: { absMs: absolute ms from page load, idleMs: idle ms to trigger }
+  // Whichever condition fires first wins.
+  var HYBRID_TRIGGERS = [
+    { absMs: 25000 + Math.floor(Math.random() * 10000), idleMs: 4000 + Math.floor(Math.random() * 1000) }, // 2nd: 25-35s OR 4-5s idle
+    { absMs: 50000, idleMs: 5000 }, // 3rd: 50s OR 5s idle
+    { absMs: 90000, idleMs: 5000 }, // 4th: 90s OR 5s idle
+  ];
+
+  // ─── Idle Detection Config ───
+  var IDLE_THRESHOLD = 2000; // 2s of inactivity = idle (for first popup deferred show)
+  var lastActivityTime = Date.now();
+  var userIsIdle = true;
+  var pendingShow = false; // true when we want to show but user isn't idle
+  var idleCheckInterval = null;
+
+  // ─── Hybrid idle state ───
+  var hybridIdleActive = false; // true when waiting for idle trigger
+  var hybridIdleMs = 0; // idle ms threshold for current hybrid trigger
+
+  // ─── Donation interaction pause ───
+  var donationInteracting = false; // true when user is interacting with donation box/checkout
+
+  // ─── Early Exit ───
+  if (window.location.pathname.indexOf('/admin') === 0) return;
+  var lastDismissed = localStorage.getItem(COOLDOWN_KEY);
+  if (lastDismissed && (Date.now() - parseInt(lastDismissed, 10)) < COOLDOWN_MS) return;
+  var sessionCount = parseInt(sessionStorage.getItem(SESSION_COUNT_KEY) || '0', 10);
+  if (sessionCount >= MAX_PER_SESSION) return;
+
+  // ─── Notification DOM ───
+  var popup = document.getElementById('social-proof-popup');
+  var contentEl = document.getElementById('social-proof-content');
+  var progressEl = document.getElementById('social-proof-progress');
+  // closeBtn is now rendered dynamically inside each notification — use event delegation
+  var closeBtn = null; // will be resolved after each render
+  if (!popup || !contentEl || !progressEl) return;
+
+  var notifications = [];
+  var currentIndex = parseInt(sessionStorage.getItem(INDEX_KEY) || '0', 10);
+  var notifShownCount = parseInt(sessionStorage.getItem(SESSION_COUNT_KEY) || '0', 10); // how many shown so far this session
+  var showTimer = null;
+  var pauseTimer = null;
+  var isVisible = false;
+  var isDismissed = false;
+
+  // ─── Idle Detection ───
+  // Track user activity — social proof only appears when user is idle (reading)
+  function markActive() { lastActivityTime = Date.now(); userIsIdle = false; }
+  function checkIdle() {
+    var now = Date.now();
+    var idleDuration = now - lastActivityTime;
+
+    if (idleDuration >= IDLE_THRESHOLD) {
+      userIsIdle = true;
+      // If a notification was waiting (deferred from showPopup), show it now
+      if (pendingShow && !isVisible && !isDismissed && !modalOpen && !donationInteracting) {
+        pendingShow = false;
+        showPopup();
+      }
+      // Hybrid idle trigger — if waiting for idle and threshold met, fire popup
+      if (hybridIdleActive && idleDuration >= hybridIdleMs && !isVisible && !isDismissed && !modalOpen && !donationInteracting && notifShownCount < MAX_PER_SESSION) {
+        hybridIdleActive = false;
+        if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+        showPopup();
+      }
+    } else {
+      userIsIdle = false;
+    }
+  }
+
+  // ─── Schedule next popup (hybrid: timer OR idle, whichever fires first) ───
+  function scheduleNextHybrid() {
+    if (isDismissed || modalOpen || donationInteracting || notifShownCount >= MAX_PER_SESSION) return;
+
+    var triggerIdx = Math.min(notifShownCount - 1, HYBRID_TRIGGERS.length - 1);
+    var trigger = HYBRID_TRIGGERS[triggerIdx];
+
+    // Timer trigger — absolute time from page load (minimum 2s gap)
+    var elapsed = Date.now() - pageLoadTime;
+    var absRemaining = Math.max(2000, trigger.absMs - elapsed);
+    pauseTimer = setTimeout(showPopup, absRemaining);
+
+    // Reset idle clock so idle trigger counts from NOW, not from before the popup showed
+    lastActivityTime = Date.now();
+    userIsIdle = false;
+
+    // Idle trigger — user must be idle for idleMs AFTER previous popup disappears
+    hybridIdleActive = true;
+    hybridIdleMs = trigger.idleMs;
+  }
+
+  // ─── Donation Interaction Detection ───
+  // Pause all social proof when user interacts with donation box, checkout, or forms
+  function markDonationInteraction() {
+    donationInteracting = true;
+    // Clear any pending popup timers
+    if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+    hybridIdleActive = false;
+    pendingShow = false;
+  }
+  function clearDonationInteraction() {
+    if (!donationInteracting) return;
+    donationInteracting = false;
+    // Resume scheduling if we haven't reached max
+    if (!isDismissed && !modalOpen && notifications.length && notifShownCount < MAX_PER_SESSION && !isVisible) {
+      scheduleNextHybrid();
+    }
+  }
+
+  // Detect clicks on donation amount buttons & donation box interactions
+  document.addEventListener('click', function(e) {
+    var t = e.target;
+    if (!t) return;
+    // Check if click is inside a donation box or on amount buttons
+    var inDonationBox = t.closest && (t.closest('[data-donation-box]') || t.closest('#fixed-donate-box') || t.closest('[data-mobile-donate]'));
+    if (inDonationBox) {
+      markDonationInteraction();
+      // Auto-clear after 30s of no further donation interaction
+      clearTimeout(window._spDonationTimeout);
+      window._spDonationTimeout = setTimeout(clearDonationInteraction, 30000);
+    }
+  }, { passive: true });
+
+  // Detect focus on any form field (including checkout forms)
+  document.addEventListener('focus', function(e) {
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) {
+      markDonationInteraction();
+      // Auto-clear when user leaves all form fields
+    }
+  }, true);
+  document.addEventListener('blur', function(e) {
+    var t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) {
+      // Small delay to check if focus moved to another field
+      setTimeout(function() {
+        var active = document.activeElement;
+        if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT')) {
+          clearDonationInteraction();
+        }
+      }, 300);
+    }
+  }, true);
+
+  // Activity listeners — detect clicks, typing, fast scrolling
+  var scrollTimeout = null;
+  document.addEventListener('click', markActive, { passive: true });
+  document.addEventListener('keydown', markActive, { passive: true });
+  document.addEventListener('input', markActive, { passive: true });
+  document.addEventListener('scroll', function() {
+    markActive();
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(function() { /* scroll ended */ }, 200);
+  }, { passive: true });
+
+  // Check idle state every 500ms
+  idleCheckInterval = setInterval(checkIdle, 500);
+
+  // ─── CW Modal DOM ───
+  var modal = document.getElementById('sp-donate-modal');
+  var mBackdrop = document.getElementById('sp-modal-backdrop');
+  var mCard = document.getElementById('sp-modal-card');
+  var mCloseBtn = document.getElementById('sp-modal-close');
+  var mImage = document.getElementById('sp-modal-image');
+  var mTitle = document.getElementById('sp-modal-title');
+  var mDesc = document.getElementById('sp-modal-desc');
+  var mLink = document.getElementById('sp-modal-link');
+
+  // CW box elements
+  var cwFormHeader = document.getElementById('sp-cw-form-header');
+  var cwUpsellHeader = document.getElementById('sp-cw-upsell-header');
+  var cwFormView = document.getElementById('sp-cw-form-view');
+  var cwUpsellView = document.getElementById('sp-cw-upsell-view');
+  var cwGridMonthly = document.getElementById('sp-cw-grid-monthly');
+  var cwGridSingle = document.getElementById('sp-cw-grid-single');
+  var cwImpactEmoji = document.getElementById('sp-cw-impact-emoji');
+  var cwImpactText = document.getElementById('sp-cw-impact-text');
+  var cwDonateBtn = document.getElementById('sp-cw-donate-btn');
+  var cwTabMonthly = document.getElementById('sp-cw-tab-monthly');
+  var cwTabSingle = document.getElementById('sp-cw-tab-single');
+
+  // Right side panels
+  var rightCampaign = document.getElementById('sp-right-campaign');
+  var rightFaq = document.getElementById('sp-right-faq');
+  var imageCol = document.getElementById('sp-image-col');
+  var faqLink = document.getElementById('sp-faq-link');
+  var faqCloseBtn = document.getElementById('sp-faq-close');
+
+  // Upsell elements
+  var cwUpsellAmountEl = document.getElementById('sp-cw-upsell-amount');
+  var cwUpsellPeriodEl = document.getElementById('sp-cw-upsell-period');
+  var cwUpsellBodyEl = document.getElementById('sp-cw-upsell-body');
+  var cwUpsellSubtextEl = document.getElementById('sp-cw-upsell-subtext');
+  var cwUpsellToggle = document.getElementById('sp-cw-upsell-toggle');
+  var cwUpsellToggleDot = document.getElementById('sp-cw-upsell-toggle-dot');
+  var cwUpsellMonthlyLabel = document.getElementById('sp-cw-upsell-monthly-label');
+  var cwUpsellBtn = document.getElementById('sp-cw-upsell-btn');
+  var cwEditLink = document.getElementById('sp-cw-edit-link');
+
+  // ─── CW State ───
+  var modalOpen = false;
+  var activeFreqKey = 'monthly';
+  var tabsSwapped = false; // true when Tab1=single, Tab2=recurring (e.g., Zakat)
+  var selectedAmount = 0;
+  var upsellMonthlyActive = false;
+  var upsellOneTimeAmount = 0;
+  var upsellMonthlyAmount = 0;
+  var currentModalCampaign = null;
+  var currentModalNotif = null;
+  var currentModalSlug = '';
+  var currentPageUrl = '';
+  var currentAccentColor = '#e1861d';
+  var currentAccentTextColor = '#ffffff';
+  var singleOnlyCampaign = false; // true for Kaffarah, Fidya, etc. — no monthly tab
+  var redirectToCampaignPage = false; // true for campaigns that should redirect to their page on donate
+
+  var MONTHLY_AMOUNTS_DEFAULT = [10, 20, 40, 100];
+  var SINGLE_AMOUNTS_DEFAULT = [50, 100, 150, 200];
+  var UPSELL_MONTHLY_RATIO = 0.4;
+  var DEFAULT_IMAGE = '/images/qurbani-foundation-food-distribution.webp';
+
+  // ─── Campaign-specific amount overrides (matches actual page pricing) ───
+  // Used as fallback when campaign DB has no frequencies/amounts configured
+  var CAMPAIGN_AMOUNTS = {
+    // Kaffarah: $180/day — 1, 2, 5, 10 days (matches page presets)
+    'kaffarah-2026': {
+      monthly: { amounts: [180, 360, 900, 1800], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [180, 360, 900, 1800], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'kaffarah': {
+      monthly: { amounts: [180, 360, 900, 1800], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [180, 360, 900, 1800], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Fidya: $10/day — 1, 5, 10, 30 days
+    'fidya-2026': {
+      monthly: { amounts: [10, 50, 100, 300], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [10, 50, 100, 300], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'fidya': {
+      monthly: { amounts: [10, 50, 100, 300], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [10, 50, 100, 300], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Zakat ul-Fitr: $15/person — 1, 2, 4, 6 people
+    'zakat-ul-fitr-2026': {
+      monthly: { amounts: [15, 30, 60, 90], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [15, 30, 60, 90], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // My Ten Nights: per-night × 10 = $50, $100, $250, $500
+    'mytennights': {
+      monthly: { amounts: [50, 100, 250, 500], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [50, 100, 250, 500], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Ramadan Food Packs: Small $50, Family $100, Large $200, Community $500
+    'ramadan-food-pack': {
+      monthly: { amounts: [50, 100, 200, 500], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [50, 100, 200, 500], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'feed-the-fasting': {
+      monthly: { amounts: [50, 100, 200, 500], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [50, 100, 200, 500], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Iftar Meals: $5/meal — 5, 25, 50 meals + 30-day package $150
+    'iftar-meals': {
+      monthly: { amounts: [25, 50, 150, 300], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [25, 50, 150, 300], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Aqiqah: Girl $150, Boy $300
+    'aqiqah': {
+      monthly: { amounts: [150, 300, 450, 600], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [150, 300, 450, 600], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Orphan Sponsorship: $45/mo per child — 1, 2, 3, 5 children
+    'sponsor-an-orphan': {
+      monthly: { amounts: [45, 90, 135, 225], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [45, 90, 135, 225], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Emergency appeals — standard CW box
+    'palestine-emergency': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'gaza-emergency': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'gaza-emergency-relief': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'pakistan-floods': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'lebanon-emergency': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'bangladesh-floods': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'afghanistan-emergency': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'turkey-syria-earthquake': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'hunger-crisis': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    'east-africa-crisis': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Where Most Needed
+    'where-most-needed': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Emergency Relief (general)
+    'emergency-relief': {
+      monthly: { amounts: [10, 20, 40, 100], suffix: 'USD/mo', label: 'MONTHLY' },
+      single:  { amounts: [50, 100, 150, 200], suffix: 'USD', label: 'GIVE ONCE' }
+    },
+    // Water Well
+    'build-a-water-well': {
+      monthly: { amounts: [50, 100, 250, 500], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [50, 100, 250, 500], suffix: 'USD', label: 'GIVE ONCE' }
+    }
+  };
+
+  // ─── Campaign Cache ───
+  var campaignCache = null;
+  var campaignCacheTime = 0;
+
+  function fetchCampaigns(cb) {
+    var now = Date.now();
+    if (campaignCache && (now - campaignCacheTime) < 300000) { cb(campaignCache); return; }
+    fetch('/api/campaigns')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var list = Array.isArray(d) ? d : (d.campaigns || []);
+        campaignCache = list; campaignCacheTime = Date.now();
+        cb(list);
+      })
+      .catch(function() { cb(campaignCache || []); });
+  }
+
+  function findCampaign(campaigns, slug) {
+    if (!slug || !campaigns) return null;
+    slug = slug.toLowerCase();
+    for (var i = 0; i < campaigns.length; i++) {
+      if ((campaigns[i].slug || '').toLowerCase() === slug) return campaigns[i];
+    }
+    for (var i = 0; i < campaigns.length; i++) {
+      var s = (campaigns[i].name || '').toLowerCase().replace(/\s+/g, '-');
+      if (s === slug || s.indexOf(slug) !== -1 || slug.indexOf(s) !== -1) return campaigns[i];
+    }
+    return null;
+  }
+
+  // ─── Emoji for campaign slug ───
+  function getEmoji(slug) {
+    var s = (slug || '').toLowerCase();
+    if (s.indexOf('water') !== -1 || s.indexOf('well') !== -1) return '💧';
+    if (s.indexOf('gaza') !== -1 || s.indexOf('palestin') !== -1) return '🇵🇸';
+    if (s.indexOf('sudan') !== -1) return '🇸🇩';
+    if (s.indexOf('syria') !== -1) return '🇸🇾';
+    if (s.indexOf('yemen') !== -1) return '🇾🇪';
+    if (s.indexOf('zakat') !== -1) return '🤲';
+    if (s.indexOf('ramadan') !== -1 || s.indexOf('iftar') !== -1 || s.indexOf('fidya') !== -1) return '🌙';
+    if (s.indexOf('orphan') !== -1) return '👶';
+    if (s.indexOf('food') !== -1 || s.indexOf('meal') !== -1 || s.indexOf('feed') !== -1) return '🍽️';
+    if (s.indexOf('qurbani') !== -1 || s.indexOf('aqiqah') !== -1) return '🐑';
+    if (s.indexOf('mosque') !== -1 || s.indexOf('masjid') !== -1) return '🕌';
+    if (s.indexOf('sadaqah') !== -1 || s.indexOf('jariyah') !== -1) return '🌱';
+    if (s.indexOf('emergency') !== -1 || s.indexOf('relief') !== -1 || s.indexOf('crisis') !== -1) return '🆘';
+    if (s.indexOf('education') !== -1 || s.indexOf('school') !== -1) return '📚';
+    return 'heart';
+  }
+
+  // ─── Impact text generator ───
+  function generateImpact(slug, freq, amount) {
+    if (freq === 'monthly') {
+      if (amount >= 100) return 'Provides <strong>comprehensive monthly support</strong> to families in need';
+      if (amount >= 40) return 'Delivers <strong>essential supplies</strong> to a family every month';
+      if (amount >= 20) return 'Provides <strong>regular meals</strong> to families in need';
+      return 'Makes a <strong>lasting monthly impact</strong> for those in need';
+    }
+    if (amount >= 200) return 'Delivers <strong>life-changing aid</strong> to families in need';
+    if (amount >= 150) return 'Provides <strong>essential support</strong> to those in crisis';
+    if (amount >= 100) return 'Helps <strong>transform lives</strong> with critical assistance';
+    if (amount >= 50) return 'Delivers <strong>emergency aid</strong> to families in need';
+    return 'Makes an <strong>immediate impact</strong> for those in need';
+  }
+
+  // ─── Notification Helpers ───
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderNotification(notif) {
+    var html = '<div class="flex items-center gap-3">';
+    html += '<div class="flex-1 min-w-0">';
+    html += '<p class="text-sm text-gray-900 leading-snug">';
+    html += '<span class="font-semibold">' + escapeHtml(notif.name) + '</span>';
+    html += ' donated <span class="font-bold text-[#01534d]">$' + notif.amount.toLocaleString('en-US') + '</span>';
+    html += '</p>';
+    html += '<p class="text-xs text-gray-500 mt-0.5">to <span class="font-medium text-gray-700">' + escapeHtml(notif.campaign) + '</span></p>';
+    html += '<p class="text-[11px] text-gray-400 mt-0.5">' + notif.flag + ' ' + escapeHtml(notif.city) + ', ' + escapeHtml(notif.country) + '</p>';
+    html += '</div>';
+    html += '<button type="button" class="sp-donate-trigger flex-shrink-0 inline-flex items-center px-5 py-2.5 bg-[#e1861d] text-white text-sm font-bold rounded-lg hover:bg-[#c97318] transition shadow-sm cursor-pointer tracking-wide">Donate</button>';
+    html += '<button type="button" id="social-proof-close" class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition ml-1" aria-label="Dismiss">';
+    html += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    html += '</button>';
+    html += '</div>';
+    return html;
+  }
+
+  // ─── Notification Show/Hide ───
+  function showPopup() {
+    if (isDismissed || !notifications.length) return;
+    if (modalOpen) return; // Never show while donation modal is open
+    if (donationInteracting) { pendingShow = true; return; } // Pause during donation interaction
+    if (notifShownCount >= MAX_PER_SESSION) return;
+    if (document.hidden) return;
+
+    // Check if user is typing in a form field
+    var activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+      pendingShow = true;
+      return;
+    }
+
+    // Idle check: if user is actively clicking/scrolling, defer
+    if (!userIsIdle) {
+      pendingShow = true;
+      return;
+    }
+
+    // Clear hybrid trigger state (timer or idle won — doesn't matter which)
+    pendingShow = false;
+    hybridIdleActive = false;
+    if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+
+    var notif = notifications[currentIndex % notifications.length];
+    contentEl.innerHTML = renderNotification(notif);
+    // Re-resolve close button (rendered dynamically in each notification)
+    closeBtn = document.getElementById('social-proof-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function(e) { e.stopPropagation(); dismiss(); });
+    }
+    popup.style.opacity = '1';
+    popup.style.transform = 'translateX(0)';
+    isVisible = true;
+
+    progressEl.style.transition = 'none';
+    progressEl.style.width = '0%';
+    void progressEl.offsetWidth;
+    progressEl.style.transition = 'width ' + SHOW_DURATION + 'ms linear';
+    progressEl.style.width = '100%';
+
+    notifShownCount++;
+    sessionStorage.setItem(SESSION_COUNT_KEY, String(notifShownCount));
+    showTimer = setTimeout(hidePopup, SHOW_DURATION);
+  }
+
+  function hidePopup() {
+    popup.style.opacity = '0';
+    popup.style.transform = 'translateX(-120%)';
+    isVisible = false;
+    currentIndex++;
+    sessionStorage.setItem(INDEX_KEY, String(currentIndex));
+    progressEl.style.transition = 'none';
+    progressEl.style.width = '0%';
+    // Schedule next popup using hybrid triggers (timer OR idle)
+    scheduleNextHybrid();
+  }
+
+  function dismiss() {
+    // Just dismiss the popup silently — lead capture only triggers from donate modal X
+    isDismissed = true;
+    if (showTimer) clearTimeout(showTimer);
+    if (pauseTimer) clearTimeout(pauseTimer);
+    localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+    popup.style.opacity = '0';
+    popup.style.transform = 'translateX(-120%)';
+    isVisible = false;
+  }
+
+  // ═══════════════════════════════════════════════
+  // CW DONATION BOX — BUILD AMOUNT GRID (3-col)
+  // ═══════════════════════════════════════════════
+  function buildAmountGrid(container, amounts, freqKey, suffix, defaultIdx) {
+    if (!container) return;
+    container.innerHTML = '';
+    var rows = [];
+    for (var i = 0; i < amounts.length; i += 3) { rows.push(amounts.slice(i, i + 3)); }
+    var lastRow = rows[rows.length - 1] || [];
+    var lastRowFull = lastRow.length === 3;
+    var otherColSpan = lastRowFull ? 3 : (3 - lastRow.length);
+
+    for (var ri = 0; ri < rows.length; ri++) {
+      var row = rows[ri];
+      var isLastRow = ri === rows.length - 1;
+      var showOtherInRow = isLastRow && !lastRowFull;
+      var rowDiv = document.createElement('div');
+      rowDiv.className = 'grid grid-cols-3 gap-2.5' + (ri < rows.length - 1 || showOtherInRow || lastRowFull ? ' mb-2.5' : '');
+
+      for (var ci = 0; ci < row.length; ci++) {
+        var amt = row[ci];
+        var idx = amounts.indexOf(amt);
+        var isDefault = idx === defaultIdx;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sp-cw-amt-btn relative rounded py-3 px-1 text-center transition-all border border-[#e0e1dc]' + (isDefault ? ' sp-cw-amt-selected' : '');
+        btn.setAttribute('data-amount', amt);
+        btn.setAttribute('data-freq', freqKey);
+        if (isDefault) {
+          btn.style.backgroundColor = currentAccentColor;
+          btn.style.borderColor = currentAccentColor;
+          btn.style.color = currentAccentTextColor;
+        } else {
+          btn.style.backgroundColor = '#f4f5f0';
+        }
+        btn.innerHTML = '<span class="text-[17px] font-bold' + (isDefault ? '' : ' text-gray-400') + '">$' + amt + '</span>' +
+                         '<span class="text-[11px] ml-0.5 font-medium' + (isDefault ? ' opacity-70' : ' text-gray-400') + '">' + suffix + '</span>';
+        rowDiv.appendChild(btn);
+      }
+
+      if (showOtherInRow) {
+        var spanClass = otherColSpan === 2 ? 'col-span-2' : otherColSpan === 3 ? 'col-span-3' : '';
+        var otherBtn = document.createElement('button');
+        otherBtn.type = 'button';
+        otherBtn.className = 'sp-cw-other-btn ' + spanClass + ' rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold text-[17px]';
+        otherBtn.style.backgroundColor = '#f4f5f0';
+        otherBtn.textContent = 'Other';
+        rowDiv.appendChild(otherBtn);
+        var customWrap = document.createElement('div');
+        customWrap.className = 'sp-cw-custom-wrap ' + spanClass + ' hidden';
+        customWrap.innerHTML = '<div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color:#f4f5f0;">' +
+          '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>' +
+          '<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" class="sp-cw-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400" placeholder="Other" />' +
+          '<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">' + suffix + '</span></div>';
+        rowDiv.appendChild(customWrap);
+      }
+      container.appendChild(rowDiv);
+    }
+
+    if (lastRowFull) {
+      var otherRow = document.createElement('div');
+      otherRow.className = 'grid grid-cols-3 gap-2.5';
+      var otherBtn2 = document.createElement('button');
+      otherBtn2.type = 'button';
+      otherBtn2.className = 'sp-cw-other-btn col-span-3 rounded py-3 px-3 text-center border border-[#e0e1dc] transition-all text-gray-400 font-bold text-[17px]';
+      otherBtn2.style.backgroundColor = '#f4f5f0';
+      otherBtn2.textContent = 'Other';
+      otherRow.appendChild(otherBtn2);
+      var customWrap2 = document.createElement('div');
+      customWrap2.className = 'sp-cw-custom-wrap col-span-3 hidden';
+      customWrap2.innerHTML = '<div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color:#f4f5f0;">' +
+        '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>' +
+        '<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" class="sp-cw-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400" placeholder="Other" />' +
+        '<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">' + suffix + '</span></div>';
+      otherRow.appendChild(customWrap2);
+      container.appendChild(otherRow);
+    }
+    wireGridEvents(container, freqKey);
+  }
+
+  function wireGridEvents(grid, freqKey) {
+    var btns = grid.querySelectorAll('.sp-cw-amt-btn');
+    btns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        selectedAmount = parseFloat(this.dataset.amount);
+        var ci = grid.querySelector('.sp-cw-custom');
+        var cw = grid.querySelector('.sp-cw-custom-wrap');
+        var ob = grid.querySelector('.sp-cw-other-btn');
+        if (ci) ci.value = '';
+        if (cw) cw.classList.add('hidden');
+        if (ob) ob.classList.remove('hidden');
+        clearGridSelection(grid);
+        highlightAmtBtn(this);
+        updateCwImpact();
+      });
+    });
+    var otherBtn = grid.querySelector('.sp-cw-other-btn');
+    if (otherBtn) {
+      otherBtn.addEventListener('click', function() {
+        var cw = grid.querySelector('.sp-cw-custom-wrap');
+        var ci = grid.querySelector('.sp-cw-custom');
+        if (cw) cw.classList.remove('hidden');
+        otherBtn.classList.add('hidden');
+        clearGridSelection(grid);
+        selectedAmount = 0;
+        updateCwImpact();
+        if (ci) ci.focus();
+      });
+    }
+    var customInput = grid.querySelector('.sp-cw-custom');
+    if (customInput) {
+      customInput.addEventListener('input', function() {
+        if (this.value) {
+          selectedAmount = parseFloat(this.value) || 0;
+          clearGridSelection(grid);
+          updateCwImpact();
+        }
+      });
+    }
+  }
+
+  function clearGridSelection(grid) {
+    if (!grid) return;
+    var btns = grid.querySelectorAll('.sp-cw-amt-btn');
+    btns.forEach(function(b) {
+      b.style.backgroundColor = '#f4f5f0';
+      b.style.color = '';
+      b.style.borderColor = '#e0e1dc';
+      b.classList.remove('sp-cw-amt-selected');
+      var spans = b.querySelectorAll('span');
+      if (spans[0]) spans[0].className = 'text-[17px] font-bold text-gray-400';
+      if (spans[1]) spans[1].className = 'text-[11px] ml-0.5 font-medium text-gray-400';
+    });
+  }
+
+  function highlightAmtBtn(btn) {
+    btn.style.backgroundColor = currentAccentColor;
+    btn.style.color = currentAccentTextColor;
+    btn.style.borderColor = currentAccentColor;
+    btn.classList.add('sp-cw-amt-selected');
+    var spans = btn.querySelectorAll('span');
+    if (spans[0]) spans[0].className = 'text-[17px] font-bold';
+    if (spans[1]) spans[1].className = 'text-[11px] ml-0.5 font-medium opacity-70';
+  }
+
+  function updateCwImpact() {
+    if (!cwImpactText) return;
+    cwImpactText.innerHTML = generateImpact(currentModalSlug, activeFreqKey, selectedAmount);
+  }
+
+  // ─── Checkout State ───
+  var spCheckoutStep1 = document.getElementById('sp-checkout-step1');
+  var spCheckoutStep2 = document.getElementById('sp-checkout-step2');
+  var spCheckoutAmount = 0;
+  var spCheckoutType = 'single';
+  var spStripeElements = null;
+  var spStripe = null;
+  var spPaymentReady = false;
+  var spProcessing = false;
+  var spCurrentStep = 0; // 0 = not in checkout, 1 = details, 2 = payment
+
+  // ── Checkout header step indicator helpers ──
+  function updateCheckoutHeaderSteps(step) {
+    var circle1 = document.getElementById('sp-ck-step1-circle');
+    var label1 = document.getElementById('sp-ck-step1-label');
+    var line = document.getElementById('sp-ck-step-line');
+    var circle2 = document.getElementById('sp-ck-step2-circle');
+    var label2 = document.getElementById('sp-ck-step2-label');
+
+    if (step === 1) {
+      // Step 1 active, Step 2 inactive
+      if (circle1) { circle1.style.backgroundColor = '#d97706'; circle1.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white'; circle1.innerHTML = '1'; }
+      if (label1) { label1.className = 'text-sm font-semibold text-gray-800'; label1.textContent = 'Your Details'; }
+      if (line) { line.style.backgroundColor = ''; line.className = 'flex-1 h-px bg-gray-200'; }
+      if (circle2) { circle2.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-gray-400 bg-gray-100'; circle2.style.backgroundColor = ''; circle2.innerHTML = '2'; }
+      if (label2) { label2.className = 'text-sm text-gray-400'; label2.textContent = 'Payment'; }
+    } else if (step === 2) {
+      // Step 1 completed (green check), Step 2 active
+      if (circle1) { circle1.style.backgroundColor = ''; circle1.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-green-500'; circle1.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>'; }
+      if (label1) { label1.className = 'text-sm text-green-600 font-medium'; label1.textContent = 'Details'; }
+      if (line) { line.style.backgroundColor = '#d97706'; line.className = 'flex-1 h-px'; }
+      if (circle2) { circle2.className = 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white'; circle2.style.backgroundColor = '#d97706'; circle2.innerHTML = '2'; }
+      if (label2) { label2.className = 'text-sm font-semibold text-gray-800'; label2.textContent = 'Payment'; }
+    }
+  }
+
+  // ─── Mobile helpers: hide/show image column during checkout ───
+  function isMobileView() { return window.innerWidth < 768; }
+  function hideImageOnMobile() {
+    if (isMobileView() && imageCol) imageCol.style.display = 'none';
+  }
+  function showImageOnMobile() {
+    if (imageCol) imageCol.style.display = '';
+  }
+
+  function showCheckoutView(amount, type) {
+    spCheckoutAmount = amount;
+    spCheckoutType = type;
+    spCurrentStep = 1;
+
+    // On mobile, hide image column to maximize form space
+    hideImageOnMobile();
+
+    // Hide form + upsell views
+    if (cwFormView) cwFormView.classList.add('hidden');
+    if (cwUpsellView) cwUpsellView.classList.add('hidden');
+    var fh = document.getElementById('sp-cw-form-header');
+    var uh = document.getElementById('sp-cw-upsell-header');
+    var ch = document.getElementById('sp-cw-checkout-header');
+    if (fh) fh.classList.add('hidden');
+    if (uh) uh.classList.add('hidden');
+
+    // Show checkout header with amount + step indicator
+    if (ch) ch.classList.remove('hidden');
+    var hamount = document.getElementById('sp-ck-header-amount');
+    var hperiod = document.getElementById('sp-ck-header-period');
+    if (hamount) hamount.textContent = '$' + amount + ' USD';
+    if (hperiod) hperiod.textContent = type === 'monthly' ? ' per month' : '';
+    updateCheckoutHeaderSteps(1);
+
+    // Show Step 1 (Your Details), hide Step 2
+    if (spCheckoutStep1) { spCheckoutStep1.classList.remove('hidden'); spCheckoutStep1.style.display = 'flex'; }
+    if (spCheckoutStep2) { spCheckoutStep2.classList.add('hidden'); spCheckoutStep2.style.display = 'none'; }
+  }
+
+  function showCheckoutStep2() {
+    spCurrentStep = 2;
+
+    // Hide Step 1, Show Step 2
+    if (spCheckoutStep1) { spCheckoutStep1.classList.add('hidden'); spCheckoutStep1.style.display = 'none'; }
+    if (spCheckoutStep2) { spCheckoutStep2.classList.remove('hidden'); spCheckoutStep2.style.display = 'flex'; }
+
+    // Update header step indicator to Step 2
+    updateCheckoutHeaderSteps(2);
+
+    // Update fee display
+    updateSPFeeDisplay();
+
+    // Mount Stripe Payment Element (lazy — only on Step 2)
+    mountSPPaymentElement();
+
+    // Init Google Places (delay to ensure address input is fully rendered/visible)
+    _spPlacesRetries = 0; // reset retries for fresh attempt
+    setTimeout(function() { initSPPlaces(); }, 300);
+  }
+
+  function goBackToStep1() {
+    if (spProcessing) return;
+    spCurrentStep = 1;
+    if (spCheckoutStep2) { spCheckoutStep2.classList.add('hidden'); spCheckoutStep2.style.display = 'none'; }
+    if (spCheckoutStep1) { spCheckoutStep1.classList.remove('hidden'); spCheckoutStep1.style.display = 'flex'; }
+    // Update header step indicator back to Step 1
+    updateCheckoutHeaderSteps(1);
+  }
+
+  function hideSPCheckout() {
+    if (spCheckoutStep1) { spCheckoutStep1.classList.add('hidden'); spCheckoutStep1.style.display = 'none'; }
+    if (spCheckoutStep2) { spCheckoutStep2.classList.add('hidden'); spCheckoutStep2.style.display = 'none'; }
+    var fh = document.getElementById('sp-cw-form-header');
+    var ch = document.getElementById('sp-cw-checkout-header');
+    if (fh) fh.classList.remove('hidden');
+    if (ch) ch.classList.add('hidden');
+    if (cwFormView) cwFormView.classList.remove('hidden');
+    // Restore image column on mobile when going back to form
+    showImageOnMobile();
+    // Clean up Stripe elements
+    spStripeElements = null;
+    spPaymentReady = false;
+    spCurrentStep = 0;
+  }
+
+  // ═══════════════════════════════════════════════
+  // CW BOX — TAB SWITCHING
+  // ═══════════════════════════════════════════════
+  function switchTab(freqKey) {
+    activeFreqKey = freqKey;
+    if (cwTabMonthly) {
+      if (freqKey === 'monthly') {
+        cwTabMonthly.style.backgroundColor = currentAccentColor;
+        cwTabMonthly.style.color = currentAccentTextColor;
+        cwTabMonthly.style.borderColor = currentAccentColor;
+      } else {
+        cwTabMonthly.style.backgroundColor = 'transparent';
+        cwTabMonthly.style.color = '#9ca3af';
+        cwTabMonthly.style.borderColor = 'transparent';
+      }
+    }
+    if (cwTabSingle) {
+      if (freqKey === 'single') {
+        cwTabSingle.style.backgroundColor = currentAccentColor;
+        cwTabSingle.style.color = currentAccentTextColor;
+        cwTabSingle.style.borderColor = currentAccentColor;
+      } else {
+        cwTabSingle.style.backgroundColor = 'transparent';
+        cwTabSingle.style.color = '#9ca3af';
+        cwTabSingle.style.borderColor = 'transparent';
+      }
+    }
+    if (cwGridMonthly) cwGridMonthly.classList.toggle('hidden', freqKey !== 'monthly');
+    if (cwGridSingle) cwGridSingle.classList.toggle('hidden', freqKey !== 'single');
+    var grids = modal ? modal.querySelectorAll('.sp-cw-freq-grid') : [];
+    grids.forEach(function(g) {
+      var cw = g.querySelector('.sp-cw-custom-wrap');
+      var ci = g.querySelector('.sp-cw-custom');
+      var ob = g.querySelector('.sp-cw-other-btn');
+      if (cw) cw.classList.add('hidden');
+      if (ci) ci.value = '';
+      if (ob) ob.classList.remove('hidden');
+    });
+    var grid = freqKey === 'monthly' ? cwGridMonthly : cwGridSingle;
+    if (grid) {
+      var firstSelected = grid.querySelector('.sp-cw-amt-selected');
+      if (firstSelected) {
+        selectedAmount = parseFloat(firstSelected.dataset.amount) || 0;
+      } else {
+        var btns = grid.querySelectorAll('.sp-cw-amt-btn');
+        var defIdx = freqKey === 'monthly' ? 2 : 1;
+        if (defIdx >= btns.length) defIdx = 0;
+        if (btns[defIdx]) {
+          selectedAmount = parseFloat(btns[defIdx].dataset.amount) || 0;
+          clearGridSelection(grid);
+          highlightAmtBtn(btns[defIdx]);
+        }
+      }
+    }
+    // Button text: "JOIN TODAY" for recurring, "GIVE NOW" for one-time
+    // When tabs are swapped (e.g. Zakat), monthly position = single content
+    if (cwDonateBtn) {
+      var isRecurring = tabsSwapped ? (freqKey === 'single') : (freqKey === 'monthly');
+      cwDonateBtn.textContent = isRecurring ? 'JOIN TODAY' : 'GIVE NOW';
+    }
+    updateCwImpact();
+  }
+
+  if (cwTabMonthly) cwTabMonthly.addEventListener('click', function() { switchTab('monthly'); });
+  if (cwTabSingle) cwTabSingle.addEventListener('click', function() { switchTab('single'); });
+
+  // ═══════════════════════════════════════════════
+  // CW BOX — CTA BUTTON
+  // ═══════════════════════════════════════════════
+  if (cwDonateBtn) {
+    cwDonateBtn.addEventListener('click', function() {
+      var amt = selectedAmount;
+      // Check custom input
+      var grid = activeFreqKey === 'monthly' ? cwGridMonthly : cwGridSingle;
+      if (grid) {
+        var ci = grid.querySelector('.sp-cw-custom');
+        if (ci && ci.value) amt = parseFloat(ci.value) || amt;
+      }
+
+      if (!amt || amt < 1) {
+        alert('Please select or enter a donation amount');
+        return;
+      }
+
+      // Redirect campaigns → go to actual campaign page instead of popup checkout
+      // Uses custom URL from admin if set, otherwise the campaign page URL
+      if (redirectToCampaignPage) {
+        var redirectUrl = currentPageUrl || '/';
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+          return;
+        }
+      }
+
+      // For monthly: go to checkout
+      if (activeFreqKey === 'monthly') {
+        showCheckoutView(amt, 'monthly');
+        return;
+      }
+
+      // For single ≤$200: show upsell
+      if (amt <= 200) {
+        showUpsell(amt);
+        return;
+      }
+
+      // Single > $200: straight to checkout
+      showCheckoutView(amt, 'single');
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // CW BOX — UPSELL
+  // ═══════════════════════════════════════════════
+  function showUpsell(amount) {
+    var suggestedMonthly = Math.round(amount * UPSELL_MONTHLY_RATIO);
+    if (suggestedMonthly < 5) suggestedMonthly = 5;
+
+    upsellOneTimeAmount = amount;
+    upsellMonthlyAmount = suggestedMonthly;
+    upsellMonthlyActive = false;
+
+    if (cwFormView) cwFormView.classList.add('hidden');
+    if (cwUpsellView) cwUpsellView.classList.remove('hidden');
+    if (cwFormHeader) cwFormHeader.classList.add('hidden');
+    if (cwUpsellHeader) cwUpsellHeader.classList.remove('hidden');
+
+    if (cwUpsellAmountEl) cwUpsellAmountEl.textContent = '$' + amount + ' USD';
+    if (cwUpsellPeriodEl) cwUpsellPeriodEl.textContent = '';
+
+    if (cwUpsellBodyEl) {
+      cwUpsellBodyEl.textContent = "By making a monthly donation, you'll empower us to make long-term investments to bring lasting change to more families around the world.";
+    }
+    if (cwUpsellSubtextEl) {
+      cwUpsellSubtextEl.textContent = 'Please consider joining our monthly giving community. Monthly donors are our most impactful and committed supporters.';
+    }
+    if (cwUpsellMonthlyLabel) {
+      cwUpsellMonthlyLabel.textContent = 'Give $' + suggestedMonthly + ' per month instead';
+    }
+    if (cwUpsellBtn) cwUpsellBtn.textContent = 'GIVE $' + amount;
+
+    // Reset toggle
+    if (cwUpsellToggle) {
+      cwUpsellToggle.setAttribute('aria-checked', 'false');
+      cwUpsellToggle.style.backgroundColor = '#d1d5db';
+    }
+    if (cwUpsellToggleDot) {
+      cwUpsellToggleDot.style.transform = 'translateX(0)';
+      cwUpsellToggleDot.style.backgroundColor = '#ffffff';
+    }
+    var tX = cwUpsellToggleDot ? cwUpsellToggleDot.querySelector('.sp-toggle-x') : null;
+    var tC = cwUpsellToggleDot ? cwUpsellToggleDot.querySelector('.sp-toggle-check') : null;
+    if (tX) tX.classList.remove('hidden');
+    if (tC) tC.classList.add('hidden');
+  }
+
+  // Edit link → back to form
+  if (cwEditLink) {
+    cwEditLink.addEventListener('click', function() {
+      if (cwUpsellView) cwUpsellView.classList.add('hidden');
+      if (cwFormView) cwFormView.classList.remove('hidden');
+      if (cwUpsellHeader) cwUpsellHeader.classList.add('hidden');
+      if (cwFormHeader) cwFormHeader.classList.remove('hidden');
+      switchTab('single');
+    });
+  }
+
+  // Upsell toggle switch
+  if (cwUpsellToggle) {
+    cwUpsellToggle.addEventListener('click', function() {
+      upsellMonthlyActive = !upsellMonthlyActive;
+      this.setAttribute('aria-checked', upsellMonthlyActive ? 'true' : 'false');
+      var tX = cwUpsellToggleDot ? cwUpsellToggleDot.querySelector('.sp-toggle-x') : null;
+      var tC = cwUpsellToggleDot ? cwUpsellToggleDot.querySelector('.sp-toggle-check') : null;
+
+      if (upsellMonthlyActive) {
+        this.style.backgroundColor = currentAccentColor;
+        if (cwUpsellToggleDot) {
+          cwUpsellToggleDot.style.transform = 'translateX(28px)';
+          cwUpsellToggleDot.style.backgroundColor = currentAccentColor;
+        }
+        if (tX) tX.classList.add('hidden');
+        if (tC) tC.classList.remove('hidden');
+        if (cwUpsellBtn) cwUpsellBtn.textContent = 'GIVE $' + upsellMonthlyAmount;
+        if (cwUpsellAmountEl) cwUpsellAmountEl.textContent = '$' + upsellMonthlyAmount + ' USD';
+        if (cwUpsellPeriodEl) cwUpsellPeriodEl.textContent = ' per month';
+      } else {
+        this.style.backgroundColor = '#d1d5db';
+        if (cwUpsellToggleDot) {
+          cwUpsellToggleDot.style.transform = 'translateX(0)';
+          cwUpsellToggleDot.style.backgroundColor = '#ffffff';
+        }
+        if (tX) tX.classList.remove('hidden');
+        if (tC) tC.classList.add('hidden');
+        if (cwUpsellBtn) cwUpsellBtn.textContent = 'GIVE $' + upsellOneTimeAmount;
+        if (cwUpsellAmountEl) cwUpsellAmountEl.textContent = '$' + upsellOneTimeAmount + ' USD';
+        if (cwUpsellPeriodEl) cwUpsellPeriodEl.textContent = '';
+      }
+    });
+  }
+
+  // Upsell CTA
+  if (cwUpsellBtn) {
+    cwUpsellBtn.addEventListener('click', function() {
+      if (upsellMonthlyActive) {
+        showCheckoutView(upsellMonthlyAmount, 'monthly');
+      } else {
+        showCheckoutView(upsellOneTimeAmount, 'single');
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // MODAL OPEN / CLOSE
+  // ═══════════════════════════════════════════════
+  function openDonateModal(notif) {
+    if (!modal || modalOpen) return;
+    leadCaptureShownThisOpen = false;
+    hideLeadCapture();
+    showImageOnMobile(); // Restore image column from any previous checkout
+
+    // Pause notifications
+    if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+    if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+    popup.style.opacity = '0';
+    popup.style.transform = 'translateX(-120%)';
+    isVisible = false;
+    progressEl.style.transition = 'none';
+    progressEl.style.width = '0%';
+
+    var slug = notif.slug || notif.campaign.toLowerCase().replace(/\s+/g, '-');
+    currentModalSlug = slug;
+    currentModalNotif = notif;
+
+    fetchCampaigns(function(campaigns) {
+      var campaign = findCampaign(campaigns, slug);
+      currentModalCampaign = campaign;
+      populateModal(campaign, notif);
+
+      var trustLinks = document.getElementById('sp-modal-trust');
+
+      modal.classList.remove('hidden');
+      void modal.offsetWidth;
+      mBackdrop.style.opacity = '1';
+      mCard.style.opacity = '1';
+      mCard.style.transform = 'scale(1)';
+      if (mCloseBtn) mCloseBtn.style.opacity = '1';
+      if (trustLinks) trustLinks.style.opacity = '1';
+      document.body.style.overflow = 'hidden';
+      modalOpen = true;
+    });
+  }
+
+  function closeDonateModal() {
+    if (!modal || !modalOpen) return;
+    if (spProcessing) return; // Block close during payment processing
+    hideLeadCapture();
+    hideSPCheckout();
+    var trustLinks = document.getElementById('sp-modal-trust');
+    mBackdrop.style.opacity = '0';
+    mCard.style.opacity = '0';
+    mCard.style.transform = 'scale(0.97)';
+    if (mCloseBtn) mCloseBtn.style.opacity = '0';
+    if (trustLinks) trustLinks.style.opacity = '0';
+    document.body.style.overflow = '';
+    modalOpen = false;
+
+    setTimeout(function() {
+      modal.classList.add('hidden');
+      if (!isDismissed && notifications.length && notifShownCount < MAX_PER_SESSION) {
+        currentIndex++;
+        sessionStorage.setItem(INDEX_KEY, String(currentIndex));
+        scheduleNextHybrid();
+      }
+    }, 300);
+  }
+
+  function populateModal(campaign, notif) {
+    // Image — prefer notif.image (from API, always correct), then campaign lookup, then fallback
+    var img = notif.image
+      || (campaign && (campaign.featured_image || campaign.hero_image_url || campaign.image_url))
+      || DEFAULT_IMAGE;
+    if (mImage) mImage.style.backgroundImage = 'url(' + img + ')';
+
+    // Title & description
+    var title = (campaign && (campaign.name || campaign.title)) || notif.campaign;
+    if (mTitle) mTitle.textContent = title;
+    var desc = (campaign && (campaign.description || campaign.long_description)) || '';
+    if (mDesc) { mDesc.textContent = desc; mDesc.style.display = desc ? '' : 'none'; }
+
+    // Link — prefer admin custom URL, then notif.url, then campaign.url_path, then fallback
+    var pageUrl = (campaign && campaign.social_proof_url)
+      || notif.url
+      || (campaign && campaign.url_path)
+      || '/appeals/' + currentModalSlug;
+    currentPageUrl = pageUrl;
+    if (mLink) {
+      mLink.href = pageUrl;
+      mLink.textContent = 'Visit our ' + title + ' page';
+    }
+
+    // Accent color from campaign or default
+    var tc = (campaign && campaign.template_config) || {};
+    currentAccentColor = (tc.accentColor) || '#e1861d';
+    currentAccentTextColor = (tc.accentTextColor) || '#ffffff';
+
+    // Update button colors
+    if (cwDonateBtn) { cwDonateBtn.style.backgroundColor = currentAccentColor; cwDonateBtn.style.color = currentAccentTextColor; }
+    if (cwUpsellBtn) { cwUpsellBtn.style.backgroundColor = currentAccentColor; cwUpsellBtn.style.color = currentAccentTextColor; }
+
+    // Emoji
+    var emoji = getEmoji(currentModalSlug);
+    var useHeart = emoji === 'heart';
+    if (cwImpactEmoji) {
+      if (useHeart) {
+        cwImpactEmoji.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="' + currentAccentColor + '"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+      } else {
+        cwImpactEmoji.textContent = emoji;
+      }
+    }
+
+    // Tab emoji
+    if (cwTabMonthly) {
+      var emojiSpan = useHeart
+        ? '<svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
+        : '<span class="text-base">' + emoji + '</span>';
+      cwTabMonthly.innerHTML = 'MONTHLY ' + emojiSpan;
+    }
+
+    // Get amounts from campaign — match CW donation box behavior
+    // Priority: DB frequencies > DB legacy amounts > CAMPAIGN_AMOUNTS map > defaults
+    var monthlyAmts = MONTHLY_AMOUNTS_DEFAULT;
+    var singleAmts = SINGLE_AMOUNTS_DEFAULT;
+    var monthlySuffix = 'USD/mo';
+    var singleSuffix = 'USD';
+    var monthlyLabel = '';
+    var singleLabel = '';
+    var amountsResolved = false;
+    var hideMonthlyTab = false;
+
+    if (campaign && campaign.template_config) {
+      var cwd = tc.cwDonation || {};
+
+      // Check frequencies array first (newer format used by ZakatHub, etc.)
+      if (cwd.frequencies && cwd.frequencies.length) {
+        var foundRecurring = false;
+        var foundSingle = false;
+        var firstFreqType = cwd.frequencies[0].type;
+        for (var fi = 0; fi < cwd.frequencies.length; fi++) {
+          var freq = cwd.frequencies[fi];
+          if (freq.type === 'single' && freq.amounts && freq.amounts.length && !foundSingle) {
+            singleAmts = freq.amounts;
+            singleSuffix = freq.suffix || 'USD';
+            singleLabel = freq.label || '';
+            foundSingle = true;
+          } else if (freq.type === 'recurring' && freq.amounts && freq.amounts.length && !foundRecurring) {
+            monthlyAmts = freq.amounts;
+            monthlySuffix = freq.suffix || 'USD/mo';
+            monthlyLabel = freq.label || '';
+            foundRecurring = true;
+          }
+        }
+        // If single is first in the array, swap tabs so Tab1=GIVE ONCE, Tab2=Recurring
+        if (firstFreqType === 'single' && foundSingle && foundRecurring) {
+          // Swap: tab1 (monthly position) gets single, tab2 (single position) gets recurring
+          var tmpAmts = monthlyAmts; monthlyAmts = singleAmts; singleAmts = tmpAmts;
+          var tmpSuffix = monthlySuffix; monthlySuffix = singleSuffix; singleSuffix = tmpSuffix;
+          var tmpLabel = monthlyLabel; monthlyLabel = singleLabel; singleLabel = tmpLabel;
+          tabsSwapped = true;
+        } else {
+          tabsSwapped = false;
+        }
+        // If no recurring frequency found, use single amounts for monthly tab too
+        if (!foundRecurring && foundSingle) {
+          monthlyAmts = singleAmts;
+          monthlySuffix = singleSuffix;
+        }
+        amountsResolved = true;
+      } else {
+        // Legacy format: monthlyAmounts / oneTimeAmounts
+        var hasLegacy = false;
+        if (cwd.monthlyAmounts && cwd.monthlyAmounts.length) { monthlyAmts = cwd.monthlyAmounts; hasLegacy = true; }
+        else if (tc.monthlyAmounts && tc.monthlyAmounts.length) { monthlyAmts = tc.monthlyAmounts; hasLegacy = true; }
+        if (cwd.oneTimeAmounts && cwd.oneTimeAmounts.length) { singleAmts = cwd.oneTimeAmounts; hasLegacy = true; }
+        else if (tc.oneTimeAmounts && tc.oneTimeAmounts.length) { singleAmts = tc.oneTimeAmounts; hasLegacy = true; }
+        if (hasLegacy) amountsResolved = true;
+      }
+    }
+
+    // Fallback to CAMPAIGN_AMOUNTS map if no DB config found
+    if (!amountsResolved) tabsSwapped = false;
+    if (!amountsResolved && currentModalSlug && CAMPAIGN_AMOUNTS[currentModalSlug]) {
+      var campOverride = CAMPAIGN_AMOUNTS[currentModalSlug];
+      if (campOverride.monthly) {
+        monthlyAmts = campOverride.monthly.amounts;
+        monthlySuffix = campOverride.monthly.suffix || 'USD/mo';
+        monthlyLabel = campOverride.monthly.label || '';
+        // If monthly type is 'single', both tabs show one-time amounts (no recurring)
+        if (campOverride.monthly.type === 'single') hideMonthlyTab = true;
+      }
+      if (campOverride.single) {
+        singleAmts = campOverride.single.amounts;
+        singleSuffix = campOverride.single.suffix || 'USD';
+        singleLabel = campOverride.single.label || '';
+      }
+    }
+
+    // Determine redirect behavior from DB social_proof_action (set in admin > Promotions & Popups)
+    // 'popup' = use quick-donate in modal, 'redirect' = go to campaign page
+    var dbAction = (campaign && campaign.social_proof_action) || (notif && notif.action) || 'redirect';
+    var dbCustomUrl = (campaign && campaign.social_proof_url) || '';
+    redirectToCampaignPage = dbAction === 'redirect' || hideMonthlyTab;
+
+    // For single-only campaigns (Kaffarah, Fidya, etc.): hide monthly tab, show only GIVE ONCE
+    if (hideMonthlyTab) {
+      singleOnlyCampaign = true;
+      // Show form header but hide Monthly tab, make Give Once full-width
+      if (cwFormHeader) {
+        cwFormHeader.classList.remove('hidden');
+        cwFormHeader.style.gridTemplateColumns = '1fr';
+      }
+      if (cwTabMonthly) cwTabMonthly.style.display = 'none';
+      if (cwTabSingle) {
+        cwTabSingle.style.display = '';
+        cwTabSingle.textContent = singleLabel || 'GIVE ONCE';
+        cwTabSingle.style.backgroundColor = currentAccentColor;
+        cwTabSingle.style.color = currentAccentTextColor;
+        cwTabSingle.style.borderColor = currentAccentColor;
+      }
+      if (cwGridMonthly) cwGridMonthly.classList.add('hidden');
+      if (cwGridSingle) cwGridSingle.classList.remove('hidden');
+      activeFreqKey = 'single';
+      tabsSwapped = false;
+      if (cwDonateBtn) cwDonateBtn.textContent = 'GIVE NOW';
+    } else {
+      singleOnlyCampaign = false;
+      // Show both tabs for campaigns with monthly + one-time
+      if (cwFormHeader) {
+        cwFormHeader.classList.remove('hidden');
+        cwFormHeader.style.gridTemplateColumns = '';
+      }
+      if (cwTabMonthly) {
+        cwTabMonthly.style.display = '';
+        var emojiHtml = useHeart
+          ? '<svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
+          : '<span class="text-base">' + emoji + '</span>';
+        cwTabMonthly.innerHTML = (monthlyLabel || 'MONTHLY') + ' ' + emojiHtml;
+      }
+      if (cwTabSingle) {
+        cwTabSingle.style.display = '';
+        if (singleLabel) cwTabSingle.textContent = singleLabel;
+      }
+      // Default to monthly tab
+      if (cwTabMonthly) cwTabMonthly.click();
+    }
+
+    // Build 3-col grids
+    buildAmountGrid(cwGridMonthly, monthlyAmts, 'monthly', monthlySuffix, 2);
+    buildAmountGrid(cwGridSingle, singleAmts, 'single', singleSuffix, 1);
+
+    // Redirect campaigns: update button to indicate page navigation
+    if (redirectToCampaignPage && cwDonateBtn) {
+      cwDonateBtn.textContent = 'DONATE NOW';
+    }
+
+    // Reset to form view (hide upsell + checkout steps + checkout header)
+    if (cwFormView) cwFormView.classList.remove('hidden');
+    if (cwUpsellView) cwUpsellView.classList.add('hidden');
+    // Form header is already configured above (single tab or dual tabs)
+    if (cwFormHeader) cwFormHeader.classList.remove('hidden');
+    if (cwUpsellHeader) cwUpsellHeader.classList.add('hidden');
+    var ckHeader = document.getElementById('sp-cw-checkout-header');
+    if (ckHeader) ckHeader.classList.add('hidden');
+    if (spCheckoutStep1) { spCheckoutStep1.classList.add('hidden'); spCheckoutStep1.style.display = 'none'; }
+    if (spCheckoutStep2) { spCheckoutStep2.classList.add('hidden'); spCheckoutStep2.style.display = 'none'; }
+    spCurrentStep = 0;
+
+    // Show campaign view, hide FAQ
+    if (rightCampaign) rightCampaign.classList.remove('hidden');
+    if (rightFaq) rightFaq.classList.add('hidden');
+
+    // Default tab + select default amount
+    // MUST always call switchTab to set selectedAmount from the visually highlighted button
+    if (hideMonthlyTab) {
+      switchTab('single');
+    } else {
+      switchTab('monthly');
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // FAQ PANEL TOGGLE + ACCORDION
+  // ═══════════════════════════════════════════════
+  if (faqLink) {
+    faqLink.addEventListener('click', function() {
+      if (rightCampaign) rightCampaign.classList.add('hidden');
+      if (rightFaq) rightFaq.classList.remove('hidden');
+    });
+  }
+  if (faqCloseBtn) {
+    faqCloseBtn.addEventListener('click', function() {
+      if (rightFaq) rightFaq.classList.add('hidden');
+      if (rightCampaign) rightCampaign.classList.remove('hidden');
+    });
+  }
+
+  // Fix "Visit our page" link — explicit click handler to ensure navigation
+  if (mLink) {
+    mLink.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var href = mLink.getAttribute('href');
+      if (href && href !== '#') {
+        e.preventDefault();
+        window.open(href, '_blank', 'noopener');
+      }
+    });
+  }
+
+  // FAQ accordion
+  if (modal) {
+    var faqTriggers = modal.querySelectorAll('.sp-faq-trigger');
+    faqTriggers.forEach(function(trigger) {
+      trigger.addEventListener('click', function() {
+        var item = this.closest('.sp-faq-item');
+        var body = item ? item.querySelector('.sp-faq-body') : null;
+        var arrow = this.querySelector('.sp-faq-arrow');
+        if (!body) return;
+
+        var isOpen = !body.classList.contains('hidden');
+
+        // Close all
+        var allBodies = modal.querySelectorAll('.sp-faq-body');
+        var allArrows = modal.querySelectorAll('.sp-faq-arrow');
+        allBodies.forEach(function(b) { b.classList.add('hidden'); });
+        allArrows.forEach(function(a) { a.style.transform = ''; });
+
+        // Toggle this one
+        if (!isOpen) {
+          body.classList.remove('hidden');
+          if (arrow) arrow.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // LEAD CAPTURE (shown when X is clicked)
+  // ═══════════════════════════════════════════════
+  var LEAD_CAPTURED_KEY = 'sp_lead_captured';
+  var LEAD_CAPTURED_AT_KEY = 'sp_lead_captured_at';
+  // Lead capture expires after 7 days so returning visitors see it again
+  var leadCapturedAt = parseInt(localStorage.getItem(LEAD_CAPTURED_AT_KEY) || '0', 10);
+  var LEAD_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+  var alreadyCapturedLead = localStorage.getItem(LEAD_CAPTURED_KEY) === 'true' && (Date.now() - leadCapturedAt) < LEAD_EXPIRY_MS;
+  // Clear expired flag
+  if (localStorage.getItem(LEAD_CAPTURED_KEY) === 'true' && !alreadyCapturedLead) {
+    localStorage.removeItem(LEAD_CAPTURED_KEY);
+    localStorage.removeItem(LEAD_CAPTURED_AT_KEY);
+  }
+  var leadCaptureShownThisOpen = false;
+
+  var leadOverlay = document.getElementById('sp-lead-capture');
+  var leadImage = document.getElementById('sp-lead-image');
+  var leadBackBtn = document.getElementById('sp-lead-back');
+  var leadEmailInput = document.getElementById('sp-lead-email');
+  var leadSubmitBtn = document.getElementById('sp-lead-submit');
+  var leadSkipBtn = document.getElementById('sp-lead-skip');
+  var leadInterestLabels = leadOverlay ? leadOverlay.querySelectorAll('.sp-lead-interest') : [];
+
+  // ── Checkbox visual toggle ──
+  leadInterestLabels.forEach(function(label) {
+    var cb = label.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    cb.addEventListener('change', function() {
+      var box = label.querySelector('.sp-lead-check');
+      var tick = box ? box.querySelector('svg') : null;
+      if (cb.checked) {
+        label.style.borderColor = '#e1861d';
+        label.style.backgroundColor = 'rgba(225,134,29,0.08)';
+        if (box) { box.style.backgroundColor = '#e1861d'; box.style.borderColor = '#e1861d'; }
+        if (tick) tick.style.opacity = '1';
+      } else {
+        label.style.borderColor = '';
+        label.style.backgroundColor = '';
+        if (box) { box.style.backgroundColor = ''; box.style.borderColor = ''; }
+        if (tick) tick.style.opacity = '0';
+      }
+    });
+  });
+
+  function getSelectedInterests() {
+    var selected = [];
+    leadInterestLabels.forEach(function(label) {
+      var cb = label.querySelector('input[type="checkbox"]');
+      if (cb && cb.checked) selected.push(cb.value);
+    });
+    return selected;
+  }
+
+  function showLeadCapture() {
+    if (!leadOverlay) return;
+    leadCaptureShownThisOpen = true;
+    // Copy campaign image to lead overlay
+    if (leadImage && mImage) {
+      leadImage.style.backgroundImage = mImage.style.backgroundImage;
+    }
+    // Reset form state
+    if (leadEmailInput) { leadEmailInput.value = ''; leadEmailInput.style.borderColor = ''; }
+    if (leadSubmitBtn) { leadSubmitBtn.textContent = 'Send Me Updates'; leadSubmitBtn.disabled = false; leadSubmitBtn.style.backgroundColor = '#e1861d'; }
+    // Reset checkboxes — pre-select Emergency Appeals only
+    var preselected = ['emergency'];
+    leadInterestLabels.forEach(function(label) {
+      var cb = label.querySelector('input[type="checkbox"]');
+      var box = label.querySelector('.sp-lead-check');
+      var tick = box ? box.querySelector('svg') : null;
+      var isPreselected = cb && preselected.indexOf(cb.value) !== -1;
+      if (cb) cb.checked = isPreselected;
+      label.style.borderColor = isPreselected ? '#e1861d' : '';
+      label.style.backgroundColor = isPreselected ? 'rgba(225,134,29,0.08)' : '';
+      if (box) { box.style.backgroundColor = isPreselected ? '#e1861d' : ''; box.style.borderColor = isPreselected ? '#e1861d' : ''; }
+      if (tick) tick.style.opacity = isPreselected ? '1' : '0';
+    });
+    leadOverlay.classList.remove('hidden');
+  }
+
+  function hideLeadCapture() {
+    if (leadOverlay) leadOverlay.classList.add('hidden');
+  }
+
+  // Back button → return to donation form
+  if (leadBackBtn) {
+    leadBackBtn.addEventListener('click', hideLeadCapture);
+  }
+
+  // "No, thanks" → close modal
+  if (leadSkipBtn) {
+    leadSkipBtn.addEventListener('click', function() {
+      hideLeadCapture();
+      closeDonateModal();
+    });
+  }
+
+  // Email input — reset border on type
+  if (leadEmailInput) {
+    leadEmailInput.addEventListener('input', function() {
+      this.style.borderColor = '';
+    });
+    leadEmailInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && leadSubmitBtn) leadSubmitBtn.click();
+    });
+  }
+
+  // "Send Me Updates" → capture lead with interests, then close
+  if (leadSubmitBtn) {
+    leadSubmitBtn.addEventListener('click', function() {
+      var email = leadEmailInput ? leadEmailInput.value.trim() : '';
+      if (!email || email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+        if (leadEmailInput) { leadEmailInput.style.borderColor = '#ef4444'; leadEmailInput.focus(); }
+        return;
+      }
+
+      // Collect selected interest tags (underscore format for GHL)
+      var interests = getSelectedInterests();
+      var tags = ['lead_exit_signup', 'source:social-proof'];
+      interests.forEach(function(i) { tags.push('interest_' + i); });
+
+      leadSubmitBtn.textContent = 'Saving...';
+      leadSubmitBtn.disabled = true;
+
+      fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          source: 'social-proof-popup',
+          campaign: currentModalSlug,
+          tags: tags
+        })
+      })
+      .then(function() {
+        localStorage.setItem(LEAD_CAPTURED_KEY, 'true');
+        localStorage.setItem(LEAD_CAPTURED_AT_KEY, String(Date.now()));
+        alreadyCapturedLead = true;
+        leadSubmitBtn.textContent = 'Thank you! ✓';
+        leadSubmitBtn.style.backgroundColor = '#16a34a';
+        setTimeout(function() {
+          hideLeadCapture();
+          closeDonateModal();
+        }, 1500);
+      })
+      .catch(function() {
+        // Still mark as captured to avoid annoying the user
+        localStorage.setItem(LEAD_CAPTURED_KEY, 'true');
+        localStorage.setItem(LEAD_CAPTURED_AT_KEY, String(Date.now()));
+        alreadyCapturedLead = true;
+        leadSubmitBtn.textContent = 'Thank you! ✓';
+        leadSubmitBtn.style.backgroundColor = '#16a34a';
+        setTimeout(function() {
+          hideLeadCapture();
+          closeDonateModal();
+        }, 1500);
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // NOTIFICATION EVENTS (delegated — closeBtn is dynamic)
+  // ═══════════════════════════════════════════════
+  popup.querySelector('.pointer-events-auto').addEventListener('click', function(e) {
+    // Check if close button was clicked (dynamic element)
+    var closeTgt = e.target.closest ? e.target.closest('#social-proof-close') : null;
+    if (closeTgt) { e.stopPropagation(); dismiss(); return; }
+
+    var triggerBtn = e.target.closest ? e.target.closest('.sp-donate-trigger') : null;
+    if (!triggerBtn && e.target.classList && e.target.classList.contains('sp-donate-trigger')) triggerBtn = e.target;
+
+    if (triggerBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      var notif = notifications[currentIndex % notifications.length];
+      if (notif) {
+        // Check if user is already on the same campaign page
+        var currentPath = window.location.pathname.toLowerCase();
+        var notifSlug = (notif.slug || '').toLowerCase();
+        var isOnSameCampaign = notifSlug && (
+          currentPath === '/appeals/' + notifSlug ||
+          currentPath === '/appeals/' + notifSlug + '/' ||
+          currentPath === '/' + notifSlug ||
+          currentPath === '/' + notifSlug + '/' ||
+          currentPath.indexOf('/appeals/' + notifSlug) === 0
+        );
+
+        if (isOnSameCampaign) {
+          // User is already on this campaign page — scroll to donation box
+          hidePopup();
+          scrollToDonationBox();
+        } else if (notif.action === 'redirect') {
+          // Redirect campaigns: go to campaign page with ?donate=true to auto-scroll
+          var targetUrl = notif.url || '/appeals/' + (notif.slug || '');
+          window.location.href = targetUrl + (targetUrl.indexOf('?') === -1 ? '?' : '&') + 'donate=true';
+        } else {
+          // Popup action: open the quick donation modal
+          openDonateModal(notif);
+        }
+      }
+      return;
+    }
+
+    // Clicking the popup itself (not the button) always goes to campaign page
+    var notif = notifications[currentIndex % notifications.length];
+    if (notif) {
+      var targetUrl = notif.url || '/appeals/' + (notif.slug || notif.campaign.toLowerCase().replace(/\s+/g, '-'));
+      window.location.href = targetUrl + (targetUrl.indexOf('?') === -1 ? '?' : '&') + 'donate=true';
+    }
+  });
+
+  // ── Attempt close — shows lead capture first if not already shown ──
+  function attemptCloseModal() {
+    if (!modalOpen || spProcessing) return;
+    // If lead capture overlay is already visible → clicking X/Esc/backdrop closes it + modal
+    if (leadOverlay && !leadOverlay.classList.contains('hidden')) {
+      hideLeadCapture();
+      closeDonateModal();
+      return;
+    }
+    // Show lead capture once per modal open, if not already captured
+    if (!alreadyCapturedLead && !leadCaptureShownThisOpen && leadOverlay) {
+      showLeadCapture();
+      return;
+    }
+    // Already shown or already captured → close for real
+    closeDonateModal();
+  }
+
+  // Modal close events — all go through attemptCloseModal()
+  if (mCloseBtn) {
+    mCloseBtn.addEventListener('click', function() {
+      attemptCloseModal();
+    });
+  }
+  if (mBackdrop) mBackdrop.addEventListener('click', function() { attemptCloseModal(); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modalOpen) attemptCloseModal();
+  });
+
+  // Pause when hidden
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+      if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+    } else if (!isDismissed && notifications.length && !modalOpen) {
+      if (!isVisible) pauseTimer = setTimeout(showPopup, 3000);
+    }
+  });
+
+  // ═══════════════════════════════════════════════
+  // IN-MODAL CHECKOUT — STRIPE + PAYMENT PROCESSING
+  // ═══════════════════════════════════════════════
+
+  // ── GA4 helpers (reuse from donationCart if available) ──
+  function spGetGA4ClientId() {
+    try {
+      if (window.donationCart && typeof window.donationCart.getGA4ClientId === 'function') {
+        return window.donationCart.getGA4ClientId();
+      }
+      var match = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/);
+      if (match && match[1]) return match[1];
+      if (typeof window.gtag === 'function') {
+        var cid = null;
+        window.gtag('get', 'G-0WC0W1PBKC', 'client_id', function(id) { cid = id; });
+        if (cid) return cid;
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  function spGetGA4SessionId() {
+    try {
+      if (window.donationCart && typeof window.donationCart.getGA4SessionId === 'function') {
+        return window.donationCart.getGA4SessionId();
+      }
+      var match = document.cookie.match(/_ga_0WC0W1PBKC=GS\d+\.\d+\.(\d+)/);
+      if (match && match[1]) return match[1];
+      if (typeof window.gtag === 'function') {
+        var sid = null;
+        window.gtag('get', 'G-0WC0W1PBKC', 'session_id', function(id) { sid = id; });
+        if (sid) return String(sid);
+      }
+    } catch(e) {}
+    return null;
+  }
+
+  // ── Stripe decline code → friendly message ──
+  function spGetDeclineMessage(error) {
+    if (!error) return 'Payment failed. Please try again.';
+    var code = error.decline_code || error.code || '';
+    var msgs = {
+      'insufficient_funds': 'Insufficient funds on this card. Please try a different card.',
+      'do_not_honor': 'Your bank declined this transaction. Please call the number on your card or try a different card.',
+      'card_velocity_exceeded': 'Too many attempts on this card. Please wait 15-30 minutes or use a different card.',
+      'card_declined': 'Your card was declined. Please try a different card.',
+      'expired_card': 'This card has expired. Please use a different card.',
+      'incorrect_cvc': 'The security code (CVC) is incorrect. Please check and try again.',
+      'processing_error': 'A processing error occurred. Please try again in a few moments.',
+      'incorrect_number': 'The card number is incorrect. Please check and try again.',
+      'authentication_required': 'Your bank requires authentication. Please try again and complete the verification.',
+    };
+    return msgs[code] || (error.message || 'Your card was declined. Please try a different card or contact your bank.');
+  }
+
+  // ── Fee display ──
+  function updateSPFeeDisplay() {
+    var feeDesc = document.getElementById('sp-ck-fee-desc');
+    var base = spCheckoutAmount;
+    var fee = Math.round(base * 0.03 * 100) / 100;
+    if (feeDesc) {
+      feeDesc.textContent = 'Add $' + fee.toFixed(2) + ' to ensure 100% of your donation goes directly to families in need.';
+    }
+  }
+
+  function getSPCheckoutTotal() {
+    var base = spCheckoutAmount;
+    var cb = document.getElementById('sp-ck-cover-fees');
+    if (cb && cb.checked) return base + Math.round(base * 0.03 * 100) / 100;
+    return base;
+  }
+
+  // ── Abandoned Checkout Capture (matches DonationCart behavior) ──
+  var _spHeartbeatInterval = null;
+  var _spLastCaptureFingerprint = '';
+
+  function spStartHeartbeat() {
+    if (_spHeartbeatInterval) return;
+    _spHeartbeatInterval = setInterval(function() {
+      var token = localStorage.getItem('qurbani_resume_token');
+      if (!token) return;
+      try {
+        navigator.sendBeacon('/api/abandoned-checkout/heartbeat', JSON.stringify({ resume_token: token }));
+      } catch(e) { /* silent */ }
+    }, 5 * 60 * 1000); // every 5 minutes
+  }
+
+  function spStopHeartbeat() {
+    if (_spHeartbeatInterval) { clearInterval(_spHeartbeatInterval); _spHeartbeatInterval = null; }
+  }
+
+  function spCaptureAbandonedCheckout() {
+    var email = (document.getElementById('sp-ck-email').value || '').trim().toLowerCase();
+    if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) return;
+
+    var firstName = (document.getElementById('sp-ck-firstName').value || '').trim();
+    var lastName = (document.getElementById('sp-ck-lastName').value || '').trim();
+    var phone = (document.getElementById('sp-ck-phone').value || '').trim();
+    var country = (document.getElementById('sp-ck-country') && document.getElementById('sp-ck-country').value) || 'US';
+    var amount = spCheckoutAmount || 0;
+    var campaignSlug = currentModalSlug || 'general';
+
+    // Debounce: don't re-fire if same fingerprint
+    var fingerprint = email + ':' + amount + ':' + campaignSlug + ':' + spCheckoutType;
+    if (_spLastCaptureFingerprint === fingerprint) return;
+    _spLastCaptureFingerprint = fingerprint;
+
+    // Read UTMs
+    var params = new URLSearchParams(window.location.search);
+    var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
+
+    var payload = {
+      email: email,
+      first_name: firstName || undefined,
+      last_name: lastName || undefined,
+      phone: phone || undefined,
+      amount: amount || undefined,
+      currency: 'USD',
+      campaign_type: spCheckoutType === 'monthly' ? 'recurring' : 'single',
+      campaign_slug: campaignSlug,
+      country: country,
+      utm_source: params.get('utm_source') || (storedUtm && storedUtm.utm_source) || undefined,
+      utm_medium: params.get('utm_medium') || (storedUtm && storedUtm.utm_medium) || undefined,
+      utm_campaign: params.get('utm_campaign') || (storedUtm && storedUtm.utm_campaign) || undefined,
+      utm_content: params.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
+      utm_term: params.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
+    };
+
+    fetch('/api/abandoned-checkout/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.resume_token) {
+        localStorage.setItem('qurbani_resume_token', data.resume_token);
+        spStartHeartbeat();
+      }
+    })
+    .catch(function() { /* silent — never disrupt checkout */ });
+  }
+
+  // ── Mount Stripe Payment Element (deferred mode) ──
+  function mountSPPaymentElement() {
+    // Ensure Stripe is available
+    if (!spStripe) {
+      if (window.donationCart && window.donationCart.stripe) {
+        spStripe = window.donationCart.stripe;
+      } else if (typeof Stripe !== 'undefined') {
+        // Fallback: read publishable key from site-level data
+        var metaKey = document.querySelector('meta[name="stripe-publishable-key"]');
+        var key = metaKey ? metaKey.getAttribute('content') : null;
+        if (!key && window.__STRIPE_PK) key = window.__STRIPE_PK;
+        if (key) {
+          spStripe = Stripe(key);
+        }
+      }
+    }
+    if (!spStripe) {
+      var cardEl = document.getElementById('sp-ck-card-element');
+      if (cardEl) cardEl.innerHTML = '<p class="text-red-500 text-sm text-center py-3">Payment system unavailable. Please try refreshing the page.</p>';
+      return;
+    }
+
+    var isRecurring = spCheckoutType === 'monthly';
+    var total = getSPCheckoutTotal();
+
+    var elementsConfig = {
+      mode: isRecurring ? 'setup' : 'payment',
+      currency: 'usd',
+      appearance: {
+        theme: 'stripe',
+        variables: {
+          colorPrimary: '#d97706',
+          fontFamily: 'system-ui, sans-serif',
+          borderRadius: '6px',
+        },
+      },
+    };
+
+    if (!isRecurring) {
+      elementsConfig.amount = Math.round(total * 100);
+    }
+
+    spStripeElements = spStripe.elements(elementsConfig);
+    var paymentElement = spStripeElements.create('payment', {
+      layout: 'tabs',
+      terms: { card: 'never' },
+      wallets: { applePay: 'auto', googlePay: 'auto', link: 'never' },
+      fields: {
+        billingDetails: {
+          address: {
+            country: 'never',
+            postalCode: 'never',
+          }
+        }
+      }
+    });
+
+    var cardEl = document.getElementById('sp-ck-card-element');
+    if (cardEl) {
+      cardEl.innerHTML = '';
+      paymentElement.mount(cardEl);
+    }
+
+    spPaymentReady = true;
+
+    // Enable pay button once mounted
+    var payBtn = document.getElementById('sp-ck-pay-btn');
+    if (payBtn) payBtn.disabled = false;
+
+    // Handle card errors
+    paymentElement.on('change', function(event) {
+      var errEl = document.getElementById('sp-ck-card-errors');
+      if (errEl) {
+        if (event.error) {
+          errEl.textContent = event.error.message;
+          errEl.classList.remove('hidden');
+        } else {
+          errEl.textContent = '';
+          errEl.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  // ── Google Places Autocomplete ──
+  var _spPlacesRetries = 0;
+  function initSPPlaces() {
+    var addressInput = document.getElementById('sp-ck-address');
+    if (!addressInput) return;
+    if (addressInput._spPlacesInit) return;
+
+    // Retry if Google Places API hasn't loaded yet (max 10 retries = ~5 seconds)
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      if (_spPlacesRetries < 10) {
+        _spPlacesRetries++;
+        setTimeout(initSPPlaces, 500);
+      }
+      return;
+    }
+    addressInput._spPlacesInit = true;
+
+    var autocomplete = new google.maps.places.Autocomplete(addressInput, {
+      types: ['address'],
+      componentRestrictions: { country: ['us', 'ca', 'gb', 'au', 'pk', 'in', 'bd'] },
+      fields: ['address_components', 'formatted_address'],
+    });
+
+    autocomplete.addListener('place_changed', function() {
+      var place = autocomplete.getPlace();
+      if (!place || !place.address_components) return;
+
+      var street = '', route = '', city = '', state = '', zip = '', country = '';
+      for (var i = 0; i < place.address_components.length; i++) {
+        var comp = place.address_components[i];
+        var types = comp.types || [];
+        if (types.indexOf('street_number') !== -1) street = comp.long_name;
+        if (types.indexOf('route') !== -1) route = comp.short_name;
+        if (types.indexOf('locality') !== -1) city = comp.long_name;
+        if (types.indexOf('sublocality_level_1') !== -1 && !city) city = comp.long_name;
+        if (types.indexOf('administrative_area_level_1') !== -1) state = comp.short_name;
+        if (types.indexOf('postal_code') !== -1) zip = comp.long_name;
+        if (types.indexOf('country') !== -1) country = comp.short_name;
+      }
+
+      addressInput.value = (street ? street + ' ' : '') + route;
+      var cityEl = document.getElementById('sp-ck-city');
+      var stateEl = document.getElementById('sp-ck-state');
+      var zipEl = document.getElementById('sp-ck-zip');
+      var countryEl = document.getElementById('sp-ck-country');
+      if (cityEl) cityEl.value = city;
+      if (stateEl) stateEl.value = state;
+      if (zipEl) zipEl.value = zip;
+      if (countryEl && country) {
+        // Set country dropdown if value exists
+        for (var j = 0; j < countryEl.options.length; j++) {
+          if (countryEl.options[j].value === country) {
+            countryEl.value = country;
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  // ── Validate checkout fields (Step 2 — billing address) ──
+  function validateSPCheckout() {
+    // Personal details already validated in Step 1, but double-check
+    var firstName = (document.getElementById('sp-ck-firstName').value || '').trim();
+    var lastName = (document.getElementById('sp-ck-lastName').value || '').trim();
+    var email = (document.getElementById('sp-ck-email').value || '').trim();
+    if (!firstName || !lastName) return 'Please go back and enter your name.';
+    if (!email || email.indexOf('@') < 1) return 'Please go back and enter a valid email.';
+
+    // Billing address fields (Step 2)
+    var address = (document.getElementById('sp-ck-address').value || '').trim();
+    var city = (document.getElementById('sp-ck-city').value || '').trim();
+    var state = (document.getElementById('sp-ck-state').value || '').trim();
+    var zip = (document.getElementById('sp-ck-zip').value || '').trim();
+
+    if (!address) return 'Please enter your billing address.';
+    if (!city) return 'Please enter your city.';
+    if (!state) return 'Please enter your state.';
+    if (!zip) return 'Please enter your ZIP code.';
+    return null;
+  }
+
+  // ── Show/hide payment error ──
+  function showSPPaymentError(msg) {
+    var errDiv = document.getElementById('sp-ck-payment-error');
+    var errText = document.getElementById('sp-ck-payment-error-text');
+    if (errDiv && errText) {
+      errText.textContent = msg;
+      errDiv.classList.remove('hidden');
+    }
+  }
+
+  function hideSPPaymentError() {
+    var errDiv = document.getElementById('sp-ck-payment-error');
+    if (errDiv) errDiv.classList.add('hidden');
+  }
+
+  // ── Process Payment ──
+  function processSPPayment() {
+    if (spProcessing || !spPaymentReady || !spStripeElements || !spStripe) return;
+
+    // Validate
+    var validationError = validateSPCheckout();
+    if (validationError) {
+      showSPPaymentError(validationError);
+      return;
+    }
+
+    hideSPPaymentError();
+    spProcessing = true;
+
+    var payBtn = document.getElementById('sp-ck-pay-btn');
+    var payText = document.getElementById('sp-ck-pay-btn-text');
+    var paySpinner = document.getElementById('sp-ck-pay-btn-spinner');
+    if (payBtn) payBtn.disabled = true;
+    if (payText) payText.classList.add('hidden');
+    if (paySpinner) paySpinner.classList.remove('hidden');
+
+    // Gather form data
+    var customer = {
+      firstName: (document.getElementById('sp-ck-firstName').value || '').trim(),
+      lastName: (document.getElementById('sp-ck-lastName').value || '').trim(),
+      email: (document.getElementById('sp-ck-email').value || '').trim(),
+      phone: (document.getElementById('sp-ck-phone').value || '').trim(),
+    };
+
+    var billingAddress = {
+      line1: (document.getElementById('sp-ck-address').value || '').trim(),
+      city: (document.getElementById('sp-ck-city').value || '').trim(),
+      state: (document.getElementById('sp-ck-state').value || '').trim(),
+      postal_code: (document.getElementById('sp-ck-zip').value || '').trim(),
+      country: (document.getElementById('sp-ck-country').value || 'US').trim(),
+    };
+
+    var coverFees = document.getElementById('sp-ck-cover-fees') ? document.getElementById('sp-ck-cover-fees').checked : false;
+    var total = getSPCheckoutTotal();
+    var feeAmount = coverFees ? Math.round(spCheckoutAmount * 0.03 * 100) / 100 : 0;
+    var baseAmount = spCheckoutAmount;
+
+    var campaignName = (currentModalCampaign && (currentModalCampaign.name || currentModalCampaign.title)) || (currentModalNotif ? currentModalNotif.campaign : 'Donation');
+    var items = [{
+      id: currentModalSlug + '-' + spCheckoutAmount + '-' + spCheckoutType,
+      name: campaignName,
+      amount: spCheckoutAmount,
+      quantity: 1,
+      type: spCheckoutType,
+      campaign: currentModalSlug,
+      label: '$' + spCheckoutAmount + (spCheckoutType === 'monthly' ? '/mo Monthly' : ' One-Time') + ' Donation'
+    }];
+
+    var isRecurring = spCheckoutType === 'monthly';
+    var prefEmail = document.getElementById('sp-ck-pref-email') ? document.getElementById('sp-ck-pref-email').checked : false;
+    var prefSms = document.getElementById('sp-ck-pref-sms') ? document.getElementById('sp-ck-pref-sms').checked : false;
+
+    // Gather UTM + journey for attribution tracking (same as DonationCart)
+    var storedUtm = window.getStoredUTM ? window.getStoredUTM() : {};
+    var spUtmSource = (storedUtm && storedUtm.utm_source) || undefined;
+    var spUtmMedium = (storedUtm && storedUtm.utm_medium) || undefined;
+    var spUtmCampaign = (storedUtm && storedUtm.utm_campaign) || undefined;
+    var spUtmContent = (storedUtm && storedUtm.utm_content) || undefined;
+
+    // Build journey object (matches buildDonationJourney in DonationCart)
+    var spJourney = undefined;
+    try {
+      var rawJ = window.getStoredJourney ? window.getStoredJourney() : null;
+      if (rawJ) {
+        rawJ.checkout = {
+          amount: total,
+          frequency: spCheckoutType || 'single',
+          items: campaignName,
+          last_page_before_checkout: rawJ.pages && rawJ.pages.length > 1 ? rawJ.pages[rawJ.pages.length - 2].p : rawJ.pages && rawJ.pages.length === 1 ? rawJ.pages[0].p : '/',
+          donation_started_at: Date.now()
+        };
+        spJourney = JSON.stringify(rawJ);
+      }
+    } catch(e) { /* silent */ }
+
+    var spResumeToken = localStorage.getItem('qurbani_resume_token') || undefined;
+
+    // Step 1: Validate card with Stripe
+    spStripeElements.submit()
+      .then(function(submitResult) {
+        if (submitResult.error) {
+          throw new Error(submitResult.error.message);
+        }
+
+        if (isRecurring) {
+          // ── RECURRING: SetupIntent → confirmSetup → create-subscription ──
+          if (paySpinner) paySpinner.innerHTML = '<svg class="animate-spin inline w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Securing payment...';
+
+          return fetch('/api/payments/create-setup-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer: customer,
+              billingAddress: billingAddress,
+            }),
+          })
+          .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+          .then(function(r) {
+            if (!r.ok) throw new Error(r.data.error || 'Failed to initialize payment. Please try again.');
+
+            return spStripe.confirmSetup({
+              elements: spStripeElements,
+              clientSecret: r.data.clientSecret,
+              confirmParams: {
+                return_url: window.location.origin + '/donate/success',
+                payment_method_data: {
+                  billing_details: {
+                    name: customer.firstName + ' ' + customer.lastName,
+                    email: customer.email,
+                    phone: customer.phone,
+                    address: billingAddress,
+                  },
+                },
+              },
+              redirect: 'if_required',
+            })
+            .then(function(setupResult) {
+              if (setupResult.error) {
+                throw { _stripeError: setupResult.error };
+              }
+
+              var setupIntent = setupResult.setupIntent;
+              if (!setupIntent || !setupIntent.payment_method) {
+                throw new Error('Payment setup failed. Please try again.');
+              }
+
+              if (paySpinner) paySpinner.innerHTML = '<svg class="animate-spin inline w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Creating subscription...';
+
+              return fetch('/api/payments/create-subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  paymentMethodId: setupIntent.payment_method,
+                  customerId: r.data.customerId,
+                  amount: total,
+                  items: items,
+                  customer: customer,
+                  billingAddress: billingAddress,
+                  interval: 'monthly',
+                  coverFees: coverFees,
+                  feeAmount: feeAmount,
+                  baseAmount: baseAmount,
+                  communicationPreferences: { email: prefEmail, sms: prefSms },
+                  resumeToken: spResumeToken,
+                  checkout_source: 'social-proof-popup',
+                  ga_client_id: spGetGA4ClientId(),
+                  ga_session_id: spGetGA4SessionId(),
+                  utm_source: spUtmSource,
+                  utm_medium: spUtmMedium,
+                  utm_campaign: spUtmCampaign,
+                  utm_content: spUtmContent,
+                  journey: spJourney,
+                }),
+              })
+              .then(function(subRes) { return subRes.json().then(function(d) { return { ok: subRes.ok, data: d }; }); })
+              .then(function(subR) {
+                if (!subR.ok) throw new Error(subR.data.error || 'Failed to create subscription. Please try again.');
+
+                // Store success data
+                var successData = {
+                  transaction_id: subR.data.paymentIntentId || setupIntent.id,
+                  donation_id: subR.data.donationId || '',
+                  total: total,
+                  items: items.map(function(item) {
+                    return { id: item.id, name: item.name, category: item.campaign, amount: item.amount, quantity: 1, type: item.type };
+                  }),
+                  cover_fees: coverFees && feeAmount > 0,
+                  fee_amount: feeAmount,
+                  is_subscription: true,
+                  subscription_id: subR.data.subscriptionId || '',
+                  interval: 'monthly',
+                  next_billing_date: subR.data.nextBillingDate || '',
+                  donor_email: customer.email,
+                  timestamp: Date.now()
+                };
+                sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+
+                // Clean up abandoned checkout tracking
+                spStopHeartbeat();
+                localStorage.removeItem('qurbani_resume_token');
+
+                // Redirect to success
+                spProcessing = false;
+                window.location.href = '/donate/success?donation_id=' + (subR.data.donationId || '') + '&subscription_id=' + (subR.data.subscriptionId || '');
+              });
+            });
+          });
+
+        } else {
+          // ── ONE-TIME: PaymentIntent → confirmPayment ──
+          if (paySpinner) paySpinner.innerHTML = '<svg class="animate-spin inline w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Processing payment...';
+
+          return fetch('/api/payments/create-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: total,
+              items: items,
+              customer: customer,
+              billingAddress: billingAddress,
+              type: 'single',
+              coverFees: coverFees,
+              feeAmount: feeAmount,
+              baseAmount: baseAmount,
+              communicationPreferences: { email: prefEmail, sms: prefSms },
+              resumeToken: spResumeToken,
+              checkout_source: 'social-proof-popup',
+              ga_client_id: spGetGA4ClientId(),
+              ga_session_id: spGetGA4SessionId(),
+              utm_source: spUtmSource,
+              utm_medium: spUtmMedium,
+              utm_campaign: spUtmCampaign,
+              utm_content: spUtmContent,
+              journey: spJourney,
+            }),
+          })
+          .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+          .then(function(r) {
+            if (!r.ok) throw new Error(r.data.error || 'Failed to create payment. Please try again.');
+
+            return spStripe.confirmPayment({
+              elements: spStripeElements,
+              clientSecret: r.data.clientSecret,
+              confirmParams: {
+                return_url: window.location.origin + '/donate/success?donation_id=' + (r.data.donationId || '') + '&type=single',
+                payment_method_data: {
+                  billing_details: {
+                    name: customer.firstName + ' ' + customer.lastName,
+                    email: customer.email,
+                    phone: customer.phone,
+                    address: billingAddress,
+                  },
+                },
+              },
+              redirect: 'if_required',
+            })
+            .then(function(result) {
+              if (result.error) {
+                throw { _stripeError: result.error };
+              }
+
+              var paymentIntent = result.paymentIntent;
+              if (!paymentIntent) throw new Error('Payment confirmation failed. Please try again.');
+
+              // Store success data
+              var successData = {
+                transaction_id: paymentIntent.id,
+                donation_id: r.data.donationId || '',
+                total: total,
+                items: items.map(function(item) {
+                  return { id: item.id, name: item.name, category: item.campaign, amount: item.amount, quantity: 1, type: item.type };
+                }),
+                cover_fees: coverFees && feeAmount > 0,
+                fee_amount: feeAmount,
+                is_subscription: false,
+                donor_email: customer.email,
+                timestamp: Date.now()
+              };
+              sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+
+              // Clean up abandoned checkout tracking
+              spStopHeartbeat();
+              localStorage.removeItem('qurbani_resume_token');
+
+              // Redirect to success
+              spProcessing = false;
+              window.location.href = '/donate/success?donation_id=' + (r.data.donationId || '') + '&type=single';
+            });
+          });
+        }
+      })
+      .catch(function(err) {
+        spProcessing = false;
+        if (payBtn) payBtn.disabled = false;
+        if (payText) payText.classList.remove('hidden');
+        if (paySpinner) { paySpinner.classList.add('hidden'); paySpinner.innerHTML = '<svg class="animate-spin inline w-5 h-5 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Processing...'; }
+
+        var msg = 'Payment failed. Please try again.';
+        if (err && err._stripeError) {
+          msg = spGetDeclineMessage(err._stripeError);
+        } else if (err && err.message) {
+          msg = err.message;
+        }
+        showSPPaymentError(msg);
+      });
+  }
+
+  // ── Checkout Event Listeners ──
+
+  // Header BACK button — context-aware: Step 2 → Step 1, Step 1 → amount selection
+  var spCkHeaderBack = document.getElementById('sp-ck-header-back');
+  if (spCkHeaderBack) {
+    spCkHeaderBack.addEventListener('click', function() {
+      if (spProcessing) return;
+      if (spCurrentStep === 2) {
+        goBackToStep1();
+      } else {
+        hideSPCheckout();
+      }
+    });
+  }
+
+  // CONTINUE button (Step 1 → Step 2) — validate details first
+  var spCkContinueBtn = document.getElementById('sp-ck-continue-btn');
+  if (spCkContinueBtn) {
+    spCkContinueBtn.addEventListener('click', function() {
+      // Validate Step 1 fields
+      var firstName = (document.getElementById('sp-ck-firstName').value || '').trim();
+      var lastName = (document.getElementById('sp-ck-lastName').value || '').trim();
+      var email = (document.getElementById('sp-ck-email').value || '').trim();
+
+      var errDiv = document.getElementById('sp-ck-step1-error');
+      var errText = document.getElementById('sp-ck-step1-error-text');
+
+      if (!firstName || !lastName) {
+        if (errDiv && errText) { errText.textContent = 'Please enter your first and last name.'; errDiv.classList.remove('hidden'); }
+        document.getElementById('sp-ck-firstName').focus();
+        return;
+      }
+      if (!email || email.indexOf('@') < 1 || email.indexOf('.') < 3) {
+        if (errDiv && errText) { errText.textContent = 'Please enter a valid email address.'; errDiv.classList.remove('hidden'); }
+        document.getElementById('sp-ck-email').focus();
+        return;
+      }
+
+      // Clear error and proceed to Step 2
+      if (errDiv) errDiv.classList.add('hidden');
+
+      // Capture abandoned checkout lead (same as GG one-step)
+      spCaptureAbandonedCheckout();
+
+      showCheckoutStep2();
+    });
+  }
+
+  // Capture lead on email/phone blur (early capture before Step 2)
+  var spCkEmailField = document.getElementById('sp-ck-email');
+  if (spCkEmailField) {
+    spCkEmailField.addEventListener('blur', function() { spCaptureAbandonedCheckout(); });
+  }
+  var spCkPhoneField = document.getElementById('sp-ck-phone');
+  if (spCkPhoneField) {
+    spCkPhoneField.addEventListener('blur', function() { spCaptureAbandonedCheckout(); });
+  }
+
+  // Resume heartbeat if resume token already exists (e.g. page reload during checkout)
+  if (localStorage.getItem('qurbani_resume_token')) spStartHeartbeat();
+
+  // Cover fees checkbox → update fee display + Stripe amount
+  var spCkCoverFees = document.getElementById('sp-ck-cover-fees');
+  if (spCkCoverFees) {
+    spCkCoverFees.addEventListener('change', function() {
+      updateSPFeeDisplay();
+      // Update Stripe elements amount for one-time payments
+      if (spStripeElements && spCheckoutType !== 'monthly') {
+        var newTotal = getSPCheckoutTotal();
+        spStripeElements.update({ amount: Math.round(newTotal * 100) });
+      }
+    });
+  }
+
+  // Pay button → process payment
+  var spCkPayBtn = document.getElementById('sp-ck-pay-btn');
+  if (spCkPayBtn) {
+    spCkPayBtn.addEventListener('click', function() {
+      processSPPayment();
+    });
+  }
+
+  // ─── Scroll to Donation Box ───
+  // Finds the donation form on the current page and scrolls to it smoothly.
+  // Uses actual data attributes from codebase: data-donation-box, data-mobile-donate, etc.
+  function scrollToDonationBox() {
+    var isMobile = window.innerWidth < 768;
+
+    // Selectors in priority order — on mobile prefer mobile-specific markers first
+    var selectors = isMobile
+      ? ['[data-mobile-donate]', '[data-donation-box]', '#donate', '#select-qurbani', '#packages']
+      : ['[data-donation-box]', '[data-mobile-donate]', '#donate', '#select-qurbani', '#packages'];
+
+    for (var si = 0; si < selectors.length; si++) {
+      // Find ALL matching elements, pick the first visible one
+      var els = document.querySelectorAll(selectors[si]);
+      for (var ei = 0; ei < els.length; ei++) {
+        var el = els[ei];
+        // Skip hidden elements (display:none, zero-size, or position:fixed sidebar)
+        if (el.offsetWidth === 0 || el.offsetHeight === 0) continue;
+        if (el.id === 'fixed-donate-box') continue; // Fixed sidebar — can't scroll to it
+
+        var rect = el.getBoundingClientRect();
+
+        // If already in upper half of viewport, just glow — no need to scroll
+        if (rect.top >= -20 && rect.top < window.innerHeight * 0.5) {
+          glowDonationBox(el);
+          return;
+        }
+
+        // Scroll with 80px offset from top for breathing room
+        var scrollTarget = window.pageYOffset + rect.top - 80;
+        window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+        var capturedEl = el;
+        setTimeout(function() { glowDonationBox(capturedEl); }, 700);
+        return;
+      }
+    }
+    // Fallback: scroll to top (most campaign pages have donation box in hero)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── Orange Glow Effect on Donation Box ───
+  // Adds a warm orange pulse glow around the donation box to draw attention
+  function glowDonationBox(el) {
+    // Find the actual donation box container (white card with shadow)
+    var box = el.querySelector('[data-donation-box]') || el;
+    if (!box) return;
+
+    // Inject keyframes if not already present
+    if (!document.getElementById('sp-glow-style')) {
+      var style = document.createElement('style');
+      style.id = 'sp-glow-style';
+      style.textContent = '@keyframes sp-orange-glow{0%{box-shadow:0 0 5px rgba(225,134,29,0.3),0 0 15px rgba(225,134,29,0.15)}50%{box-shadow:0 0 15px rgba(225,134,29,0.6),0 0 30px rgba(225,134,29,0.3)}100%{box-shadow:0 0 5px rgba(225,134,29,0.3),0 0 15px rgba(225,134,29,0.15)}}';
+      document.head.appendChild(style);
+    }
+
+    // Store original box-shadow to restore later
+    var origShadow = box.style.boxShadow || '';
+    var origTransition = box.style.transition || '';
+
+    // Apply glow animation — 3 pulses over 2.4s
+    box.style.animation = 'sp-orange-glow 0.8s ease-in-out 3';
+    box.style.borderRadius = box.style.borderRadius || getComputedStyle(box).borderRadius;
+
+    // Clean up after animation
+    box.addEventListener('animationend', function cleanup() {
+      box.removeEventListener('animationend', cleanup);
+      box.style.animation = '';
+      box.style.boxShadow = origShadow;
+      box.style.transition = origTransition;
+    });
+  }
+
+  // ─── Auto-scroll on ?donate=true (from social proof redirect) ───
+  if (window.location.search.indexOf('donate=true') !== -1) {
+    // Wait for page to fully load, then scroll to donation box
+    if (document.readyState === 'complete') {
+      setTimeout(scrollToDonationBox, 500);
+    } else {
+      window.addEventListener('load', function() { setTimeout(scrollToDonationBox, 500); });
+    }
+  }
+
+  // ─── Relevance Sorting ───
+  // Prioritize campaigns matching the current page the user is viewing
+  function sortByCampaignRelevance(items) {
+    var path = window.location.pathname.toLowerCase();
+    // Try to extract slug from various URL patterns
+    var slug = '';
+    var match = path.match(/\/appeals\/([^\/]+)/);
+    if (match) slug = match[1];
+    else if (path.match(/^\/(zakat|ramadan|orphans?|water|qurbani|aqiqah|sadaqah)/)) {
+      slug = path.replace(/^\//, '').replace(/\/$/, '').split('/')[0];
+    }
+    if (!slug) return items;
+
+    // Split into matching (current campaign) and others
+    var matching = [], others = [];
+    for (var i = 0; i < items.length; i++) {
+      var cs = (items[i].slug || items[i].campaign.toLowerCase().replace(/\s+/g, '-'));
+      if (cs.indexOf(slug) !== -1 || slug.indexOf(cs) !== -1) matching.push(items[i]);
+      else others.push(items[i]);
+    }
+
+    // If on a campaign page, show 60%+ matching, mix in some variety
+    // Interleave: matching first, then intersperse others
+    if (matching.length > 0 && others.length > 0) {
+      var result = [];
+      var mi = 0, oi = 0;
+      // Put 2 matching then 1 other — keeps it relevant but varied
+      while (mi < matching.length || oi < others.length) {
+        if (mi < matching.length) result.push(matching[mi++]);
+        if (mi < matching.length) result.push(matching[mi++]);
+        if (oi < others.length) result.push(others[oi++]);
+      }
+      return result;
+    }
+
+    return matching.concat(others);
+  }
+
+  // ─── Deduplicate by campaign slug (keep first per slug) ───
+  function deduplicateByCampaign(items) {
+    var seen = {};
+    var result = [];
+    for (var i = 0; i < items.length; i++) {
+      var slug = items[i].slug || '';
+      if (!seen[slug]) {
+        seen[slug] = true;
+        result.push(items[i]);
+      }
+    }
+    return result;
+  }
+
+  // ─── Pause on Page Visibility Change ───
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      // Page hidden — pause timers
+      if (showTimer) { clearTimeout(showTimer); showTimer = null; }
+      if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+      hybridIdleActive = false;
+      if (isVisible) hidePopup();
+    } else {
+      // Page visible again — schedule next via hybrid triggers
+      if (!isDismissed && !modalOpen && !donationInteracting && notifications.length && notifShownCount < MAX_PER_SESSION && !isVisible) {
+        scheduleNextHybrid();
+      }
+    }
+  });
+
+  // ─── Init ───
+  setTimeout(function() {
+    fetch('/api/social-proof')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.notifications || !d.notifications.length) return;
+        var sorted = sortByCampaignRelevance(d.notifications);
+        notifications = deduplicateByCampaign(sorted);
+        showPopup();
+      })
+      .catch(function() {});
+  }, DELAY_BEFORE_FIRST);
+})();
+</script>

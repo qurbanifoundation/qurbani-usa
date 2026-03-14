@@ -1,16 +1,24 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { getAllCategories, categoryIcons } from '../../lib/categories';
+import { getCategoryPageTemplates } from '../../lib/templates';
 
 export const prerender = false;
 
 let categories: any[] = [];
 let fetchError = '';
+let categoryPageTemplates: any[] = [];
 
 try {
   categories = await getAllCategories();
 } catch (e: any) {
   fetchError = e.message || 'Failed to fetch categories';
+}
+
+try {
+  categoryPageTemplates = await getCategoryPageTemplates();
+} catch (e: any) {
+  console.error('Error fetching category page templates:', e);
 }
 
 const availableIcons = Object.keys(categoryIcons);
@@ -54,7 +62,8 @@ const availableIcons = Object.keys(categoryIcons);
           <div class="flex-1">Label & Slug (click to edit)</div>
           <div class="w-24 text-center">Menu</div>
           <div class="w-24 text-center">Active</div>
-          <div class="w-32 text-right">Actions</div>
+          <div class="w-32 text-center">Template</div>
+          <div class="w-40 text-right">Actions</div>
         </div>
       </div>
 
@@ -118,7 +127,26 @@ const availableIcons = Object.keys(categoryIcons);
                 {category.is_active ? 'Active' : 'Inactive'}
               </button>
             </div>
-            <div class="w-32 flex items-center justify-end gap-2">
+            <div class="w-32 text-center">
+              {category.page_template ? (
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#01534d]/10 text-[#01534d]">
+                  {category.page_template}
+                </span>
+              ) : (
+                <span class="text-xs text-gray-400">Site Default</span>
+              )}
+            </div>
+            <div class="w-40 flex items-center justify-end gap-1">
+              <a
+                href={`/${category.slug}`}
+                target="_blank"
+                class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                title={`View /${category.slug}`}
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+              </a>
               <button
                 class="edit-btn p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
                 data-category={JSON.stringify(category)}
@@ -158,6 +186,8 @@ const availableIcons = Object.keys(categoryIcons);
         <li>• <strong>Label & Slug:</strong> Click directly on the text to edit inline (press Enter to save, Esc to cancel)</li>
         <li>• <strong>Menu:</strong> Toggle whether category shows in the mega menu</li>
         <li>• <strong>Active:</strong> Inactive categories are completely hidden</li>
+        <li>• <strong>Template:</strong> Assign a page template to change how the category listing page looks</li>
+        <li>• <strong>View:</strong> Click the external link icon to preview the category's front-end page</li>
         <li>• <strong>Color & Icon:</strong> Click the paint palette icon to change appearance</li>
       </ul>
     </div>
@@ -222,6 +252,17 @@ const availableIcons = Object.keys(categoryIcons);
               <input type="checkbox" id="category-menu" checked class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
               <span class="text-sm text-gray-700">Show in Menu</span>
             </label>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Page Template</label>
+            <select id="category-page-template" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d]">
+              <option value="">Use Site Default</option>
+              {categoryPageTemplates.map((t: any) => (
+                <option value={t.template_key}>{t.template_label}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Assign a listing page template for <code>/category/slug</code> URL</p>
           </div>
 
           <div class="flex justify-end gap-3 pt-4 border-t">
@@ -294,12 +335,14 @@ const availableIcons = Object.keys(categoryIcons);
       document.getElementById('category-sort').value = category.sort_order;
       document.getElementById('category-active').checked = category.is_active;
       document.getElementById('category-menu').checked = category.show_in_menu;
+      document.getElementById('category-page-template').value = category.page_template || '';
     } else {
       modalTitle.textContent = 'Add Category';
       form.reset();
       document.getElementById('category-id').value = '';
       document.getElementById('category-color').value = '#01534d';
       document.getElementById('category-color-text').value = '#01534d';
+      document.getElementById('category-page-template').value = '';
     }
     modal.classList.remove('hidden');
   }
@@ -356,6 +399,7 @@ const availableIcons = Object.keys(categoryIcons);
       sort_order: parseInt(document.getElementById('category-sort').value),
       is_active: document.getElementById('category-active').checked,
       show_in_menu: document.getElementById('category-menu').checked,
+      page_template: document.getElementById('category-page-template').value || null,
     };
 
     if (id) data.id = id;

@@ -3,6 +3,7 @@ import '../styles/global.css'
 import SEO from '../components/SEO.astro';
 import DonationCart from '../components/DonationCart.astro';
 import RamadanPopup from '../components/RamadanPopup.astro';
+import SocialProofPopup from '../components/SocialProofPopup.astro';
 import { getSettings } from '../lib/settings';
 
 interface Props {
@@ -179,6 +180,173 @@ const faviconType = adminFavicon
       window.trackDonationEvent = function(eventName, params) {
         gtag('event', eventName, params);
       };
+
+      // ============================================
+      // DONOR ATTRIBUTION & JOURNEY TRACKING
+      // Captures first-touch + last-touch UTMs, page journey, device, session timing
+      // ============================================
+      (function() {
+        try {
+          var KEY = 'qurbani_tracking';
+          var raw = localStorage.getItem(KEY);
+          var tracking = raw ? JSON.parse(raw) : null;
+          var now = Date.now();
+          var params = new URLSearchParams(window.location.search);
+          var path = window.location.pathname;
+
+          // Detect device + browser (only on first visit)
+          function detectDevice() {
+            var ua = navigator.userAgent;
+            var isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+            var isTablet = /iPad|Tablet|PlayBook/i.test(ua) || (isMobile && Math.min(screen.width, screen.height) > 600);
+            var browser = 'Other';
+            if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) browser = 'Chrome';
+            else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) browser = 'Safari';
+            else if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+            else if (ua.indexOf('Edg') > -1) browser = 'Edge';
+            var os = 'Other';
+            if (/iPhone/i.test(ua)) os = 'iPhone';
+            else if (/iPad/i.test(ua)) os = 'iPad';
+            else if (/Android/i.test(ua)) os = 'Android';
+            else if (/Windows/i.test(ua)) os = 'Windows';
+            else if (/Macintosh|Mac OS/i.test(ua)) os = 'Mac';
+            else if (/CrOS/i.test(ua)) os = 'ChromeOS';
+            else if (/Linux/i.test(ua)) os = 'Linux';
+            return { device: isTablet ? 'tablet' : isMobile ? 'mobile' : 'desktop', browser: browser, os: os };
+          }
+
+          // Extract current UTM params from URL
+          function getCurrentUTMs() {
+            var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+            var utms = {};
+            var hasAny = false;
+            utmKeys.forEach(function(k) {
+              var v = params.get(k);
+              if (v) { utms[k] = v; hasAny = true; }
+            });
+            return hasAny ? utms : null;
+          }
+
+          // Expire after 24 hours — start fresh session
+          if (!tracking || (now - tracking.session_started > 86400000)) {
+            var dev = detectDevice();
+            var currentUtms = getCurrentUTMs();
+            // Google Ads parameters from tracking template
+            var gads = {
+              gclid: params.get('gclid') || '',
+              fbclid: params.get('fbclid') || '',
+              matchtype: params.get('matchtype') || '',
+              network: params.get('network') || '',
+              campaignid: params.get('campaignid') || params.get('campaign_id') || '',
+              adgroupid: params.get('adgroupid') || params.get('ad_group_id') || '',
+              keyword: params.get('keyword') || params.get('utm_term') || '',
+              creative: params.get('creative') || '',
+              loc_interest: params.get('loc_interest_ms') || '',
+              loc_physical: params.get('loc_physical_ms') || '',
+              device: params.get('device') || '',
+            };
+
+            tracking = {
+              session_started: now,
+              // First-touch attribution (set once, never overwritten)
+              first_touch: {
+                utm: currentUtms || {},
+                landing_page: path,
+                referrer: document.referrer || 'direct',
+                gclid: gads.gclid,
+                fbclid: gads.fbclid,
+                matchtype: gads.matchtype,
+                network: gads.network,
+                campaignid: gads.campaignid,
+                adgroupid: gads.adgroupid,
+                keyword: gads.keyword,
+                creative: gads.creative,
+                loc_interest: gads.loc_interest,
+                loc_physical: gads.loc_physical,
+                device: gads.device,
+              },
+              // Last-touch attribution (updated on each new UTM arrival)
+              last_touch: {
+                utm: currentUtms || {},
+                landing_page: path,
+                referrer: document.referrer || 'direct',
+                gclid: gads.gclid,
+                fbclid: gads.fbclid,
+                matchtype: gads.matchtype,
+                network: gads.network,
+                campaignid: gads.campaignid,
+                adgroupid: gads.adgroupid,
+                keyword: gads.keyword,
+                creative: gads.creative,
+                loc_interest: gads.loc_interest,
+                loc_physical: gads.loc_physical,
+                device: gads.device,
+              },
+              device: dev.device,
+              browser: dev.browser,
+              os: dev.os,
+              pages: []
+            };
+          } else {
+            // Existing session — update last-touch if new UTMs arrive
+            var newUtms = getCurrentUTMs();
+            if (newUtms || params.get('gclid')) {
+              tracking.last_touch = {
+                utm: newUtms || tracking.last_touch.utm || {},
+                landing_page: path,
+                referrer: document.referrer || 'direct',
+                gclid: params.get('gclid') || tracking.last_touch.gclid || '',
+                fbclid: params.get('fbclid') || tracking.last_touch.fbclid || '',
+                matchtype: params.get('matchtype') || tracking.last_touch.matchtype || '',
+                network: params.get('network') || tracking.last_touch.network || '',
+                campaignid: params.get('campaignid') || params.get('campaign_id') || tracking.last_touch.campaignid || '',
+                adgroupid: params.get('adgroupid') || params.get('ad_group_id') || tracking.last_touch.adgroupid || '',
+                keyword: params.get('keyword') || params.get('utm_term') || tracking.last_touch.keyword || '',
+                creative: params.get('creative') || tracking.last_touch.creative || '',
+                loc_interest: params.get('loc_interest_ms') || tracking.last_touch.loc_interest || '',
+                loc_physical: params.get('loc_physical_ms') || tracking.last_touch.loc_physical || '',
+                device: params.get('device') || tracking.last_touch.device || '',
+              };
+            }
+          }
+
+          // Track page visit (avoid consecutive duplicates, keep last 10)
+          var lastPage = tracking.pages.length > 0 ? tracking.pages[tracking.pages.length - 1] : null;
+          if (!lastPage || lastPage.p !== path) {
+            tracking.pages.push({ p: path, t: now });
+            if (tracking.pages.length > 10) tracking.pages = tracking.pages.slice(-10);
+          }
+
+          localStorage.setItem(KEY, JSON.stringify(tracking));
+        } catch(e) {}
+      })();
+
+      // Helper: get stored UTM params (last-touch, for payment flow compatibility)
+      window.getStoredUTM = function() {
+        try {
+          var raw = localStorage.getItem('qurbani_tracking');
+          if (!raw) return null;
+          var data = JSON.parse(raw);
+          if (Date.now() - data.session_started > 86400000) return null;
+          var utm = data.last_touch && data.last_touch.utm ? data.last_touch.utm : {};
+          utm.ts = data.session_started;
+          return utm;
+        } catch(e) { return null; }
+      };
+
+      // Helper: get full tracking data for donation attribution
+      window.getStoredJourney = function() {
+        try {
+          var raw = localStorage.getItem('qurbani_tracking');
+          if (!raw) return null;
+          var data = JSON.parse(raw);
+          if (Date.now() - data.session_started > 86400000) {
+            localStorage.removeItem('qurbani_tracking');
+            return null;
+          }
+          return data;
+        } catch(e) { return null; }
+      };
     </script>
     <link rel="icon" type={faviconType} href={faviconHref} />
     <link rel="alternate icon" href="/favicon.ico" />
@@ -197,8 +365,14 @@ const faviconType = adminFavicon
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" />
 
-    <!-- Google Fonts: Signika, Lato & Playfair Display -->
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Signika:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- DNS prefetch for third-party domains loaded later -->
+    <link rel="dns-prefetch" href="https://js.stripe.com" />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+    <!-- Google Fonts: Non-render-blocking load with Caveat included -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&family=Lato:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Signika:wght@400;500;600;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&family=Lato:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Signika:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&family=Lato:wght@400;700;900&family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Signika:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
 
     <!-- Donation box hover effects -->
     <style is:inline>
@@ -213,6 +387,7 @@ const faviconType = adminFavicon
     <slot />
     <DonationCart checkoutTemplate={settings.checkout_template || 'three-step'} showCartReminder={settings.show_cart_reminder !== false} sidecartEnabled={settings.sidecart_enabled !== false} showSidecartMonthly={settings.show_sidecart_monthly !== false} showSidecartJummah={settings.show_sidecart_jummah !== false} />
     {settings.show_ramadan_popup !== false && <RamadanPopup />}
+    {settings.show_social_proof !== false && <SocialProofPopup />}
 
     <!-- Mobile auto-scroll to donation box on page load -->
     <script is:inline>

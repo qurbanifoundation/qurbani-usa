@@ -36,11 +36,24 @@ function buildZakatEmail(data: {
   nisabValue: number;
   assetsBreakdown: Array<{ label: string; amount: number }>;
   liabilitiesBreakdown: Array<{ label: string; amount: number }>;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
 }): string {
   const logoUrl = 'https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png';
   const name = data.firstName || 'there';
   const zakatDue = data.zakatAmount > 0;
-  const payUrl = `https://www.qurbani.com/zakat?amount=${data.zakatAmount.toFixed(2)}`;
+  // Build pay URL with UTM attribution for tracking continuity
+  const payParams = new URLSearchParams();
+  payParams.set('amount', data.zakatAmount.toFixed(2));
+  if (data.utm_source) payParams.set('utm_source', data.utm_source);
+  if (data.utm_medium) payParams.set('utm_medium', data.utm_medium);
+  if (data.utm_campaign) payParams.set('utm_campaign', data.utm_campaign);
+  if (data.utm_content) payParams.set('utm_content', data.utm_content);
+  if (data.utm_term) payParams.set('utm_term', data.utm_term);
+  const payUrl = `https://www.qurbani.com/zakat?${payParams.toString()}`;
   const nisabLabel = data.nisabType === 'gold' ? 'Gold' : 'Silver';
   const nisabGrams = data.nisabType === 'gold' ? '87.48' : '612.36';
 
@@ -232,7 +245,7 @@ function buildZakatEmail(data: {
             <p style="font-size: 11px; color: #bbb; margin: 0 0 4px;">EIN: 38-4109716 | 1-800-900-0027</p>
             <p style="font-size: 11px; color: #bbb; margin: 0;">
               <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
-              <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
+              <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a>
             </p>
           </td>
         </tr>
@@ -272,7 +285,14 @@ export const POST: APIRoute = async ({ request }) => {
       nisabValue,
       assetsBreakdown,
       liabilitiesBreakdown,
-      wantsReminder
+      wantsReminder,
+      // UTM attribution data
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      utm_term,
+      checkout_source,
     } = body;
 
     // Validate required fields
@@ -296,7 +316,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Track the Zakat calculation in GHL (with full breakdown)
+    // Track the Zakat calculation in GHL (with full breakdown + UTMs)
     const result = await trackZakatCalculation({
       email,
       firstName,
@@ -311,6 +331,11 @@ export const POST: APIRoute = async ({ request }) => {
       assetsBreakdown: assetsBreakdown || [],
       liabilitiesBreakdown: liabilitiesBreakdown || [],
       wantsReminder: wantsReminder || false,
+      utm_source: utm_source || undefined,
+      utm_medium: utm_medium || undefined,
+      utm_campaign: utm_campaign || undefined,
+      utm_content: utm_content || undefined,
+      utm_term: utm_term || undefined,
     });
 
     if (!result.success) {
@@ -331,6 +356,11 @@ export const POST: APIRoute = async ({ request }) => {
           nisabValue: nisabValue || 0,
           assetsBreakdown: assetsBreakdown || [],
           liabilitiesBreakdown: liabilitiesBreakdown || [],
+          utm_source: utm_source || undefined,
+          utm_medium: utm_medium || undefined,
+          utm_campaign: utm_campaign || undefined,
+          utm_content: utm_content || undefined,
+          utm_term: utm_term || undefined,
         });
 
         const emailRes = await fetch('https://api.resend.com/emails', {
@@ -341,7 +371,7 @@ export const POST: APIRoute = async ({ request }) => {
           },
           body: JSON.stringify({
             from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-            reply_to: 'donorcare@qurbani.com',
+            reply_to: 'donorcare@us.qurbani.com',
             to: [email],
             subject: zakatAmount > 0
               ? `Your Zakat Calculation: ${fmtCurrency(zakatAmount)} Due`
@@ -366,7 +396,15 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Queue follow-up drip emails (steps 2-4)
     try {
-      const payUrl = `https://www.qurbani.com/zakat?amount=${zakatAmount.toFixed(2)}`;
+      // Build pay URL with UTM attribution for drip emails too
+      const dripPayParams = new URLSearchParams();
+      dripPayParams.set('amount', zakatAmount.toFixed(2));
+      if (utm_source) dripPayParams.set('utm_source', utm_source);
+      if (utm_medium) dripPayParams.set('utm_medium', utm_medium);
+      if (utm_campaign) dripPayParams.set('utm_campaign', utm_campaign);
+      if (utm_content) dripPayParams.set('utm_content', utm_content);
+      if (utm_term) dripPayParams.set('utm_term', utm_term);
+      const payUrl = `https://www.qurbani.com/zakat?${dripPayParams.toString()}`;
 
       // Upsert: if they recalculate, update the data and reset the drip
       const { error: queueError } = await supabaseAdmin
@@ -388,6 +426,12 @@ export const POST: APIRoute = async ({ request }) => {
           drip_last_sent_at: new Date().toISOString(),
           status: 'active',
           created_at: new Date().toISOString(),
+          utm_source: utm_source || null,
+          utm_medium: utm_medium || null,
+          utm_campaign: utm_campaign || null,
+          utm_content: utm_content || null,
+          utm_term: utm_term || null,
+          checkout_source: checkout_source || 'zakat-calculator',
         }, {
           onConflict: 'email',
           ignoreDuplicates: false,
@@ -423,6 +467,12 @@ export const POST: APIRoute = async ({ request }) => {
               drip_last_sent_at: new Date().toISOString(),
               status: 'active',
               created_at: new Date().toISOString(),
+              utm_source: utm_source || null,
+              utm_medium: utm_medium || null,
+              utm_campaign: utm_campaign || null,
+              utm_content: utm_content || null,
+              utm_term: utm_term || null,
+              checkout_source: checkout_source || 'zakat-calculator',
             })
             .eq('id', existing.id);
         } else {
@@ -444,6 +494,12 @@ export const POST: APIRoute = async ({ request }) => {
               drip_step_last_sent: 1,
               drip_last_sent_at: new Date().toISOString(),
               status: 'active',
+              utm_source: utm_source || null,
+              utm_medium: utm_medium || null,
+              utm_campaign: utm_campaign || null,
+              utm_content: utm_content || null,
+              utm_term: utm_term || null,
+              checkout_source: checkout_source || 'zakat-calculator',
             });
         }
         console.log(`[Zakat Queue] Queued drip emails for ${email} (fallback method)`);

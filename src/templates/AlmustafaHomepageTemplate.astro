@@ -9,6 +9,14 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import { supabaseAdmin } from '../lib/supabase';
 
+// SEO props passed from index.astro (fetched from pages table)
+interface Props {
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
+}
+const { metaTitle, metaDescription, ogImage } = Astro.props;
+
 // Fetch active campaigns
 let campaigns: any[] = [];
 try {
@@ -25,12 +33,12 @@ try {
 if (campaigns.length === 0) {
   campaigns = [
     { id: 1, title: 'Palestine & Gaza Emergency', slug: 'palestine', description: 'Emergency relief for families in Gaza', featured_image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800', is_urgent: true },
-    { id: 2, title: 'Orphan Sponsorship', slug: 'orphan-sponsorship', description: 'Support orphaned children', featured_image: '/images/qurbani-foundation-orphan-sponsorship.jpg' },
+    { id: 2, title: 'Orphan Sponsorship', slug: 'orphan-sponsorship', description: 'Support orphaned children', featured_image: '/images/qurbani-foundation-orphan-sponsorship.webp' },
     { id: 3, title: 'Water for Life', slug: 'water', description: 'Provide clean drinking water', featured_image: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=800' },
     { id: 4, title: 'Cataract Surgery', slug: 'cataract', description: 'Restore sight to the blind', featured_image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800' },
     { id: 5, title: 'Yemen Emergency', slug: 'yemen', description: 'Crisis relief for Yemen', featured_image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800', is_urgent: true },
     { id: 6, title: 'Sponsor a Hafiz', slug: 'hafiz', description: 'Support Quran memorization', featured_image: 'https://images.unsplash.com/photo-1585036156261-1e2ac055e25e?w=800' },
-    { id: 7, title: 'Food Packs', slug: 'food-packs', description: 'Feed hungry families', featured_image: '/images/qurbani-foundation-food-distribution.png' },
+    { id: 7, title: 'Food Packs', slug: 'food-packs', description: 'Feed hungry families', featured_image: '/images/qurbani-foundation-food-distribution.webp' },
     { id: 8, title: 'Education Fund', slug: 'education', description: 'Build brighter futures', featured_image: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=800' },
   ];
 }
@@ -46,7 +54,11 @@ const impactStats = [
 ];
 ---
 
-<Layout title="Qurbani Foundation - 100% Zakat Policy">
+<Layout
+  title={metaTitle || "Qurbani Foundation - 100% Zakat Policy"}
+  description={metaDescription}
+  ogImage={ogImage}
+>
   <Navbar />
 
   <main>
@@ -57,7 +69,7 @@ const impactStats = [
       <!-- Background Image -->
       <div class="absolute inset-0">
         <img
-          src="/images/Qurbani-hero-section-img-1.jpg"
+          src="/images/Qurbani-hero-section-img-1.webp"
           alt="Hero"
           class="w-full h-full object-cover opacity-60"
         />
@@ -310,7 +322,7 @@ const impactStats = [
           <div class="relative">
             <div class="relative rounded-lg overflow-hidden shadow-xl aspect-video bg-gray-900">
               <img
-                src="/images/qurbani-foundation-food-distribution.png"
+                src="/images/qurbani-foundation-food-distribution.webp"
                 alt="Watch our impact"
                 class="w-full h-full object-cover opacity-80"
               />

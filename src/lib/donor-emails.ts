@@ -3,6 +3,8 @@
  * Sends professional emails via Resend + logs to GHL for tracking
  */
 
+import { buildPreferencesUrls } from './email-preferences';
+
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 const GHL_API_KEY = import.meta.env.GHL_API_KEY;
 const GHL_LOCATION_ID = import.meta.env.GHL_LOCATION_ID;
@@ -53,7 +55,7 @@ interface PaymentFailedData {
 // EMAIL SENDING + GHL LOGGING
 // ============================================
 
-async function sendEmailAndLogToGHL(params: {
+export async function sendEmailAndLogToGHL(params: {
   to: string;
   subject: string;
   html: string;
@@ -73,7 +75,7 @@ async function sendEmailAndLogToGHL(params: {
         },
         body: JSON.stringify({
           from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-          reply_to: 'donorcare@qurbani.com',
+          reply_to: 'donorcare@us.qurbani.com',
           to: to,
           subject: subject,
           html: html,
@@ -172,7 +174,14 @@ async function sendEmailAndLogToGHL(params: {
 // EMAIL TEMPLATES
 // ============================================
 
-function getEmailWrapper(content: string, preheader: string = ''): string {
+export function getEmailWrapper(content: string, preheader: string = '', prefUrls?: { manage: string; unsubscribe: string }): string {
+  const preferencesLine = prefUrls
+    ? `<p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 11px;">
+        Want to change how you receive these emails?
+        <a href="${prefUrls.manage}" style="color: #d97706; text-decoration: underline;">Update your preferences</a> or
+        <a href="${prefUrls.unsubscribe}" style="color: #9ca3af; text-decoration: underline;">unsubscribe from this list</a>.
+      </p>`
+    : '';
   return `
 <!DOCTYPE html>
 <html>
@@ -219,17 +228,22 @@ function getEmailWrapper(content: string, preheader: string = ''): string {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td style="text-align: center;">
-                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
-                      <strong>Qurbani Foundation</strong><br>
-                      A 501(c)(3) Tax-Exempt Organization
+                    <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 14px; font-weight: 600;">
+                      Qurbani Foundation USA
                     </p>
-                    <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                      EIN: 38-4109716
+                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
+                      4245 N Central Expy, Dallas, TX 75205
                     </p>
-                    <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                      <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
-                      <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
+                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
+                      1-800-900-0027 · +1 989-QURBANI (787-2265)
                     </p>
+                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
+                      EIN: 38-4109716 · A 501(c)(3) Tax-Exempt Organization
+                    </p>
+                    <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                      Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.
+                    </p>
+                    ${preferencesLine}
                   </td>
                 </tr>
               </table>
@@ -385,7 +399,7 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
     <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
       <p style="margin: 0; color: #1e40af; font-size: 14px;">
         <strong>🔄 Recurring Donation</strong><br>
-        You will be automatically charged $${(data.recurringAmount || amount).toFixed(2)} ${donationType === 'weekly' ? 'every Friday' : 'each month'}.
+        You will be automatically charged $${(data.recurringAmount || amount).toFixed(2)} ${donationType === 'weekly' || items.some(i => (i as any).type === 'weekly') ? 'every Friday' : 'each month'}.
       </p>
       ${data.managementUrl ? `
       <div style="margin-top: 12px;">
@@ -395,7 +409,7 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
       </div>
       ` : `
       <p style="margin: 8px 0 0 0; color: #1e40af; font-size: 14px;">
-        To manage your subscription, contact us at <a href="mailto:donorcare@qurbani.com" style="color: #1e40af;">donorcare@qurbani.com</a>
+        To manage your subscription, contact us at <a href="mailto:donorcare@us.qurbani.com" style="color: #1e40af;">donorcare@us.qurbani.com</a>
       </p>
       `}
     </div>
@@ -413,7 +427,8 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
     </div>
   `;
 
-  const html = getEmailWrapper(content, `Thank you for your $${amount.toFixed(2)} donation to Qurbani Foundation!`);
+  const prefUrls = donorEmail ? await buildPreferencesUrls(donorEmail) : undefined;
+  const html = getEmailWrapper(content, `Thank you for your $${amount.toFixed(2)} donation to Qurbani Foundation!`, prefUrls);
 
   const plainText = `Thank you, ${firstName}!
 
@@ -432,8 +447,10 @@ Transaction ID: ${transactionId}
 ${donationType !== 'single' && data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
 "Those who (in sadaqah) spend of their goods by night and by day, in secret and in public, have their reward with their Lord: On them shall be no fear, nor shall they grieve." (Al-Quran, 2:274)
 
-Qurbani Foundation (EIN: 38-4109716)
-www.qurbani.com | donorcare@qurbani.com`;
+Qurbani Foundation USA (EIN: 38-4109716)
+4245 N Central Expy, Dallas, TX 75205
+1-800-900-0027 · +1 989-QURBANI (787-2265)
+Please do not reply to this email. Contact donorcare@us.qurbani.com for any inquiries.`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -520,13 +537,14 @@ export async function sendSubscriptionConfirmation(data: SubscriptionConfirmatio
       <p style="margin: 0 0 16px 0; color: #6b7280; font-size: 14px;">
         Questions about your subscription? We're here to help!
       </p>
-      <a href="mailto:donorcare@qurbani.com" style="display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+      <a href="mailto:donorcare@us.qurbani.com" style="display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
         Contact Donor Care
       </a>
     </div>
   `;
 
-  const html = getEmailWrapper(content, `Your ${intervalLabel} donation of $${amount.toFixed(2)} is now active!`);
+  const prefUrls = donorEmail ? await buildPreferencesUrls(donorEmail) : undefined;
+  const html = getEmailWrapper(content, `Your ${intervalLabel} donation of $${amount.toFixed(2)} is now active!`, prefUrls);
 
   const plainText = `Welcome to Our Family, ${firstName}!
 
@@ -545,8 +563,10 @@ What happens next:
 ${data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
 Thank you for your ongoing support!
 
-Qurbani Foundation
-www.qurbani.com | donorcare@qurbani.com`;
+Qurbani Foundation USA
+4245 N Central Expy, Dallas, TX 75205
+1-800-900-0027 · +1 989-QURBANI (787-2265)
+Please do not reply to this email. Contact donorcare@us.qurbani.com for any inquiries.`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -600,12 +620,13 @@ export async function sendPaymentFailedEmail(data: PaymentFailedData): Promise<{
         Try Again
       </a>
       <p style="margin: 16px 0 0 0; color: #6b7280; font-size: 14px;">
-        Need help? Contact us at <a href="mailto:donorcare@qurbani.com" style="color: #d97706;">donorcare@qurbani.com</a>
+        Need help? Contact us at <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706;">donorcare@us.qurbani.com</a>
       </p>
     </div>
   `;
 
-  const html = getEmailWrapper(content, `Action needed: Your $${amount.toFixed(2)} donation couldn't be processed.`);
+  const prefUrls = donorEmail ? await buildPreferencesUrls(donorEmail) : undefined;
+  const html = getEmailWrapper(content, `Action needed: Your $${amount.toFixed(2)} donation couldn't be processed.`, prefUrls);
 
   const plainText = `Payment Issue, ${firstName}
 
@@ -621,10 +642,11 @@ HOW TO FIX THIS
 3. Contact your bank if the issue persists
 4. Update your payment method or try again
 
-Need help? Contact us at donorcare@qurbani.com
+Need help? Contact us at donorcare@us.qurbani.com
 
-Qurbani Foundation
-www.qurbani.com`;
+Qurbani Foundation USA
+4245 N Central Expy, Dallas, TX 75205
+1-800-900-0027 · +1 989-QURBANI (787-2265)`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -674,7 +696,8 @@ export async function sendSubscriptionCancelledEmail(data: {
     </div>
   `;
 
-  const html = getEmailWrapper(content, `Your recurring donation has been cancelled.`);
+  const prefUrls = donorEmail ? await buildPreferencesUrls(donorEmail) : undefined;
+  const html = getEmailWrapper(content, `Your recurring donation has been cancelled.`, prefUrls);
 
   const plainText = `We're Sorry to See You Go, ${firstName}
 
@@ -686,8 +709,10 @@ We'd love to know why you decided to cancel. Your feedback helps us serve our do
 
 Changed your mind? You can always start a new donation anytime at www.qurbani.com
 
-Qurbani Foundation
-www.qurbani.com | donorcare@qurbani.com`;
+Qurbani Foundation USA
+4245 N Central Expy, Dallas, TX 75205
+1-800-900-0027 · +1 989-QURBANI (787-2265)
+Please do not reply to this email. Contact donorcare@us.qurbani.com for any inquiries.`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -732,12 +757,13 @@ export async function sendRefundEmail(data: {
 
     <div style="text-align: center; padding: 24px 0; border-top: 1px solid #e5e7eb;">
       <p style="margin: 0; color: #6b7280; font-size: 14px;">
-        Questions? Contact us at <a href="mailto:donorcare@qurbani.com" style="color: #d97706;">donorcare@qurbani.com</a>
+        Questions? Contact us at <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706;">donorcare@us.qurbani.com</a>
       </p>
     </div>
   `;
 
-  const html = getEmailWrapper(content, `Your $${amount.toFixed(2)} refund has been processed.`);
+  const prefUrls = donorEmail ? await buildPreferencesUrls(donorEmail) : undefined;
+  const html = getEmailWrapper(content, `Your $${amount.toFixed(2)} refund has been processed.`, prefUrls);
 
   const plainText = `Refund Processed, ${firstName}
 
@@ -749,10 +775,11 @@ Refund Amount: $${amount.toFixed(2)}
 
 Please allow 5-10 business days for the refund to appear on your statement, depending on your bank.
 
-Questions? Contact us at donorcare@qurbani.com
+Questions? Contact us at donorcare@us.qurbani.com
 
-Qurbani Foundation
-www.qurbani.com`;
+Qurbani Foundation USA
+4245 N Central Expy, Dallas, TX 75205
+1-800-900-0027 · +1 989-QURBANI (787-2265)`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -777,6 +804,7 @@ export async function sendFulfillmentEmail(data: {
   certificateUrl?: string;
 }): Promise<{ success: boolean }> {
   const { donorEmail, donorName, amount, items, campaignName, fulfilledAt, certificateUrl } = data;
+  const fulfillmentPrefUrls = await buildPreferencesUrls(donorEmail);
   const firstName = donorName.split(' ')[0] || 'Dear Donor';
   const fulfillmentDate = fulfilledAt.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -844,7 +872,11 @@ export async function sendFulfillmentEmail(data: {
       <p style="font-size: 14px; color: #6b7280;">JazakAllahu Khairan,<br><strong>Qurbani Foundation</strong></p>
     </div>
     <div style="background: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
-      <p style="margin: 0; font-size: 12px; color: #9ca3af;">Qurbani Foundation USA | www.qurbani.com | 1-800-900-0027</p>
+      <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af; font-weight: 600;">Qurbani Foundation USA</p>
+      <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af;">4245 N Central Expy, Dallas, TX 75205</p>
+      <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af;">1-800-900-0027 · +1 989-QURBANI (787-2265)</p>
+      <p style="margin: 0 0 4px 0; font-size: 11px; color: #9ca3af;">Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.</p>
+      <p style="margin: 0; font-size: 11px; color: #9ca3af;">Want to change how you receive these emails? <a href="${fulfillmentPrefUrls.manage}" style="color: #d97706; text-decoration: underline;">Update your preferences</a> or <a href="${fulfillmentPrefUrls.unsubscribe}" style="color: #9ca3af; text-decoration: underline;">unsubscribe from this list</a>.</p>
     </div>
   </div>
 </body>
@@ -866,8 +898,9 @@ ${items.map(i => `  - ${i.name}: $${(typeof i.amount === 'number' ? i.amount : p
 May Allah accept your generosity and reward you abundantly.
 
 JazakAllahu Khairan,
-Qurbani Foundation
-www.qurbani.com`;
+Qurbani Foundation USA
+4245 N Central Expy, Dallas, TX 75205
+1-800-900-0027 · +1 989-QURBANI (787-2265)`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,

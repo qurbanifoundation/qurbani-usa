@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import Stripe from 'stripe';
+import { getStripe } from '../../../lib/stripe-cache';
 
 export const prerender = false;
 
@@ -23,7 +23,7 @@ const STRIPE_INTERVALS: Record<string, string> = {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken, ga_client_id, ga_session_id } = body;
+    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken, checkout_source, ga_client_id, ga_session_id, utm_source, utm_medium, utm_campaign, utm_content, journey } = body;
 
     // Validate amount
     if (!amount || amount < 1) {
@@ -62,80 +62,68 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    // Get Stripe secret key from settings
-    const { data: settings } = await supabaseAdmin
-      .from('site_settings')
-      .select('stripe_secret_key, stripe_enabled, payment_test_mode')
-      .single();
+    // Get cached Stripe instance (avoids Supabase query on warm requests)
+    const stripe = await getStripe();
 
-    if (!settings?.stripe_enabled) {
-      return new Response(JSON.stringify({ error: 'Stripe payments are disabled' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (!settings?.stripe_secret_key) {
-      return new Response(JSON.stringify({ error: 'Stripe is not configured' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Initialize Stripe
-    const stripe = new Stripe(settings.stripe_secret_key, {
-      apiVersion: '2023-10-16',
-    });
-
-    // Create or retrieve Stripe customer (required for subscriptions)
-    let stripeCustomerId: string;
-    if (customer?.email) {
-      const customers = await stripe.customers.list({ email: customer.email, limit: 1 });
-      if (customers.data.length > 0) {
-        stripeCustomerId = customers.data[0].id;
-        // Update customer with latest address
-        if (billingAddress) {
-          await stripe.customers.update(stripeCustomerId, {
-            address: {
+    // Create or retrieve Stripe customer — run in parallel with abandoned checkout recovery
+    const customerPromise = (async () => {
+      if (customer?.email) {
+        const customers = await stripe.customers.list({ email: customer.email, limit: 1 });
+        if (customers.data.length > 0) {
+          const existingId = customers.data[0].id;
+          // Update customer with latest address (fire-and-forget — don't block payment)
+          if (billingAddress) {
+            stripe.customers.update(existingId, {
+              address: {
+                line1: billingAddress.line1,
+                line2: billingAddress.line2 || undefined,
+                city: billingAddress.city,
+                state: billingAddress.state,
+                postal_code: billingAddress.postal_code,
+                country: billingAddress.country,
+              },
+            }).catch((e: any) => console.error('Customer update error:', e));
+          }
+          return existingId;
+        } else {
+          const newCustomer = await stripe.customers.create({
+            email: customer.email,
+            name: `${customer.firstName} ${customer.lastName}`,
+            phone: customer.phone,
+            address: billingAddress ? {
               line1: billingAddress.line1,
               line2: billingAddress.line2 || undefined,
               city: billingAddress.city,
               state: billingAddress.state,
               postal_code: billingAddress.postal_code,
               country: billingAddress.country,
-            },
+            } : undefined,
           });
+          return newCustomer.id;
         }
       } else {
+        if (type === 'monthly' || type === 'weekly' || type === 'yearly' || type === 'daily') {
+          throw new Error('Email is required for recurring donations');
+        }
         const newCustomer = await stripe.customers.create({
-          email: customer.email,
-          name: `${customer.firstName} ${customer.lastName}`,
-          phone: customer.phone,
-          address: billingAddress ? {
-            line1: billingAddress.line1,
-            line2: billingAddress.line2 || undefined,
-            city: billingAddress.city,
-            state: billingAddress.state,
-            postal_code: billingAddress.postal_code,
-            country: billingAddress.country,
-          } : undefined,
+          description: 'Anonymous donor',
         });
-        stripeCustomerId = newCustomer.id;
+        return newCustomer.id;
       }
-    } else {
-      // Customer email is required for subscriptions
-      if (type === 'monthly' || type === 'weekly' || type === 'yearly' || type === 'daily') {
-        return new Response(JSON.stringify({ error: 'Email is required for recurring donations' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-      // For one-time donations, create anonymous customer
-      const newCustomer = await stripe.customers.create({
-        description: 'Anonymous donor',
-      });
-      stripeCustomerId = newCustomer.id;
-    }
+    })();
+
+    // Abandoned checkout recovery — runs in parallel with customer lookup
+    const abandonedPromise = resumeToken ? supabaseAdmin
+      .from('abandoned_checkouts')
+      .update({ status: 'recovered', recovered_at: new Date().toISOString() })
+      .eq('resume_token', resumeToken)
+      .eq('status', 'abandoned')
+      .then(() => {})
+      .catch((e: any) => console.error('Error marking abandoned checkout as recovered:', e))
+    : Promise.resolve();
+
+    // Wait for both in parallel
+    const [stripeCustomerId] = await Promise.all([customerPromise, abandonedPromise]);
 
     // Build metadata for tracking - include item metadata (childName, notes, etc.)
     // Stripe limits metadata values to 500 chars, so we build a compact summary
@@ -177,19 +165,79 @@ export const POST: APIRoute = async ({ request }) => {
       metadata.ga_session_id = ga_session_id;
     }
 
-    // Abandoned checkout recovery token
+    // Checkout source tracking (e.g. 'gg-one-step-checkout', 'social-proof-popup', 'three-step-checkout')
+    if (checkout_source) metadata.checkout_source = String(checkout_source).substring(0, 500);
+
+    // UTM tracking for email/ad campaign attribution
+    if (utm_source) metadata.utm_source = String(utm_source).substring(0, 500);
+    if (utm_medium) metadata.utm_medium = String(utm_medium).substring(0, 500);
+    if (utm_campaign) metadata.utm_campaign = String(utm_campaign).substring(0, 500);
+    if (utm_content) metadata.utm_content = String(utm_content).substring(0, 500);
+
+    // Journey data — extract first-touch + last-touch attribution, drop verbose page history
+    // Stripe metadata values max 500 chars; full journey is preserved in Supabase donations.metadata
+    if (journey) {
+      try {
+        const j = typeof journey === 'string' ? JSON.parse(journey) : journey;
+        const compact: Record<string, any> = {};
+        if (j.device) compact.device = j.device;
+        if (j.browser) compact.browser = j.browser;
+        if (j.session_started) compact.session_started = j.session_started;
+
+        // First-touch attribution (how the donor originally found us)
+        if (j.first_touch) {
+          const ft = j.first_touch;
+          if (ft.utm?.utm_source) compact.first_source = ft.utm.utm_source;
+          if (ft.utm?.utm_medium) compact.first_medium = ft.utm.utm_medium;
+          if (ft.utm?.utm_campaign) compact.first_campaign = ft.utm.utm_campaign;
+          if (ft.utm?.utm_term) compact.first_term = ft.utm.utm_term;
+          if (ft.landing_page) compact.first_landing = ft.landing_page;
+          if (ft.referrer && ft.referrer !== 'direct') compact.first_referrer = ft.referrer;
+          if (ft.gclid) compact.first_gclid = ft.gclid;
+          if (ft.fbclid) compact.first_fbclid = ft.fbclid;
+          if (ft.matchtype) compact.first_matchtype = ft.matchtype;
+          if (ft.network) compact.first_network = ft.network;
+          if (ft.campaignid) compact.first_campaignid = ft.campaignid;
+          if (ft.adgroupid) compact.first_adgroupid = ft.adgroupid;
+          if (ft.keyword) compact.first_keyword = ft.keyword;
+          if (ft.creative) compact.first_creative = ft.creative;
+          if (ft.placement) compact.first_placement = ft.placement;
+          if (ft.adposition) compact.first_adposition = ft.adposition;
+          if (ft.device) compact.first_device = ft.device;
+        }
+
+        // Last-touch attribution (what brought them back to donate)
+        if (j.last_touch) {
+          const lt = j.last_touch;
+          if (lt.utm?.utm_source) compact.last_source = lt.utm.utm_source;
+          if (lt.utm?.utm_medium) compact.last_medium = lt.utm.utm_medium;
+          if (lt.utm?.utm_campaign) compact.last_campaign = lt.utm.utm_campaign;
+          if (lt.utm?.utm_term) compact.last_term = lt.utm.utm_term;
+          if (lt.landing_page) compact.last_landing = lt.landing_page;
+          if (lt.referrer && lt.referrer !== 'direct') compact.last_referrer = lt.referrer;
+          if (lt.gclid) compact.last_gclid = lt.gclid;
+          if (lt.fbclid) compact.last_fbclid = lt.fbclid;
+          if (lt.matchtype) compact.last_matchtype = lt.matchtype;
+          if (lt.network) compact.last_network = lt.network;
+          if (lt.campaignid) compact.last_campaignid = lt.campaignid;
+          if (lt.adgroupid) compact.last_adgroupid = lt.adgroupid;
+          if (lt.keyword) compact.last_keyword = lt.keyword;
+          if (lt.creative) compact.last_creative = lt.creative;
+          if (lt.placement) compact.last_placement = lt.placement;
+          if (lt.adposition) compact.last_adposition = lt.adposition;
+          if (lt.device) compact.last_device = lt.device;
+        }
+
+        if (j.checkout?.last_page_before_checkout) compact.last_page = j.checkout.last_page_before_checkout;
+        metadata.journey = JSON.stringify(compact).substring(0, 500);
+      } catch {
+        metadata.journey = String(journey).substring(0, 500);
+      }
+    }
+
+    // Abandoned checkout recovery token (actual update already ran in parallel above)
     if (resumeToken) {
       metadata.resume_token = resumeToken;
-      // Mark abandoned checkout as recovered
-      try {
-        await supabaseAdmin
-          .from('abandoned_checkouts')
-          .update({ status: 'recovered', recovered_at: new Date().toISOString() })
-          .eq('resume_token', resumeToken)
-          .eq('status', 'abandoned');
-      } catch (e) {
-        console.error('Error marking abandoned checkout as recovered:', e);
-      }
     }
 
     // Recurring donations (monthly/weekly/yearly/daily) now use the SetupIntent → create-subscription flow
@@ -256,12 +304,39 @@ export const POST: APIRoute = async ({ request }) => {
         covers_fees: coverFees,
         fee_amount: feeAmount,
         base_amount: baseAmount || amount,
-        metadata: {
-          stripe_customer_id: stripeCustomerId,
-          billing_address: billingAddress || null,
-          ...(ga_client_id ? { ga_client_id } : {}),
-          ...(ga_session_id ? { ga_session_id } : {}),
-        },
+        metadata: (() => {
+          // Parse journey for first/last touch extraction
+          let journeyObj: any = null;
+          if (journey) {
+            try { journeyObj = typeof journey === 'string' ? JSON.parse(journey) : journey; } catch {}
+          }
+          const ft = journeyObj?.first_touch;
+          const lt = journeyObj?.last_touch;
+
+          return {
+            stripe_customer_id: stripeCustomerId,
+            billing_address: billingAddress || null,
+            ...(checkout_source ? { checkout_source } : {}),
+            ...(ga_client_id ? { ga_client_id } : {}),
+            ...(ga_session_id ? { ga_session_id } : {}),
+            // Last-touch UTMs (what brought them back to donate)
+            ...(utm_source ? { utm_source } : {}),
+            ...(utm_medium ? { utm_medium } : {}),
+            ...(utm_campaign ? { utm_campaign } : {}),
+            ...(utm_content ? { utm_content } : {}),
+            // Explicit first-touch & last-touch source for easy querying
+            ...(ft?.utm?.utm_source ? { first_source: ft.utm.utm_source } : {}),
+            ...(ft?.utm?.utm_medium ? { first_medium: ft.utm.utm_medium } : {}),
+            ...(ft?.utm?.utm_campaign ? { first_campaign: ft.utm.utm_campaign } : {}),
+            ...(ft?.landing_page ? { first_landing: ft.landing_page } : {}),
+            ...(lt?.utm?.utm_source ? { last_source: lt.utm.utm_source } : {}),
+            ...(lt?.utm?.utm_medium ? { last_medium: lt.utm.utm_medium } : {}),
+            ...(lt?.utm?.utm_campaign ? { last_campaign: lt.utm.utm_campaign } : {}),
+            ...(lt?.landing_page ? { last_landing: lt.landing_page } : {}),
+            // Full journey preserved for detailed attribution reports
+            ...(journeyObj ? { journey: journeyObj } : {}),
+          };
+        })(),
       })
       .select()
       .single();

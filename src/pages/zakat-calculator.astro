@@ -908,6 +908,10 @@ const nisabSilverGrams = 595;
       messageEl?.classList.add('hidden');
 
       try {
+        // Get stored UTM data from localStorage (set by Layout.astro tracking)
+        var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
+        var urlParams = new URLSearchParams(window.location.search);
+
         const response = await fetch('/api/ghl/track-zakat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -919,6 +923,13 @@ const nisabSilverGrams = 595;
             zakatAmount,
             totalAssets,
             wantsReminder,
+            // UTM attribution data
+            utm_source: urlParams.get('utm_source') || (storedUtm && storedUtm.utm_source) || undefined,
+            utm_medium: urlParams.get('utm_medium') || (storedUtm && storedUtm.utm_medium) || undefined,
+            utm_campaign: urlParams.get('utm_campaign') || (storedUtm && storedUtm.utm_campaign) || undefined,
+            utm_content: urlParams.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
+            utm_term: urlParams.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
+            checkout_source: 'zakat-calculator',
           }),
         });
 
@@ -978,7 +989,7 @@ const nisabSilverGrams = 595;
           quantity: 1,
           type: 'single',
           campaignSlug: 'zakat',
-          image: '/images/qurbani-foundation-food-distribution.png',
+          image: '/images/qurbani-foundation-food-distribution.webp',
         });
       } else {
         // Fallback: redirect to donate page with amount

@@ -29,7 +29,7 @@ try {
         month: 'long',
         year: 'numeric'
       }),
-      image: article.featured_image || '/images/qurbani-foundation-food-distribution.png',
+      image: article.featured_image || '/images/qurbani-foundation-food-distribution.webp',
       url: article.slug.startsWith('/blog/') ? article.slug : `/blog/${article.slug.replace(/^\//, '')}`,
       excerpt: article.meta_description || ''
     }));
@@ -45,7 +45,7 @@ if (newsArticles.length === 0) {
       title: "How Qurbani Foundation Distributes Millions of Meals During Ramadan",
       publication: "Qurbani Foundation",
       date: "March 2026",
-      image: "/images/qurbani-foundation-food-distribution.png",
+      image: "/images/qurbani-foundation-food-distribution.webp",
       url: "/blog/ramadan-food-distribution-impact",
       excerpt: "Learn how we coordinate massive food distribution efforts during Ramadan."
     },
@@ -61,7 +61,7 @@ if (newsArticles.length === 0) {
       title: "Orphan Sponsorship Program: Changing Lives One Child at a Time",
       publication: "Qurbani Foundation",
       date: "March 2026",
-      image: "/images/qurbani-foundation-orphan-sponsorship.jpg",
+      image: "/images/qurbani-foundation-orphan-sponsorship.webp",
       url: "/blog/orphan-sponsorship-program-impact",
       excerpt: "See how comprehensive care gives orphaned children a brighter future."
     }
@@ -173,7 +173,7 @@ const videos = [
     <section class="relative min-h-[450px] flex items-center overflow-hidden">
       <div class="absolute inset-0">
         <img
-          src="/images/qurbani-foundation-food-distribution.png"
+          src="/images/qurbani-foundation-food-distribution.webp"
           alt="Media and press"
           class="w-full h-full object-cover"
         />

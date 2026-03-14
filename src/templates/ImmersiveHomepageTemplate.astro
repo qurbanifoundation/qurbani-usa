@@ -11,6 +11,14 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import { supabaseAdmin } from '../lib/supabase';
 
+// SEO props passed from index.astro (fetched from pages table)
+interface Props {
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
+}
+const { metaTitle, metaDescription, ogImage } = Astro.props;
+
 // Fetch active campaigns
 let campaigns: any[] = [];
 let urgentCampaign: any = null;
@@ -31,9 +39,9 @@ try {
 if (campaigns.length === 0) {
   campaigns = [
     { id: 1, title: 'Palestine Emergency', slug: 'palestine', description: 'Urgent humanitarian aid for families in Gaza.', featured_image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800', is_urgent: true, goal_amount: 500000, raised_amount: 387500 },
-    { id: 2, title: 'Orphan Sponsorship', slug: 'orphan-sponsorship', description: 'Give orphans hope with education and care.', featured_image: '/images/qurbani-foundation-orphan-sponsorship.jpg', goal_amount: 250000, raised_amount: 198000 },
+    { id: 2, title: 'Orphan Sponsorship', slug: 'orphan-sponsorship', description: 'Give orphans hope with education and care.', featured_image: '/images/qurbani-foundation-orphan-sponsorship.webp', goal_amount: 250000, raised_amount: 198000 },
     { id: 3, title: 'Water for Life', slug: 'water', description: 'Provide clean drinking water to communities.', featured_image: 'https://images.unsplash.com/photo-1594398901394-4e34939a4fd0?w=800', goal_amount: 150000, raised_amount: 112000 },
-    { id: 4, title: 'Food Security', slug: 'food-packs', description: 'Feed families with nutritious food packs.', featured_image: '/images/qurbani-foundation-food-distribution.png', goal_amount: 200000, raised_amount: 156000 },
+    { id: 4, title: 'Food Security', slug: 'food-packs', description: 'Feed families with nutritious food packs.', featured_image: '/images/qurbani-foundation-food-distribution.webp', goal_amount: 200000, raised_amount: 156000 },
     { id: 5, title: 'Yemen Crisis', slug: 'yemen', description: 'Support families in Yemen.', featured_image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800', is_urgent: true, goal_amount: 300000, raised_amount: 234000 },
     { id: 6, title: 'Education Fund', slug: 'education', description: 'Build brighter futures through knowledge.', featured_image: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=800', goal_amount: 100000, raised_amount: 67000 },
   ];
@@ -59,7 +67,11 @@ const programs = [
 ];
 ---
 
-<Layout title="Qurbani Foundation - Transform Lives with 100% Zakat Policy">
+<Layout
+  title={metaTitle || "Qurbani Foundation - Transform Lives with 100% Zakat Policy"}
+  description={metaDescription}
+  ogImage={ogImage}
+>
   <Navbar />
 
   <main class="overflow-hidden bg-white">
@@ -72,7 +84,7 @@ const programs = [
       <div class="absolute inset-0">
         <div class="absolute inset-0 bg-neutral-900"></div>
         <img
-          src="/images/Qurbani-hero-section-img-1.jpg"
+          src="/images/Qurbani-hero-section-img-1.webp"
           alt="Qurbani Foundation"
           class="absolute inset-0 w-full h-full object-cover opacity-40 scale-105 hero-parallax"
           loading="eager"

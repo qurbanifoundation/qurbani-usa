@@ -87,6 +87,12 @@ const CUSTOM_FIELDS = [
   { name: 'Campaign Interests', fieldKey: 'campaign_interests', dataType: 'LARGE_TEXT', placeholder: 'Campaign slugs' },
   { name: 'Last Campaign Viewed', fieldKey: 'last_campaign_viewed', dataType: 'TEXT', placeholder: 'Campaign name' },
   { name: 'Pages Viewed', fieldKey: 'pages_viewed', dataType: 'NUMERICAL', placeholder: '0' },
+
+  // UTM Attribution Tracking
+  { name: 'Last UTM Source', fieldKey: 'last_utm_source', dataType: 'TEXT', placeholder: 'e.g. ghl, google, facebook' },
+  { name: 'Last UTM Medium', fieldKey: 'last_utm_medium', dataType: 'TEXT', placeholder: 'e.g. email, cpc, social' },
+  { name: 'Last UTM Campaign', fieldKey: 'last_utm_campaign', dataType: 'TEXT', placeholder: 'e.g. ramadan-2026-email1' },
+  { name: 'Last UTM Content', fieldKey: 'last_utm_content', dataType: 'TEXT', placeholder: 'e.g. zakat-cta, hero-banner' },
 ];
 
 // ============================================

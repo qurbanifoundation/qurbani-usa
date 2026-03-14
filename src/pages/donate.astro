@@ -336,10 +336,11 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
                   <div class="relative">
                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl font-bold">$</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputmode="decimal"
+                      pattern="[0-9]*\.?[0-9]*"
                       id="custom-amount"
                       name="customAmount"
-                      min="1"
                       placeholder="Enter custom amount"
                       class="w-full pl-10 pr-4 py-4 text-xl font-bold text-gray-700 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-[#01534d] focus:ring-2 focus:ring-[#01534d]/20 outline-none transition"
                       style="font-family: 'Signika', sans-serif;"

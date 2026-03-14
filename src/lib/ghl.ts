@@ -413,12 +413,15 @@ export async function syncNewsletterSignupToGHL(data: {
   email: string;
   firstName?: string;
   lastName?: string;
+  tags?: string[];
 }): Promise<{ success: boolean; contactId?: string; error?: string }> {
+  const baseTags = ['website', 'newsletter'];
+  const allTags = data.tags ? [...baseTags, ...data.tags] : baseTags;
   return upsertContact({
     firstName: data.firstName || '',
     lastName: data.lastName || '',
     email: data.email,
-    tags: ['website', 'newsletter'],
+    tags: allTags,
     source: 'Newsletter Signup',
   });
 }

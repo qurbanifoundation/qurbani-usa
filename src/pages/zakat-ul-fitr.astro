@@ -145,73 +145,103 @@ import Footer from '../components/Footer.astro';
 
         <!-- Right Column - Donation Box -->
         <div class="lg:sticky lg:top-24" data-mobile-donate>
-          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-[#0096D6] to-[#00b4d8] p-6 text-center">
-              <h3 class="text-2xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">
-                Pay Zakat ul-Fitr
-              </h3>
-              <p class="text-white/80 text-sm">$15 per person</p>
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden" data-donation-box>
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-[#0077b3] via-[#0096D6] to-[#00b4d8] p-6 text-center relative overflow-hidden">
+              <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;40&quot; height=&quot;40&quot; viewBox=&quot;0 0 40 40&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.3&quot;%3E%3Ccircle cx=&quot;20&quot; cy=&quot;20&quot; r=&quot;2&quot;/%3E%3C/g%3E%3C/svg%3E');"></div>
+              <div class="relative z-10">
+                <p class="text-white/70 text-xs font-semibold uppercase tracking-wider mb-2">Obligatory Charity</p>
+                <h3 class="text-2xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">
+                  Pay Your Zakat ul-Fitr
+                </h3>
+                <p class="text-[#fdc448] font-bold text-lg">$15 per person</p>
+                <p class="text-white/60 text-xs mt-2">☪ Must be paid before Eid prayer</p>
+              </div>
             </div>
 
-            <div class="p-6">
-              <!-- People Selection -->
-              <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Number of People</label>
-                <div class="grid grid-cols-4 gap-2 mb-3">
-                  <button class="fitr-people-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#0096D6] transition" data-people="1">1</button>
-                  <button class="fitr-people-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#0096D6] transition" data-people="2">2</button>
-                  <button class="fitr-people-btn py-3 border-2 border-[#0096D6] rounded-lg bg-[#0096D6]/10 text-[#0096D6] font-bold text-sm" data-people="4">4</button>
-                  <button class="fitr-people-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#0096D6] transition" data-people="5">5</button>
-                </div>
-                <div class="relative">
-                  <input type="number" id="fitr-custom-people" min="1" placeholder="Custom number of people" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0096D6] focus:border-[#0096D6] outline-none transition" />
-                </div>
+            <div class="p-5">
+              <!-- People Selector Label -->
+              <p class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">How many people?</p>
+
+              <!-- People Grid — 3 columns -->
+              <div class="grid grid-cols-3 gap-2 mb-3">
+                <button class="fitr-people-btn flex flex-col items-center py-3 px-1 border-2 border-gray-200 rounded-xl bg-white text-gray-600 hover:border-[#0096D6] hover:bg-[#0096D6]/5 transition-all cursor-pointer" data-people="1">
+                  <span class="text-lg font-bold leading-none">1</span>
+                  <span class="text-[10px] text-gray-400 mt-1">Myself</span>
+                </button>
+                <button class="fitr-people-btn flex flex-col items-center py-3 px-1 border-2 border-gray-200 rounded-xl bg-white text-gray-600 hover:border-[#0096D6] hover:bg-[#0096D6]/5 transition-all cursor-pointer" data-people="2">
+                  <span class="text-lg font-bold leading-none">2</span>
+                  <span class="text-[10px] text-gray-400 mt-1">Couple</span>
+                </button>
+                <button class="fitr-people-btn flex flex-col items-center py-3 px-1 border-2 border-gray-200 rounded-xl bg-white text-gray-600 hover:border-[#0096D6] hover:bg-[#0096D6]/5 transition-all cursor-pointer" data-people="3">
+                  <span class="text-lg font-bold leading-none">3</span>
+                  <span class="text-[10px] text-gray-400 mt-1">Family of 3</span>
+                </button>
+                <button class="fitr-people-btn flex flex-col items-center py-3 px-1 border-2 border-[#0096D6] rounded-xl bg-[#0096D6]/10 text-[#0096D6] transition-all cursor-pointer" data-people="4">
+                  <span class="text-lg font-bold leading-none">4</span>
+                  <span class="text-[10px] font-semibold mt-1">Family of 4</span>
+                </button>
+                <button class="fitr-people-btn flex flex-col items-center py-3 px-1 border-2 border-gray-200 rounded-xl bg-white text-gray-600 hover:border-[#0096D6] hover:bg-[#0096D6]/5 transition-all cursor-pointer" data-people="5">
+                  <span class="text-lg font-bold leading-none">5</span>
+                  <span class="text-[10px] text-gray-400 mt-1">Family of 5</span>
+                </button>
+                <button class="fitr-people-btn flex flex-col items-center py-3 px-1 border-2 border-gray-200 rounded-xl bg-white text-gray-600 hover:border-[#0096D6] hover:bg-[#0096D6]/5 transition-all cursor-pointer" data-people="6">
+                  <span class="text-lg font-bold leading-none">6</span>
+                  <span class="text-[10px] text-gray-400 mt-1">Family of 6</span>
+                </button>
               </div>
 
-              <!-- Total Amount -->
-              <div class="bg-[#0096D6]/10 rounded-xl p-4 mb-6 text-center">
-                <p class="text-sm text-gray-600 mb-1">Total Amount</p>
-                <p class="text-4xl font-bold text-[#0096D6]" id="fitr-total">$60</p>
-                <p class="text-xs text-gray-500 mt-1"><span id="fitr-people-display">4</span> people x $15</p>
+              <!-- Stepper for custom count -->
+              <div class="flex items-center justify-center gap-3 mb-5 py-2 px-3 bg-gray-50 rounded-xl border border-gray-100">
+                <span class="text-xs text-gray-400 font-medium">Other:</span>
+                <button id="fitr-minus" type="button" class="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:border-[#0096D6] hover:text-[#0096D6] transition font-bold text-lg cursor-pointer">−</button>
+                <span id="fitr-stepper-count" class="text-xl font-bold text-gray-800 w-10 text-center select-none">4</span>
+                <button id="fitr-plus" type="button" class="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:border-[#0096D6] hover:text-[#0096D6] transition font-bold text-lg cursor-pointer">+</button>
               </div>
 
-              <!-- Family Quick Add -->
-              <div class="border border-gray-200 rounded-lg p-4 mb-6">
-                <p class="text-sm font-semibold text-gray-700 mb-3">Quick Family Calculation:</p>
-                <div class="space-y-2">
-                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="3">
-                    <span class="text-sm">Couple + 1 child</span>
-                    <span class="text-sm font-bold text-[#0096D6]">$45</span>
-                  </button>
-                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="4">
-                    <span class="text-sm">Couple + 2 children</span>
-                    <span class="text-sm font-bold text-[#0096D6]">$60</span>
-                  </button>
-                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="5">
-                    <span class="text-sm">Couple + 3 children</span>
-                    <span class="text-sm font-bold text-[#0096D6]">$75</span>
-                  </button>
-                  <button class="fitr-family-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-people="6">
-                    <span class="text-sm">Couple + 4 children</span>
-                    <span class="text-sm font-bold text-[#0096D6]">$90</span>
-                  </button>
-                </div>
+              <!-- Impact Text -->
+              <p id="fitr-impact" class="text-center text-sm text-gray-500 mb-4 min-h-[20px] transition-opacity duration-200" style="font-family: 'Lato', sans-serif;">
+                🌙 Your family of 4 fulfills this blessed obligation
+              </p>
+
+              <!-- Total Display -->
+              <div class="bg-gradient-to-br from-[#0096D6]/10 to-[#00b4d8]/10 rounded-xl p-5 mb-5 text-center border border-[#0096D6]/20">
+                <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Your Total</p>
+                <p class="text-5xl font-bold text-[#0096D6] transition-transform duration-200" id="fitr-total" style="font-family: 'Signika', sans-serif;">$60</p>
+                <p class="text-sm text-gray-500 mt-1"><span id="fitr-people-display">4</span> × $15 per person</p>
               </div>
 
-              <!-- Add to Cart Button -->
+              <!-- CTA Button -->
               <button
                 id="fitr-add-to-cart"
-                class="w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
-                style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(0, 150, 214, 0.3);"
+                class="fitr-cta-btn w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 text-lg"
+                style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(0, 150, 214, 0.35);"
               >
+                Pay $60 Zakat ul-Fitr
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                 </svg>
-                Give Zakat ul-Fitr Now
               </button>
 
-              <p class="text-center text-xs text-gray-500 mt-4">
-                Ensure your family's Eid obligation is fulfilled
+              <!-- Trust Signals -->
+              <div class="flex items-center justify-center gap-4 mt-4 text-[11px] text-gray-400">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                  Secure
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
+                  Tax-Deductible
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                  100% Delivered
+                </span>
+              </div>
+
+              <!-- Urgency Footer -->
+              <p class="text-center text-xs text-gray-400 mt-3 pb-1">
+                ⏰ Pay before Eid prayer to fulfill your obligation
               </p>
             </div>
           </div>
@@ -313,63 +343,87 @@ import Footer from '../components/Footer.astro';
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const peopleButtons = document.querySelectorAll('.fitr-people-btn');
-    const familyButtons = document.querySelectorAll('.fitr-family-btn');
-    const customPeopleInput = document.getElementById('fitr-custom-people') as HTMLInputElement;
     const totalDisplay = document.getElementById('fitr-total');
     const peopleDisplay = document.getElementById('fitr-people-display');
+    const impactText = document.getElementById('fitr-impact');
+    const stepperCount = document.getElementById('fitr-stepper-count');
+    const minusBtn = document.getElementById('fitr-minus');
+    const plusBtn = document.getElementById('fitr-plus');
     const addToCartBtn = document.getElementById('fitr-add-to-cart');
 
     const FITR_RATE = 15;
     let selectedPeople = 4;
 
-    function updateTotal() {
-      const total = selectedPeople * FITR_RATE;
-      if (totalDisplay) totalDisplay.textContent = `$${total}`;
-      if (peopleDisplay) peopleDisplay.textContent = selectedPeople.toString();
+    const impactMessages: Record<number, string> = {
+      1: '🌙 Ensures 1 person celebrates Eid with dignity',
+      2: '🌙 Covers Zakat ul-Fitr for you and your spouse',
+      3: '🌙 Your family of 3 fulfills this blessed obligation',
+      4: '🌙 Your family of 4 fulfills this blessed obligation',
+      5: '🌙 Covers your entire family of 5 — beautiful!',
+      6: '🌙 MashaAllah — Fitr for your whole family of 6',
+    };
+
+    function getImpactText(people: number): string {
+      if (impactMessages[people]) return impactMessages[people];
+      if (people >= 10) return `🌙 MashaAllah! You're covering Fitr for ${people} people`;
+      return `🌙 Zakat ul-Fitr for ${people} people — JazakAllah Khair`;
     }
 
-    function selectPeople(people: number) {
-      selectedPeople = people;
+    function updateUI() {
+      const total = selectedPeople * FITR_RATE;
+      if (totalDisplay) {
+        totalDisplay.textContent = `$${total}`;
+        totalDisplay.style.transform = 'scale(1.08)';
+        setTimeout(() => { if (totalDisplay) totalDisplay.style.transform = 'scale(1)'; }, 150);
+      }
+      if (peopleDisplay) peopleDisplay.textContent = selectedPeople.toString();
+      if (stepperCount) stepperCount.textContent = selectedPeople.toString();
+      if (impactText) impactText.textContent = getImpactText(selectedPeople);
+      if (addToCartBtn) addToCartBtn.innerHTML = `Pay $${total} Zakat ul-Fitr <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>`;
+
+      // Highlight matching grid button
       peopleButtons.forEach(btn => {
-        btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
-        btn.classList.add('border-gray-200', 'text-gray-700');
-        if (parseInt(btn.getAttribute('data-people') || '0') === people) {
+        const btnPeople = parseInt(btn.getAttribute('data-people') || '0');
+        const numSpan = btn.querySelector('span:first-child');
+        const labelSpan = btn.querySelector('span:last-child');
+        if (btnPeople === selectedPeople) {
           btn.classList.add('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
-          btn.classList.remove('border-gray-200', 'text-gray-700');
+          btn.classList.remove('border-gray-200', 'text-gray-600');
+          if (labelSpan) { labelSpan.classList.add('font-semibold'); labelSpan.classList.remove('text-gray-400'); }
+        } else {
+          btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
+          btn.classList.add('border-gray-200', 'text-gray-600');
+          if (labelSpan) { labelSpan.classList.remove('font-semibold'); labelSpan.classList.add('text-gray-400'); }
         }
       });
-      updateTotal();
     }
 
+    // Grid buttons
     peopleButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        const people = parseInt(btn.getAttribute('data-people') || '4');
-        if (customPeopleInput) customPeopleInput.value = '';
-        selectPeople(people);
+        selectedPeople = parseInt(btn.getAttribute('data-people') || '4');
+        updateUI();
       });
     });
 
-    familyButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const people = parseInt(btn.getAttribute('data-people') || '4');
-        if (customPeopleInput) customPeopleInput.value = '';
-        selectPeople(people);
-      });
+    // Stepper buttons
+    minusBtn?.addEventListener('click', () => {
+      if (selectedPeople > 1) {
+        selectedPeople--;
+        updateUI();
+      }
     });
 
-    customPeopleInput?.addEventListener('input', () => {
-      const people = parseInt(customPeopleInput.value) || 1;
-      selectedPeople = Math.max(1, people);
-      peopleButtons.forEach(btn => {
-        btn.classList.remove('border-[#0096D6]', 'bg-[#0096D6]/10', 'text-[#0096D6]');
-        btn.classList.add('border-gray-200', 'text-gray-700');
-      });
-      updateTotal();
+    plusBtn?.addEventListener('click', () => {
+      if (selectedPeople < 99) {
+        selectedPeople++;
+        updateUI();
+      }
     });
 
+    // Add to cart
     addToCartBtn?.addEventListener('click', () => {
       const total = selectedPeople * FITR_RATE;
-
       if (typeof (window as any).addToCart === 'function') {
         (window as any).addToCart({
           id: `zakat-ul-fitr-${selectedPeople}-${Date.now()}`,
@@ -377,20 +431,24 @@ import Footer from '../components/Footer.astro';
           name: 'Zakat ul-Fitr',
           amount: total,
           quantity: 1,
-          description: `${selectedPeople} people x $${FITR_RATE}`,
+          description: `${selectedPeople} ${selectedPeople === 1 ? 'person' : 'people'} x $${FITR_RATE}`,
           frequency: 'single'
         });
       }
     });
 
-    // Hero button: scroll to donation box
+    // Hero button: scroll to top of donation box
     const heroBtn = document.getElementById('hero-give-btn');
     const donationBox = document.querySelector('[data-mobile-donate]');
     heroBtn?.addEventListener('click', () => {
-      donationBox?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (donationBox) {
+        const rect = donationBox.getBoundingClientRect();
+        const scrollTarget = window.pageYOffset + rect.top - 20;
+        window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+      }
     });
 
     // Initialize
-    updateTotal();
+    updateUI();
   });
 </script>

@@ -1,0 +1,753 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+export const prerender = false;
+---
+
+<Layout title="Email Preferences - Qurbani Foundation">
+  <div class="min-h-screen bg-stone-50">
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-[#01534d] via-[#016d5b] to-[#01534d] text-white">
+      <div class="max-w-2xl mx-auto px-4 py-10 text-center">
+        <a href="/" class="inline-block mb-6">
+          <img src="/images/logo-white.png" alt="Qurbani Foundation" class="h-10 mx-auto" onerror="this.style.display='none'" />
+        </a>
+        <h1 class="text-3xl font-bold mb-2" style="font-family: 'Signika', sans-serif;">Email Preferences</h1>
+        <p class="text-white/80">Choose what you hear about and how often</p>
+      </div>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 -mt-6 pb-16">
+
+      <!-- Step 1: Email Input -->
+      <div id="step-email" class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div class="text-center mb-5">
+          <div class="w-14 h-14 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-3">
+            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <p class="text-stone-600">Enter your email to manage your preferences</p>
+        </div>
+        <form id="email-form" class="space-y-4">
+          <input
+            type="email"
+            id="email-input"
+            placeholder="your@email.com"
+            required
+            class="w-full px-4 py-3.5 border border-stone-300 rounded-xl text-base focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition placeholder:text-stone-400"
+          />
+          <button
+            type="submit"
+            class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition shadow-sm text-base flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Manage My Preferences
+          </button>
+        </form>
+        <p id="email-error" class="text-red-600 text-sm mt-3 text-center hidden"></p>
+      </div>
+
+      <!-- Step 2: Security - Send Link -->
+      <div id="step-send-link" class="bg-white rounded-2xl shadow-lg p-8 mb-6 hidden">
+        <h2 class="text-xl font-bold text-stone-900 mb-3" style="font-family: 'Signika', sans-serif;">Update your preferences</h2>
+        <p class="text-stone-600 text-[15px] leading-relaxed mb-2">
+          To update your preferences, click the button below.
+        </p>
+        <p class="text-stone-500 text-sm leading-relaxed mb-6">
+          For security, we'll send an email to your inbox that contains a link to update your preferences. The link is unique to you, so be sure to use it quickly.
+        </p>
+        <button
+          id="send-link-btn"
+          class="inline-flex items-center gap-2 px-6 py-3.5 bg-stone-800 text-white font-semibold rounded-xl hover:bg-stone-900 transition shadow-sm text-base"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+          <span id="send-link-btn-text">Email Me A Link</span>
+        </button>
+        <p id="send-link-error" class="text-red-600 text-sm mt-3 hidden"></p>
+      </div>
+
+      <!-- Step 3: Check Inbox Confirmation -->
+      <div id="step-sent" class="bg-white rounded-2xl shadow-lg p-8 mb-6 hidden">
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76"></path>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-stone-900 mb-2" style="font-family: 'Signika', sans-serif;">Check your inbox</h2>
+          <p class="text-stone-600 text-[15px] leading-relaxed mb-1">
+            We've sent a preferences link to
+          </p>
+          <p id="sent-email-display" class="font-semibold text-stone-800 mb-4"></p>
+          <p class="text-stone-500 text-sm leading-relaxed mb-6">
+            Click the link in the email to manage your preferences. If you don't see it, check your spam folder.
+          </p>
+          <button
+            id="resend-btn"
+            class="text-emerald-600 text-sm font-medium hover:text-emerald-700 hover:underline transition"
+          >
+            Didn't receive it? Send again
+          </button>
+        </div>
+      </div>
+
+      <!-- Preferences Form (hidden until loaded) -->
+      <div id="preferences-card" class="hidden">
+
+        <!-- Email Badge -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+            </div>
+            <div>
+              <p class="text-stone-500 text-sm">Managing preferences for</p>
+              <p id="pref-email-display" class="font-semibold text-stone-800"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Unsubscribed Banner (shown when globally unsubscribed) -->
+        <div id="unsubscribed-banner" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4">
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div>
+              <p class="font-semibold text-amber-800">You're currently unsubscribed from all emails</p>
+              <p class="text-amber-700 text-sm mt-1">Toggle any category below and save to re-subscribe.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Banner -->
+        <div id="success-banner" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <p id="success-text" class="text-emerald-800 font-medium text-sm">Preferences saved successfully!</p>
+          </div>
+        </div>
+
+        <!-- Category Toggles -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+          <h2 class="text-lg font-bold text-stone-800 mb-1" style="font-family: 'Signika', sans-serif;">Email Categories</h2>
+          <p class="text-stone-500 text-sm mb-5">Choose which types of emails you'd like to receive</p>
+
+          <div class="space-y-0 divide-y divide-stone-100" id="category-toggles">
+
+            <!-- Ramadan -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Ramadan & Laylatul Qadr</p>
+                <p class="text-stone-500 text-sm">Ramadan schedules, last 10 nights updates, iftar programs</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-ramadan" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Zakat -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Zakat Reminders</p>
+                <p class="text-stone-500 text-sm">Calculator tips, Nisab updates, Zakat fulfillment reminders</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-zakat" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Orphan -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Orphan Sponsorship</p>
+                <p class="text-stone-500 text-sm">Sponsorship updates, stories from the field, program news</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-orphan" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Emergency -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Emergency & Disaster Relief</p>
+                <p class="text-stone-500 text-sm">Urgent humanitarian appeals, disaster response updates</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-emergency" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">General Newsletter</p>
+                <p class="text-stone-500 text-sm">Impact stories, community news, annual reports</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-newsletter" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Eid -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Eid & Holiday Greetings</p>
+                <p class="text-stone-500 text-sm">Eid Mubarak messages, seasonal greetings</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-eid" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Qurbani -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Qurbani / Udhiyah</p>
+                <p class="text-stone-500 text-sm">Qurbani season updates, distribution reports</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-qurbani" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Water -->
+            <div class="flex items-center justify-between py-4">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Water for Life</p>
+                <p class="text-stone-500 text-sm">Well-building updates, clean water impact stories</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" id="toggle-water" class="sr-only peer" checked />
+                <div class="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+
+            <!-- Donation Receipts (always on) -->
+            <div class="flex items-center justify-between py-4 opacity-60">
+              <div class="pr-4">
+                <p class="font-medium text-stone-800">Donation Receipts</p>
+                <p class="text-stone-500 text-sm">Tax receipts and payment confirmations</p>
+              </div>
+              <label class="relative inline-flex items-center flex-shrink-0">
+                <input type="checkbox" checked disabled class="sr-only peer" />
+                <div class="w-11 h-6 bg-emerald-500 rounded-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:translate-x-full cursor-not-allowed"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frequency -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+          <h2 class="text-lg font-bold text-stone-800 mb-1" style="font-family: 'Signika', sans-serif;">Email Frequency</h2>
+          <p class="text-stone-500 text-sm mb-5">How often would you like to hear from us?</p>
+
+          <div class="space-y-3">
+            <label class="flex items-start gap-3 p-3 rounded-xl border border-stone-200 cursor-pointer hover:border-emerald-300 transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+              <input type="radio" name="frequency" value="all" checked class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+              <div>
+                <p class="font-medium text-stone-800">Every email</p>
+                <p class="text-stone-500 text-sm">Receive each email as it's sent</p>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-3 p-3 rounded-xl border border-stone-200 cursor-pointer hover:border-emerald-300 transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+              <input type="radio" name="frequency" value="weekly_digest" class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+              <div>
+                <p class="font-medium text-stone-800">Weekly digest</p>
+                <p class="text-stone-500 text-sm">One summary email per week</p>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-3 p-3 rounded-xl border border-stone-200 cursor-pointer hover:border-emerald-300 transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+              <input type="radio" name="frequency" value="important_only" class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+              <div>
+                <p class="font-medium text-stone-800">Important updates only</p>
+                <p class="text-stone-500 text-sm">Only urgent appeals and Ramadan updates</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <button
+          id="save-btn"
+          class="w-full py-4 bg-[#ef7c01] text-white font-bold rounded-xl hover:bg-[#d96e00] transition shadow-sm text-lg mb-6 flex items-center justify-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <span id="save-btn-text">Save Preferences</span>
+        </button>
+
+        <!-- Unsubscribe Section -->
+        <div id="unsubscribe-section" class="border-t border-stone-200 pt-6">
+          <div class="text-center">
+            <p class="text-stone-400 text-sm mb-3">Prefer not to hear from us?</p>
+            <button
+              id="unsubscribe-btn"
+              class="px-6 py-2.5 bg-stone-100 text-stone-500 rounded-xl text-sm font-medium hover:bg-stone-200 hover:text-stone-600 transition"
+            >
+              Unsubscribe from all emails
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Retention Modal -->
+    <div id="retention-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div class="text-center mb-5">
+          <div class="w-16 h-16 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-stone-900 mb-2" style="font-family: 'Signika', sans-serif;">We'll miss you</h3>
+          <p class="text-stone-600 text-sm leading-relaxed">
+            Your support helps feed <strong>5,000+ families</strong>, sponsor <strong>200+ orphans</strong>,
+            and provide <strong>clean water</strong> to communities in need. Every email helps us keep you connected to the impact you make.
+          </p>
+        </div>
+
+        <!-- Reason (optional) -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-stone-600 mb-1.5">Help us improve (optional)</label>
+          <select id="unsub-reason" class="w-full px-3 py-2.5 border border-stone-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <option value="">Select a reason...</option>
+            <option value="too_many">Too many emails</option>
+            <option value="not_relevant">Content not relevant to me</option>
+            <option value="didnt_signup">I didn't sign up for this</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Retain Option -->
+          <button
+            id="modal-reduce-btn"
+            class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-700 transition text-sm"
+          >
+            Receive fewer emails instead
+          </button>
+
+          <!-- Confirm Unsubscribe -->
+          <button
+            id="modal-unsub-btn"
+            class="w-full py-3 bg-stone-100 text-stone-500 rounded-xl text-sm font-medium hover:bg-stone-200 transition"
+          >
+            Continue with unsubscribe
+          </button>
+
+          <!-- Cancel -->
+          <button
+            id="modal-cancel-btn"
+            class="w-full py-2 text-stone-400 text-sm hover:text-stone-600 transition"
+          >
+            Never mind, keep my subscription
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // ============================================
+  // State
+  // ============================================
+  let currentEmail = '';
+  let currentToken = '';
+
+  // DOM references — Steps
+  const stepEmail = document.getElementById('step-email') as HTMLDivElement;
+  const stepSendLink = document.getElementById('step-send-link') as HTMLDivElement;
+  const stepSent = document.getElementById('step-sent') as HTMLDivElement;
+  const prefsCard = document.getElementById('preferences-card') as HTMLDivElement;
+
+  // Step 1: Email input
+  const emailForm = document.getElementById('email-form') as HTMLFormElement;
+  const emailInput = document.getElementById('email-input') as HTMLInputElement;
+  const emailError = document.getElementById('email-error') as HTMLParagraphElement;
+
+  // Step 2: Send link
+  const sendLinkBtn = document.getElementById('send-link-btn') as HTMLButtonElement;
+  const sendLinkBtnText = document.getElementById('send-link-btn-text') as HTMLSpanElement;
+  const sendLinkError = document.getElementById('send-link-error') as HTMLParagraphElement;
+
+  // Step 3: Sent confirmation
+  const sentEmailDisplay = document.getElementById('sent-email-display') as HTMLParagraphElement;
+  const resendBtn = document.getElementById('resend-btn') as HTMLButtonElement;
+
+  // Preferences panel
+  const prefEmailDisplay = document.getElementById('pref-email-display') as HTMLParagraphElement;
+  const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+  const saveBtnText = document.getElementById('save-btn-text') as HTMLSpanElement;
+  const successBanner = document.getElementById('success-banner') as HTMLDivElement;
+  const successText = document.getElementById('success-text') as HTMLParagraphElement;
+  const unsubBanner = document.getElementById('unsubscribed-banner') as HTMLDivElement;
+  const unsubBtn = document.getElementById('unsubscribe-btn') as HTMLButtonElement;
+  const retentionModal = document.getElementById('retention-modal') as HTMLDivElement;
+  const modalReduceBtn = document.getElementById('modal-reduce-btn') as HTMLButtonElement;
+  const modalUnsubBtn = document.getElementById('modal-unsub-btn') as HTMLButtonElement;
+  const modalCancelBtn = document.getElementById('modal-cancel-btn') as HTMLButtonElement;
+  const unsubReason = document.getElementById('unsub-reason') as HTMLSelectElement;
+
+  // Toggle field mapping
+  const toggleMap: Record<string, string> = {
+    'toggle-ramadan': 'pref_ramadan',
+    'toggle-zakat': 'pref_zakat',
+    'toggle-orphan': 'pref_orphan',
+    'toggle-emergency': 'pref_emergency',
+    'toggle-newsletter': 'pref_newsletter',
+    'toggle-eid': 'pref_eid_greetings',
+    'toggle-qurbani': 'pref_qurbani',
+    'toggle-water': 'pref_water',
+  };
+
+  // ============================================
+  // URL Parameter Check (auto-load from email link)
+  // ============================================
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  const urlEmail = urlParams.get('email');
+  const urlAction = urlParams.get('action');
+
+  if (urlToken && urlEmail) {
+    // Authenticated via email link — skip directly to preferences
+    currentEmail = urlEmail;
+    currentToken = urlToken;
+    loadPreferences(urlEmail, urlToken);
+  }
+
+  // ============================================
+  // Step 1: Email Form → Show "Send Link" screen
+  // ============================================
+  emailForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    currentEmail = email;
+    emailError.classList.add('hidden');
+
+    // Move to Step 2
+    stepEmail.classList.add('hidden');
+    stepSendLink.classList.remove('hidden');
+  });
+
+  // ============================================
+  // Step 2: Send Magic Link Email
+  // ============================================
+  async function sendMagicLink() {
+    sendLinkBtn.disabled = true;
+    sendLinkBtnText.textContent = 'Sending...';
+    sendLinkError.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/email-preferences/send-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send email');
+
+      // Move to Step 3
+      stepSendLink.classList.add('hidden');
+      stepSent.classList.remove('hidden');
+      sentEmailDisplay.textContent = currentEmail;
+    } catch (err: any) {
+      sendLinkError.textContent = err.message || 'Failed to send email. Please try again.';
+      sendLinkError.classList.remove('hidden');
+    } finally {
+      sendLinkBtn.disabled = false;
+      sendLinkBtnText.textContent = 'Email Me A Link';
+    }
+  }
+
+  sendLinkBtn.addEventListener('click', sendMagicLink);
+
+  // Resend button
+  resendBtn.addEventListener('click', async () => {
+    resendBtn.textContent = 'Sending...';
+    resendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/email-preferences/send-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail }),
+      });
+      if (!res.ok) throw new Error('Failed to resend');
+      resendBtn.textContent = 'Sent! Check your inbox';
+      setTimeout(() => {
+        resendBtn.textContent = "Didn't receive it? Send again";
+        resendBtn.disabled = false;
+      }, 5000);
+    } catch {
+      resendBtn.textContent = 'Failed — try again';
+      resendBtn.disabled = false;
+    }
+  });
+
+  // ============================================
+  // Load Preferences (with token from email link)
+  // ============================================
+  async function loadPreferences(email: string, token: string) {
+    // Hide all steps, show loading
+    stepEmail.innerHTML = '<div class="text-center py-6"><p class="text-stone-500">Loading your preferences...</p></div>';
+
+    try {
+      const res = await fetch('/api/email-preferences/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load preferences');
+
+      showPreferences(data.preferences);
+    } catch (err: any) {
+      stepEmail.innerHTML = `
+        <div class="text-center py-6">
+          <p class="text-red-600 mb-4">${err.message || 'Failed to load preferences'}</p>
+          <a href="/email-preferences" class="text-emerald-600 font-medium hover:underline">Try again</a>
+        </div>
+      `;
+    }
+  }
+
+  // ============================================
+  // Show Preferences UI
+  // ============================================
+  function showPreferences(prefs: any) {
+    stepEmail.classList.add('hidden');
+    stepSendLink.classList.add('hidden');
+    stepSent.classList.add('hidden');
+    prefsCard.classList.remove('hidden');
+    prefEmailDisplay.textContent = prefs.email;
+
+    // Set toggle states
+    for (const [toggleId, prefField] of Object.entries(toggleMap)) {
+      const toggle = document.getElementById(toggleId) as HTMLInputElement;
+      if (toggle) {
+        toggle.checked = prefs[prefField] ?? true;
+      }
+    }
+
+    // Set frequency
+    const freqRadio = document.querySelector(`input[name="frequency"][value="${prefs.frequency || 'all'}"]`) as HTMLInputElement;
+    if (freqRadio) freqRadio.checked = true;
+
+    // Show unsubscribed banner if applicable
+    if (prefs.unsubscribed_all) {
+      unsubBanner.classList.remove('hidden');
+    } else {
+      unsubBanner.classList.add('hidden');
+    }
+
+    // Auto-scroll to unsubscribe section if action=unsubscribe
+    if (urlAction === 'unsubscribe') {
+      setTimeout(() => {
+        const section = document.getElementById('unsubscribe-section');
+        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+    }
+  }
+
+  // ============================================
+  // Save Preferences
+  // ============================================
+  saveBtn.addEventListener('click', async () => {
+    if (!currentToken || saveBtn.disabled) return;
+
+    saveBtn.disabled = true;
+    saveBtnText.textContent = 'Saving...';
+    successBanner.classList.add('hidden');
+
+    // Gather all toggle values
+    const preferences: Record<string, any> = {};
+    for (const [toggleId, prefField] of Object.entries(toggleMap)) {
+      const toggle = document.getElementById(toggleId) as HTMLInputElement;
+      preferences[prefField] = toggle?.checked ?? true;
+    }
+
+    // Get frequency
+    const freqRadio = document.querySelector('input[name="frequency"]:checked') as HTMLInputElement;
+    preferences.frequency = freqRadio?.value || 'all';
+
+    // Check if any category is toggled ON — if so, also re-subscribe
+    const anyOn = Object.entries(toggleMap).some(([id]) => {
+      return (document.getElementById(id) as HTMLInputElement)?.checked;
+    });
+
+    try {
+      const res = await fetch('/api/email-preferences/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: currentEmail,
+          token: currentToken,
+          preferences,
+          unsubscribe_all: !anyOn ? true : false,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+
+      // Show success
+      successBanner.classList.remove('hidden', 'bg-red-50', 'border-red-200');
+      successBanner.classList.add('bg-emerald-50', 'border-emerald-200');
+      successText.textContent = 'Your preferences have been saved!';
+      const icon = successBanner.querySelector('svg');
+      if (icon) {
+        icon.classList.remove('text-red-600');
+        icon.classList.add('text-emerald-600');
+      }
+      const text = successBanner.querySelector('p');
+      if (text) {
+        text.classList.remove('text-red-800');
+        text.classList.add('text-emerald-800');
+      }
+
+      // Hide unsubscribed banner if they re-subscribed
+      if (anyOn) {
+        unsubBanner.classList.add('hidden');
+      }
+
+      // Scroll to top to show success
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      successBanner.classList.remove('hidden');
+      successBanner.classList.remove('bg-emerald-50', 'border-emerald-200');
+      successBanner.classList.add('bg-red-50', 'border-red-200');
+      successText.textContent = err.message || 'Failed to save. Please try again.';
+      const text = successBanner.querySelector('p');
+      if (text) {
+        text.classList.remove('text-emerald-800');
+        text.classList.add('text-red-800');
+      }
+    } finally {
+      saveBtn.disabled = false;
+      saveBtnText.textContent = 'Save Preferences';
+    }
+  });
+
+  // ============================================
+  // Unsubscribe Flow (Retention Modal)
+  // ============================================
+  unsubBtn.addEventListener('click', () => {
+    retentionModal.classList.remove('hidden');
+    retentionModal.classList.add('flex');
+  });
+
+  modalCancelBtn.addEventListener('click', () => {
+    retentionModal.classList.remove('flex');
+    retentionModal.classList.add('hidden');
+  });
+
+  // "Receive fewer emails" — switch to important_only
+  modalReduceBtn.addEventListener('click', async () => {
+    retentionModal.classList.remove('flex');
+    retentionModal.classList.add('hidden');
+
+    // Set frequency to important_only
+    const importantRadio = document.querySelector('input[name="frequency"][value="important_only"]') as HTMLInputElement;
+    if (importantRadio) importantRadio.checked = true;
+
+    // Keep at least emergency + ramadan on, turn others off
+    for (const [toggleId] of Object.entries(toggleMap)) {
+      const toggle = document.getElementById(toggleId) as HTMLInputElement;
+      if (toggle) {
+        toggle.checked = (toggleId === 'toggle-ramadan' || toggleId === 'toggle-emergency');
+      }
+    }
+
+    // Auto-save
+    saveBtn.click();
+  });
+
+  // "Continue with unsubscribe" — unsubscribe from all
+  modalUnsubBtn.addEventListener('click', async () => {
+    if (!currentToken) return;
+
+    modalUnsubBtn.disabled = true;
+    modalUnsubBtn.textContent = 'Unsubscribing...';
+
+    try {
+      const reason = unsubReason.value || undefined;
+
+      const res = await fetch('/api/email-preferences/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: currentEmail,
+          token: currentToken,
+          unsubscribe_all: true,
+          unsubscribe_reason: reason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unsubscribe failed');
+
+      // Close modal
+      retentionModal.classList.remove('flex');
+      retentionModal.classList.add('hidden');
+
+      // Update UI — turn off all toggles
+      for (const [toggleId] of Object.entries(toggleMap)) {
+        const toggle = document.getElementById(toggleId) as HTMLInputElement;
+        if (toggle) toggle.checked = false;
+      }
+
+      // Show unsubscribed banner
+      unsubBanner.classList.remove('hidden');
+
+      // Show success message
+      successBanner.classList.remove('hidden', 'bg-blue-50', 'border-blue-200', 'bg-red-50', 'border-red-200');
+      successBanner.classList.add('bg-amber-50', 'border-amber-200');
+      successText.textContent = 'You have been unsubscribed from all emails. You can re-subscribe anytime by toggling categories above.';
+      const text = successBanner.querySelector('p');
+      if (text) {
+        text.classList.remove('text-emerald-800', 'text-blue-800', 'text-red-800');
+        text.classList.add('text-amber-800');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      alert(err.message || 'Failed to unsubscribe. Please try again.');
+    } finally {
+      modalUnsubBtn.disabled = false;
+      modalUnsubBtn.textContent = 'Continue with unsubscribe';
+    }
+  });
+
+  // Close modal on backdrop click
+  retentionModal.addEventListener('click', (e) => {
+    if (e.target === retentionModal) {
+      retentionModal.classList.remove('flex');
+      retentionModal.classList.add('hidden');
+    }
+  });
+</script>

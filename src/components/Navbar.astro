@@ -14,7 +14,7 @@ const { menuOrder, menuNames, menuColors, mobileLinks, categories: dbCategories,
 const useCustomWidgets = {
   'our-work': hasWidgets(widgets, 'our-work'),
   'zakat': hasWidgets(widgets, 'zakat'),
-  'appeals': hasWidgets(widgets, 'appeals'),
+  'appeals': hasWidgets(widgets, 'appeals') || hasWidgets(widgets, 'ramadan'),
   'about': hasWidgets(widgets, 'about'),
 };
 
@@ -368,46 +368,67 @@ function getMobileIconHtml(iconKey: string): string {
                     </div>
 
                     <!-- Middle Column - Zakat Info -->
-                    <div class="flex-1 bg-[#f8f6f2] p-6 border-l border-r border-gray-200/60">
-                      <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Understanding Zakat</p>
-                      <div class="bg-white rounded-xl p-5 border border-gray-100 mb-4">
-                        <h4 class="font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">The Third Pillar of Islam</h4>
-                        <p class="text-sm text-gray-600 mb-3">Zakat is an obligatory form of charity for Muslims who meet the necessary criteria of wealth (nisab). It purifies your wealth and helps those in need.</p>
-                        <div class="grid grid-cols-2 gap-3 text-center">
-                          <a href="/zakat/calculator" class="bg-[#e6f4fa] rounded-lg p-3 hover:bg-[#cce9f5] transition-colors block">
-                            <p class="text-2xl font-bold text-[#0096D6]">2.5%</p>
-                            <p class="text-xs text-gray-600">Of qualifying wealth</p>
-                          </a>
-                          <a href="/zakat/calculator" class="bg-[#fef3c7] rounded-lg p-3 hover:bg-[#fde68a] transition-colors block">
-                            <p class="text-2xl font-bold text-[#eab308]" id="mega-menu-nisab-value">—</p>
-                            <p class="text-xs text-gray-600">Silver Nisab threshold</p>
-                          </a>
-                        </div>
-                        <p class="text-[10px] text-gray-400 text-center mt-2" id="mega-menu-nisab-date"></p>
+                    <div class="flex-1 bg-[#f8f6f2] p-6 border-l border-r border-gray-200/60 flex items-center justify-center">
+                      <div class="flex flex-col items-start justify-center w-full rounded-lg px-8 py-10 bg-white" style="border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+                        <h3 class="text-[30px] leading-[1.15] font-extrabold text-[#333] mb-3" style="font-family: 'Signika', sans-serif;">
+                          Calculate Your Zakat<br /><span style="color: #0096D6;">in 30 Seconds</span>
+                        </h3>
+                        <p class="text-base text-gray-500 mb-8">Simple, sharia-compliant calculator</p>
+                        <a href="/zakat-calculator" class="w-full block text-white font-bold py-4 rounded text-center transition-all text-[16px] hover:shadow-lg hover:-translate-y-[1px] active:translate-y-[1px]" style="background-color: #0096D6; box-shadow: 0 8px 24px rgba(0,150,214,0.4); font-family: 'Signika', sans-serif;">
+                          Calculate Your Zakat
+                        </a>
                       </div>
-                      <a href="/zakat/calculator" class="block w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-semibold py-2.5 rounded-full text-center transition text-[15px]">
-                        Calculate Your Zakat Now
-                      </a>
                     </div>
 
                     <!-- Right Column - Quick Zakat -->
-                    <div class="w-[300px] p-4 flex-shrink-0">
-                      <div class="bg-white rounded-xl p-5 shadow-lg border border-gray-100" id="quick-zakat-widget">
-                        <h4 class="text-xl font-bold text-[#333] text-center mb-1" style="font-family: 'Signika', sans-serif;">Pay Your Zakat</h4>
-                        <p class="text-[13px] text-gray-500 text-center mb-4">Select an amount or enter your own</p>
-                        <div class="grid grid-cols-3 gap-2 mb-4">
-                          <button class="zakat-amount-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-[#333] font-bold text-lg hover:border-[#0096D6] hover:bg-blue-50 transition cursor-pointer" data-amount="100">$100</button>
-                          <button class="zakat-amount-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-[#333] font-bold text-lg hover:border-[#0096D6] hover:bg-blue-50 transition cursor-pointer" data-amount="250">$250</button>
-                          <button class="zakat-amount-btn py-3 border-2 border-[#0096D6] bg-blue-50 text-[#0096D6] rounded-lg font-bold text-lg cursor-pointer" data-amount="500">$500</button>
+                    <div class="w-[400px] p-5 flex-shrink-0">
+                      <div class="rounded-lg overflow-hidden" id="quick-zakat-widget" style="box-shadow: 0 20px 60px rgba(0,150,214,0.3), 0 4px 12px rgba(0,0,0,0.1);">
+                        <!-- Header -->
+                        <div class="relative px-6 pt-6 pb-5 text-center overflow-hidden" style="background: linear-gradient(160deg, #0096D6 0%, #0066a0 100%);">
+                          <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-white"></div>
+                          <div class="absolute -bottom-4 -left-4 w-16 h-16 rounded-full opacity-[0.07] bg-white"></div>
+                          <div class="relative z-10">
+                            <h4 class="text-[22px] font-extrabold text-white tracking-tight" style="font-family: 'Signika', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">Pay Your Zakat</h4>
+                            <p class="text-[13px] text-white/75 mt-1">Fulfill your obligation today</p>
+                          </div>
                         </div>
-                        <div class="relative mb-4">
-                          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-semibold">$</span>
-                          <input type="number" id="quick-zakat-amount" placeholder="Other amount" class="w-full pl-8 pr-3 py-3 border-2 border-gray-200 rounded-lg bg-[#f9f9f9] text-base font-semibold text-[#333] focus:border-[#0096D6] focus:outline-none focus:bg-white transition" />
+                        <!-- Body -->
+                        <div class="bg-white px-6 pt-5 pb-6">
+                          <div class="grid grid-cols-3 gap-3 mb-5">
+                            <button class="zakat-amount-btn py-3.5 border-2 border-gray-200 rounded bg-gray-50 text-gray-700 font-bold text-[17px] hover:bg-gray-100 hover:border-gray-300 transition-all cursor-pointer" data-amount="100">$100</button>
+                            <button class="zakat-amount-btn relative py-3.5 border-2 rounded font-bold text-[17px] cursor-pointer text-white shadow-lg ring-2 ring-offset-1" data-amount="250" style="background: #0096D6; border-color: #0096D6; --tw-ring-color: rgba(0,150,214,0.27);">
+                              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase tracking-[0.08em] px-2.5 py-[3px] rounded-full text-white whitespace-nowrap shadow-sm" style="background: #0066a0;">Popular</span>
+                              $250
+                            </button>
+                            <button class="zakat-amount-btn py-3.5 border-2 border-gray-200 rounded bg-gray-50 text-gray-700 font-bold text-[17px] hover:bg-gray-100 hover:border-gray-300 transition-all cursor-pointer" data-amount="500">$500</button>
+                          </div>
+                          <div class="relative mb-5">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center pointer-events-none">
+                              <span class="text-gray-500 text-sm font-bold">$</span>
+                            </div>
+                            <input type="number" id="quick-zakat-amount" placeholder="Enter custom amount" class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:border-[#0096D6] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style="box-shadow: none;" onfocus="this.style.boxShadow='0 0 0 3px rgba(0,150,214,0.08)'" onblur="this.style.boxShadow='none'" />
+                          </div>
+                          <button type="button" id="quick-zakat-pay" class="group w-full text-white font-extrabold py-4 rounded transition-all text-base tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2.5 hover:shadow-xl hover:-translate-y-[1px] active:translate-y-[1px]" style="background: #0096D6; font-family: 'Signika', sans-serif;">
+                            <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            Pay Zakat Now
+                            <svg class="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path></svg>
+                          </button>
+                          <!-- Trust Badges -->
+                          <div class="mt-5 flex items-center justify-between px-1">
+                            <span class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                              <svg class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                              <span class="font-semibold">100% Zakat Policy</span>
+                            </span>
+                            <span class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                              <svg class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                              <span class="font-semibold">Tax Deductible</span>
+                            </span>
+                            <span class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                              <svg class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                              <span class="font-semibold">50,000+ Donors</span>
+                            </span>
+                          </div>
                         </div>
-                        <button type="button" id="quick-zakat-pay" class="block w-full bg-[#0096D6] hover:bg-[#0077b3] text-white font-bold py-3.5 rounded-lg transition text-base text-center cursor-pointer border-none" style="font-family: 'Signika', sans-serif; letter-spacing: 0.02em;">
-                          Pay Zakat Now &rarr;
-                        </button>
-                        <p class="text-xs text-gray-400 text-center mt-3 leading-relaxed">&#10084;&#65039; 100% Zakat policy &mdash; every dollar<br/>reaches those in need</p>
                       </div>
                     </div>
                   </div>
@@ -430,7 +451,7 @@ function getMobileIconHtml(iconKey: string): string {
               <!-- APPEALS MEGA MENU -->
               <div id="appeals-mega-menu" class="mega-menu-panel fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
                 {useCustomWidgets['appeals'] ? (
-                  <DynamicMegaMenu menuId="appeals" menuColor={menuColors['appeals'] || '#024139'} widgets={getMenuWidgets(widgets, 'appeals')} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu('appeals')} />
+                  <DynamicMegaMenu menuId="appeals" menuColor={menuColors['appeals'] || menuColors['ramadan'] || '#024139'} widgets={hasWidgets(widgets, 'appeals') ? getMenuWidgets(widgets, 'appeals') : getMenuWidgets(widgets, 'ramadan')} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu('appeals')} />
                 ) : (
                 <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
                   <div class="h-1 bg-[#024139]"></div>
@@ -761,7 +782,9 @@ function getMobileIconHtml(iconKey: string): string {
             </button>
             <div class="mobile-accordion-content hidden pl-2 pb-3 space-y-1">
               {/* Categories as expandable sub-accordions */}
-              {categories.map(cat => (
+              {categories.map(cat => {
+                const catCampaigns = (campaignsByCategory[cat.id] || []).slice(0, 6);
+                return catCampaigns.length > 0 ? (
                 <div class="mobile-sub-accordion" data-category={cat.id}>
                   <button type="button" class="mobile-sub-accordion-btn w-full flex items-center justify-between py-2 text-gray-700 hover:text-[#D97718] transition">
                     <div class="flex items-center gap-2">
@@ -775,7 +798,7 @@ function getMobileIconHtml(iconKey: string): string {
                     </svg>
                   </button>
                   <div class="mobile-sub-accordion-content hidden pl-8 pb-2 space-y-1">
-                    {(campaignsByCategory[cat.id] || []).slice(0, 6).map(campaign => (
+                    {catCampaigns.map(campaign => (
                       <a href={campaign.slug} class="block py-1.5 text-sm text-gray-600 hover:text-[#D97718] transition">
                         {campaign.name}
                       </a>
@@ -785,7 +808,20 @@ function getMobileIconHtml(iconKey: string): string {
                     </a>
                   </div>
                 </div>
-              ))}
+                ) : (
+                <a href={`/appeals?category=${cat.id}`} class="flex items-center justify-between py-2 text-gray-700 hover:text-[#D97718] transition">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                      <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+                    </div>
+                    <span class="text-sm font-medium">{cat.label}</span>
+                  </div>
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </a>
+                );
+              })}
               <a href="/appeals" class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition mt-2 border-t border-gray-200 pt-3">
                 <span class="text-sm font-medium">View All Appeals →</span>
               </a>
@@ -837,17 +873,38 @@ function getMobileIconHtml(iconKey: string): string {
 
       {/* Quick Donate Section */}
       <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mt-2" id="mobile-quick-donate">
-        <p class="text-white font-bold text-base mb-3" style="font-family: 'Signika', sans-serif;">QUICK DONATE</p>
+        <p class="text-white font-extrabold text-lg mb-3 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
         <div class="grid grid-cols-4 gap-2 mb-3">
           <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
           <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="50">$50</button>
           <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="100">$100</button>
           <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="250">$250</button>
         </div>
+        <div class="mb-3 relative" id="mobile-fund-type-wrapper">
+          <input type="hidden" id="mobile-fund-type" value="general-donation" />
+          <button type="button" id="mobile-fund-type-btn" class="w-full py-3 px-4 rounded-lg text-[15px] font-semibold text-white border-none cursor-pointer flex items-center justify-between" style="background-color: rgba(255,255,255,0.2);">
+            <span id="mobile-fund-type-label">General Donation</span>
+            <svg class="w-4 h-4 text-white/80 transition-transform" id="mobile-fund-type-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div id="mobile-fund-type-menu" class="hidden absolute left-0 right-0 top-full mt-1 rounded-lg overflow-hidden shadow-lg z-50" style="background-color: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+            <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition border-b border-gray-100/50 flex items-center justify-between" data-value="general-donation" data-label="General Donation">
+              General Donation
+              <svg class="w-4 h-4 text-[#D97718] mobile-fund-check" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+            </button>
+            <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition border-b border-gray-100/50 flex items-center justify-between" data-value="sadaqah" data-label="Sadaqah">
+              Sadaqah
+              <svg class="w-4 h-4 text-[#D97718] mobile-fund-check hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+            </button>
+            <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition flex items-center justify-between" data-value="zakat" data-label="Zakat">
+              Zakat
+              <svg class="w-4 h-4 text-[#D97718] mobile-fund-check hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+            </button>
+          </div>
+        </div>
         <div class="flex gap-2">
           <div class="relative flex-1">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#D97718] font-bold text-base">$</span>
-            <input type="number" id="mobile-donate-amount" placeholder="Other" class="w-full pl-7 pr-2 py-3 rounded-lg text-base font-semibold text-[#333] border-none focus:outline-none focus:ring-2 focus:ring-white/50" />
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-base">$</span>
+            <input type="number" id="mobile-donate-amount" placeholder="Other" class="w-full pl-7 pr-2 py-3 rounded-lg text-base font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
           </div>
           <button type="button" id="mobile-donate-pay" class="bg-white text-[#D97718] font-bold py-3 px-5 rounded-lg text-base transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
             Donate &rarr;
@@ -1598,24 +1655,35 @@ function getMobileIconHtml(iconKey: string): string {
     });
 
     // ===== QUICK ZAKAT WIDGET =====
-    let quickZakatSelectedAmount = 500; // default
+    let quickZakatSelectedAmount = 250; // default
     const zakatAmountBtns = document.querySelectorAll('.zakat-amount-btn');
     const quickZakatInput = document.getElementById('quick-zakat-amount');
     const quickZakatPayBtn = document.getElementById('quick-zakat-pay');
 
     // Preset amount button clicks
+    function resetZakatBtn(b) {
+      b.style.background = 'white';
+      b.style.borderColor = '#e5e7eb';
+      b.style.color = '#374151';
+      b.classList.remove('text-white', 'shadow-lg');
+      // Remove popular badge highlight
+      const badge = b.querySelector('span.absolute');
+      if (badge) badge.style.display = 'none';
+    }
+    function selectZakatBtn(b) {
+      b.style.background = 'linear-gradient(135deg, #0096D6, #0077b3)';
+      b.style.borderColor = '#0096D6';
+      b.style.color = 'white';
+      b.classList.add('text-white', 'shadow-lg');
+      const badge = b.querySelector('span.absolute');
+      if (badge) badge.style.display = '';
+    }
     zakatAmountBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const amt = parseInt(btn.dataset.amount);
         quickZakatSelectedAmount = amt;
-        // Visual toggle — highlight selected, reset others
-        zakatAmountBtns.forEach(b => {
-          b.classList.remove('border-[#0096D6]', 'bg-blue-50', 'text-[#0096D6]');
-          b.classList.add('border-gray-200', 'text-[#333]');
-        });
-        btn.classList.remove('border-gray-200', 'text-[#333]');
-        btn.classList.add('border-[#0096D6]', 'bg-blue-50', 'text-[#0096D6]');
-        // Clear custom input when preset is picked
+        zakatAmountBtns.forEach(b => resetZakatBtn(b));
+        selectZakatBtn(btn);
         if (quickZakatInput) quickZakatInput.value = '';
       });
     });
@@ -1626,11 +1694,7 @@ function getMobileIconHtml(iconKey: string): string {
         const val = parseFloat(quickZakatInput.value);
         if (val > 0) {
           quickZakatSelectedAmount = val;
-          // Deselect all preset buttons
-          zakatAmountBtns.forEach(b => {
-            b.classList.remove('border-[#0096D6]', 'bg-blue-50', 'text-[#0096D6]');
-            b.classList.add('border-gray-200', 'text-[#333]');
-          });
+          zakatAmountBtns.forEach(b => resetZakatBtn(b));
         }
       });
     }
@@ -1664,26 +1728,43 @@ function getMobileIconHtml(iconKey: string): string {
 
     // ===== DYNAMIC QUICK DONATE WIDGETS (from MegaMenuWidget.astro) =====
     document.querySelectorAll('[data-quick-donate]').forEach(widget => {
-      const fundType = widget.dataset.fundType || 'donation';
+      const baseFundType = widget.dataset.fundType || 'donation';
       const campaignSlug = widget.dataset.campaignSlug || '';
       const itemName = widget.dataset.itemName || 'Donation';
       const amountBtns = widget.querySelectorAll('.zakat-amount-btn');
       const customInput = widget.querySelector('.quick-donate-input');
       const payBtn = widget.querySelector('.quick-donate-pay');
-      // Find default amount from the pre-selected button
+      const fundTypeSelect = widget.querySelector('.quick-donate-fund-type');
+      // Find default amount from the pre-selected button (gradient = selected)
       let selectedAmount = 0;
-      amountBtns.forEach(b => { if (b.classList.contains('bg-blue-50')) selectedAmount = parseInt(b.dataset.amount); });
+      amountBtns.forEach(b => { if (b.classList.contains('text-white')) selectedAmount = parseInt(b.dataset.amount); });
       if (!selectedAmount && amountBtns.length) selectedAmount = parseInt(amountBtns[amountBtns.length - 1].dataset.amount);
+
+      // Get the button color from the widget's CTA button
+      const widgetColor = payBtn?.style?.background?.match(/#[0-9a-fA-F]{6}/)?.[0] || payBtn?.style?.backgroundColor?.match(/#[0-9a-fA-F]{6}/)?.[0] || '#D97718';
+
+      function resetDynamicBtn(b) {
+        b.style.background = 'white';
+        b.style.borderColor = '#e5e7eb';
+        b.style.color = '#374151';
+        b.classList.remove('text-white', 'shadow-lg');
+        const badge = b.querySelector('span.absolute');
+        if (badge) badge.style.display = 'none';
+      }
+      function selectDynamicBtn(b) {
+        b.style.background = `linear-gradient(135deg, ${widgetColor}, ${widgetColor}dd)`;
+        b.style.borderColor = widgetColor;
+        b.style.color = 'white';
+        b.classList.add('text-white', 'shadow-lg');
+        const badge = b.querySelector('span.absolute');
+        if (badge) badge.style.display = '';
+      }
 
       amountBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           selectedAmount = parseInt(btn.dataset.amount);
-          amountBtns.forEach(b => {
-            b.classList.remove('border-[#0096D6]', 'bg-blue-50', 'text-[#0096D6]');
-            b.classList.add('border-gray-200', 'text-[#333]');
-          });
-          btn.classList.remove('border-gray-200', 'text-[#333]');
-          btn.classList.add('border-[#0096D6]', 'bg-blue-50', 'text-[#0096D6]');
+          amountBtns.forEach(b => resetDynamicBtn(b));
+          selectDynamicBtn(btn);
           if (customInput) customInput.value = '';
         });
       });
@@ -1691,10 +1772,7 @@ function getMobileIconHtml(iconKey: string): string {
       if (customInput) {
         customInput.addEventListener('input', () => {
           if (parseFloat(customInput.value) > 0) {
-            amountBtns.forEach(b => {
-              b.classList.remove('border-[#0096D6]', 'bg-blue-50', 'text-[#0096D6]');
-              b.classList.add('border-gray-200', 'text-[#333]');
-            });
+            amountBtns.forEach(b => resetDynamicBtn(b));
           }
         });
       }
@@ -1707,10 +1785,12 @@ function getMobileIconHtml(iconKey: string): string {
           // Close mega menu
           document.querySelectorAll('.mega-menu-panel').forEach(p => { p.style.display = 'none'; p.style.opacity = '0'; });
           if (typeof window.addToCart === 'function') {
+            const fundType = fundTypeSelect ? fundTypeSelect.value : baseFundType;
+            const displayName = fundTypeSelect ? fundTypeSelect.options[fundTypeSelect.selectedIndex].text : itemName;
             window.addToCart({
               id: fundType + '-quick-' + Date.now(),
-              name: itemName,
-              description: itemName,
+              name: displayName,
+              description: displayName,
               amount: amount,
               quantity: 1,
               category: fundType,
@@ -1725,12 +1805,57 @@ function getMobileIconHtml(iconKey: string): string {
     // ===== MOBILE QUICK DONATE =====
     const mobileDonateInput = document.getElementById('mobile-donate-amount');
     const mobileDonatePayBtn = document.getElementById('mobile-donate-pay');
+    const mobileFundTypeInput = document.getElementById('mobile-fund-type');
+    const mobileFundTypeBtn = document.getElementById('mobile-fund-type-btn');
+    const mobileFundTypeMenu = document.getElementById('mobile-fund-type-menu');
+    const mobileFundTypeLabel = document.getElementById('mobile-fund-type-label');
+    const mobileFundTypeArrow = document.getElementById('mobile-fund-type-arrow');
+
+    // Custom dropdown toggle
+    if (mobileFundTypeBtn && mobileFundTypeMenu) {
+      mobileFundTypeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !mobileFundTypeMenu.classList.contains('hidden');
+        mobileFundTypeMenu.classList.toggle('hidden');
+        if (mobileFundTypeArrow) mobileFundTypeArrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+      });
+
+      // Option selection
+      document.querySelectorAll('.mobile-fund-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = opt.dataset.value;
+          const label = opt.dataset.label;
+          if (mobileFundTypeInput) mobileFundTypeInput.value = val;
+          if (mobileFundTypeLabel) mobileFundTypeLabel.textContent = label;
+          // Update checkmarks
+          document.querySelectorAll('.mobile-fund-check').forEach(c => c.classList.add('hidden'));
+          const check = opt.querySelector('.mobile-fund-check');
+          if (check) check.classList.remove('hidden');
+          // Close
+          mobileFundTypeMenu.classList.add('hidden');
+          if (mobileFundTypeArrow) mobileFundTypeArrow.style.transform = '';
+        });
+      });
+
+      // Close on outside click
+      document.addEventListener('click', () => {
+        mobileFundTypeMenu.classList.add('hidden');
+        if (mobileFundTypeArrow) mobileFundTypeArrow.style.transform = '';
+      });
+    }
+
+    function getMobileFundType() {
+      if (!mobileFundTypeInput) return { value: 'donation', label: 'General Donation' };
+      return { value: mobileFundTypeInput.value, label: mobileFundTypeLabel?.textContent || 'General Donation' };
+    }
 
     // Preset amount buttons — add to cart immediately
     document.querySelectorAll('.mobile-donate-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const amount = parseInt(btn.dataset.amount);
         if (!amount) return;
+        const fund = getMobileFundType();
         // Close mobile menu
         const mobileMenu = document.getElementById('mobile-menu');
         if (mobileMenu) mobileMenu.classList.add('hidden');
@@ -1738,13 +1863,13 @@ function getMobileIconHtml(iconKey: string): string {
         // Add to cart
         if (typeof window.addToCart === 'function') {
           window.addToCart({
-            id: 'donate-quick-' + Date.now(),
-            name: 'Donation',
-            description: 'General Donation',
+            id: fund.value + '-quick-' + Date.now(),
+            name: 'Where Most Needed',
+            description: fund.label,
             amount: amount,
             quantity: 1,
-            category: 'donation',
-            fundType: 'donation',
+            category: fund.value,
+            fundType: fund.value,
           });
         }
       });
@@ -1758,6 +1883,7 @@ function getMobileIconHtml(iconKey: string): string {
           if (mobileDonateInput) { mobileDonateInput.focus(); mobileDonateInput.style.outline = '2px solid #fff'; }
           return;
         }
+        const fund = getMobileFundType();
         // Close mobile menu
         const mobileMenu = document.getElementById('mobile-menu');
         if (mobileMenu) mobileMenu.classList.add('hidden');
@@ -1765,13 +1891,13 @@ function getMobileIconHtml(iconKey: string): string {
         // Add to cart
         if (typeof window.addToCart === 'function') {
           window.addToCart({
-            id: 'donate-quick-' + Date.now(),
-            name: 'Donation',
-            description: 'General Donation',
+            id: fund.value + '-quick-' + Date.now(),
+            name: 'Where Most Needed',
+            description: fund.label,
             amount: amount,
             quantity: 1,
-            category: 'donation',
-            fundType: 'donation',
+            category: fund.value,
+            fundType: fund.value,
           });
         }
       });

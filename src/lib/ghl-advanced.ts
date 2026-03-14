@@ -258,6 +258,11 @@ export async function trackZakatCalculation(data: {
   liabilitiesBreakdown?: Array<{ label: string; amount: number }>;
   wantsReminder?: boolean;
   phone?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
 }) {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
@@ -306,6 +311,12 @@ export async function trackZakatCalculation(data: {
     { key: 'lead_stage', field_value: 'qualified' },
     { key: 'lead_source', field_value: 'Zakat Calculator' },
   ];
+
+  // Add UTM custom fields if available
+  if (data.utm_source) customFields.push({ key: 'last_utm_source', field_value: data.utm_source });
+  if (data.utm_medium) customFields.push({ key: 'last_utm_medium', field_value: data.utm_medium });
+  if (data.utm_campaign) customFields.push({ key: 'last_utm_campaign', field_value: data.utm_campaign });
+  if (data.utm_content) customFields.push({ key: 'last_utm_content', field_value: data.utm_content });
 
   const tags = ['website', 'zakat-calculator', 'qualified-lead'];
   if (data.zakatAmount >= 1000) tags.push('high-value-prospect');
@@ -456,6 +467,11 @@ export async function trackDonation(data: {
   stripePaymentId?: string;
   donationId?: string;
   currency?: string;
+  // UTM campaign attribution
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
 }) {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
@@ -556,6 +572,14 @@ export async function trackDonation(data: {
     customFields.push({ key: 'zakat_remaining', field_value: newZakatRemaining.toString() });
   }
 
+  // UTM attribution — track which marketing channel drove the donation
+  if (data.utmSource) {
+    customFields.push({ key: 'last_utm_source', field_value: data.utmSource });
+    customFields.push({ key: 'last_utm_medium', field_value: data.utmMedium || '' });
+    customFields.push({ key: 'last_utm_campaign', field_value: data.utmCampaign || '' });
+    customFields.push({ key: 'last_utm_content', field_value: data.utmContent || '' });
+  }
+
   // ---- CAMPAIGN-SPECIFIC TAGS ----
   const tags = ['donor', 'website', `donor-${year}`];
 
@@ -585,6 +609,12 @@ export async function trackDonation(data: {
     tags.push('weekly-donor');
     tags.push('jummah-donor');
   }
+
+  // Source tags for marketing attribution
+  if (data.utmSource === 'ghl') tags.push('source:ghl-email');
+  else if (data.utmSource === 'email') tags.push('source:email');
+  else if (data.utmSource) tags.push(`source:${data.utmSource}`);
+  if (data.utmCampaign) tags.push(`email:${data.utmCampaign}`);
 
   // Tier tags
   if (newLifetime >= 1000) tags.push('major-donor');

@@ -17,6 +17,7 @@ export interface Category {
   show_in_menu: boolean;
   sort_order: number;
   menu?: string; // Which header menu this category belongs to (our-work, zakat, ramadan, about)
+  page_template?: string | null; // Category listing page template key. NULL = use site default
 }
 
 // Cache configuration - manual clear only for maximum performance

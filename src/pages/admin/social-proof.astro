@@ -1,0 +1,786 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getSettings } from '../../lib/settings';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+const settings = await getSettings();
+
+// Fetch ALL active campaigns with social proof columns
+const { data: campaigns } = await supabaseAdmin
+  .from('campaigns')
+  .select('id, name, slug, title, featured_image, url_path, is_active, show_in_social_proof, social_proof_action, social_proof_url, social_proof_order, social_proof_title, category')
+  .eq('is_active', true)
+  .order('social_proof_order', { ascending: true })
+  .order('name', { ascending: true });
+
+const allCampaigns = campaigns || [];
+const enabledCount = allCampaigns.filter(c => c.show_in_social_proof).length;
+---
+
+<AdminLayout title="Promotions & Popups" activeNav="social-proof">
+  <div class="max-w-5xl">
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 text-white"></div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SITE PROMOTIONS (accordion cards)           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">Site Promotions</h2>
+          <p class="text-sm text-gray-500">Toggle on to enable, click the row to expand settings.</p>
+        </div>
+      </div>
+
+      <div class="space-y-2" id="promoList">
+
+        <!-- Ramadan Popup -->
+        <div class="promo-card rounded-lg border border-gray-200 overflow-hidden" data-key="showRamadanPopup">
+          <div class="promo-header flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition select-none">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-xl">🌙</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800">Ramadan Popup</p>
+                <p class="text-xs text-gray-400">Timed popup encouraging monthly giving</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="promo-status text-xs font-medium px-2 py-1 rounded-full"></span>
+              <input type="checkbox" checked={settings.show_ramadan_popup !== false}
+                class="promo-toggle w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+              <svg class="promo-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          <div class="promo-body hidden border-t border-gray-100 bg-gray-50/50 p-4">
+            <p class="text-sm text-gray-600">Shows a Ramadan giving popup to visitors after a few seconds on the page. Encourages monthly giving during the holy month.</p>
+            <div class="mt-3 flex items-center gap-2 text-xs text-gray-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span>Triggers after 3 seconds on page</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart Reminder -->
+        <div class="promo-card rounded-lg border border-gray-200 overflow-hidden" data-key="showCartReminder">
+          <div class="promo-header flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition select-none">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-xl">🛒</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800">Cart Reminder Popup</p>
+                <p class="text-xs text-gray-400">Bottom-left nudge for abandoned carts</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="promo-status text-xs font-medium px-2 py-1 rounded-full"></span>
+              <input type="checkbox" checked={settings.show_cart_reminder !== false}
+                class="promo-toggle w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+              <svg class="promo-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          <div class="promo-body hidden border-t border-gray-100 bg-gray-50/50 p-4">
+            <p class="text-sm text-gray-600">Displays a subtle bottom-left reminder when visitors have items in their cart but haven't checked out. Appears after 5 seconds on desktop.</p>
+          </div>
+        </div>
+
+        <!-- ═══ Social Proof Notifications ═══ -->
+        <div class="promo-card rounded-lg border border-gray-200 overflow-hidden" data-key="showSocialProof" id="socialProofCard">
+          <div class="promo-header flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition select-none">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-xl">🔔</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800">Social Proof Notifications</p>
+                <p class="text-xs text-gray-400">Real-time donation popups &bull; <span id="activeCount" class="font-bold text-[#01534d]">{enabledCount}</span> campaigns active</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="promo-status text-xs font-medium px-2 py-1 rounded-full"></span>
+              <input type="checkbox" checked={settings.show_social_proof !== false}
+                class="promo-toggle w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+              <svg class="promo-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+
+          <!-- Expanded: Campaign Management (embedded inside this card) -->
+          <div class="promo-body hidden border-t border-gray-100 bg-white">
+            <div class="p-4 pb-2">
+              <p class="text-sm text-gray-600 mb-3">Manage which campaigns appear in social proof. Lower order number = shown first in rotation.</p>
+
+              <!-- Min Amount Setting -->
+              <div class="flex items-center gap-3 mb-3 pb-3 border-b border-gray-100">
+                <label for="minAmountInput" class="text-sm font-medium text-gray-700 whitespace-nowrap">Min. Amount Shown</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                  <input
+                    type="number"
+                    id="minAmountInput"
+                    min="0"
+                    step="5"
+                    value={settings.social_proof_min_amount ?? 10}
+                    class="w-24 pl-7 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-[#01534d] focus:border-[#01534d] text-gray-800"
+                  />
+                </div>
+                <span class="text-xs text-gray-400">Donations below this amount won't appear in notifications</span>
+              </div>
+
+              <!-- Bulk Actions -->
+              <div class="flex flex-wrap items-center gap-2 mb-3 pb-3 border-b border-gray-100">
+                <label class="flex items-center gap-1.5 cursor-pointer select-none mr-1">
+                  <input type="checkbox" id="selectAllCampaigns" class="w-4 h-4 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+                  <span class="text-xs text-gray-500">All</span>
+                </label>
+                <div class="w-px h-5 bg-gray-200"></div>
+                <button type="button" id="btnEnableAll" class="px-3 py-1.5 text-xs font-medium bg-[#01534d] text-white rounded-lg hover:bg-[#013d39] transition">Enable All</button>
+                <button type="button" id="btnDisableAll" class="px-3 py-1.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Disable All</button>
+                <button type="button" id="btnSetAllPopup" class="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">All &rarr; Popup</button>
+                <button type="button" id="btnSetAllRedirect" class="px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition">All &rarr; Redirect</button>
+                <div class="ml-auto flex gap-1">
+                  <button type="button" id="btnExpandAll" class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100 transition" title="Expand all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                  </button>
+                  <button type="button" id="btnCollapseAll" class="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100 transition" title="Collapse all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Floating Selection Bar (shown when items are checked) -->
+              <div id="selectionBar" class="hidden sticky top-0 z-10 mb-2 bg-[#01534d] text-white rounded-lg px-4 py-2.5 flex items-center justify-between shadow-lg">
+                <span class="text-sm font-medium"><span id="selectedCount">0</span> selected</span>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="btnEnableSelected" class="px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-lg transition">Enable Selected</button>
+                  <button type="button" id="btnDisableSelected" class="px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 rounded-lg transition">Disable Selected</button>
+                  <button type="button" id="btnPopupSelected" class="px-3 py-1.5 text-xs font-medium bg-blue-500/80 hover:bg-blue-500 rounded-lg transition">Popup</button>
+                  <button type="button" id="btnRedirectSelected" class="px-3 py-1.5 text-xs font-medium bg-amber-500/80 hover:bg-amber-500 rounded-lg transition">Redirect</button>
+                  <div class="w-px h-5 bg-white/30 mx-1"></div>
+                  <button type="button" id="btnClearSelection" class="px-2 py-1.5 text-xs hover:bg-white/20 rounded-lg transition" title="Clear selection">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Campaign List -->
+            <div class="space-y-1 px-4 pb-4 max-h-[600px] overflow-y-auto" id="campaignList">
+              {allCampaigns.map((c) => {
+                const isOn = !!c.show_in_social_proof;
+                const action = c.social_proof_action || 'redirect';
+                const order = c.social_proof_order ?? 50;
+                return (
+                  <div
+                    class={`campaign-row rounded-lg border overflow-hidden transition-all ${isOn ? 'border-green-200 bg-green-50/30' : 'border-gray-100 bg-gray-50/50 opacity-50'}`}
+                    data-id={c.id}
+                    data-slug={c.slug}
+                    data-order={order}
+                  >
+                    <!-- Row Header -->
+                    <div class="camp-header flex items-center gap-2 p-2.5 cursor-pointer hover:bg-white/60 transition select-none">
+                      <!-- Checkbox for multi-select -->
+                      <input
+                        type="checkbox"
+                        class="sp-select-cb w-4 h-4 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer flex-shrink-0"
+                      />
+
+                      <!-- Order number -->
+                      <input
+                        type="number"
+                        class="sp-order-input w-10 h-8 text-center text-xs font-bold border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent flex-shrink-0"
+                        value={String(order)}
+                        min="0"
+                        max="999"
+                        title="Display order (lower = shown first)"
+                      />
+
+                      <!-- Toggle -->
+                      <button
+                        type="button"
+                        class="sp-toggle relative w-10 h-5.5 rounded-full transition-colors flex-shrink-0 focus:outline-none"
+                        style={`background-color: ${isOn ? '#01534d' : '#d1d5db'}; min-width:40px; height:22px;`}
+                        data-active={isOn ? 'true' : 'false'}
+                      >
+                        <span class="absolute top-0.5 left-0.5 w-[18px] h-[18px] bg-white rounded-full shadow transition-transform" style={`transform: translateX(${isOn ? '18px' : '0'})`}></span>
+                      </button>
+
+                      <!-- Image -->
+                      <div class="flex-shrink-0 w-8 h-8 rounded overflow-hidden bg-gray-200">
+                        {c.featured_image ? (
+                          <img src={c.featured_image} alt={c.name} class="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                          </div>
+                        )}
+                      </div>
+
+                      <!-- Name -->
+                      <div class="flex-1 min-w-0">
+                        <p class="camp-name font-medium text-sm text-gray-800 truncate">{c.social_proof_title || c.name || c.title}</p>
+                      </div>
+
+                      <!-- Action badge -->
+                      <span class={`camp-action-badge flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${action === 'popup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {action === 'popup' ? 'Popup' : 'Redirect'}
+                      </span>
+
+                      <!-- Chevron -->
+                      <svg class="camp-chevron w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </div>
+
+                    <!-- Expandable Settings -->
+                    <div class="camp-body hidden border-t border-gray-100 bg-white px-3 py-3">
+                      <!-- Display Title -->
+                      <div class="mb-3">
+                        <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Display Title <span class="text-gray-300 font-normal">(how it appears in notification)</span></label>
+                        <input type="text" class="sp-title-input w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white placeholder-gray-400"
+                          placeholder={c.name || c.title || 'Campaign name'}
+                          value={c.social_proof_title || ''} />
+                      </div>
+
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Action Type -->
+                        <div>
+                          <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Donate Action</label>
+                          <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                            <button type="button" class={`sp-action-btn flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${action === 'popup' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`} data-action="popup">Popup</button>
+                            <button type="button" class={`sp-action-btn flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${action === 'redirect' ? 'bg-amber-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-white'}`} data-action="redirect">Redirect</button>
+                          </div>
+                        </div>
+                        <!-- Custom URL -->
+                        <div>
+                          <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Custom URL <span class="text-gray-300 font-normal">(optional)</span></label>
+                          <input type="text" class="sp-url-input w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white placeholder-gray-400"
+                            placeholder={c.url_path || `/appeals/${c.slug}`}
+                            value={c.social_proof_url || ''} />
+                        </div>
+                      </div>
+                      <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
+                        <div class="flex items-center gap-2 text-xs text-gray-400">
+                          <span>/{c.slug}</span>
+                          {c.category && <span class="bg-gray-100 px-1.5 py-0.5 rounded">{c.category}</span>}
+                          <a href={c.url_path || `/appeals/${c.slug}`} target="_blank" class="text-[#01534d] hover:underline flex items-center gap-0.5">
+                            View
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                          </a>
+                        </div>
+                        <button type="button" class="sp-remove-btn text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition">Disable</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {allCampaigns.length === 0 && (
+              <div class="text-center py-8 text-gray-400 px-4">
+                <p class="text-sm">No active campaigns found</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Sidecart Enable -->
+        <div class="promo-card rounded-lg border border-gray-200 overflow-hidden" data-key="sidecartEnabled">
+          <div class="promo-header flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition select-none">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-xl">🛒</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800">Sidecart Panel</p>
+                <p class="text-xs text-gray-400">Slide-out cart drawer on icon click</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="promo-status text-xs font-medium px-2 py-1 rounded-full"></span>
+              <input type="checkbox" checked={settings.sidecart_enabled !== false}
+                class="promo-toggle w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+              <svg class="promo-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          <div class="promo-body hidden border-t border-gray-100 bg-gray-50/50 p-4">
+            <p class="text-sm text-gray-600">When enabled, clicking the cart icon opens the sidecart panel. When disabled, goes straight to checkout page.</p>
+          </div>
+        </div>
+
+        <!-- Make it Monthly -->
+        <div class="promo-card rounded-lg border border-gray-200 overflow-hidden" data-key="showSidecartMonthly">
+          <div class="promo-header flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition select-none">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-xl">🔄</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800">Sidecart — Make it Monthly</p>
+                <p class="text-xs text-gray-400">Recurring upsell checkbox in sidecart</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="promo-status text-xs font-medium px-2 py-1 rounded-full"></span>
+              <input type="checkbox" checked={settings.show_sidecart_monthly !== false}
+                class="promo-toggle w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+              <svg class="promo-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          <div class="promo-body hidden border-t border-gray-100 bg-gray-50/50 p-4">
+            <p class="text-sm text-gray-600">Shows a "Make it Monthly" checkbox in the sidecart, letting donors convert one-time donations into monthly recurring.</p>
+          </div>
+        </div>
+
+        <!-- Every Jummah -->
+        <div class="promo-card rounded-lg border border-gray-200 overflow-hidden" data-key="showSidecartJummah">
+          <div class="promo-header flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition select-none">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-xl">🕌</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800">Sidecart — Every Jummah</p>
+                <p class="text-xs text-gray-400">Weekly Friday recurring upsell</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="promo-status text-xs font-medium px-2 py-1 rounded-full"></span>
+              <input type="checkbox" checked={settings.show_sidecart_jummah !== false}
+                class="promo-toggle w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d] cursor-pointer" />
+              <svg class="promo-chevron w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          <div class="promo-body hidden border-t border-gray-100 bg-gray-50/50 p-4">
+            <p class="text-sm text-gray-600">Shows an "Every Jummah" checkbox in the sidecart, letting donors convert one-time donations into weekly Friday recurring.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+(function() {
+  // ─── Toast ───
+  function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    var ic = type === 'success'
+      ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+      : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    t.innerHTML = ic + '<span>' + msg + '</span>';
+    t.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 text-white ' + (type === 'success' ? 'bg-green-600' : 'bg-red-600');
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function() { t.className = 'hidden'; }, 3000);
+  }
+
+  // ─── Active count ───
+  function updateActiveCount() {
+    var c = 0;
+    document.querySelectorAll('.campaign-row .sp-toggle').forEach(function(b) { if (b.getAttribute('data-active') === 'true') c++; });
+    var el = document.getElementById('activeCount');
+    if (el) el.textContent = String(c);
+  }
+
+  // ─── Promo badge states ───
+  function updatePromoStatuses() {
+    document.querySelectorAll('.promo-card').forEach(function(card) {
+      var chk = card.querySelector('.promo-toggle');
+      var badge = card.querySelector('.promo-status');
+      if (chk && badge) {
+        if (chk.checked) {
+          badge.textContent = 'ON';
+          badge.className = 'promo-status text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700';
+          card.style.borderColor = '#86efac';
+        } else {
+          badge.textContent = 'OFF';
+          badge.className = 'promo-status text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-400';
+          card.style.borderColor = '#e5e7eb';
+        }
+      }
+    });
+  }
+  updatePromoStatuses();
+
+  // ─── Save settings toggle ───
+  function savePromoToggle(key, val) {
+    var body = {};
+    body[key] = val;
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function(r) { if (!r.ok) throw new Error(); showToast('Setting updated', 'success'); })
+      .catch(function() { showToast('Failed to save', 'error'); });
+  }
+
+  // ─── Promo accordion ───
+  document.querySelectorAll('.promo-card .promo-header').forEach(function(hdr) {
+    hdr.addEventListener('click', function(e) {
+      if (e.target.classList.contains('promo-toggle')) return;
+      var card = this.closest('.promo-card');
+      var body = card.querySelector('.promo-body');
+      var chev = card.querySelector('.promo-chevron');
+      if (body.classList.contains('hidden')) {
+        body.classList.remove('hidden');
+        if (chev) chev.style.transform = 'rotate(180deg)';
+      } else {
+        body.classList.add('hidden');
+        if (chev) chev.style.transform = '';
+      }
+    });
+  });
+
+  // ─── Promo toggles ───
+  document.querySelectorAll('.promo-card .promo-toggle').forEach(function(chk) {
+    chk.addEventListener('change', function(e) {
+      e.stopPropagation();
+      var card = this.closest('.promo-card');
+      var key = card.getAttribute('data-key');
+      savePromoToggle(key, this.checked);
+      updatePromoStatuses();
+    });
+  });
+
+  // ─── Min Amount Setting ───
+  var minAmountInput = document.getElementById('minAmountInput');
+  if (minAmountInput) {
+    var minAmountTimer = null;
+    minAmountInput.addEventListener('input', function() {
+      // Debounce — save 800ms after user stops typing
+      clearTimeout(minAmountTimer);
+      var val = parseInt(this.value, 10);
+      if (isNaN(val) || val < 0) return;
+      minAmountTimer = setTimeout(function() {
+        savePromoToggle('social_proof_min_amount', val);
+      }, 800);
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // CAMPAIGN ROWS
+  // ═══════════════════════════════════════════════
+
+  function saveCampaignSP(id, data) {
+    return fetch('/api/social-proof-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ id: id }, data)),
+    }).then(function(r) { if (!r.ok) throw new Error(); return r.json(); });
+  }
+
+  function setRowState(row, on) {
+    if (on) {
+      row.classList.remove('border-gray-100', 'bg-gray-50/50', 'opacity-50');
+      row.classList.add('border-green-200', 'bg-green-50/30');
+    } else {
+      row.classList.remove('border-green-200', 'bg-green-50/30');
+      row.classList.add('border-gray-100', 'bg-gray-50/50', 'opacity-50');
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // MULTI-SELECT CHECKBOXES + SELECTION BAR
+  // ═══════════════════════════════════════════════
+
+  function updateSelectionBar() {
+    var checked = document.querySelectorAll('.sp-select-cb:checked');
+    var bar = document.getElementById('selectionBar');
+    var countEl = document.getElementById('selectedCount');
+    var selectAll = document.getElementById('selectAllCampaigns');
+    var total = document.querySelectorAll('.sp-select-cb').length;
+
+    if (checked.length > 0) {
+      bar.classList.remove('hidden');
+      bar.classList.add('flex');
+      countEl.textContent = String(checked.length);
+    } else {
+      bar.classList.add('hidden');
+      bar.classList.remove('flex');
+    }
+
+    if (selectAll) {
+      selectAll.checked = checked.length === total && total > 0;
+      selectAll.indeterminate = checked.length > 0 && checked.length < total;
+    }
+  }
+
+  // Individual checkboxes
+  document.querySelectorAll('.sp-select-cb').forEach(function(cb) {
+    cb.addEventListener('click', function(e) { e.stopPropagation(); });
+    cb.addEventListener('change', function() { updateSelectionBar(); });
+  });
+
+  // Select All checkbox
+  var selectAllCb = document.getElementById('selectAllCampaigns');
+  if (selectAllCb) {
+    selectAllCb.addEventListener('change', function() {
+      var val = this.checked;
+      document.querySelectorAll('.sp-select-cb').forEach(function(cb) { cb.checked = val; });
+      updateSelectionBar();
+    });
+  }
+
+  // Clear selection
+  document.getElementById('btnClearSelection').addEventListener('click', function() {
+    document.querySelectorAll('.sp-select-cb').forEach(function(cb) { cb.checked = false; });
+    updateSelectionBar();
+  });
+
+  function getSelectedIds() {
+    var ids = [];
+    document.querySelectorAll('.sp-select-cb:checked').forEach(function(cb) {
+      var row = cb.closest('.campaign-row');
+      if (row) ids.push(row.getAttribute('data-id'));
+    });
+    return ids;
+  }
+
+  function getSelectedRows() {
+    var rows = [];
+    document.querySelectorAll('.sp-select-cb:checked').forEach(function(cb) {
+      var row = cb.closest('.campaign-row');
+      if (row) rows.push(row);
+    });
+    return rows;
+  }
+
+  function bulkSelectedUpdate(field, value) {
+    var rows = getSelectedRows();
+    if (rows.length === 0) return;
+    rows.forEach(function(row) {
+      if (field === 'show_in_social_proof') {
+        var tog = row.querySelector('.sp-toggle');
+        tog.setAttribute('data-active', value ? 'true' : 'false');
+        tog.style.backgroundColor = value ? '#01534d' : '#d1d5db';
+        var knob = tog.querySelector('span');
+        if (knob) knob.style.transform = 'translateX(' + (value ? '18px' : '0') + ')';
+        setRowState(row, value);
+      }
+      if (field === 'social_proof_action') {
+        row.querySelectorAll('.sp-action-btn').forEach(function(b) {
+          var a = b.getAttribute('data-action');
+          b.className = 'sp-action-btn flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ' +
+            (a === value ? (value === 'popup' ? 'bg-blue-600 text-white shadow-sm' : 'bg-amber-500 text-white shadow-sm') : 'text-gray-500 hover:text-gray-700 hover:bg-white');
+        });
+        var badge = row.querySelector('.camp-action-badge');
+        if (badge) {
+          badge.textContent = value === 'popup' ? 'Popup' : 'Redirect';
+          badge.className = 'camp-action-badge flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ' + (value === 'popup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+        }
+      }
+    });
+    updateActiveCount();
+    var data = {};
+    data[field] = value;
+    var ids = getSelectedIds();
+    Promise.all(ids.map(function(id) { return saveCampaignSP(id, data); }))
+      .then(function() { showToast(ids.length + ' campaigns updated', 'success'); })
+      .catch(function() { showToast('Some failed', 'error'); });
+  }
+
+  document.getElementById('btnEnableSelected').addEventListener('click', function() { bulkSelectedUpdate('show_in_social_proof', true); });
+  document.getElementById('btnDisableSelected').addEventListener('click', function() { bulkSelectedUpdate('show_in_social_proof', false); });
+  document.getElementById('btnPopupSelected').addEventListener('click', function() { bulkSelectedUpdate('social_proof_action', 'popup'); });
+  document.getElementById('btnRedirectSelected').addEventListener('click', function() { bulkSelectedUpdate('social_proof_action', 'redirect'); });
+
+  // ─── Campaign row accordion ───
+  document.querySelectorAll('.camp-header').forEach(function(hdr) {
+    hdr.addEventListener('click', function(e) {
+      if (e.target.closest('.sp-toggle') || e.target.closest('.sp-order-input') || e.target.closest('.sp-select-cb')) return;
+      var row = this.closest('.campaign-row');
+      var body = row.querySelector('.camp-body');
+      var chev = row.querySelector('.camp-chevron');
+      if (body.classList.contains('hidden')) {
+        body.classList.remove('hidden');
+        if (chev) chev.style.transform = 'rotate(180deg)';
+      } else {
+        body.classList.add('hidden');
+        if (chev) chev.style.transform = '';
+      }
+    });
+  });
+
+  // ─── Toggle switch ───
+  document.querySelectorAll('.campaign-row .sp-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      var row = this.closest('.campaign-row');
+      var id = row.getAttribute('data-id');
+      var wasOn = this.getAttribute('data-active') === 'true';
+      var nowOn = !wasOn;
+
+      this.setAttribute('data-active', nowOn ? 'true' : 'false');
+      this.style.backgroundColor = nowOn ? '#01534d' : '#d1d5db';
+      var knob = this.querySelector('span');
+      if (knob) knob.style.transform = 'translateX(' + (nowOn ? '18px' : '0') + ')';
+      setRowState(row, nowOn);
+
+      saveCampaignSP(id, { show_in_social_proof: nowOn })
+        .then(function() { showToast(nowOn ? 'Enabled' : 'Disabled', 'success'); updateActiveCount(); })
+        .catch(function() {
+          showToast('Failed', 'error');
+          btn.setAttribute('data-active', wasOn ? 'true' : 'false');
+          btn.style.backgroundColor = wasOn ? '#01534d' : '#d1d5db';
+          if (knob) knob.style.transform = 'translateX(' + (wasOn ? '18px' : '0') + ')';
+          setRowState(row, wasOn);
+        });
+    });
+  });
+
+  // ─── Action buttons ───
+  document.querySelectorAll('.sp-action-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var row = this.closest('.campaign-row');
+      var id = row.getAttribute('data-id');
+      var action = this.getAttribute('data-action');
+      var group = this.parentNode;
+      group.querySelectorAll('.sp-action-btn').forEach(function(b) {
+        b.className = 'sp-action-btn flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all text-gray-500 hover:text-gray-700 hover:bg-white';
+      });
+      this.className = 'sp-action-btn flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm ' +
+        (action === 'popup' ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white');
+      var badge = row.querySelector('.camp-action-badge');
+      if (badge) {
+        badge.textContent = action === 'popup' ? 'Popup' : 'Redirect';
+        badge.className = 'camp-action-badge flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ' +
+          (action === 'popup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+      }
+      saveCampaignSP(id, { social_proof_action: action })
+        .then(function() { showToast('Action: ' + action, 'success'); })
+        .catch(function() { showToast('Failed', 'error'); });
+    });
+  });
+
+  // ─── Title inputs ───
+  document.querySelectorAll('.sp-title-input').forEach(function(inp) {
+    var _o = inp.value;
+    inp.addEventListener('click', function(e) { e.stopPropagation(); });
+    inp.addEventListener('blur', function() {
+      var v = this.value.trim();
+      if (v === _o) return;
+      _o = v;
+      var row = this.closest('.campaign-row');
+      saveCampaignSP(row.getAttribute('data-id'), { social_proof_title: v || null })
+        .then(function() {
+          showToast('Title saved', 'success');
+          // Update the row label to show new title
+          var nameEl = row.querySelector('.camp-name');
+          if (nameEl && v) nameEl.textContent = v;
+        })
+        .catch(function() { showToast('Failed', 'error'); });
+    });
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+  });
+
+  // ─── URL inputs ───
+  document.querySelectorAll('.sp-url-input').forEach(function(inp) {
+    var _o = inp.value;
+    inp.addEventListener('click', function(e) { e.stopPropagation(); });
+    inp.addEventListener('blur', function() {
+      var v = this.value.trim();
+      if (v === _o) return;
+      _o = v;
+      var row = this.closest('.campaign-row');
+      saveCampaignSP(row.getAttribute('data-id'), { social_proof_url: v || null })
+        .then(function() { showToast('URL saved', 'success'); })
+        .catch(function() { showToast('Failed', 'error'); });
+    });
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+  });
+
+  // ─── Order inputs ───
+  document.querySelectorAll('.sp-order-input').forEach(function(inp) {
+    var _o = inp.value;
+    inp.addEventListener('click', function(e) { e.stopPropagation(); });
+    inp.addEventListener('blur', function() {
+      var v = this.value.trim();
+      if (v === _o) return;
+      _o = v;
+      var row = this.closest('.campaign-row');
+      saveCampaignSP(row.getAttribute('data-id'), { social_proof_order: parseInt(v, 10) || 50 })
+        .then(function() { showToast('Order saved', 'success'); })
+        .catch(function() { showToast('Failed', 'error'); });
+    });
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+  });
+
+  // ─── Remove/Disable button ───
+  document.querySelectorAll('.sp-remove-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var row = this.closest('.campaign-row');
+      var id = row.getAttribute('data-id');
+      var toggle = row.querySelector('.sp-toggle');
+      toggle.setAttribute('data-active', 'false');
+      toggle.style.backgroundColor = '#d1d5db';
+      var knob = toggle.querySelector('span');
+      if (knob) knob.style.transform = 'translateX(0)';
+      setRowState(row, false);
+      var body = row.querySelector('.camp-body');
+      var chev = row.querySelector('.camp-chevron');
+      if (body) body.classList.add('hidden');
+      if (chev) chev.style.transform = '';
+      saveCampaignSP(id, { show_in_social_proof: false })
+        .then(function() { showToast('Disabled', 'success'); updateActiveCount(); })
+        .catch(function() { showToast('Failed', 'error'); });
+    });
+  });
+
+  // ═══════════════════════════════════════════════
+  // BULK ACTIONS
+  // ═══════════════════════════════════════════════
+  function bulkUpdate(field, value) {
+    var rows = document.querySelectorAll('.campaign-row');
+    var ids = [];
+    rows.forEach(function(r) { ids.push(r.getAttribute('data-id')); });
+    rows.forEach(function(row) {
+      if (field === 'show_in_social_proof') {
+        var tog = row.querySelector('.sp-toggle');
+        tog.setAttribute('data-active', value ? 'true' : 'false');
+        tog.style.backgroundColor = value ? '#01534d' : '#d1d5db';
+        var knob = tog.querySelector('span');
+        if (knob) knob.style.transform = 'translateX(' + (value ? '18px' : '0') + ')';
+        setRowState(row, value);
+      }
+      if (field === 'social_proof_action') {
+        row.querySelectorAll('.sp-action-btn').forEach(function(b) {
+          var a = b.getAttribute('data-action');
+          b.className = 'sp-action-btn flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ' +
+            (a === value ? (value === 'popup' ? 'bg-blue-600 text-white shadow-sm' : 'bg-amber-500 text-white shadow-sm') : 'text-gray-500 hover:text-gray-700 hover:bg-white');
+        });
+        var badge = row.querySelector('.camp-action-badge');
+        if (badge) {
+          badge.textContent = value === 'popup' ? 'Popup' : 'Redirect';
+          badge.className = 'camp-action-badge flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ' + (value === 'popup' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+        }
+      }
+    });
+    updateActiveCount();
+    var data = {};
+    data[field] = value;
+    Promise.all(ids.map(function(id) { return saveCampaignSP(id, data); }))
+      .then(function() { showToast('All updated', 'success'); })
+      .catch(function() { showToast('Some failed', 'error'); });
+  }
+
+  document.getElementById('btnEnableAll').addEventListener('click', function() { bulkUpdate('show_in_social_proof', true); });
+  document.getElementById('btnDisableAll').addEventListener('click', function() { bulkUpdate('show_in_social_proof', false); });
+  document.getElementById('btnSetAllPopup').addEventListener('click', function() { bulkUpdate('social_proof_action', 'popup'); });
+  document.getElementById('btnSetAllRedirect').addEventListener('click', function() { bulkUpdate('social_proof_action', 'redirect'); });
+
+  document.getElementById('btnExpandAll').addEventListener('click', function() {
+    document.querySelectorAll('.campaign-row').forEach(function(r) {
+      var b = r.querySelector('.camp-body'); var c = r.querySelector('.camp-chevron');
+      if (b) b.classList.remove('hidden'); if (c) c.style.transform = 'rotate(180deg)';
+    });
+  });
+  document.getElementById('btnCollapseAll').addEventListener('click', function() {
+    document.querySelectorAll('.campaign-row').forEach(function(r) {
+      var b = r.querySelector('.camp-body'); var c = r.querySelector('.camp-chevron');
+      if (b) b.classList.add('hidden'); if (c) c.style.transform = '';
+    });
+  });
+})();
+</script>

@@ -94,6 +94,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Popup settings (boolean)
     if ('showRamadanPopup' in body) updateData.show_ramadan_popup = body.showRamadanPopup === true || body.showRamadanPopup === 'on';
     if ('showCartReminder' in body) updateData.show_cart_reminder = body.showCartReminder === true || body.showCartReminder === 'on';
+    if ('showSocialProof' in body) updateData.show_social_proof = body.showSocialProof === true || body.showSocialProof === 'on';
 
     // Sidecart settings (boolean)
     if ('sidecartEnabled' in body) updateData.sidecart_enabled = body.sidecartEnabled === true || body.sidecartEnabled === 'on';
@@ -102,6 +103,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Homepage donation box heading
     if ('donationBoxHeading' in body) updateData.donation_box_heading = body.donationBoxHeading || '';
+
+    // Social proof min amount
+    if ('social_proof_min_amount' in body) updateData.social_proof_min_amount = parseInt(body.social_proof_min_amount, 10) || 10;
 
     const { data, error } = await supabaseAdmin
       .from('site_settings')

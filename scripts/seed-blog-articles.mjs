@@ -24,7 +24,7 @@ const blogArticles = [
     title: 'How Qurbani Foundation Distributes Millions of Meals During Ramadan',
     template: 'blog',
     status: 'published',
-    featured_image: '/images/qurbani-foundation-food-distribution.png',
+    featured_image: '/images/qurbani-foundation-food-distribution.webp',
     meta_title: 'Ramadan Food Distribution Impact | Qurbani Foundation',
     meta_description: 'Learn how Qurbani Foundation coordinates massive food distribution efforts during Ramadan, reaching vulnerable communities in over 40 countries.',
     content: {
@@ -34,7 +34,7 @@ const blogArticles = [
           type: 'hero',
           title: 'How Qurbani Foundation Distributes Millions of Meals During Ramadan',
           subtitle: 'A behind-the-scenes look at the logistics, partnerships, and dedication that make large-scale food distribution possible.',
-          backgroundImage: '/images/qurbani-foundation-food-distribution.png'
+          backgroundImage: '/images/qurbani-foundation-food-distribution.webp'
         },
         {
           id: 'content-1',
@@ -50,7 +50,7 @@ const blogArticles = [
         {
           id: 'image-1',
           type: 'image',
-          imageUrl: '/images/qurbani-foundation-food-distribution.png',
+          imageUrl: '/images/qurbani-foundation-food-distribution.webp',
           caption: 'Volunteers preparing food packages for distribution during Ramadan 2025.',
           alt: 'Qurbani Foundation food distribution during Ramadan'
         },
@@ -148,7 +148,7 @@ const blogArticles = [
     title: 'Orphan Sponsorship Program: Changing Lives One Child at a Time',
     template: 'blog',
     status: 'published',
-    featured_image: '/images/qurbani-foundation-orphan-sponsorship.jpg',
+    featured_image: '/images/qurbani-foundation-orphan-sponsorship.webp',
     meta_title: 'Orphan Sponsorship Program Impact | Qurbani Foundation',
     meta_description: 'See how Qurbani Foundation\'s orphan sponsorship program provides education, healthcare, and emotional support to children who have lost their parents.',
     content: {
@@ -158,7 +158,7 @@ const blogArticles = [
           type: 'hero',
           title: 'Orphan Sponsorship Program: Changing Lives One Child at a Time',
           subtitle: 'How comprehensive care and education are giving orphaned children the foundation they need to build bright futures.',
-          backgroundImage: '/images/qurbani-foundation-orphan-sponsorship.jpg'
+          backgroundImage: '/images/qurbani-foundation-orphan-sponsorship.webp'
         },
         {
           id: 'content-1',
@@ -179,7 +179,7 @@ const blogArticles = [
         {
           id: 'image-1',
           type: 'image',
-          imageUrl: '/images/qurbani-foundation-orphan-sponsorship.jpg',
+          imageUrl: '/images/qurbani-foundation-orphan-sponsorship.webp',
           caption: 'Children in our orphan sponsorship program enjoying a day of educational activities.',
           alt: 'Qurbani Foundation orphan sponsorship program'
         },

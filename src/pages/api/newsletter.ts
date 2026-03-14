@@ -17,6 +17,9 @@ interface NewsletterData {
   email: string;
   firstName?: string;
   lastName?: string;
+  source?: string;
+  campaign?: string;
+  tags?: string[];
   pageUrl?: string;
   utmSource?: string;
   utmMedium?: string;
@@ -37,13 +40,14 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const leadSource = body.source || 'newsletter';
 
     // Check if already subscribed
     const { data: existing } = await supabaseAdmin
       .from('leads')
       .select('id')
       .eq('email', normalizedEmail)
-      .eq('source', 'newsletter')
+      .eq('source', leadSource)
       .single();
 
     if (existing) {
@@ -64,7 +68,16 @@ export const POST: APIRoute = async ({ request }) => {
         email: normalizedEmail,
         first_name: body.firstName?.trim() || null,
         last_name: body.lastName?.trim() || null,
-        source: 'newsletter',
+        source: leadSource,
+        form_data: body.campaign || body.tags
+          ? {
+              campaign: body.campaign || null,
+              tags: body.tags || [],
+              interests: (body.tags || [])
+                .filter((t: string) => t.startsWith('interest_') || t.startsWith('interest:'))
+                .map((t: string) => t.replace(/^interest[_:]/, '')),
+            }
+          : null,
         page_url: body.pageUrl || null,
         utm_source: body.utmSource || null,
         utm_medium: body.utmMedium || null,
@@ -90,6 +103,7 @@ export const POST: APIRoute = async ({ request }) => {
         email: normalizedEmail,
         firstName: body.firstName?.trim(),
         lastName: body.lastName?.trim(),
+        tags: body.tags,
       });
 
       if (ghlResult.success) {

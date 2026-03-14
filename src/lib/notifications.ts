@@ -30,6 +30,20 @@ interface NotificationData {
   donorName?: string;
   donorEmail?: string;
   metadata?: Record<string, any>;
+  attribution?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    checkout_source?: string;
+    journey?: any;
+  };
+  donorHistory?: {
+    donation_count: number;
+    lifetime_total: number;
+    first_donation: string | null;
+    last_donation: string | null;
+  };
 }
 
 // Emoji and color mapping for notification types
@@ -102,6 +116,12 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
   try {
     const amountDisplay = data.amount ? `$${data.amount.toFixed(2)}` : '';
 
+    // Build items list for display
+    const itemsList = data.metadata?.items || [];
+    const campaignName = itemsList.length > 0
+      ? itemsList.map((i: { name: string }) => i.name).join(', ')
+      : (data.metadata?.campaign || 'General Donation');
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -109,47 +129,233 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f3f4f6; padding: 20px; margin: 0;">
-        <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <body style="margin: 0; padding: 0; background-color: #f5f3ef; font-family: Georgia, 'Times New Roman', serif;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f3ef;">
+          <tr>
+            <td align="center" style="padding: 30px 15px;">
+              <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width: 580px; width: 100%;">
 
-          <!-- Header -->
-          <div style="background: ${config.color}; padding: 24px; text-align: center;">
-            <span style="font-size: 48px;">${config.emoji}</span>
-            <h1 style="color: white; margin: 12px 0 0 0; font-size: 24px;">${data.title}</h1>
-          </div>
+                <!-- HEADER -->
+                <tr>
+                  <td style="padding-bottom: 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="left" valign="middle" style="width: 50%;">
+                          <a href="https://www.qurbani.com" style="text-decoration: none;">
+                            <img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815947323-nkje6c.png"
+                                 alt="Qurbani Foundation" width="160" style="max-width: 160px; height: auto; display: inline-block;" />
+                          </a>
+                        </td>
+                        <td align="right" valign="middle" style="width: 50%; font-family: Arial, Helvetica, sans-serif;">
+                          <a href="https://www.qurbani.com/admin" style="display: inline-block; background-color: #ef7c01; color: #ffffff; text-decoration: none; padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;">ADMIN</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
 
-          <!-- Body -->
-          <div style="padding: 24px;">
-            <p style="font-size: 16px; color: #374151; line-height: 1.6; margin: 0 0 16px 0;">
-              ${data.message}
-            </p>
+                <!-- BODY -->
+                <tr>
+                  <td style="background-color: #ffffff; padding: 36px 40px; border-radius: 6px;">
 
-            ${amountDisplay ? `
-              <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                <p style="margin: 0; color: #6b7280; font-size: 14px;">Amount</p>
-                <p style="margin: 4px 0 0 0; color: #111827; font-size: 28px; font-weight: bold;">${amountDisplay}</p>
-              </div>
-            ` : ''}
+                    <!-- Title -->
+                    <h1 style="margin: 0 0 24px; color: #ef7c01; font-size: 22px; line-height: 1.3; font-weight: 700;">
+                      ${data.title}
+                    </h1>
 
-            ${data.donorName ? `
-              <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px;">
-                <p style="margin: 0; color: #6b7280; font-size: 14px;">Donor Information</p>
-                <p style="margin: 8px 0 0 0; color: #111827; font-weight: 600;">${data.donorName}</p>
-                ${data.donorEmail ? `<p style="margin: 4px 0 0 0; color: #6b7280;">${data.donorEmail}</p>` : ''}
-              </div>
-            ` : ''}
-          </div>
+                    ${(() => {
+                      // ══════════════════════════════════════════════════
+                      // Shared helpers
+                      // ══════════════════════════════════════════════════
+                      const na = '<span style="color: #ccc;">N/A</span>';
+                      const row = (label: string, value: string) => `<tr><td style="padding: 4px 0; color: #888; font-size: 13px; width: 150px; vertical-align: top; font-family: Arial, Helvetica, sans-serif;">${label}</td><td style="padding: 4px 0; color: #1a1a1a; font-size: 13px; font-family: Arial, Helvetica, sans-serif;">${value || na}</td></tr>`;
+                      const mono = (v: string) => v ? `<span style="font-family: monospace; font-size: 12px; background: #f5f3ef; padding: 1px 6px; border-radius: 3px;">${v}</span>` : na;
+                      const sectionHeader = (title: string) => `<div style="border-top: 1px solid #e8e5e0; margin: 20px 0 12px;"></div><p style="margin: 0 0 10px; color: #ef7c01; font-size: 14px; font-weight: 700; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">${title}</p>`;
+                      const subHeader = (title: string) => `<p style="margin: 0 0 6px; color: #374151; font-size: 12px; font-weight: 700; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase; letter-spacing: 0.5px;">${title}</p>`;
 
-          <!-- Footer -->
-          <div style="background: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #e5e7eb;">
-            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-              Qurbani USA Admin Notification • ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET
-            </p>
-            <a href="https://www.qurbani.com/admin" style="display: inline-block; margin-top: 12px; color: #d97706; text-decoration: none; font-size: 14px; font-weight: 500;">
-              View in Admin Dashboard →
-            </a>
-          </div>
-        </div>
+                      const checkoutLabel = data.attribution?.checkout_source === 'social-proof-popup' ? 'Social Proof Popup' :
+                        data.attribution?.checkout_source === 'gg-one-step-checkout' ? 'One-Step Checkout' :
+                        data.attribution?.checkout_source === 'three-step-checkout' ? 'Three-Step Checkout' :
+                        data.attribution?.checkout_source === 'two-step-checkout' ? 'Two-Step Checkout' :
+                        data.attribution?.checkout_source || na;
+
+                      // Parse journey
+                      const a = data.attribution || {};
+                      const j = typeof a.journey === 'string' ? JSON.parse(a.journey) : (a.journey || {});
+                      const ft = j?.first_touch || {};
+                      const lt = j?.last_touch || {};
+                      const ftUtm = ft.utm || {};
+                      const ltUtm = lt.utm || {};
+                      const checkout = j?.checkout || {};
+                      const hasPages = j?.pages && j.pages.length > 0;
+
+                      // Source label helper
+                      function sourceLabel(touch: any, utm: any) {
+                        if (touch?.gclid) return 'Google Ads';
+                        if (touch?.fbclid) return 'Facebook Ads';
+                        if (utm?.utm_source === 'email' || utm?.utm_source === 'ghl') return 'Email Campaign';
+                        if (utm?.utm_source) return utm.utm_source.charAt(0).toUpperCase() + utm.utm_source.slice(1);
+                        if (touch?.referrer && touch.referrer !== 'direct') {
+                          try { return new URL(touch.referrer).hostname; } catch { return touch.referrer; }
+                        }
+                        return 'Direct';
+                      }
+
+                      const firstSource = sourceLabel(ft, ftUtm);
+                      const lastSource = sourceLabel(lt, ltUtm);
+
+                      // Deduplicated values
+                      const ftCampaign = ft.campaignid || ftUtm.utm_campaign || '';
+                      const ftKeyword = ft.keyword || ftUtm.utm_term || '';
+                      const ltCampaign = lt.campaignid || ltUtm.utm_campaign || '';
+                      const ltKeyword = lt.keyword || ltUtm.utm_term || '';
+
+                      // Ad details — use whichever touch has Google Ads data
+                      const adTouch = (ft.gclid || ft.matchtype || ft.network) ? ft : (lt.gclid || lt.matchtype || lt.network) ? lt : null;
+                      const mapMatch = (m: string) => m === 'e' ? 'Exact' : m === 'p' ? 'Phrase' : m === 'b' ? 'Broad' : m;
+                      const mapNetwork = (n: string) => n === 'g' ? 'Google Search' : n === 'd' ? 'Display Network' : n === 'y' ? 'YouTube' : n;
+                      const mapDevice = (d: string) => d === 'm' ? 'Mobile' : d === 'c' ? 'Computer' : d === 't' ? 'Tablet' : d;
+
+                      // Timing
+                      const sessionStart = j?.session_started ? new Date(j.session_started).toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                      const donationStart = checkout.donation_started_at ? new Date(checkout.donation_started_at).toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+                      const timeToDonateSec = (j?.session_started && checkout.donation_started_at) ? Math.round((checkout.donation_started_at - j.session_started) / 1000) : 0;
+                      const timeToStr = timeToDonateSec > 0 ? (timeToDonateSec >= 60 ? Math.floor(timeToDonateSec / 60) + 'm ' + (timeToDonateSec % 60) + 's' : timeToDonateSec + 's') : '';
+
+                      // Journey pages
+                      const displayPages = hasPages ? j.pages.slice(-10) : [];
+                      const pagePath = displayPages.map((pg: { p: string }) => pg.p).join(' → ');
+                      const pageRows = displayPages.map((pg: { p: string; t: number }) => {
+                        const time = new Date(pg.t).toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', hour12: true });
+                        return `<tr><td style="padding: 2px 8px; color: #374151; font-size: 12px; font-family: monospace;">${pg.p}</td><td style="padding: 2px 8px; color: #9ca3af; font-size: 11px; white-space: nowrap; text-align: right;">${time}</td></tr>`;
+                      }).join('');
+
+                      // Donor history
+                      const hist = data.donorHistory || { donation_count: 0, lifetime_total: 0, first_donation: null, last_donation: null };
+                      const formatCurrency = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      const formatDate = (d: string | null) => d ? new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: 'short', day: 'numeric' }) : na;
+                      const isMajorDonor = (data.amount && data.amount >= 500) || (hist.lifetime_total >= 1000);
+                      const isToday = (d: string | null) => {
+                        if (!d) return false;
+                        const dt = new Date(d);
+                        const now = new Date();
+                        return dt.toDateString() === now.toDateString();
+                      };
+
+                      return `
+                      <!-- ════════════════════════════════════════ -->
+                      <!-- SECTION 1: DONATION DETAILS             -->
+                      <!-- ════════════════════════════════════════ -->
+                      <table style="width: 100%; border-collapse: collapse; margin: 0 0 4px;">
+                        ${row('Donor Name', data.donorName ? '<strong>' + data.donorName + '</strong>' : na)}
+                        ${row('Email', data.donorEmail || na)}
+                        ${row('Amount', amountDisplay ? '<strong style="font-size: 15px;">' + amountDisplay + '</strong>' : na)}
+                        ${row('Campaign', campaignName)}
+                        ${row('Type', data.metadata?.typeLabel || 'One-time')}
+                        ${row('Checkout', checkoutLabel)}
+                      </table>
+
+                      <!-- ════════════════════════════════════════ -->
+                      <!-- SECTION 2: ATTRIBUTION                  -->
+                      <!-- ════════════════════════════════════════ -->
+                      ${sectionHeader('Attribution')}
+
+                      ${subHeader('First Touch')}
+                      <table style="width: 100%; border-collapse: collapse; margin: 0 0 14px;">
+                        ${row('Source', firstSource)}
+                        ${row('Landing Page', ft.landing_page || na)}
+                        ${row('Referrer', (ft.referrer && ft.referrer !== 'direct') ? ft.referrer : na)}
+                        ${row('Campaign', ftCampaign ? mono(ftCampaign) : na)}
+                        ${row('Keyword', ftKeyword ? '<strong>' + ftKeyword + '</strong>' : na)}
+                      </table>
+
+                      ${subHeader('Last Touch')}
+                      <table style="width: 100%; border-collapse: collapse; margin: 0 0 4px;">
+                        ${row('Source', lastSource)}
+                        ${row('Conversion Page', lt.landing_page || na)}
+                        ${row('Referrer', (lt.referrer && lt.referrer !== 'direct') ? lt.referrer : na)}
+                        ${row('Campaign', ltCampaign ? mono(ltCampaign) : na)}
+                        ${row('Keyword', ltKeyword ? '<strong>' + ltKeyword + '</strong>' : na)}
+                      </table>
+
+                      <!-- ════════════════════════════════════════ -->
+                      <!-- SECTION 3: AD DETAILS                   -->
+                      <!-- ════════════════════════════════════════ -->
+                      ${sectionHeader('Ad Details')}
+                      <table style="width: 100%; border-collapse: collapse; margin: 0 0 4px;">
+                        ${row('Match Type', adTouch?.matchtype ? mapMatch(adTouch.matchtype) : na)}
+                        ${row('Network', adTouch?.network ? mapNetwork(adTouch.network) : na)}
+                        ${row('Device', adTouch?.device ? mapDevice(adTouch.device) : (j?.device ? j.device.charAt(0).toUpperCase() + j.device.slice(1) : na))}
+                        ${row('OS / Platform', j?.os ? j.os : na)}
+                        ${row('Browser', j?.browser ? j.browser : na)}
+                        ${row('Google Click ID', adTouch?.gclid ? '<span style="font-family: monospace; font-size: 11px; color: #6b7280;">' + adTouch.gclid.substring(0, 28) + '...</span>' : na)}
+                        ${row('Creative ID', adTouch?.creative ? mono(adTouch.creative) : na)}
+                        ${row('Campaign ID', (adTouch?.campaignid || ft.campaignid || lt.campaignid) ? mono(adTouch?.campaignid || ft.campaignid || lt.campaignid) : na)}
+                        ${row('Ad Group ID', (adTouch?.adgroupid || ft.adgroupid || lt.adgroupid) ? mono(adTouch?.adgroupid || ft.adgroupid || lt.adgroupid) : na)}
+                        ${row('Location Interest ID', adTouch?.loc_interest ? mono(adTouch.loc_interest) : na)}
+                        ${row('Physical Location ID', adTouch?.loc_physical ? mono(adTouch.loc_physical) : na)}
+                      </table>
+
+                      <!-- ════════════════════════════════════════ -->
+                      <!-- SECTION 4: JOURNEY                      -->
+                      <!-- ════════════════════════════════════════ -->
+                      ${sectionHeader('Journey')}
+                      ${hasPages ? `
+                        <p style="margin: 0 0 8px; color: #374151; font-size: 13px; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">${pagePath}</p>
+                        <div style="background: #f5f3ef; border-radius: 4px; padding: 8px; overflow-x: auto; margin: 0 0 8px;">
+                          <table style="width: 100%; border-collapse: collapse;">
+                            ${pageRows}
+                          </table>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                          ${row('Pages Viewed', String(j.pages.length))}
+                          ${row('Conversion Page', checkout.last_page_before_checkout || lt.landing_page || na)}
+                          ${row('Session Started', sessionStart ? sessionStart + ' ET' : na)}
+                          ${row('Checkout Started', donationStart ? donationStart + ' ET' : na)}
+                          ${row('Time to Donate', timeToStr || na)}
+                        </table>
+                      ` : `
+                        <table style="width: 100%; border-collapse: collapse;">
+                          ${row('Pages Viewed', na)}
+                          ${row('Session Started', na)}
+                        </table>
+                      `}
+
+                      <!-- ════════════════════════════════════════ -->
+                      <!-- SECTION 5: DONOR HISTORY                -->
+                      <!-- ════════════════════════════════════════ -->
+                      ${sectionHeader('Donor History')}
+                      <table style="width: 100%; border-collapse: collapse; margin: 0 0 4px;">
+                        ${row('Lifetime Donations', hist.donation_count > 0 ? '<strong>' + formatCurrency(hist.lifetime_total) + '</strong>' : na)}
+                        ${row('Donation Count', hist.donation_count > 0 ? String(hist.donation_count) : na)}
+                        ${row('First Donation', formatDate(hist.first_donation))}
+                        ${row('Last Donation', hist.last_donation ? (isToday(hist.last_donation) ? 'Today' : formatDate(hist.last_donation)) : na)}
+                        ${row('Major Donor', isMajorDonor
+                          ? '<span style="display: inline-block; background: #ef7c01; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;">Yes</span>'
+                          : 'No'
+                        )}
+                      </table>
+                      `;
+                    })()}
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td style="padding: 24px 20px; text-align: center;">
+                    <p style="margin: 0 0 4px; color: #999; font-size: 12px; font-family: Arial, sans-serif; line-height: 1.6;">
+                      <strong>Qurbani Foundation USA</strong> &mdash; Admin Notification
+                    </p>
+                    <p style="margin: 0; color: #bbb; font-size: 11px; font-family: Arial, sans-serif; line-height: 1.6;">
+                      ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
@@ -268,6 +474,20 @@ export async function notifyDonationReceived(donation: {
   type?: string;
   recurringAmount?: number;
   onetimeAmount?: number;
+  attribution?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    checkout_source?: string;
+    journey?: any;
+  };
+  donorHistory?: {
+    donation_count: number;
+    lifetime_total: number;
+    first_donation: string | null;
+    last_donation: string | null;
+  };
 }): Promise<void> {
   // Build per-item breakdown with frequency labels
   const itemDetails = donation.items?.map(i => {
@@ -287,11 +507,17 @@ export async function notifyDonationReceived(donation: {
 
   await sendNotification({
     type: 'donation_received',
-    title: 'New Donation Received!',
+    title: 'New Donation Received',
     message: `${typeLabel} donation of ${amountBreakdown} received.\nItems: ${itemDetails}`,
     amount: donation.amount,
     donorName: donation.donorName,
     donorEmail: donation.donorEmail,
+    attribution: donation.attribution,
+    donorHistory: donation.donorHistory,
+    metadata: {
+      items: donation.items,
+      typeLabel,
+    },
   });
 }
 

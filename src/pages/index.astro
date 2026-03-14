@@ -51,26 +51,44 @@ const DEFAULT_TEMPLATE = 'immersive';
 export const prerender = false;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Fetch homepage template setting from database
+// Fetch homepage template setting + SEO data from database
 // ═══════════════════════════════════════════════════════════════════════════
 let homepageTemplate = DEFAULT_TEMPLATE;
+let pageSeo: { meta_title?: string; meta_description?: string; featured_image?: string } = {};
 
 try {
-  const { data: settings } = await supabaseAdmin
-    .from('site_settings')
-    .select('homepage_template')
-    .limit(1)
-    .single();
+  // Fetch template setting and homepage SEO data in parallel
+  const [settingsResult, pageResult] = await Promise.all([
+    supabaseAdmin
+      .from('site_settings')
+      .select('homepage_template')
+      .limit(1)
+      .single(),
+    supabaseAdmin
+      .from('pages')
+      .select('meta_title, meta_description, featured_image')
+      .eq('slug', '/home')
+      .eq('status', 'published')
+      .maybeSingle(),
+  ]);
 
-  if (settings?.homepage_template && TEMPLATE_COMPONENTS[settings.homepage_template]) {
-    homepageTemplate = settings.homepage_template;
+  if (settingsResult.data?.homepage_template && TEMPLATE_COMPONENTS[settingsResult.data.homepage_template]) {
+    homepageTemplate = settingsResult.data.homepage_template;
+  }
+
+  if (pageResult.data) {
+    pageSeo = pageResult.data;
   }
 } catch (e) {
-  console.error('Error fetching homepage template setting:', e);
+  console.error('Error fetching homepage settings:', e);
 }
 
 // Get the component to render
 const TemplateComponent = TEMPLATE_COMPONENTS[homepageTemplate] || TEMPLATE_COMPONENTS[DEFAULT_TEMPLATE];
 ---
 
-<TemplateComponent />
+<TemplateComponent
+  metaTitle={pageSeo.meta_title}
+  metaDescription={pageSeo.meta_description}
+  ogImage={pageSeo.featured_image}
+/>

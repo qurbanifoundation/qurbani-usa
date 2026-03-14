@@ -1,0 +1,430 @@
+---
+/**
+ * Emergency Appeals Category Template
+ * High-conversion, donor-friendly template for emergency campaigns
+ * Designed for older donors with clear CTAs, trust signals, and urgency
+ */
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import CWDonationBox from '../../components/donation/CWDonationBox.astro';
+
+export const prerender = false;
+
+interface Props {
+  campaigns?: any[];
+  category?: { label: string; slug: string; color: string; description?: string | null };
+  pageTitle?: string;
+}
+
+const { campaigns = [], category, pageTitle } = Astro.props;
+
+const title = pageTitle || category?.label || 'Emergency Appeals';
+const description = category?.description || 'Your support is critical to providing life-saving aid to those affected by natural disasters, conflict, and humanitarian crises.';
+
+// Show max 3 key emergencies above the fold, rest under "More Ongoing Appeals"
+// Priority: featured first, then non-featured
+const sorted = [...campaigns.filter(c => c.is_featured), ...campaigns.filter(c => !c.is_featured)];
+const currentAppeals = sorted.slice(0, 3);
+const ongoingAppeals = sorted.slice(3);
+
+// Special pages redirect
+const specialPages: Record<string, string> = { 'qurbani': '/qurbani' };
+const getCampaignUrl = (slug: string) => specialPages[slug] || `/appeals/${slug}`;
+
+// Impact stats
+const impactStats = [
+  { value: '53+', label: 'Countries Served', icon: '🌍' },
+  { value: '2M+', label: 'Lives Impacted', icon: '❤️' },
+  { value: '100%', label: 'Zakat Policy', icon: '✅' },
+  { value: '25+', label: 'Years of Service', icon: '🕌' },
+];
+---
+
+<Layout title={title}>
+  <Navbar />
+
+  <!-- HERO SECTION with Quick Donate -->
+  <section class="relative pt-28 pb-20 md:pt-36 md:pb-24 overflow-hidden">
+    <!-- Background Image -->
+    <div class="absolute inset-0">
+      <img
+        src="/images/turkey-earthquake-qurbani-foundation.webp"
+        alt="Qurbani Foundation emergency relief response"
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#1a1a2e]/90 via-[#1a1a2e]/80 to-[#1a1a2e]/60"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <!-- Left: Text -->
+        <div>
+          <div class="inline-flex items-center gap-2 bg-[#c41e3a]/20 backdrop-blur-sm border border-[#c41e3a]/30 rounded-full px-4 py-1.5 mb-4">
+            <span class="w-2 h-2 bg-[#c41e3a] rounded-full animate-pulse"></span>
+            <span class="text-white/90 text-sm font-semibold tracking-wide">URGENT APPEAL</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4" style="font-family: 'Signika', sans-serif;">
+            Help Families Survive Crisis
+          </h1>
+          <p class="text-white/80 text-base leading-relaxed max-w-xl mb-6 md:hidden">
+            Your donation delivers food, water and emergency medical care to families affected by disaster.
+          </p>
+          <p class="text-white/80 text-base sm:text-lg leading-relaxed max-w-xl mb-6 hidden md:block">
+            Your donation delivers food, water and emergency medical care to families affected by disaster.
+          </p>
+        </div>
+
+        <!-- Right: CW Donation Box -->
+        <div class="max-w-md mx-auto lg:mx-0 lg:ml-auto w-full emergency-hero-box" id="emergency-quick-donate">
+          <style is:global>.emergency-hero-box [data-box-heading] { display: none !important; } @media (min-width: 768px) { .emergency-hero-box [data-box-heading] { display: block !important; } }</style>
+          <CWDonationBox
+            campaignSlug="emergency-relief"
+            campaignTitle="Emergency Relief"
+            cartLabel="Where Needed Most"
+            donationBoxHeading="Help Families Now"
+            tabEmoji="🆘"
+            colors={{ accentColor: '#c41e3a', accentTextColor: '#ffffff' }}
+            defaultTabIndex={1}
+            skipUpsell={false}
+            upsellSubText="Please consider joining our monthly giving community. Monthly donations help us respond faster to emergencies and support families throughout the year."
+            tabLabelMonthly="MONTHLY"
+            tabLabelOneTime="GIVE ONCE"
+            buttonTextMonthly="DONATE MONTHLY"
+            buttonTextOneTime="DONATE NOW"
+            monthlyAmounts={[25, 50, 100, 250]}
+            oneTimeAmounts={[50, 100, 250, 500]}
+            impactTexts={{
+              monthly: {
+                25: 'Provides <strong>emergency food</strong> for a family every month.',
+                50: 'Supplies <strong>clean water</strong> for families affected by disaster each month.',
+                100: 'Delivers a <strong>family relief kit</strong> with food, water & shelter supplies monthly.',
+                250: 'Funds <strong>emergency medical care</strong> for disaster survivors every month.',
+              },
+              single: {
+                50: 'Provides <strong>emergency food parcels</strong> for a family in crisis.',
+                100: 'Delivers <strong>clean water & hygiene kits</strong> to families affected by disaster.',
+                250: 'Sends a <strong>complete family relief kit</strong> with food, water, shelter & medicine.',
+                500: 'Funds <strong>emergency medical treatment</strong> and shelter for disaster survivors.',
+              }
+            }}
+            monthlyImpactText="Your monthly gift provides <strong>ongoing emergency relief</strong> to families when disaster strikes."
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Donation Impact Tiers -->
+  <section class="bg-gradient-to-b from-[#1a1a2e] to-[#2d2d44] py-5 md:py-7">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-xl md:text-2xl font-extrabold text-white text-center mb-1" style="font-family: 'Signika', sans-serif;">
+        Your Donation Makes a Real Impact
+      </h2>
+      <p class="text-white/60 text-xs text-center mb-5">Every dollar goes directly to families in crisis</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button data-impact-amount="50" class="impact-tier-card group bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-5 text-center hover:bg-[#c41e3a]/20 hover:border-[#c41e3a]/40 transition-all cursor-pointer">
+          <div class="text-3xl mb-2">🍞</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-[#c41e3a] mb-1" style="font-family: 'Signika', sans-serif;">$50</div>
+          <div class="text-white/90 text-sm font-semibold">Emergency Food</div>
+          <div class="text-white/50 text-xs mt-1">Feeds a family for a week</div>
+        </button>
+        <button data-impact-amount="100" class="impact-tier-card group bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-5 text-center hover:bg-[#c41e3a]/20 hover:border-[#c41e3a]/40 transition-all cursor-pointer">
+          <div class="text-3xl mb-2">💧</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-[#c41e3a] mb-1" style="font-family: 'Signika', sans-serif;">$100</div>
+          <div class="text-white/90 text-sm font-semibold">Water for Families</div>
+          <div class="text-white/50 text-xs mt-1">Clean water & hygiene kits</div>
+        </button>
+        <button data-impact-amount="250" class="impact-tier-card group bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-5 text-center hover:bg-[#c41e3a]/20 hover:border-[#c41e3a]/40 transition-all cursor-pointer">
+          <div class="text-3xl mb-2">📦</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-[#c41e3a] mb-1" style="font-family: 'Signika', sans-serif;">$250</div>
+          <div class="text-white/90 text-sm font-semibold">Family Relief Kit</div>
+          <div class="text-white/50 text-xs mt-1">Food, water, shelter & medicine</div>
+        </button>
+        <button data-impact-amount="500" class="impact-tier-card group bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-5 text-center hover:bg-[#c41e3a]/20 hover:border-[#c41e3a]/40 transition-all cursor-pointer">
+          <div class="text-3xl mb-2">🏥</div>
+          <div class="text-2xl md:text-3xl font-extrabold text-[#c41e3a] mb-1" style="font-family: 'Signika', sans-serif;">$500</div>
+          <div class="text-white/90 text-sm font-semibold">Emergency Medical Care</div>
+          <div class="text-white/50 text-xs mt-1">Life-saving treatment & shelter</div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Impact Stats Bar -->
+  <section class="bg-white border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {impactStats.map(stat => (
+          <div class="text-center">
+            <div class="text-3xl md:text-4xl font-extrabold text-[#D97718] mb-1" style="font-family: 'Signika', sans-serif;">{stat.value}</div>
+            <div class="text-sm text-gray-600 font-medium">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Current Emergency Appeals -->
+  {currentAppeals.length > 0 && (
+    <section class="bg-gray-50 py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-1 h-8 bg-[#c41e3a] rounded-full"></div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900" style="font-family: 'Signika', sans-serif;">
+            Current Emergency Appeals
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {currentAppeals.map(campaign => {
+            const image = campaign.featured_image || campaign.hero_image_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop';
+            const campaignName = campaign.title || campaign.name || campaign.hero_title || campaign.slug;
+            const progress = campaign.goal_amount > 0 ? Math.min(100, Math.round((campaign.raised_amount / campaign.goal_amount) * 100)) : 0;
+            const hasGoal = campaign.goal_amount > 0;
+
+            return (
+              <a href={getCampaignUrl(campaign.slug)} class="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col">
+                <!-- Image -->
+                <div class="relative aspect-[4/3] overflow-hidden">
+                  <img src={image} alt={campaignName} loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {campaign.is_featured && (
+                    <div class="absolute top-3 left-3">
+                      <span class="bg-[#c41e3a] text-white text-xs font-bold px-3 py-1 rounded-full">URGENT</span>
+                    </div>
+                  )}
+                  <!-- Title overlay on image -->
+                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-5">
+                    <h3 class="text-white text-xl md:text-2xl font-extrabold leading-snug drop-shadow-lg" style="font-family: 'Signika', sans-serif;">
+                      {campaignName}
+                    </h3>
+                  </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-5 flex-1 flex flex-col">
+                  {/* Progress Bar */}
+                  {hasGoal && (
+                    <div class="mb-3">
+                      <div class="flex justify-between text-xs text-gray-500 mb-1">
+                        <span class="font-semibold text-[#01534d]">${(campaign.raised_amount || 0).toLocaleString()} raised</span>
+                        <span>${(campaign.goal_amount || 0).toLocaleString()} goal</span>
+                      </div>
+                      <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-[#01534d] rounded-full transition-all duration-700" style={`width: ${progress}%`}></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {(campaign.short_description || campaign.description || campaign.subtitle) && (
+                    <p class="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-4 flex-1">{campaign.short_description || campaign.description || campaign.subtitle}</p>
+                  )}
+
+                  <div class="mt-auto pt-3 border-t border-gray-100">
+                    <span class="inline-flex items-center gap-2 text-[#c41e3a] font-bold text-sm group-hover:gap-3 transition-all">
+                      Donate Now
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                    </span>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Ongoing Appeals -->
+  {ongoingAppeals.length > 0 && (
+    <section class="bg-white py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-1 h-8 bg-[#D97718] rounded-full"></div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900" style="font-family: 'Signika', sans-serif;">
+            More Ongoing Appeals
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ongoingAppeals.map(campaign => {
+            const image = campaign.featured_image || campaign.hero_image_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop';
+            const campaignName = campaign.title || campaign.name || campaign.hero_title || campaign.slug;
+            return (
+              <a href={getCampaignUrl(campaign.slug)} class="group bg-white rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-1 flex flex-col">
+                <div class="relative aspect-[3/2] overflow-hidden">
+                  <img src={image} alt={campaignName} loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <!-- Title overlay on image -->
+                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-5">
+                    <h3 class="text-white text-lg md:text-xl font-extrabold leading-snug drop-shadow-lg" style="font-family: 'Signika', sans-serif;">
+                      {campaignName}
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-5 flex-1 flex flex-col">
+                  {(campaign.short_description || campaign.description || campaign.subtitle) && (
+                    <p class="text-gray-600 text-sm leading-relaxed line-clamp-2 flex-1">{campaign.short_description || campaign.description || campaign.subtitle}</p>
+                  )}
+                  <div class="mt-3 pt-3 border-t border-gray-100">
+                    <span class="inline-flex items-center gap-2 text-[#D97718] font-semibold text-sm group-hover:gap-3 transition-all">
+                      Donate Now
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                    </span>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Emergency Response Fund CTA -->
+  <section class="bg-[#1a1a2e] py-12 md:py-16 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div class="relative rounded-2xl overflow-hidden aspect-[4/3] md:aspect-auto md:h-full min-h-[250px]">
+          <img src="/images/turkey-earthquake-qurbani-foundation.webp" alt="Emergency response" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-r from-[#1a1a2e]/40 to-transparent"></div>
+        </div>
+        <div class="py-4 md:py-8">
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-4" style="font-family: 'Signika', sans-serif;">
+            Help us respond rapidly to crises when disaster strikes
+          </h2>
+          <p class="text-white/80 text-base leading-relaxed mb-4">
+            Qurbani Foundation aims to be the first on the ground when a crisis hits, providing emergency relief and helping those affected immediately through our Emergency Response fund.
+          </p>
+          <p class="text-white/70 text-sm leading-relaxed mb-6">
+            When floods, droughts or earthquakes happen, we are there, aiming to provide life-saving aid such as food, water, shelter, medicine and other essential items to families who have lost everything.
+          </p>
+          <a href="/appeals" class="inline-flex items-center gap-2 bg-[#c41e3a] hover:bg-[#a51830] text-white font-bold px-6 py-3.5 rounded-xl transition-all hover:shadow-lg text-base" style="font-family: 'Signika', sans-serif;">
+            Emergency Response Fund
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Give Section -->
+  <section class="bg-white py-12 md:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900 text-center mb-10" style="font-family: 'Signika', sans-serif;">
+        Why Give to Emergency Appeals?
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+          <div class="w-14 h-14 bg-[#c41e3a]/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#c41e3a]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">Immediate Impact</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Funds are deployed within 48 hours of a crisis. Your donation provides immediate relief when it's needed most.</p>
+        </div>
+        <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+          <div class="w-14 h-14 bg-[#01534d]/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#01534d]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">100% Zakat Policy</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Every cent of your Zakat reaches those in need. We cover administrative costs separately so your full donation has maximum impact.</p>
+        </div>
+        <div class="text-center p-6 rounded-2xl bg-gray-50 border border-gray-100">
+          <div class="w-14 h-14 bg-[#D97718]/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#D97718]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2" style="font-family: 'Signika', sans-serif;">On the Ground</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">With local teams across 53+ countries, we respond quickly with culturally sensitive, effective humanitarian aid where it's needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Zakat & Sadaqah CTA -->
+  <section class="bg-[#01534d] py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div>
+        <h2 class="text-xl md:text-2xl font-extrabold text-white" style="font-family: 'Signika', sans-serif;">
+          Your Zakat & Sadaqah Makes an Impact
+        </h2>
+        <p class="text-white/80 text-sm mt-1">100% of your Zakat reaches those in need. We cover administrative costs separately.</p>
+      </div>
+      <a href="/zakat/zakat-calculator" class="inline-flex items-center gap-2 bg-[#D97718] hover:bg-[#c06a14] text-white font-bold px-6 py-3.5 rounded-xl transition-all hover:shadow-lg whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
+        Calculate Zakat
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Sticky Mobile Quick Donate Bar -->
+  <div class="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[#c41e3a] shadow-[0_-4px_20px_rgba(0,0,0,0.2)] px-4 py-3" id="mobile-sticky-donate">
+    <div class="flex items-center gap-3">
+      <span class="text-white font-bold text-sm whitespace-nowrap flex-shrink-0">Emergency Appeal</span>
+      <div class="relative flex-1">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+        <input type="number" id="mobile-sticky-amount" value="100" class="w-full pl-7 pr-3 py-2.5 rounded-lg text-sm font-bold text-[#333] border-none focus:outline-none" />
+      </div>
+      <button id="mobile-sticky-donate-btn" class="bg-white text-[#c41e3a] font-extrabold px-5 py-2.5 rounded-lg text-sm whitespace-nowrap hover:bg-gray-50 transition cursor-pointer" style="font-family: 'Signika', sans-serif;">
+        Donate
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom padding for sticky bar on mobile -->
+  <div class="h-16 md:hidden"></div>
+
+  <Footer />
+</Layout>
+
+<script is:inline>
+  // ===== STICKY MOBILE BAR =====
+  function addEmergencyToCart(amount) {
+    if (typeof window.addToCart === 'function') {
+      window.addToCart({
+        id: 'emergency-relief-' + Date.now(),
+        name: 'Emergency Relief',
+        label: 'Where Needed Most',
+        amount: amount,
+        quantity: 1,
+        type: 'single',
+        campaign: 'emergency-relief',
+      });
+    }
+  }
+
+  // ===== STICKY MOBILE BAR =====
+  const mobileStickyBtn = document.getElementById('mobile-sticky-donate-btn');
+  const mobileStickyAmount = document.getElementById('mobile-sticky-amount');
+
+  if (mobileStickyBtn && mobileStickyAmount) {
+    mobileStickyBtn.addEventListener('click', () => {
+      const amount = parseInt(mobileStickyAmount.value) || 100;
+      addEmergencyToCart(amount);
+    });
+  }
+
+  // ===== IMPACT TIER CARDS — add to cart & open checkout =====
+  document.querySelectorAll('.impact-tier-card').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      e.preventDefault();
+      var amount = parseInt(card.getAttribute('data-impact-amount'));
+      if (!amount) return;
+      addEmergencyToCart(amount);
+    });
+  });
+
+  // Hide sticky bar when hero donate is visible
+  const heroCard = document.getElementById('emergency-quick-donate');
+  const stickyBar = document.getElementById('mobile-sticky-donate');
+  if (heroCard && stickyBar) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        stickyBar.style.transform = entry.isIntersecting ? 'translateY(100%)' : 'translateY(0)';
+        stickyBar.style.transition = 'transform 0.3s ease';
+      });
+    }, { threshold: 0.1 });
+    observer.observe(heroCard);
+  }
+</script>

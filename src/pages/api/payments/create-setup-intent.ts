@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import Stripe from 'stripe';
+import { getStripe } from '../../../lib/stripe-cache';
 
 export const prerender = false;
 
@@ -30,22 +30,8 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Get Stripe secret key from settings
-    const { data: settings } = await supabaseAdmin
-      .from('site_settings')
-      .select('stripe_secret_key, stripe_enabled')
-      .single();
-
-    if (!settings?.stripe_enabled || !settings?.stripe_secret_key) {
-      return new Response(JSON.stringify({ error: 'Stripe is not configured' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const stripe = new Stripe(settings.stripe_secret_key, {
-      apiVersion: '2023-10-16',
-    });
+    // Get cached Stripe instance
+    const stripe = await getStripe();
 
     // Create or retrieve Stripe customer
     let stripeCustomerId: string;
@@ -53,8 +39,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (customers.data.length > 0) {
       stripeCustomerId = customers.data[0].id;
-      // Update with latest info
-      await stripe.customers.update(stripeCustomerId, {
+      // Update with latest info (fire-and-forget — don't block setup)
+      stripe.customers.update(stripeCustomerId, {
         name: `${customer.firstName} ${customer.lastName}`.trim() || undefined,
         phone: customer.phone || undefined,
         address: billingAddress ? {
@@ -65,7 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
           postal_code: billingAddress.postal_code,
           country: billingAddress.country,
         } : undefined,
-      });
+      }).catch((e: any) => console.error('Customer update error:', e));
     } else {
       const newCustomer = await stripe.customers.create({
         email: customer.email,

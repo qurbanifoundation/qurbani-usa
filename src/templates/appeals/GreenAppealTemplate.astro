@@ -2,6 +2,7 @@
 /**
  * Green Appeal Template
  * Teal/Blue (#255764) color scheme with orange accents
+ * Accepts optional props for category-filtered view
  */
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
@@ -10,23 +11,34 @@ import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
 
-// Fetch all active campaigns from database
-let campaigns: any[] = [];
-try {
-  const { data, error } = await supabaseAdmin
-    .from('campaigns')
-    .select('*')
-    .eq('is_active', true)
-    .order('is_featured', { ascending: false })
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: false });
-
-  if (!error && data) {
-    campaigns = data;
-  }
-} catch (e) {
-  console.error('Error fetching campaigns:', e);
+interface Props {
+  campaigns?: any[];
+  category?: { label: string; slug: string; color: string; description?: string | null };
+  pageTitle?: string;
 }
+const { campaigns: propCampaigns, category: propCategory, pageTitle } = Astro.props;
+
+// Use prop campaigns if provided (category-filtered), otherwise fetch all
+let campaigns: any[] = propCampaigns || [];
+if (!propCampaigns) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('is_active', true)
+      .order('is_featured', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      campaigns = data;
+    }
+  } catch (e) {
+    console.error('Error fetching campaigns:', e);
+  }
+}
+
+const isCategoryView = !!propCategory;
 
 // Get unique categories from campaigns
 const campaignCategories = [...new Set(campaigns.map(c => c.category).filter(Boolean))];
@@ -74,13 +86,14 @@ const impactStats = [
     <!-- Background Image -->
     <div class="absolute inset-0">
       <img
-        src="https://images.unsplash.com/photo-1509099836639-18ba1795216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-        alt="Joyful children - making a difference"
+        src="/images/turkey-earthquake-qurbani-foundation.webp"
+        alt="Qurbani Foundation emergency relief and humanitarian aid worldwide"
+        title="Appeals - Support Qurbani Foundation Humanitarian Projects"
         class="w-full h-full object-cover object-top"
         loading="eager"
       />
       <!-- Gradient Overlay -->
-      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/95 via-[#255764]/85 to-[#255764]/70"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#255764]/80 via-[#255764]/60 to-[#255764]/40"></div>
     </div>
 
     <!-- Islamic Geometric Pattern Border -->

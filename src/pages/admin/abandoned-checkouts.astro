@@ -231,6 +231,7 @@ const showPagination = totalPages > 1;
               <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
               <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Donor</th>
               <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Campaign</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Source</th>
               <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
               <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
               <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Emails</th>
@@ -250,6 +251,26 @@ const showPagination = totalPages > 1;
                 <td class="px-4 py-3">
                   <div class="text-sm text-gray-700">{c.campaign_slug || '-'}</div>
                   <div class="text-xs text-gray-400 capitalize">{c.campaign_type || ''}</div>
+                </td>
+                <td class="px-4 py-3">
+                  {c.checkout_source ? (
+                    <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700">{c.checkout_source}</span>
+                  ) : (
+                    <span class="text-gray-300 text-xs">-</span>
+                  )}
+                  {c.utm_source && (
+                    <div class="mt-1 flex flex-wrap gap-0.5">
+                      <span class="inline-block px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-medium rounded" title="utm_source">{c.utm_source}</span>
+                      {c.utm_medium && <span class="inline-block px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-medium rounded" title="utm_medium">{c.utm_medium}</span>}
+                      {c.utm_campaign && <span class="inline-block px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-medium rounded" title="utm_campaign">{c.utm_campaign}</span>}
+                    </div>
+                  )}
+                  {(c.utm_content || c.utm_term) && (
+                    <div class="mt-0.5 flex flex-wrap gap-0.5">
+                      {c.utm_content && <span class="inline-block px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-medium rounded" title="utm_content">{c.utm_content}</span>}
+                      {c.utm_term && <span class="inline-block px-1.5 py-0.5 bg-pink-50 text-pink-600 text-[9px] font-medium rounded" title="utm_term">{c.utm_term}</span>}
+                    </div>
+                  )}
                 </td>
                 <td class="px-4 py-3 text-sm font-medium text-gray-800 text-right whitespace-nowrap">{formatAmount(c.amount)}</td>
                 <td class="px-4 py-3 text-center">

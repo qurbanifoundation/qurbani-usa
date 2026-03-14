@@ -4,7 +4,6 @@ import { trackDonation, trackRefund, markReceiptSent, moveDonationThroughPipelin
 import { calculateFulfillmentDate, calculateEmailSendTime, detectTimezone } from '../../../lib/fulfillment';
 import {
   notifyDonationReceived,
-  notifySubscriptionStarted,
   notifySubscriptionCancelled,
   notifyPaymentFailed,
   notifyRefund,
@@ -307,6 +306,10 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         stripePaymentId: paymentIntent.id,
         donationId: donation.id,
         currency: donation.currency || 'USD',
+        utmSource: donation.metadata?.utm_source || paymentIntent.metadata?.utm_source || '',
+        utmMedium: donation.metadata?.utm_medium || paymentIntent.metadata?.utm_medium || '',
+        utmCampaign: donation.metadata?.utm_campaign || paymentIntent.metadata?.utm_campaign || '',
+        utmContent: donation.metadata?.utm_content || paymentIntent.metadata?.utm_content || '',
       });
 
       console.log('Donation synced to GHL:', {
@@ -323,57 +326,92 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       console.error('GHL sync error:', ghlError);
     }
 
-    // Send admin notification (GHL)
+    // Send admin notification with attribution + donor history
+    const donationMeta = donation.metadata || paymentIntent.metadata || {};
+
+    // Query donor lifetime stats for admin notification
+    let donorHistory = { donation_count: 0, lifetime_total: 0, first_donation: null as string | null, last_donation: null as string | null };
+    try {
+      const { data: historyData } = await supabaseAdmin
+        .from('donations')
+        .select('amount, created_at')
+        .eq('donor_email', donation.donor_email)
+        .eq('status', 'completed');
+      if (historyData && historyData.length > 0) {
+        donorHistory.donation_count = historyData.length;
+        donorHistory.lifetime_total = historyData.reduce((sum: number, d: any) => sum + (parseFloat(d.amount) || 0), 0);
+        const dates = historyData.map((d: any) => d.created_at).sort();
+        donorHistory.first_donation = dates[0];
+        donorHistory.last_donation = dates[dates.length - 1];
+      }
+    } catch (historyError) {
+      console.error('Error fetching donor history:', historyError);
+    }
+
     await notifyDonationReceived({
       amount: parseFloat(donation.amount),
       donorName: donation.donor_name,
       donorEmail: donation.donor_email,
       items: items,
       type: donation.donation_type,
+      attribution: {
+        utm_source: donationMeta.utm_source || '',
+        utm_medium: donationMeta.utm_medium || '',
+        utm_campaign: donationMeta.utm_campaign || '',
+        utm_content: donationMeta.utm_content || '',
+        checkout_source: donationMeta.checkout_source || '',
+        journey: donationMeta.journey || null,
+      },
+      donorHistory,
     });
 
-    // Fetch subscription management URL for recurring donations
-    let managementUrl: string | undefined;
-    if (donation.is_recurring || donation.donation_type === 'monthly' || donation.donation_type === 'weekly') {
-      const { data: sub } = await supabaseAdmin
-        .from('donation_subscriptions')
-        .select('id, management_token')
-        .eq('donor_email', donation.donor_email)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      if (sub?.management_token) {
-        managementUrl = `https://www.qurbani.com/manage-subscription/${sub.id}_${sub.management_token}`;
+    // Skip receipt if already sent (e.g., mixed cart handled by create-subscription.ts)
+    if (donation.receipt_sent) {
+      console.log('Receipt already sent for donation:', donation.id, '— skipping duplicate email from webhook');
+    } else {
+      // Fetch subscription management URL for recurring donations
+      let managementUrl: string | undefined;
+      if (donation.is_recurring || donation.donation_type === 'monthly' || donation.donation_type === 'weekly') {
+        const { data: sub } = await supabaseAdmin
+          .from('donation_subscriptions')
+          .select('id, management_token')
+          .eq('donor_email', donation.donor_email)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (sub?.management_token) {
+          managementUrl = `https://www.qurbani.com/manage-subscription/${sub.id}_${sub.management_token}`;
+        }
       }
+
+      // Send donor receipt email (Resend + log to GHL Conversations)
+      await sendDonationReceipt({
+        donorEmail: donation.donor_email,
+        donorName: donation.donor_name,
+        amount: parseFloat(donation.amount),
+        items: items,
+        transactionId: paymentIntent.id,
+        donationType: (donation.donation_type as 'single' | 'monthly' | 'weekly') || 'single',
+        date: new Date(),
+        billingAddress: donation.metadata?.billing_address,
+        managementUrl,
+      });
+
+      // Mark receipt as sent in Supabase + GHL
+      await supabaseAdmin
+        .from('donations')
+        .update({ receipt_sent: true })
+        .eq('id', donation.id);
+
+      await markReceiptSent(donation.donor_email).catch(err =>
+        console.error('GHL markReceiptSent error:', err)
+      );
+
+      // Move pipeline: Payment Received → Receipt Sent
+      await moveDonationThroughPipeline(donation.donor_email, 'receipt sent')
+        .catch(err => console.error('GHL pipeline move to Receipt Sent error:', err));
     }
-
-    // Send donor receipt email (Resend + log to GHL Conversations)
-    await sendDonationReceipt({
-      donorEmail: donation.donor_email,
-      donorName: donation.donor_name,
-      amount: parseFloat(donation.amount),
-      items: items,
-      transactionId: paymentIntent.id,
-      donationType: (donation.donation_type as 'single' | 'monthly' | 'weekly') || 'single',
-      date: new Date(),
-      billingAddress: donation.metadata?.billing_address,
-      managementUrl,
-    });
-
-    // Mark receipt as sent in Supabase + GHL
-    await supabaseAdmin
-      .from('donations')
-      .update({ receipt_sent: true })
-      .eq('id', donation.id);
-
-    await markReceiptSent(donation.donor_email).catch(err =>
-      console.error('GHL markReceiptSent error:', err)
-    );
-
-    // Move pipeline: Payment Received → Receipt Sent
-    await moveDonationThroughPipeline(donation.donor_email, 'receipt sent')
-      .catch(err => console.error('GHL pipeline move to Receipt Sent error:', err));
   }
 
   // PRIMARY GA4 tracking via Measurement Protocol (server-side)
@@ -390,6 +428,10 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     items: items,
     campaignName: donation?.campaign_name || 'General Donation',
     donationType: donation?.donation_type || 'single',
+    utmSource: donation?.metadata?.utm_source || paymentIntent.metadata?.utm_source || '',
+    utmMedium: donation?.metadata?.utm_medium || paymentIntent.metadata?.utm_medium || '',
+    utmCampaign: donation?.metadata?.utm_campaign || paymentIntent.metadata?.utm_campaign || '',
+    utmContent: donation?.metadata?.utm_content || paymentIntent.metadata?.utm_content || '',
   });
 
   // Detect and mark recovered abandoned checkouts
@@ -546,17 +588,27 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     console.error('Error updating subscription:', error);
   }
 
-  // Send admin notification (GHL)
+  // Admin notification already sent by create-subscription.ts with full data
+  // (campaign, attribution, journey). Skipping duplicate here to avoid
+  // sending a second "New Recurring Donor!" email with missing context.
   if (subRecord) {
-    await notifySubscriptionStarted({
-      amount: parseFloat(subRecord.amount),
-      donorName: subRecord.donor_name || 'Unknown',
-      donorEmail: subRecord.donor_email || 'Unknown',
-      interval: subRecord.interval || 'monthly',
-    });
-
-    // Send donor confirmation email (Resend + log to GHL Conversations)
+    // Check if receipt was already sent by create-subscription.ts (prevents duplicate email)
+    let receiptAlreadySent = false;
     if (subRecord.donor_email) {
+      const { data: existingDonation } = await supabaseAdmin
+        .from('donations')
+        .select('receipt_sent')
+        .eq('stripe_subscription_id', subscription.id)
+        .eq('receipt_sent', true)
+        .limit(1)
+        .maybeSingle();
+      receiptAlreadySent = !!existingDonation;
+    }
+
+    if (receiptAlreadySent) {
+      console.log('Receipt already sent for subscription:', subscription.id, '— skipping duplicate confirmation email');
+    } else if (subRecord.donor_email) {
+      // Send donor confirmation email (Resend + log to GHL Conversations)
       // Calculate next billing date
       const nextBillingDate = subRecord.next_billing_date
         ? new Date(subRecord.next_billing_date)
@@ -584,8 +636,10 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         items: items,
         managementUrl: subManagementUrl,
       });
+    }
 
-      // Move GHL pipeline to "Active Subscriber" for recurring donors
+    // Move GHL pipeline to "Active Subscriber" for recurring donors (always, regardless of email)
+    if (subRecord.donor_email) {
       await moveDonationThroughPipeline(subRecord.donor_email, 'active subscriber')
         .catch(err => console.error('GHL pipeline move to Active Subscriber error:', err));
     }
@@ -831,6 +885,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
         stripePaymentId: paymentIntentId,
         donationId: donation?.id,
         currency: subscriptionRecord.currency || 'USD',
+        utmSource: donation?.metadata?.utm_source || subscriptionRecord.metadata?.utm_source || '',
+        utmMedium: donation?.metadata?.utm_medium || subscriptionRecord.metadata?.utm_medium || '',
+        utmCampaign: donation?.metadata?.utm_campaign || subscriptionRecord.metadata?.utm_campaign || '',
+        utmContent: donation?.metadata?.utm_content || subscriptionRecord.metadata?.utm_content || '',
       });
 
       console.log('Recurring donation synced to GHL:', {
@@ -869,6 +927,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
       items: recurringItems.length > 0 ? recurringItems : [{ name: 'Recurring Donation', amount: parseFloat(subscriptionRecord.amount) }],
       campaignName: recurringItems.length > 0 ? recurringItems[0].name : (isWeekly ? 'Jummah Donation' : 'Monthly Donation'),
       donationType: donationType,
+      utmSource: donation?.metadata?.utm_source || subscriptionRecord.metadata?.utm_source || '',
+      utmMedium: donation?.metadata?.utm_medium || subscriptionRecord.metadata?.utm_medium || '',
+      utmCampaign: donation?.metadata?.utm_campaign || subscriptionRecord.metadata?.utm_campaign || '',
+      utmContent: donation?.metadata?.utm_content || subscriptionRecord.metadata?.utm_content || '',
     });
   }
 
@@ -1166,6 +1228,11 @@ interface GA4PurchaseParams {
   items: Array<{ name: string; amount: number; quantity?: number }>;
   campaignName: string;
   donationType: string;
+  // UTM campaign attribution (from email/ad campaigns)
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
 }
 
 async function sendGA4PurchaseEvent(params: GA4PurchaseParams): Promise<void> {
@@ -1191,6 +1258,14 @@ async function sendGA4PurchaseEvent(params: GA4PurchaseParams): Promise<void> {
 
     const mpPayload = {
       client_id: clientId,
+      // UTM campaign attribution — tells GA4 which marketing channel drove this purchase
+      ...(params.utmSource ? {
+        traffic_source: {
+          source: params.utmSource,
+          medium: params.utmMedium || 'email',
+          campaign: params.utmCampaign || '',
+        },
+      } : {}),
       events: [{
         name: 'purchase',
         params: {
@@ -1202,6 +1277,11 @@ async function sendGA4PurchaseEvent(params: GA4PurchaseParams): Promise<void> {
           // Custom dimensions for reporting
           campaign_name: params.campaignName,
           donation_type: params.donationType,
+          // UTM params as custom dimensions for drill-down reporting
+          ...(params.utmSource ? { utm_source: params.utmSource } : {}),
+          ...(params.utmMedium ? { utm_medium: params.utmMedium } : {}),
+          ...(params.utmCampaign ? { utm_campaign: params.utmCampaign } : {}),
+          ...(params.utmContent ? { utm_content: params.utmContent } : {}),
           items: params.items.map((item) => ({
             item_id: (item.name || 'donation').toLowerCase().replace(/\s+/g, '-'),
             item_name: item.name || 'Donation',

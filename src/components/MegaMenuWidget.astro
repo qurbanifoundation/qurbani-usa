@@ -23,7 +23,34 @@ const isInteractive = config.interactive === true;
 ---
 
 {/* Link List Widget */}
-{widget_type === 'link-list' && (
+{widget_type === 'link-list' && config.style === 'cards' && (
+  <div class="widget-link-list-cards px-3 py-2 rounded-2xl h-full" style={config.bgColor ? `background-color: ${config.bgColor};` : ''}>
+    {title && <p class="text-[18px] font-bold text-[#333] mb-3 px-1" style="font-family: 'Signika', sans-serif;">{title}</p>}
+    {(config.links || []).map((link: any, index: number) => (
+      <Fragment>
+        {link.section && (
+          <p class={`text-[18px] font-bold text-[#333] ${index > 0 ? 'mt-5' : ''} mb-3 px-1`} style="font-family: 'Signika', sans-serif;">{link.section}</p>
+        )}
+        <a href={link.href} class="mega-card-link flex items-center gap-3 px-4 py-3 rounded-xl mb-1.5 transition-all hover:shadow-md hover:-translate-y-[1px] border border-transparent hover:border-gray-200/80" style={`background-color: ${config.cardColor || '#FDFAF4'}; box-shadow: 0 1px 3px rgba(0,0,0,0.04);`}>
+          {link.emoji && (
+            <span class="text-[24px] flex-shrink-0 leading-none">{link.emoji}</span>
+          )}
+          {link.icon && !link.emoji && (
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color || menuColor}`}>
+              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(link.icon)} />
+            </div>
+          )}
+          <span class="flex-1 font-semibold text-[#333] text-[15px]">{link.label}</span>
+          <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </a>
+      </Fragment>
+    ))}
+  </div>
+)}
+
+{widget_type === 'link-list' && config.style !== 'cards' && (
   <div class="widget-link-list">
     {title && <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">{title}</p>}
     <nav class="space-y-0">
@@ -32,20 +59,26 @@ const isInteractive = config.interactive === true;
         const hoverBg = config.hoverColor || (menuId === 'ramadan' ? `${menuColor}10` : '#fbefdd');
         const isLast = index === (config.links || []).length - 1;
         return (
-          <a href={link.href} class={`mega-link w-full flex items-center gap-3 px-4 py-2.5 transition-colors ${!isLast ? 'border-b border-gray-200/60' : ''}`} style={`--hover-bg: ${hoverBg}`}>
-            {link.icon && (
-              <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color || menuColor}`}>
-                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(link.icon)} />
-              </div>
+          <Fragment>
+            {/* Section header — rendered when a link has a "section" property */}
+            {link.section && (
+              <p class={`text-xs font-bold text-gray-400 uppercase tracking-wider px-4 ${index > 0 ? 'pt-3 mt-1 border-t border-gray-100' : ''} pb-1`}>{link.section}</p>
             )}
-            <div class="flex-1">
-              <span class="font-medium text-[#333] text-[15px]">{link.label}</span>
-              {link.subtitle && <span class="block text-xs" style={`color: ${link.color || menuColor}`}>{link.subtitle}</span>}
-            </div>
-            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </a>
+            <a href={link.href} class={`mega-link w-full flex items-center gap-3 px-4 py-2.5 transition-colors ${!isLast ? 'border-b border-gray-200/60' : ''}`} style={`--hover-bg: ${hoverBg}`}>
+              {link.icon && (
+                <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color || menuColor}`}>
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(link.icon)} />
+                </div>
+              )}
+              <div class="flex-1">
+                <span class="font-medium text-[#333] text-[15px]">{link.label}</span>
+                {link.subtitle && <span class="block text-xs" style={`color: ${link.color || menuColor}`}>{link.subtitle}</span>}
+              </div>
+              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </Fragment>
         );
       })}
     </nav>
@@ -57,25 +90,46 @@ const isInteractive = config.interactive === true;
   <div class="widget-info-box">
     {title && <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">{title}</p>}
 
-    {/* Content Box Layout (heading + description + embedded stats) - for Zakat style */}
-    {config.heading && config.description && (
+    {/* Content Box Layout (heading + description) - full cover centered style */}
+    {config.heading && config.description && !config.stats && (() => {
+      const btnColor = config.button?.color || menuColor;
+      // Split heading on "in " to put the second part on a new line
+      const headingParts = config.heading.includes(' in ') ? config.heading.split(/ in (.+)/) : null;
+      return (
+        <div class="flex flex-col items-start justify-center h-full rounded-lg px-8 py-10 bg-white" style="border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+          {headingParts ? (
+            <h3 class="text-[30px] leading-[1.15] font-extrabold text-[#333] mb-3" style="font-family: 'Signika', sans-serif;">
+              {headingParts[0]}<br /><span style={`color: ${btnColor};`}>in {headingParts[1]}</span>
+            </h3>
+          ) : (
+            <h3 class="text-[30px] leading-[1.15] font-extrabold text-[#333] mb-3" style="font-family: 'Signika', sans-serif;">{config.heading}</h3>
+          )}
+          <p class="text-base text-gray-500 mb-8">{config.description}</p>
+          {config.button && (
+            <a href={config.button.href} class="w-full block text-white font-bold py-4 rounded text-center transition-all text-[16px] hover:shadow-lg hover:-translate-y-[1px] active:translate-y-[1px]" style={`background-color: ${btnColor}; box-shadow: 0 8px 24px ${btnColor}40; font-family: 'Signika', sans-serif;`}>
+              {config.button.label}
+            </a>
+          )}
+        </div>
+      );
+    })()}
+
+    {/* Content Box Layout (heading + description + embedded stats) */}
+    {config.heading && config.description && config.stats && config.stats.length > 0 && (
       <div class="bg-white rounded-xl p-5 border border-gray-100 mb-4">
         <h4 class="font-bold text-[#333] mb-2" style="font-family: 'Signika', sans-serif;">{config.heading}</h4>
         <p class="text-sm text-gray-600 mb-3">{config.description}</p>
-        {/* Embedded Stats */}
-        {config.stats && config.stats.length > 0 && (
-          <div class="grid grid-cols-2 gap-3 text-center">
-            {config.stats.map((stat: any) => {
-              const bgColor = stat.bgColor || (stat.color === '#eab308' ? '#fef3c7' : `${stat.color}15`);
-              return (
-                <a href={stat.href || '#'} class="rounded-lg p-3 transition-colors block hover:opacity-80" style={`background-color: ${bgColor}`}>
-                  <p class="text-2xl font-bold" style={`color: ${stat.color || menuColor}`}>{stat.value}</p>
-                  <p class="text-xs text-gray-600">{stat.label}</p>
-                </a>
-              );
-            })}
-          </div>
-        )}
+        <div class="grid grid-cols-2 gap-3 text-center">
+          {config.stats.map((stat: any) => {
+            const bgColor = stat.bgColor || (stat.color === '#eab308' ? '#fef3c7' : `${stat.color}15`);
+            return (
+              <a href={stat.href || '#'} class="rounded-lg p-3 transition-colors block hover:opacity-80" style={`background-color: ${bgColor}`}>
+                <p class="text-2xl font-bold" style={`color: ${stat.color || menuColor}`}>{stat.value}</p>
+                <p class="text-xs text-gray-600">{stat.label}</p>
+              </a>
+            );
+          })}
+        </div>
       </div>
     )}
 
@@ -91,8 +145,8 @@ const isInteractive = config.interactive === true;
       </div>
     )}
 
-    {/* Button */}
-    {config.button && (
+    {/* Standalone Button (only when no heading/description layout handles it) */}
+    {config.button && !(config.heading && config.description && !config.stats) && (
       <a href={config.button.href} class="block w-full text-white font-semibold py-2.5 rounded-full text-center transition text-[15px] hover:opacity-90" style={`background-color: ${config.button.color || menuColor}`}>
         {config.button.label}
       </a>
@@ -101,40 +155,93 @@ const isInteractive = config.interactive === true;
 )}
 
 {/* Quick Form Widget */}
-{widget_type === 'quick-form' && (
+{widget_type === 'quick-form' && (() => {
+  const btnColor = config.buttonColor || menuColor;
+  const darkerColor = config.buttonColorDark || btnColor;
+  return (
   <div class="widget-quick-form">
-    <div class="bg-white rounded-xl p-5 shadow-lg border border-gray-100" data-quick-donate data-fund-type={config.fundType || 'donation'} data-campaign-slug={config.campaignSlug || ''} data-item-name={config.itemName || title || config.title || 'Donation'}>
-      {(title || config.title) && <h4 class="text-xl font-bold text-[#333] text-center mb-1" style="font-family: 'Signika', sans-serif;">{title || config.title}</h4>}
-      {config.subtitle && <p class="text-[13px] text-gray-500 text-center mb-4">{config.subtitle}</p>}
-      {config.amounts && config.amounts.length > 0 && (
-        <div class="grid grid-cols-3 gap-2 mb-4">
-          {config.amounts.slice(0, 3).map((amount: number, index: number) => (
-            <button
-              class:list={[
-                'zakat-amount-btn py-3 border-2 rounded-lg bg-white font-bold text-lg transition cursor-pointer',
-                amount === (config.defaultAmount || config.amounts[config.amounts.length - 1])
-                  ? 'border-[#0096D6] bg-blue-50 text-[#0096D6]'
-                  : 'border-gray-200 text-[#333] hover:border-[#0096D6] hover:bg-blue-50'
-              ]}
-              style={amount === (config.defaultAmount || config.amounts[config.amounts.length - 1]) ? `border-color: ${config.buttonColor || menuColor}; color: ${config.buttonColor || menuColor}` : ''}
-              data-amount={amount}
-            >
-              ${amount}
-            </button>
-          ))}
+    <div class="qf-card rounded-lg overflow-hidden" style={`box-shadow: 0 20px 60px ${btnColor}30, 0 4px 12px rgba(0,0,0,0.1);`} data-quick-donate data-fund-type={config.fundType || 'donation'} data-campaign-slug={config.campaignSlug || ''} data-item-name={config.itemName || title || config.title || 'Donation'}>
+      {/* ── Header ── */}
+      <div class="relative px-6 pt-6 pb-5 text-center overflow-hidden" style={`background: linear-gradient(160deg, ${btnColor} 0%, ${darkerColor} 100%);`}>
+        {/* Decorative circles */}
+        <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10" style="background: white;"></div>
+        <div class="absolute -bottom-4 -left-4 w-16 h-16 rounded-full opacity-[0.07]" style="background: white;"></div>
+        <div class="relative z-10">
+          {(title || config.title) && <h4 class="text-[22px] font-extrabold text-white tracking-tight" style="font-family: 'Signika', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">{title || config.title}</h4>}
+          {config.subtitle && <p class="text-[13px] text-white/75 mt-1">{config.subtitle}</p>}
         </div>
-      )}
-      <div class="relative mb-4">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-semibold">$</span>
-        <input type="number" placeholder={config.placeholder || 'Other amount'} class="quick-donate-input w-full pl-8 pr-3 py-3 border-2 border-gray-200 rounded-lg bg-[#f9f9f9] text-base font-semibold text-[#333] focus:outline-none focus:bg-white transition" style={`--focus-color: ${config.buttonColor || menuColor}`} />
       </div>
-      <button type="button" class="quick-donate-pay block w-full text-white font-bold py-3.5 rounded-lg transition text-base text-center cursor-pointer border-none" style={`background-color: ${config.button?.color || config.buttonColor || menuColor}; font-family: 'Signika', sans-serif; letter-spacing: 0.02em;`}>
-        {config.button?.label || config.buttonText || 'Donate Now'} &rarr;
-      </button>
-      {config.footnote && <p class="text-xs text-gray-400 text-center mt-3 leading-relaxed">{config.footnote}</p>}
+
+      {/* ── Body ── */}
+      <div class="bg-white px-6 pt-5 pb-6">
+        {/* Amount buttons */}
+        {config.amounts && config.amounts.length > 0 && (
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            {config.amounts.slice(0, 3).map((amount: number) => {
+              const isDefault = amount === (config.defaultAmount || config.amounts[1] || config.amounts[config.amounts.length - 1]);
+              return (
+                <button
+                  class:list={[
+                    'qf-amount-btn zakat-amount-btn relative py-3.5 rounded font-bold text-[17px] transition-all duration-200 cursor-pointer border-2',
+                    isDefault
+                      ? 'text-white shadow-lg ring-2 ring-offset-1'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                  ]}
+                  style={isDefault ? `background: ${btnColor}; border-color: ${btnColor}; color: white; --tw-ring-color: ${btnColor}44;` : ''}
+                  data-amount={amount}
+                >
+                  {isDefault && <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase tracking-[0.08em] px-2.5 py-[3px] rounded-full text-white whitespace-nowrap shadow-sm" style={`background: ${darkerColor};`}>Popular</span>}
+                  ${amount}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Custom amount */}
+        <div class="relative mb-5">
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center pointer-events-none">
+            <span class="text-gray-500 text-sm font-bold">$</span>
+          </div>
+          <input type="number" placeholder={config.placeholder || 'Enter custom amount'} class="quick-donate-input w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style={`--focus-color: ${btnColor};`} onfocus={`this.style.borderColor='${btnColor}'; this.style.boxShadow='0 0 0 3px ${btnColor}15'`} onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" />
+        </div>
+
+        {/* Fund Type Dropdown */}
+        {config.fundTypes && config.fundTypes.length > 0 && (
+          <div class="relative mb-4">
+            <select class="quick-donate-fund-type w-full py-3 px-4 border-2 border-gray-200 rounded bg-white text-[15px] font-semibold text-[#333] appearance-none cursor-pointer focus:outline-none transition" style={`background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center;`} onfocus={`this.style.borderColor='${btnColor}'; this.style.boxShadow='0 0 0 3px ${btnColor}15'`} onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+              {config.fundTypes.map((ft: any) => (
+                <option value={ft.value} selected={ft.default}>{ft.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* CTA */}
+        <button type="button" class="quick-donate-pay group w-full text-white font-extrabold py-4 rounded transition-all duration-200 text-base tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2.5 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-[1px]" style={`background: ${btnColor}; font-family: 'Signika', sans-serif;`}>
+          <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          {config.button?.label || config.buttonText || 'Donate Now'}
+          <svg class="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path></svg>
+        </button>
+
+        {/* Trust row */}
+        {config.trustBadges && config.trustBadges.length > 0 && (
+          <div class="mt-5 flex items-center justify-between px-1">
+            {config.trustBadges.map((badge: any) => (
+              <span class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <svg class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="font-semibold">{badge.text || badge}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   </div>
-)}
+  );
+})()}
 
 {/* Promo Card Widget - Rich card with gradient, pricing, and CTA */}
 {widget_type === 'promo-card' && (
@@ -418,7 +525,7 @@ const isInteractive = config.interactive === true;
     <div
       id={`campaigns-grid-${widget.id}`}
       class:list={[
-        "grid grid-cols-2 gap-3 mb-4 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar",
+        "grid grid-cols-2 gap-3 mb-4 max-h-[480px] overflow-y-auto pr-1 custom-scrollbar",
         isInteractive && "dynamic-campaigns-grid"
       ]}
     >
@@ -486,6 +593,55 @@ const isInteractive = config.interactive === true;
     )}
   </div>
 )}
+
+{/* Pricing Card Widget - Dark card with white pricing item cards + CTA */}
+{widget_type === 'pricing-card' && (() => {
+  const bg = config.bgColor || '#024139';
+  return (
+  <div class="widget-pricing-card h-full flex flex-col">
+    <div class="rounded-2xl overflow-hidden flex-1 flex flex-col" style={`background-color: ${bg};`}>
+      {/* Header */}
+      <div class="px-6 pt-6 pb-1">
+        {config.heading && <h3 class="text-[24px] font-extrabold text-white leading-tight" style="font-family: 'Signika', sans-serif;">{config.heading}</h3>}
+        {config.subtitle && <p class="text-[14px] text-white/50 mt-2 italic">{config.subtitle}</p>}
+        <div class="mt-4 border-t border-white/10"></div>
+      </div>
+
+      {/* Pricing Item Cards */}
+      {config.items && config.items.length > 0 && (
+        <div class="px-4 pt-3 pb-1 space-y-3 flex-1">
+          {config.items.map((item: any) => (
+            <a href={item.href || '#'} class="flex items-center gap-4 hover:bg-white rounded-xl px-5 py-4 transition-all hover:shadow-md group border border-white/20" style="background-color: #F8F4F0;">
+              {item.icon && !item.emoji && (
+                <div class="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0" style={`background-color: ${item.color || menuColor}`}>
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(item.icon)} />
+                </div>
+              )}
+              {item.emoji && !item.icon && <span class="text-[36px] flex-shrink-0 leading-none">{item.emoji}</span>}
+              <div class="flex-1 min-w-0">
+                <span class="font-extrabold text-[#333] text-[18px] block leading-tight" style="font-family: 'Signika', sans-serif;">{item.name}</span>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <span class="font-extrabold text-[24px] text-[#333] block leading-tight" style="font-family: 'Signika', sans-serif;">{item.price}</span>
+                {item.suffix && <p class="text-[11px] text-gray-500 mt-0.5 font-medium">{item.suffix}</p>}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {/* CTA Button */}
+      {config.button && (
+        <div class="px-4 pt-4 pb-5 mt-auto">
+          <a href={config.button.href || '#'} class="block w-full text-center font-extrabold py-4 rounded-xl transition-all text-[17px] hover:opacity-90 hover:shadow-lg" style={`background-color: ${config.button.bgColor || '#f5f3ef'}; color: ${config.button.textColor || bg}; font-family: 'Signika', sans-serif;`}>
+            {config.button.label}
+          </a>
+        </div>
+      )}
+    </div>
+  </div>
+  );
+})()}
 
 {/* Feature Card Widget - Badge, large number/icon, features, CTA */}
 {widget_type === 'feature-card' && (

@@ -212,90 +212,6 @@ const campaignTemplates = [
         </div>
       </div>
 
-      <!-- Promotions & Popups -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <h2 class="text-lg font-bold text-gray-800 mb-2">Promotions & Popups</h2>
-        <p class="text-sm text-gray-500 mb-6">Control promotional popups and banners displayed across the site.</p>
-        <div class="space-y-4">
-          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-            <div>
-              <span class="font-medium text-gray-800">🌙 Ramadan Popup</span>
-              <p class="text-sm text-gray-500">Show the Ramadan giving popup to visitors after they've been on the page for a few seconds. The popup encourages monthly giving during Ramadan.</p>
-            </div>
-            <input
-              type="checkbox"
-              name="showRamadanPopup"
-              id="showRamadanPopup"
-              checked={settings.show_ramadan_popup !== false}
-              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
-            />
-          </label>
-          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-            <div>
-              <span class="font-medium text-gray-800">🛒 Cart Reminder Popup</span>
-              <p class="text-sm text-gray-500">Show a bottom-left reminder popup when visitors have items in their cart but haven't checked out. Appears after 5 seconds of inactivity on desktop.</p>
-            </div>
-            <input
-              type="checkbox"
-              name="showCartReminder"
-              id="showCartReminder"
-              checked={settings.show_cart_reminder !== false}
-              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
-            />
-          </label>
-
-          <div class="border-t border-gray-200 pt-4 mt-4">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sidecart Settings</p>
-          </div>
-
-          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-            <div>
-              <span class="font-medium text-gray-800">🛒 Enable Sidecart</span>
-              <p class="text-sm text-gray-500">When enabled, clicking the cart icon opens the sidecart panel. When disabled, clicking the cart icon goes straight to checkout.</p>
-            </div>
-            <input
-              type="checkbox"
-              name="sidecartEnabled"
-              id="sidecartEnabled"
-              checked={settings.sidecart_enabled !== false}
-              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
-            />
-          </label>
-
-          <div class="border-t border-gray-200 pt-4 mt-4">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sidecart Recurring Upsells</p>
-          </div>
-
-          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-            <div>
-              <span class="font-medium text-gray-800">🔄 Sidecart — Make it Monthly</span>
-              <p class="text-sm text-gray-500">Show the "Make it Monthly" checkbox in the sidecart, allowing donors to convert one-time donations into monthly recurring.</p>
-            </div>
-            <input
-              type="checkbox"
-              name="showSidecartMonthly"
-              id="showSidecartMonthly"
-              checked={settings.show_sidecart_monthly !== false}
-              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
-            />
-          </label>
-
-          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-            <div>
-              <span class="font-medium text-gray-800">🕌 Sidecart — Every Jummah (Weekly)</span>
-              <p class="text-sm text-gray-500">Show the "Every Jummah" checkbox in the sidecart, allowing donors to convert one-time donations into weekly Friday recurring.</p>
-            </div>
-            <input
-              type="checkbox"
-              name="showSidecartJummah"
-              id="showSidecartJummah"
-              checked={settings.show_sidecart_jummah !== false}
-              class="w-5 h-5 text-[#01534d] rounded focus:ring-[#01534d]"
-            />
-          </label>
-        </div>
-      </div>
-
       <!-- Save Button -->
       <div class="flex justify-end gap-4">
         <button type="button" id="cancelBtn">
@@ -442,13 +358,6 @@ const campaignTemplates = [
     formData.forEach((value, key) => {
       settingsData[key] = value as string;
     });
-
-    // Handle checkboxes explicitly (unchecked ones aren't in FormData)
-    settingsData.showRamadanPopup = (document.getElementById('showRamadanPopup') as HTMLInputElement)?.checked ?? true;
-    settingsData.showCartReminder = (document.getElementById('showCartReminder') as HTMLInputElement)?.checked ?? true;
-    settingsData.sidecartEnabled = (document.getElementById('sidecartEnabled') as HTMLInputElement)?.checked ?? true;
-    settingsData.showSidecartMonthly = (document.getElementById('showSidecartMonthly') as HTMLInputElement)?.checked ?? true;
-    settingsData.showSidecartJummah = (document.getElementById('showSidecartJummah') as HTMLInputElement)?.checked ?? true;
 
     try {
       const res = await fetch('/api/settings', {

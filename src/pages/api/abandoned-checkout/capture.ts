@@ -53,7 +53,9 @@ interface CaptureRequestBody {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  utm_content?: string;
   utm_term?: string;
+  checkout_source?: string;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -97,7 +99,9 @@ export const POST: APIRoute = async ({ request }) => {
       .maybeSingle();
 
     if (existing) {
-      // Update existing record with fresh data
+      // Update existing record with fresh data + reset start time so it appears at top of admin list
+      const now = new Date().toISOString();
+      const freshResumeUrl = `${siteBaseUrl}/donate/resume?token=${existing.resume_token}`;
       await supabaseAdmin
         .from('abandoned_checkouts')
         .update({
@@ -112,8 +116,17 @@ export const POST: APIRoute = async ({ request }) => {
           utm_source: body.utm_source || undefined,
           utm_medium: body.utm_medium || undefined,
           utm_campaign: body.utm_campaign || undefined,
+          utm_content: body.utm_content || undefined,
           utm_term: body.utm_term || undefined,
-          last_activity_at: new Date().toISOString(),
+          checkout_source: body.checkout_source || undefined,
+          checkout_started_at: now,
+          last_activity_at: now,
+          resume_url: freshResumeUrl,
+          // Reset recovery state since this is a fresh checkout session
+          status: 'started',
+          abandoned_at: null,
+          recovery_step_last_sent: 0,
+          recovery_last_sent_at: null,
         })
         .eq('id', existing.id);
 
@@ -147,7 +160,9 @@ export const POST: APIRoute = async ({ request }) => {
         utm_source: body.utm_source || null,
         utm_medium: body.utm_medium || null,
         utm_campaign: body.utm_campaign || null,
+        utm_content: body.utm_content || null,
         utm_term: body.utm_term || null,
+        checkout_source: body.checkout_source || null,
         resume_token,
         resume_url,
         status: 'started',

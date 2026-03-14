@@ -30,6 +30,7 @@ interface Props {
   campaignSlug?: string;
   campaignTitle?: string;
   campaignImage?: string;
+  cartLabel?: string;
   frequencies?: FrequencyConfig[];
   // Legacy props (used when frequencies is not provided)
   monthlyAmounts?: number[];
@@ -54,6 +55,7 @@ interface Props {
   buttonTextMonthly?: string;
   buttonTextOneTime?: string;
   donationBoxHeading?: string;
+  defaultTabIndex?: number;
   className?: string;
 }
 
@@ -61,6 +63,7 @@ const {
   campaignSlug = 'general',
   campaignTitle = 'Donation',
   campaignImage = '',
+  cartLabel = '',
   frequencies,
   monthlyAmounts = [10, 20, 40, 100],
   oneTimeAmounts = [50, 100, 150, 200],
@@ -81,6 +84,7 @@ const {
   buttonTextMonthly = 'JOIN TODAY',
   buttonTextOneTime = 'GIVE',
   donationBoxHeading = '',
+  defaultTabIndex = 0,
   className = '',
 } = Astro.props;
 
@@ -206,7 +210,8 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
 )}
 <div
   id={boxId}
-  class={`bg-white rounded-md overflow-hidden shadow-xl border border-gray-200 w-full ${className}`}
+  class={`bg-white rounded-md overflow-hidden border border-gray-200 w-full ${className}`}
+  style="filter: drop-shadow(0 25px 40px rgba(0,0,0,0.35)) drop-shadow(0 10px 15px rgba(0,0,0,0.15));"
   data-donation-box
   data-template="cw-donation"
 >
@@ -220,11 +225,11 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
           class={`cw-toggle flex items-center justify-center gap-1 py-2.5 rounded ${tabTextSize} font-bold uppercase tracking-wider transition-all border-2`}
           data-type={freq.key}
           data-freq-index={i}
-          style={i === 0
+          style={i === defaultTabIndex
             ? `background-color: ${accentColor}; color: ${accentTextColor}; border-color: ${accentColor};`
             : 'background-color: transparent; color: #9ca3af; border-color: transparent;'}
         >
-          {freq.label} {i === 0 && (useHeartSvg ? (
+          {freq.label} {freq.type === 'recurring' && (useHeartSvg ? (
             <svg class="w-4 h-4 inline-block" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           ) : (
             <span class="text-base">{resolvedEmoji}</span>
@@ -270,7 +275,7 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
         const otherSpanClass = otherColSpan === 3 ? 'col-span-3' : otherColSpan === 2 ? 'col-span-2' : '';
 
         return (
-          <div class={`cw-freq-grid ${fi === 0 ? '' : 'hidden'}`} data-freq-key={freq.key}>
+          <div class={`cw-freq-grid ${fi === defaultTabIndex ? '' : 'hidden'}`} data-freq-key={freq.key}>
             {/* Amount rows */}
             {amountRows.map((row, ri) => {
               const isLastRow = ri === amountRows.length - 1;
@@ -308,9 +313,9 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
                       <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
                         <input
-                          type="number"
-                          step="0.01"
-                          min="1"
+                          type="text"
+                          inputmode="decimal"
+                          pattern="[0-9]*\.?[0-9]*"
                           class="cw-freq-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
                           placeholder="Other"
                         />
@@ -335,9 +340,9 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
                   <div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color: #f4f5f0;">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>
                     <input
-                      type="number"
-                      step="0.01"
-                      min="1"
+                      type="text"
+                      inputmode="decimal"
+                      pattern="[0-9]*\.?[0-9]*"
                       class="cw-freq-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400"
                       placeholder="Other"
                     />
@@ -443,16 +448,18 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
   specialProjectAmount,
   accentColor,
   accentTextColor,
-  skipUpsell
+  skipUpsell,
+  defaultTabIndex,
+  cartLabel
 }}>
   document.addEventListener('DOMContentLoaded', function() {
     var box = document.getElementById(boxId);
     if (!box) return;
 
     // Current state
-    var activeFreqIndex = 0;
-    var activeFreqKey = frequencyTabs[0].key;
-    var selectedAmount = frequencyTabs[0].amounts[frequencyTabs[0].defaultAmountIndex] || frequencyTabs[0].amounts[0] || 0;
+    var activeFreqIndex = defaultTabIndex;
+    var activeFreqKey = frequencyTabs[defaultTabIndex].key;
+    var selectedAmount = frequencyTabs[defaultTabIndex].amounts[frequencyTabs[defaultTabIndex].defaultAmountIndex] || frequencyTabs[defaultTabIndex].amounts[0] || 0;
     var upsellMonthlyActive = false;
 
     // Elements
@@ -580,7 +587,7 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
         window.addToCart({
           id: itemId,
           name: campaignTitle,
-          label: '$' + amount + ' Donation',
+          label: cartLabel || ('$' + amount + ' Donation'),
           amount: amount,
           quantity: 1,
           type: type,

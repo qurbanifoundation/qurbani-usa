@@ -83,7 +83,7 @@ const pageContent = {
 const heroTitle = campaign.hero_title || campaign.title || 'Fulfill Your Zakat Today';
 const heroDescription = campaign.subtitle || '';
 const heroBadgeText = campaign.subtitle2 || 'THIRD PILLAR OF ISLAM';
-const heroImage = campaign.featured_image || '/images/qurbani-foundation-food-distribution.png';
+const heroImage = campaign.featured_image || '/images/qurbani-foundation-food-distribution.webp';
 const heroBadges: string[] = campaign.template_config?.heroBadges || ['100% Zakat Policy', 'Shariah Compliant', 'Tax Deductible'];
 const heroCta = campaign.template_config?.heroCta || { text: 'Calculate My Zakat', link: '/zakat/calculator' };
 
@@ -108,7 +108,7 @@ const cardIcons = [
 // ── Why Give section ─────────────────────────────────────────────────
 const whyGiveHeading = pageContent.whyMonthly.heading || 'Why Give Your Zakat Through Us?';
 const contentSections = campaign.content_sections || [];
-const whyGiveImage = campaign.gallery_images?.[0] || '/images/qurbani-foundation-zakat.png';
+const whyGiveImage = campaign.gallery_images?.[0] || '/images/qurbani-foundation-zakat.webp';
 const imageOverlay = campaign.template_config?.imageOverlay ?? 40;
 
 // ── Impact stats badge ───────────────────────────────────────────────

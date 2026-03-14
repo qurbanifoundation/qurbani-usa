@@ -53,12 +53,12 @@ async function seedZakatCampaign() {
     is_active: true,
     is_featured: false,
     is_zakat_eligible: true,
-    featured_image: '/images/qurbani-foundation-food-distribution.png',
+    featured_image: '/images/qurbani-foundation-food-distribution.webp',
     meta_title: 'Pay Your Zakat | Qurbani USA - 100% Zakat Policy',
     meta_description: 'Fulfill your Zakat obligation through Qurbani Foundation USA. 100% Zakat policy, Shariah compliant, tax deductible. Serving 50+ countries worldwide.',
 
     // Gallery images — first image used as "Why Give" section image
-    gallery_images: ['/images/qurbani-foundation-zakat.png'],
+    gallery_images: ['/images/qurbani-foundation-zakat.webp'],
 
     // Impact stats — first entry used as stat badge
     impact_stats: [

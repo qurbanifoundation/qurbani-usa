@@ -31,10 +31,18 @@ export interface MenuWidget {
   sort_order: number;
 }
 
+export interface MobileLink {
+  label: string;
+  url: string;
+  color: string;
+  icon: string;
+}
+
 export interface NavbarData {
   menuOrder: string[];
   menuNames: Record<string, string>;
   menuColors: Record<string, string>;
+  mobileLinks: Record<string, MobileLink[]>;
   categories: Array<{
     id: string;
     slug: string;
@@ -102,7 +110,7 @@ export async function getNavbarData(): Promise<NavbarData> {
     const [menusResult, categoriesResult, campaignsResult, campaignPagesResult, widgetsResult] = await Promise.all([
       supabaseAdmin
         .from('mega_menus')
-        .select('id, name, sort_order, color')
+        .select('id, name, sort_order, color, mobile_links')
         .eq('is_active', true)
         .order('sort_order'),
 
@@ -139,12 +147,16 @@ export async function getNavbarData(): Promise<NavbarData> {
     const menuOrder: string[] = [];
     const menuNames: Record<string, string> = { ...defaultMenuNames };
     const menuColors: Record<string, string> = { ...defaultMenuColors };
+    const mobileLinks: Record<string, MobileLink[]> = {};
 
     if (menusResult.data && menusResult.data.length > 0) {
-      menusResult.data.forEach(m => {
+      menusResult.data.forEach((m: any) => {
         menuOrder.push(m.id);
         menuNames[m.id] = m.name;
         menuColors[m.id] = m.color;
+        if (m.mobile_links && Array.isArray(m.mobile_links) && m.mobile_links.length > 0) {
+          mobileLinks[m.id] = m.mobile_links;
+        }
       });
     } else {
       menuOrder.push(...defaultMenuOrder);
@@ -217,6 +229,7 @@ export async function getNavbarData(): Promise<NavbarData> {
       menuOrder,
       menuNames,
       menuColors,
+      mobileLinks,
       categories,
       campaignsByCategory,
       widgets,
@@ -233,6 +246,7 @@ export async function getNavbarData(): Promise<NavbarData> {
       menuOrder: defaultMenuOrder,
       menuNames: defaultMenuNames,
       menuColors: defaultMenuColors,
+      mobileLinks: {},
       categories: [],
       campaignsByCategory: {},
       widgets: {},

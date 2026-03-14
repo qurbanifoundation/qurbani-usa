@@ -1,0 +1,127 @@
+---
+/**
+ * Category Listing Page
+ * Renders a filtered campaign listing using the category's assigned template
+ * URL: /category/{category-slug}
+ *
+ * Supports two types of templates:
+ * 1. Category listing templates (green, orange, emergency-appeals) — show multiple campaigns
+ * 2. Single-campaign templates (food-aid, etc.) — render the main campaign for the category
+ */
+import GreenAppealTemplate from '../../templates/appeals/GreenAppealTemplate.astro';
+import OrangeAppealTemplate from '../../templates/appeals/OrangeAppealTemplate.astro';
+import EmergencyAppealsTemplate from '../../templates/categories/EmergencyAppealsTemplate.astro';
+import FoodAidTemplate from '../../templates/FoodAidTemplate.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+import { getCategoryBySlug } from '../../lib/categories';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Look up category
+const category = slug ? await getCategoryBySlug(slug) : null;
+
+if (!category) {
+  return Astro.redirect('/appeals');
+}
+
+// Determine template: category override → site default → 'green'
+let templateKey = category.page_template || 'green';
+
+// If no category-specific template, check site settings for default
+if (!category.page_template) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('site_settings')
+      .select('default_appeals_page_template')
+      .limit(1);
+    if (data?.[0]?.default_appeals_page_template) {
+      templateKey = data[0].default_appeals_page_template;
+    }
+  } catch (e) {
+    console.error('Error fetching site settings:', e);
+  }
+}
+
+// Templates that render a single campaign (not a listing)
+const singleCampaignTemplates = ['food-aid'];
+const isSingleCampaign = singleCampaignTemplates.includes(templateKey);
+
+// For single-campaign templates, load the main campaign for this category
+let mainCampaign: any = null;
+if (isSingleCampaign) {
+  try {
+    // Try to find a campaign whose slug matches the category slug (e.g., food-aid campaign for food-aid category)
+    const { data } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single();
+    mainCampaign = data;
+  } catch (e) {
+    // Fallback: get the first featured or first campaign in this category
+    try {
+      const { data } = await supabaseAdmin
+        .from('campaigns')
+        .select('*')
+        .eq('category', slug)
+        .eq('is_active', true)
+        .order('is_featured', { ascending: false })
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .single();
+      mainCampaign = data;
+    } catch (e2) {
+      console.error('Error fetching main campaign for category:', e2);
+    }
+  }
+}
+
+// For listing templates, fetch all campaigns in this category
+let campaigns: any[] = [];
+if (!isSingleCampaign) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('category', slug)
+      .eq('is_active', true)
+      .order('is_featured', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      campaigns = data;
+    }
+  } catch (e) {
+    console.error('Error fetching campaigns for category:', e);
+  }
+}
+
+const pageTitle = `${category.label} - Qurbani Foundation USA`;
+const categoryProps = {
+  label: category.label,
+  slug: category.slug,
+  color: category.color,
+  description: category.description,
+};
+
+// Get donation box template for single-campaign templates
+const donationBoxTemplate = mainCampaign?.template_config?.donationBoxTemplate || mainCampaign?.donation_box_template || 'cw-donation';
+---
+
+{/* Single-campaign templates */}
+{templateKey === 'food-aid' && mainCampaign ? (
+  <FoodAidTemplate campaign={mainCampaign} donationBoxTemplate={donationBoxTemplate} />
+) : (
+  /* Listing templates */
+  templateKey === 'emergency-appeals' ? (
+    <EmergencyAppealsTemplate campaigns={campaigns} category={categoryProps} pageTitle={pageTitle} />
+  ) : templateKey === 'orange' ? (
+    <OrangeAppealTemplate campaigns={campaigns} category={categoryProps} pageTitle={pageTitle} />
+  ) : (
+    <GreenAppealTemplate campaigns={campaigns} category={categoryProps} pageTitle={pageTitle} />
+  )
+)}

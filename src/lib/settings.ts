@@ -1,9 +1,9 @@
 import { supabase } from './supabase';
 
-// Cache for settings - manual clear only for maximum performance
+// Cache for settings - short TTL to ensure admin changes propagate across Worker isolates
 let settingsCache: SiteSettings | null = null;
 let settingsCacheTime: number = 0;
-const SETTINGS_CACHE_TTL = 365 * 24 * 60 * 60 * 1000; // 1 year (effectively permanent until manually cleared)
+const SETTINGS_CACHE_TTL = 60 * 1000; // 60 seconds — balances performance with quick propagation of admin changes
 
 // Default settings (fallback if Supabase fails)
 const defaultSettings = {
@@ -45,6 +45,8 @@ const defaultSettings = {
   // Popup settings
   show_ramadan_popup: true,
   show_cart_reminder: true,
+  show_social_proof: true,
+  social_proof_min_amount: 10,
 
   // Sidecart recurring upsell options
   show_sidecart_monthly: true,
