@@ -765,152 +765,262 @@ function getMobileIconHtml(iconKey: string): string {
     </div>
   </div>
 
-  <!-- Mobile Menu - Accordion Style -->
-  <div class="hidden lg:hidden bg-[#f8f6f2] shadow-lg max-h-[85vh] overflow-y-auto" id="mobile-menu">
-    <div class="px-4 py-4 space-y-1">
+  <!-- Mobile Menu - Slide Navigation Style -->
+  <div class="lg:hidden bg-[#f8f6f2] shadow-lg" id="mobile-menu" style="height: calc(100vh - 68px); display: none; position: relative;">
+    <div class="mobile-menu-container" style="position: relative; height: 100%; overflow: hidden;">
 
-      {/* Render all menus in database order */}
-      {allMenusSorted.map(menu => (
-        menu.id === 'our-work' ? (
-          /* Our Work Menu - uses categories/campaigns (special rendering) */
-          <div class="mobile-accordion" data-menu="our-work">
-            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-              <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
-              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="mobile-accordion-content hidden pl-2 pb-3 space-y-1">
-              {/* Categories as expandable sub-accordions */}
-              {categories.map(cat => {
-                const catCampaigns = (campaignsByCategory[cat.id] || []).slice(0, 6);
-                return catCampaigns.length > 0 ? (
-                <div class="mobile-sub-accordion" data-category={cat.id}>
-                  <button type="button" class="mobile-sub-accordion-btn w-full flex items-center justify-between py-2 text-gray-700 hover:text-[#D97718] transition">
-                    <div class="flex items-center gap-2">
-                      <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
-                        <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
-                      </div>
-                      <span class="text-sm font-medium">{cat.label}</span>
-                    </div>
-                    <svg class="mobile-sub-accordion-icon w-3 h-3 transition-transform text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                  </button>
-                  <div class="mobile-sub-accordion-content hidden pl-8 pb-2 space-y-1">
-                    {catCampaigns.map(campaign => (
-                      <a href={campaign.slug} class="block py-1.5 text-sm text-gray-600 hover:text-[#D97718] transition">
-                        {campaign.name}
-                      </a>
-                    ))}
-                    <a href={`/appeals?category=${cat.id}`} class="block py-1.5 text-xs text-[#D97718] font-medium">
-                      View All {cat.label} →
-                    </a>
-                  </div>
-                </div>
-                ) : (
-                <a href={`/appeals?category=${cat.id}`} class="flex items-center justify-between py-2 text-gray-700 hover:text-[#D97718] transition">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
-                      <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
-                    </div>
-                    <span class="text-sm font-medium">{cat.label}</span>
-                  </div>
-                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* ===== MAIN MENU PANEL ===== */}
+      <div class="mobile-panel mobile-panel-main" id="mobile-panel-main" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column;">
+        <div class="flex-1 overflow-y-auto px-4 pt-4 pb-2">
+          {allMenusSorted.map(menu => (
+            menu.id === 'appeals' ? null : (
+              menu.id === 'our-work' ? (
+                /* Our Work — has categories, so it opens submenu */
+                <button type="button" class="mobile-menu-item w-full flex items-center justify-between py-4 border-b border-gray-200 text-[#333]" data-submenu="our-work">
+                  <span class="text-base font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              ) : mobileLinks[menu.id] && mobileLinks[menu.id].length > 0 ? (
+                /* Dynamic menu with links — opens submenu */
+                <button type="button" class="mobile-menu-item w-full flex items-center justify-between py-4 border-b border-gray-200 text-[#333]" data-submenu={menu.id}>
+                  <span class="text-base font-semibold" style={`font-family: 'Oswald', sans-serif; letter-spacing: 0.5px; ${menu.color === '#024139' ? 'color: #024139;' : ''}`}>{menu.name.toUpperCase()}</span>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              ) : (
+                /* Simple link — no submenu */
+                <a href={`/${menu.id}`} class="mobile-menu-item flex items-center justify-between py-4 border-b border-gray-200 text-[#333]">
+                  <span class="text-base font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
                 </a>
-                );
-              })}
-              <a href="/appeals" class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition mt-2 border-t border-gray-200 pt-3">
-                <span class="text-sm font-medium">View All Appeals →</span>
-              </a>
-            </div>
-          </div>
-        ) : menu.id === 'appeals' ? (
-          /* Appeals Menu - Skip (replaced by Our Work) */
-          null
-        ) : mobileLinks[menu.id] && mobileLinks[menu.id].length > 0 ? (
-          /* Dynamic menu with mobile_links from database */
-          <div class="mobile-accordion" data-menu={menu.id}>
-            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-              <span style="font-family: 'Oswald', sans-serif;" class={menu.color === '#024139' ? 'text-[#024139]' : ''}>{menu.name.toUpperCase()}</span>
-              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="mobile-accordion-content hidden pl-4 pb-3 space-y-1">
-              {mobileLinks[menu.id].map(link => (
-                <a href={link.url} class="flex items-center gap-2 py-2 text-gray-700 transition" style={`--hover-color: ${link.color}`}>
-                  <div class="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color}`}>
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getMobileIconHtml(link.icon)} />
-                  </div>
-                  <span class="text-sm">{link.label}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Fallback for menus without mobile_links */
-          <div class="mobile-accordion" data-menu={menu.id}>
-            <button type="button" class="mobile-accordion-btn w-full flex items-center justify-between py-3 text-[#333] font-medium border-b border-gray-200">
-              <span style="font-family: 'Oswald', sans-serif;">{menu.name.toUpperCase()}</span>
-              <svg class="mobile-accordion-icon w-4 h-4 transition-transform text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="mobile-accordion-content hidden pl-4 pb-3">
-              <a href={`/${menu.id}`} class="flex items-center gap-2 py-2 text-[#D97718] hover:text-[#c46a14] transition">
-                <span class="text-sm font-medium">View {menu.name} →</span>
-              </a>
-            </div>
-          </div>
-        )
-      ))}
+              )
+            )
+          ))}
 
-      {/* Divider */}
-      <div class="border-t border-gray-200 my-3"></div>
-
-      {/* Quick Donate Section */}
-      <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mt-2" id="mobile-quick-donate">
-        <p class="text-white font-extrabold text-lg mb-3 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
-        <div class="grid grid-cols-4 gap-2 mb-3">
-          <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
-          <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="50">$50</button>
-          <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="100">$100</button>
-          <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="250">$250</button>
-        </div>
-        <div class="mb-3 relative" id="mobile-fund-type-wrapper">
-          <input type="hidden" id="mobile-fund-type" value="general-donation" />
-          <button type="button" id="mobile-fund-type-btn" class="w-full py-3 px-4 rounded-lg text-[15px] font-semibold text-white border-none cursor-pointer flex items-center justify-between" style="background-color: rgba(255,255,255,0.2);">
-            <span id="mobile-fund-type-label">General Donation</span>
-            <svg class="w-4 h-4 text-white/80 transition-transform" id="mobile-fund-type-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div id="mobile-fund-type-menu" class="hidden absolute left-0 right-0 top-full mt-1 rounded-lg overflow-hidden shadow-lg z-50" style="background-color: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
-            <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition border-b border-gray-100/50 flex items-center justify-between" data-value="general-donation" data-label="General Donation">
-              General Donation
-              <svg class="w-4 h-4 text-[#D97718] mobile-fund-check" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-            </button>
-            <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition border-b border-gray-100/50 flex items-center justify-between" data-value="sadaqah" data-label="Sadaqah">
-              Sadaqah
-              <svg class="w-4 h-4 text-[#D97718] mobile-fund-check hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-            </button>
-            <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition flex items-center justify-between" data-value="zakat" data-label="Zakat">
-              Zakat
-              <svg class="w-4 h-4 text-[#D97718] mobile-fund-check hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-            </button>
+          {/* Extra quick links */}
+          <div class="mt-4 flex flex-wrap gap-2">
+            <a href="/contact" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+              Contact Us
+            </a>
+            <a href="/zakat/calculator" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7z"></path></svg>
+              Zakat Calculator
+            </a>
+            <a href="/appeals" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+              All Appeals
+            </a>
           </div>
         </div>
-        <div class="flex gap-2">
-          <div class="relative flex-1">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-base">$</span>
-            <input type="number" id="mobile-donate-amount" placeholder="Other" class="w-full pl-7 pr-2 py-3 rounded-lg text-base font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+
+        {/* Quick Donate at bottom of main panel */}
+        <div class="px-4 pb-4 pt-2 flex-shrink-0">
+          <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4" id="mobile-quick-donate">
+            <p class="text-white font-extrabold text-lg mb-3 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
+            <div class="grid grid-cols-4 gap-2 mb-3">
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="50">$50</button>
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="100">$100</button>
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-3 rounded-lg text-base font-bold transition cursor-pointer border-none" data-amount="250">$250</button>
+            </div>
+            <div class="mb-3 relative" id="mobile-fund-type-wrapper">
+              <input type="hidden" id="mobile-fund-type" value="general-donation" />
+              <button type="button" id="mobile-fund-type-btn" class="w-full py-3 px-4 rounded-lg text-[15px] font-semibold text-white border-none cursor-pointer flex items-center justify-between" style="background-color: rgba(255,255,255,0.2);">
+                <span id="mobile-fund-type-label">General Donation</span>
+                <svg class="w-4 h-4 text-white/80 transition-transform" id="mobile-fund-type-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              <div id="mobile-fund-type-menu" class="hidden absolute left-0 right-0 bottom-full mb-1 rounded-lg overflow-hidden shadow-lg z-50" style="background-color: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+                <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition border-b border-gray-100/50 flex items-center justify-between" data-value="general-donation" data-label="General Donation">
+                  General Donation
+                  <svg class="w-4 h-4 text-[#D97718] mobile-fund-check" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </button>
+                <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition border-b border-gray-100/50 flex items-center justify-between" data-value="sadaqah" data-label="Sadaqah">
+                  Sadaqah
+                  <svg class="w-4 h-4 text-[#D97718] mobile-fund-check hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </button>
+                <button type="button" class="mobile-fund-option w-full text-left px-4 py-3 text-[15px] font-semibold text-[#333] hover:bg-[#D97718]/10 transition flex items-center justify-between" data-value="zakat" data-label="Zakat">
+                  Zakat
+                  <svg class="w-4 h-4 text-[#D97718] mobile-fund-check hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-base">$</span>
+                <input type="number" id="mobile-donate-amount" placeholder="Other" class="w-full pl-7 pr-2 py-3 rounded-lg text-base font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+              </div>
+              <button type="button" id="mobile-donate-pay" class="bg-white text-[#D97718] font-bold py-3 px-5 rounded-lg text-base transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
+                Donate &rarr;
+              </button>
+            </div>
           </div>
-          <button type="button" id="mobile-donate-pay" class="bg-white text-[#D97718] font-bold py-3 px-5 rounded-lg text-base transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
-            Donate &rarr;
-          </button>
         </div>
       </div>
+
+      {/* ===== SUBMENU PANELS (same beige theme as main menu) ===== */}
+
+      {/* Our Work Submenu — Level 2: categories only */}
+      <div class="mobile-panel mobile-panel-sub bg-[#f8f6f2]" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; transform: translateX(100%);" id="mobile-sub-our-work">
+        <div class="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+          <button type="button" class="mobile-back-btn flex items-center gap-2 text-[#D97718] font-semibold text-sm py-1 transition" data-back="main">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Back to menu
+          </button>
+          <h3 class="text-xl font-bold text-[#333] mt-2 mb-1" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">OUR WORK</h3>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-2">
+          {categories.map(cat => {
+            const catCampaigns = (campaignsByCategory[cat.id] || []).slice(0, 6);
+            return catCampaigns.length > 0 ? (
+              /* Category with campaigns → opens Level 3 */
+              <button type="button" class="mobile-menu-item mobile-cat-btn w-full flex items-center gap-3 py-4 border-b border-gray-200 text-[#333] text-left" data-category={cat.id}>
+                <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+                </div>
+                <span class="text-[15px] font-semibold flex-1">{cat.label}</span>
+                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </button>
+            ) : (
+              /* Category without campaigns → direct link */
+              <a href={`/appeals?category=${cat.id}`} class="mobile-menu-item flex items-center gap-3 py-4 border-b border-gray-200 text-[#333] hover:text-[#D97718] transition">
+                <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+                </div>
+                <span class="text-[15px] font-semibold flex-1">{cat.label}</span>
+                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              </a>
+            );
+          })}
+          <a href="/appeals" class="flex items-center gap-2 py-3 text-[#D97718] hover:text-[#c46a14] transition font-semibold text-sm mt-1">
+            View All Appeals →
+          </a>
+        </div>
+        <div class="flex-shrink-0 px-4 pb-4 pt-2">
+          <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mb-2">
+            <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
+            <div class="grid grid-cols-4 gap-2 mb-2">
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="50">$50</button>
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="100">$100</button>
+              <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="250">$250</button>
+            </div>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-sm">$</span>
+                <input type="number" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+              </div>
+              <button type="button" class="mobile-sub-donate-pay bg-white text-[#D97718] font-bold py-2.5 px-4 rounded-lg text-sm transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
+                Donate &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Level 3 panels — one per category that has campaigns */}
+      {categories.map(cat => {
+        const catCampaigns = (campaignsByCategory[cat.id] || []).slice(0, 8);
+        return catCampaigns.length > 0 ? (
+          <div class="mobile-panel mobile-panel-l3 bg-[#f8f6f2]" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; transform: translateX(100%);" id={`mobile-cat-${cat.id}`}>
+            <div class="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+              <button type="button" class="mobile-back-btn flex items-center gap-2 text-[#D97718] font-semibold text-sm py-1 transition" data-back="our-work">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Back to Our Work
+              </button>
+              <div class="flex items-center gap-3 mt-2 mb-1">
+                <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${cat.color}`}>
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getIconSvg(cat.icon)} />
+                </div>
+                <h3 class="text-xl font-bold text-[#333]" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{cat.label.toUpperCase()}</h3>
+              </div>
+            </div>
+            <div class="flex-1 overflow-y-auto px-4 py-2">
+              {catCampaigns.map(campaign => (
+                <a href={campaign.slug} class="flex items-center justify-between py-4 border-b border-gray-200 text-[#333] hover:text-[#D97718] transition">
+                  <span class="text-[15px] font-medium">{campaign.name}</span>
+                  <svg class="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+              ))}
+              <a href={`/appeals?category=${cat.id}`} class="flex items-center gap-2 py-3 text-[#D97718] hover:text-[#c46a14] transition font-semibold text-sm mt-1">
+                View All {cat.label} →
+              </a>
+            </div>
+            <div class="flex-shrink-0 px-4 pb-4 pt-2">
+              <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mb-2">
+                <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
+                <div class="grid grid-cols-4 gap-2 mb-2">
+                  <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
+                  <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="50">$50</button>
+                  <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="100">$100</button>
+                  <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="250">$250</button>
+                </div>
+                <div class="flex gap-2">
+                  <div class="relative flex-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-sm">$</span>
+                    <input type="number" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+                  </div>
+                  <button type="button" class="mobile-sub-donate-pay bg-white text-[#D97718] font-bold py-2.5 px-4 rounded-lg text-sm transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
+                    Donate &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })}
+
+      {/* Dynamic submenus for other menus with mobile_links */}
+      {allMenusSorted.filter(menu => menu.id !== 'our-work' && menu.id !== 'appeals' && mobileLinks[menu.id] && mobileLinks[menu.id].length > 0).map(menu => (
+        <div class="mobile-panel mobile-panel-sub bg-[#f8f6f2]" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; transform: translateX(100%);" id={`mobile-sub-${menu.id}`}>
+          {/* Top: ← Back to menu */}
+          <div class="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-200">
+            <button type="button" class="mobile-back-btn flex items-center gap-2 text-[#D97718] font-semibold text-sm py-1 transition" data-back="main">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              Back to menu
+            </button>
+            <h3 class="text-xl font-bold text-[#333] mt-2 mb-1" style={`font-family: 'Oswald', sans-serif; letter-spacing: 0.5px; ${menu.color === '#024139' ? 'color: #024139;' : ''}`}>{menu.name.toUpperCase()}</h3>
+          </div>
+          {/* Links */}
+          <div class="flex-1 overflow-y-auto px-4 py-2">
+            {mobileLinks[menu.id].map(link => (
+              <a href={link.url} class="flex items-center gap-3 py-3 border-b border-gray-200 text-[#333] hover:text-[#D97718] transition">
+                <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style={`background-color: ${link.color}`}>
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20" set:html={getMobileIconHtml(link.icon)} />
+                </div>
+                <span class="text-[15px] font-medium">{link.label}</span>
+              </a>
+            ))}
+          </div>
+          {/* Bottom: Donate Box */}
+          <div class="flex-shrink-0 px-4 pb-4 pt-2">
+            <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4 mb-2">
+              <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
+              <div class="grid grid-cols-4 gap-2 mb-2">
+                <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
+                <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="50">$50</button>
+                <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="100">$100</button>
+                <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="250">$250</button>
+              </div>
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-sm">$</span>
+                  <input type="number" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+                </div>
+                <button type="button" class="mobile-sub-donate-pay bg-white text-[#D97718] font-bold py-2.5 px-4 rounded-lg text-sm transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
+                  Donate &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
     </div>
   </div>
 </header>
@@ -1262,47 +1372,54 @@ function getMobileIconHtml(iconKey: string): string {
     margin-left: auto;
   }
 
-  /* Mobile Menu Accordion Animations */
+  /* Mobile Menu Slide Navigation */
   #mobile-menu {
-    transition: all 0.3s ease-out;
+    transition: opacity 0.2s ease-out;
   }
 
-  .mobile-accordion-content {
-    overflow: hidden;
-    transition: max-height 0.3s ease-out, opacity 0.2s ease;
+  .mobile-menu-container {
+    position: relative;
+    height: 100%;
   }
 
-  .mobile-accordion-content.hidden {
-    max-height: 0;
-    opacity: 0;
-    padding-bottom: 0;
-    display: block !important;
+  .mobile-panel {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
 
-  .mobile-accordion-content:not(.hidden) {
-    max-height: 500px;
-    opacity: 1;
+  .mobile-panel-main {
+    transform: translateX(0) !important;
   }
 
-  .mobile-accordion-icon {
-    transition: transform 0.3s ease;
+  .mobile-panel-main.slide-out {
+    transform: translateX(-30%) !important;
   }
 
-  .mobile-accordion-btn {
+  .mobile-panel-sub, .mobile-panel-l3 {
+    transform: translateX(100%) !important;
+  }
+
+  .mobile-panel-sub.slide-in, .mobile-panel-l3.slide-in {
+    transform: translateX(0) !important;
+  }
+
+  /* When L3 is open, push L2 to the left */
+  .mobile-panel-sub.slide-out-l3 {
+    transform: translateX(-30%) !important;
+  }
+
+  /* Touch targets and feedback */
+  .mobile-menu-item, .mobile-back-btn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
 
-  /* Better touch targets for mobile */
-  .mobile-accordion a {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
+  .mobile-menu-item:active {
+    opacity: 0.7;
   }
 
-  /* Active state feedback */
-  .mobile-accordion-btn:active {
-    opacity: 0.8;
+  .mobile-back-btn:active {
+    opacity: 0.7;
   }
 </style>
 
@@ -1317,77 +1434,116 @@ function getMobileIconHtml(iconKey: string): string {
     const openIcon = mobileBtn?.querySelector('.mobile-menu-open-icon');
     const closeIcon = mobileBtn?.querySelector('.mobile-menu-close-icon');
 
-    mobileBtn?.addEventListener('click', () => {
-      mobileMenu?.classList.toggle('hidden');
-      // Toggle hamburger icon between bars and X
-      const isOpen = !mobileMenu?.classList.contains('hidden');
-      mobileBtn.setAttribute('aria-expanded', isOpen.toString());
+    const mainPanel = document.getElementById('mobile-panel-main');
 
-      // Toggle icon visibility
-      if (isOpen) {
+    // Helper to close mobile menu and reset state
+    function closeMobileMenu() {
+      if (!mobileMenu || !mobileBtn) return;
+      mobileMenu.style.display = 'none';
+      mobileBtn.setAttribute('aria-expanded', 'false');
+      openIcon?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+      // Reset all panels back to main
+      mainPanel?.classList.remove('slide-out');
+      document.querySelectorAll('.mobile-panel-sub').forEach(sub => {
+        sub.classList.remove('slide-in');
+        sub.classList.remove('slide-out-l3');
+      });
+      document.querySelectorAll('.mobile-panel-l3').forEach(l3 => {
+        l3.classList.remove('slide-in');
+      });
+    }
+
+    mobileBtn?.addEventListener('click', () => {
+      const isCurrentlyOpen = mobileMenu?.style.display === 'block';
+      if (isCurrentlyOpen) {
+        closeMobileMenu();
+      } else {
+        if (mobileMenu) mobileMenu.style.display = 'block';
+        mobileBtn.setAttribute('aria-expanded', 'true');
         openIcon?.classList.add('hidden');
         closeIcon?.classList.remove('hidden');
-      } else {
-        openIcon?.classList.remove('hidden');
-        closeIcon?.classList.add('hidden');
       }
     });
 
-    // Mobile Accordion Functionality
-    document.querySelectorAll('.mobile-accordion-btn').forEach(btn => {
+    // === LEVEL 1 → LEVEL 2: Menu items that open submenus ===
+    document.querySelectorAll('.mobile-menu-item[data-submenu]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const accordion = btn.closest('.mobile-accordion');
-        const content = accordion?.querySelector('.mobile-accordion-content');
-        const icon = btn.querySelector('.mobile-accordion-icon');
+        const submenuId = btn.getAttribute('data-submenu');
+        const subPanel = document.getElementById('mobile-sub-' + submenuId);
+        if (!subPanel || !mainPanel) return;
+        mainPanel.classList.add('slide-out');
+        subPanel.classList.add('slide-in');
+      });
+    });
 
-        if (!content) return;
+    // === LEVEL 2 → LEVEL 3: Category buttons that open campaign lists ===
+    document.querySelectorAll('.mobile-cat-btn[data-category]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const catId = btn.getAttribute('data-category');
+        const l3Panel = document.getElementById('mobile-cat-' + catId);
+        const parentSub = btn.closest('.mobile-panel-sub');
+        if (!l3Panel || !parentSub) return;
+        parentSub.classList.add('slide-out-l3');
+        l3Panel.classList.add('slide-in');
+      });
+    });
 
-        // Close other accordions (optional - for single-open behavior)
-        document.querySelectorAll('.mobile-accordion').forEach(other => {
-          if (other !== accordion) {
-            const otherContent = other.querySelector('.mobile-accordion-content');
-            const otherIcon = other.querySelector('.mobile-accordion-icon');
-            otherContent?.classList.add('hidden');
-            if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
-          }
+    // === BACK: Level 2 → Level 1 ===
+    document.querySelectorAll('.mobile-back-btn[data-back="main"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        mainPanel?.classList.remove('slide-out');
+        document.querySelectorAll('.mobile-panel-sub').forEach(sub => {
+          sub.classList.remove('slide-in');
+          sub.classList.remove('slide-out-l3');
         });
-
-        // Toggle current accordion
-        const isOpen = content.classList.contains('hidden');
-        content.classList.toggle('hidden');
-        if (icon) {
-          icon.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-        }
+        document.querySelectorAll('.mobile-panel-l3').forEach(l3 => {
+          l3.classList.remove('slide-in');
+        });
       });
     });
 
-    // Mobile Sub-Accordion Functionality (for categories with campaigns)
-    document.querySelectorAll('.mobile-sub-accordion-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const subAccordion = btn.closest('.mobile-sub-accordion');
-        const content = subAccordion?.querySelector('.mobile-sub-accordion-content');
-        const icon = btn.querySelector('.mobile-sub-accordion-icon');
-
-        if (!content) return;
-
-        // Toggle current sub-accordion
-        const isOpen = content.classList.contains('hidden');
-        content.classList.toggle('hidden');
-        if (icon) {
-          icon.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
-        }
+    // === BACK: Level 3 → Level 2 ===
+    document.querySelectorAll('.mobile-back-btn[data-back="our-work"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ourWorkPanel = document.getElementById('mobile-sub-our-work');
+        ourWorkPanel?.classList.remove('slide-out-l3');
+        document.querySelectorAll('.mobile-panel-l3').forEach(l3 => {
+          l3.classList.remove('slide-in');
+        });
       });
     });
 
-    // Close mobile menu when clicking a link (except accordion buttons)
+    // Close mobile menu when clicking a link inside it
     mobileMenu?.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
-        mobileMenu?.classList.add('hidden');
-        mobileBtn?.setAttribute('aria-expanded', 'false');
-        // Restore hamburger icon
-        openIcon?.classList.remove('hidden');
-        closeIcon?.classList.add('hidden');
+        closeMobileMenu();
+      });
+    });
+
+    // All donate buttons inside sub-panels and L3 panels
+    document.querySelectorAll('.mobile-panel-sub .mobile-donate-btn, .mobile-panel-l3 .mobile-donate-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const amount = parseInt(btn.getAttribute('data-amount') || '0');
+        if (!amount || typeof window.addToCart !== 'function') return;
+        window.addToCart({ slug: 'general-donation', name: 'General Donation', amount, label: '$' + amount + ' Donation' });
+        closeMobileMenu();
+        if (typeof window.openCart === 'function') window.openCart();
+      });
+    });
+
+    // All custom amount donate buttons
+    document.querySelectorAll('.mobile-sub-donate-pay').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const wrapper = btn.closest('.rounded-xl');
+        const input = wrapper?.querySelector('.mobile-sub-donate-amount');
+        const amount = input ? parseFloat(input.value) : 0;
+        if (!amount || amount < 1) { if (input) { input.focus(); input.style.outline = '2px solid #fff'; } return; }
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({ slug: 'general-donation', name: 'General Donation', amount, label: '$' + amount + ' Donation' });
+        }
+        closeMobileMenu();
+        if (typeof window.openCart === 'function') window.openCart();
       });
     });
 
@@ -1850,16 +2006,23 @@ function getMobileIconHtml(iconKey: string): string {
       return { value: mobileFundTypeInput.value, label: mobileFundTypeLabel?.textContent || 'General Donation' };
     }
 
-    // Preset amount buttons — add to cart immediately
-    document.querySelectorAll('.mobile-donate-btn').forEach(btn => {
+    // Preset amount buttons (main panel) — add to cart immediately
+    document.querySelectorAll('#mobile-panel-main .mobile-donate-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const amount = parseInt(btn.dataset.amount);
         if (!amount) return;
         const fund = getMobileFundType();
         // Close mobile menu
         const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenu) mobileMenu.classList.add('hidden');
+        if (mobileMenu) mobileMenu.style.display = 'none';
         document.body.style.overflow = '';
+        // Reset panels
+        mainPanel?.classList.remove('slide-out');
+        document.querySelectorAll('.mobile-panel-sub').forEach(s => s.classList.remove('slide-in'));
+        // Restore hamburger icon
+        openIcon?.classList.remove('hidden');
+        closeIcon?.classList.add('hidden');
+        mobileBtn?.setAttribute('aria-expanded', 'false');
         // Add to cart
         if (typeof window.addToCart === 'function') {
           window.addToCart({
@@ -1875,7 +2038,7 @@ function getMobileIconHtml(iconKey: string): string {
       });
     });
 
-    // Custom amount + Donate button
+    // Custom amount + Donate button (main panel)
     if (mobileDonatePayBtn) {
       mobileDonatePayBtn.addEventListener('click', () => {
         const amount = mobileDonateInput ? parseFloat(mobileDonateInput.value) : 0;
@@ -1886,8 +2049,14 @@ function getMobileIconHtml(iconKey: string): string {
         const fund = getMobileFundType();
         // Close mobile menu
         const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenu) mobileMenu.classList.add('hidden');
+        if (mobileMenu) mobileMenu.style.display = 'none';
         document.body.style.overflow = '';
+        // Reset panels
+        mainPanel?.classList.remove('slide-out');
+        document.querySelectorAll('.mobile-panel-sub').forEach(s => s.classList.remove('slide-in'));
+        openIcon?.classList.remove('hidden');
+        closeIcon?.classList.add('hidden');
+        mobileBtn?.setAttribute('aria-expanded', 'false');
         // Add to cart
         if (typeof window.addToCart === 'function') {
           window.addToCart({
