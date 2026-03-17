@@ -143,12 +143,16 @@ const features = [
 // FAQ items
 const faqs = [
   {
-    question: 'What is Aqiqah?',
-    answer: 'Aqiqah is a Sunnah practice performed to celebrate the birth of a child. It involves sacrificing an animal (goat or sheep) - one for a girl and two for a boy - as an act of gratitude to Allah. The meat is then distributed to family, friends, and those in need.',
+    question: 'What is Aqiqah for a newborn?',
+    answer: 'Aqiqah is a Sunnah practice performed to celebrate the birth of a newborn. It involves sacrificing an animal (goat or sheep) — one for a girl and two for a boy — as an act of gratitude to Allah. The meat is then distributed to family, friends, and those in need.',
   },
   {
-    question: 'When should Aqiqah be performed?',
-    answer: 'Traditionally, Aqiqah is performed on the 7th day after birth. However, it can also be done on the 14th or 21st day, or any time after. Many scholars agree it can be performed at any age if not done earlier. It\'s never too late!',
+    question: 'When should Aqiqah be performed for a newborn?',
+    answer: 'Traditionally, aqiqah for a newborn is performed on the 7th day after birth. However, it can also be done on the 14th or 21st day, or any time after. Many scholars agree it can be performed at any age if not done earlier. It\'s never too late!',
+  },
+  {
+    question: 'Can I donate aqiqah online?',
+    answer: 'Yes! You can donate aqiqah online through Qurbani Foundation in just a few minutes. Simply choose your package (Baby Boy or Baby Girl), enter your child\'s name, and complete payment securely via Stripe. We handle the sacrifice and send you a personalized certificate.',
   },
   {
     question: 'Is Aqiqah obligatory (Fard)?',
@@ -210,7 +214,10 @@ const stats = [
 ];
 ---
 
-<Layout title={`${campaign.title} - Celebrate Your Child's Birth | Qurbani Foundation`}>
+<Layout
+  title="Aqiqah for Newborn – Donate Aqiqah Online"
+  description="Perform aqiqah for your newborn following the Sunnah. Donate aqiqah online from $150 — Shariah-compliant sacrifice, meat distributed to families in need, and personalized certificate included."
+>
   <Navbar />
 
   <!-- Hero Section - Emotional & Trust-Building -->
@@ -244,9 +251,9 @@ const stats = [
         <p class="text-white/80 text-sm mb-6 italic">"May Allah bless you with what He has given you"</p>
 
         <!-- Main Headline -->
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
-          Celebrate Your Child's Birth<br/>
-          <span class="text-yellow-400">With Aqiqah</span>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+          Celebrate Your Child's<br/>
+          <span class="whitespace-nowrap">Birth <span class="text-yellow-400">With Aqiqah</span></span>
         </h1>
 
         <!-- Subheadline -->
@@ -256,24 +263,24 @@ const stats = [
         </p>
 
         <!-- Key Points -->
-        <div class="flex flex-wrap justify-center gap-4 mb-8">
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+        <div class="flex flex-nowrap justify-center gap-2 sm:gap-4 mb-8">
+          <div class="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-full">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-white text-sm">Shariah Compliant</span>
+            <span class="text-white text-[11px] sm:text-sm whitespace-nowrap">Shariah Compliant</span>
           </div>
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-full">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-white text-sm">Certificate Included</span>
+            <span class="text-white text-[11px] sm:text-sm whitespace-nowrap">Certificate Included</span>
           </div>
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-full">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-white text-sm">Done in 24-Hours</span>
+            <span class="text-white text-[11px] sm:text-sm whitespace-nowrap">Done in 24-Hours</span>
           </div>
         </div>
 
@@ -314,6 +321,34 @@ const stats = [
     </div>
   </section>
 
+  <!-- Aqiqah for Newborn — Keyword-rich intro strip -->
+  <section class="py-12 bg-white border-b border-gray-100">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+          Aqiqah for Your Newborn — Donate Online in Minutes
+        </h2>
+        <p class="text-gray-600 text-lg leading-relaxed max-w-3xl mx-auto mb-6">
+          Welcoming a newborn is one of life's greatest blessings. Performing aqiqah for your newborn is a cherished Sunnah that celebrates this gift from Allah. With Qurbani Foundation, you can donate aqiqah online from anywhere in the world — we handle the sacrifice, distribute the meat to families in need, and send you a personalized certificate.
+        </p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <span class="inline-flex items-center gap-1.5 bg-[#01534d]/5 text-[#01534d] text-sm font-medium px-4 py-2 rounded-full">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            Trusted by 1,000+ parents
+          </span>
+          <span class="inline-flex items-center gap-1.5 bg-[#01534d]/5 text-[#01534d] text-sm font-medium px-4 py-2 rounded-full">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            From $150 per aqiqah
+          </span>
+          <span class="inline-flex items-center gap-1.5 bg-[#01534d]/5 text-[#01534d] text-sm font-medium px-4 py-2 rounded-full">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            Performed within 24 hours
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- What is Aqiqah Section -->
   <section class="py-20 bg-gradient-to-b from-gray-50 to-white">
     <div class="container mx-auto px-4">
@@ -338,7 +373,7 @@ const stats = [
             </div>
             <div class="md:w-2/3">
               <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                <strong>Aqiqah</strong> is the beautiful Islamic tradition of sacrificing an animal to celebrate the birth of a child. It is a <span class="text-[#01534d] font-semibold">Sunnah Mu'akkadah</span> (emphasized practice) of Prophet Muhammad ﷺ.
+                <strong>Aqiqah</strong> is the Islamic tradition of sacrificing an animal to celebrate the birth of a newborn. It is a <span class="text-[#01534d] font-semibold">Sunnah Mu'akkadah</span> (emphasized practice) of Prophet Muhammad ﷺ, typically performed on the 7th day after birth.
               </p>
               <div class="grid md:grid-cols-2 gap-4">
                 <div class="flex items-start gap-3 bg-pink-50 rounded-xl p-4">
@@ -373,6 +408,56 @@ const stats = [
     </div>
   </section>
 
+  <!-- How It Works -->
+  <section id="how-it-works" class="py-10 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-6 sm:mb-16">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-2 sm:mb-4" style="font-family: 'Signika', sans-serif;">
+          How It Works
+        </h2>
+        <p class="text-gray-500 text-sm sm:text-lg max-w-2xl mx-auto">
+          3 simple steps to complete your Aqiqah
+        </p>
+      </div>
+
+      <div class="max-w-4xl mx-auto">
+        <!-- Mobile: compact horizontal steps -->
+        <div class="flex md:hidden items-start gap-3 relative">
+          <!-- Connection line -->
+          <div class="absolute top-5 left-[10%] right-[10%] h-0.5 bg-[#01534d]/20"></div>
+          {steps.map((step) => (
+            <div class="flex-1 text-center relative z-10">
+              <div class="w-10 h-10 mx-auto bg-[#01534d] rounded-full flex items-center justify-center mb-2">
+                <span class="text-base font-bold text-white">{step.number}</span>
+              </div>
+              <h3 class="text-xs font-bold text-gray-800 mb-0.5">{step.title}</h3>
+              <span class="text-[10px] text-[#01534d] font-semibold">{step.time}</span>
+            </div>
+          ))}
+        </div>
+
+        <!-- Desktop: full layout -->
+        <div class="relative hidden md:block">
+          <div class="absolute top-24 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-[#01534d]/20 via-[#01534d] to-[#01534d]/20"></div>
+          <div class="grid md:grid-cols-3 gap-8">
+            {steps.map((step) => (
+              <div class="relative text-center">
+                <div class="relative z-10 w-20 h-20 mx-auto bg-gradient-to-br from-[#01534d] to-teal-600 rounded-full flex items-center justify-center shadow-lg mb-6">
+                  <span class="text-3xl font-bold text-white">{step.number}</span>
+                </div>
+                <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold mb-3">
+                  {step.time}
+                </span>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">{step.title}</h3>
+                <p class="text-gray-600">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Packages Section -->
   <section id="packages" class="py-20 bg-white" data-mobile-donate>
     <div class="container mx-auto px-4">
@@ -381,10 +466,10 @@ const stats = [
           Choose Your Package
         </span>
         <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
-          Aqiqah Packages
+          Choose Your Aqiqah Package
         </h2>
         <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-          Select the appropriate package based on your child's gender. All packages include certificate and meat distribution.
+          Select the right package for your newborn and donate online in minutes. All packages include a personalized certificate and meat distribution to families in need.
         </p>
       </div>
 
@@ -460,45 +545,6 @@ const stats = [
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
           </svg>
           <span class="text-sm">100% Distributed</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section id="how-it-works" class="py-20 bg-gradient-to-b from-gray-50 to-white">
-    <div class="container mx-auto px-4">
-      <div class="text-center mb-16">
-        <span class="inline-block px-4 py-1 bg-[#01534d]/10 text-[#01534d] rounded-full text-sm font-semibold mb-4">
-          Simple Process
-        </span>
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
-          How It Works
-        </h2>
-        <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-          Performing Aqiqah through us is simple, convenient, and hassle-free.
-        </p>
-      </div>
-
-      <div class="max-w-4xl mx-auto">
-        <div class="relative">
-          <!-- Connection Line -->
-          <div class="absolute top-24 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-[#01534d]/20 via-[#01534d] to-[#01534d]/20 hidden md:block"></div>
-
-          <div class="grid md:grid-cols-3 gap-8">
-            {steps.map((step, index) => (
-              <div class="relative text-center">
-                <div class="relative z-10 w-20 h-20 mx-auto bg-gradient-to-br from-[#01534d] to-teal-600 rounded-full flex items-center justify-center shadow-lg mb-6">
-                  <span class="text-3xl font-bold text-white">{step.number}</span>
-                </div>
-                <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold mb-3">
-                  {step.time}
-                </span>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">{step.title}</h3>
-                <p class="text-gray-600">{step.description}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -609,7 +655,7 @@ const stats = [
           Why Parents Trust Us
         </h2>
         <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-          Over 1,000 families have trusted us with their child's Aqiqah
+          Over 1,000 families have trusted us to perform aqiqah for their newborn
         </p>
       </div>
 
@@ -720,14 +766,14 @@ const stats = [
         <p class="text-white/80 text-sm italic mb-8">"Our Lord, grant us from among our spouses and offspring comfort to our eyes"</p>
 
         <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
-          Ready to Celebrate Your Child's Birth?
+          Ready to Perform Aqiqah for Your Newborn?
         </h2>
         <p class="text-xl text-white/80 mb-8">
-          Fulfill this blessed Sunnah and feed families in need at the same time.
+          Donate aqiqah online today — fulfill the Sunnah and feed families in need.
         </p>
 
         <a href="#packages" class="inline-flex items-center gap-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg">
-          <span>Order Aqiqah Now</span>
+          <span>Donate Aqiqah Now</span>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
           </svg>
@@ -740,8 +786,8 @@ const stats = [
     </div>
   </section>
 
-  <!-- Sticky Mobile CTA -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg">
+  <!-- Sticky Mobile CTA (hidden when packages section is in view) -->
+  <div id="mobile-sticky-cta" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg transition-transform duration-300">
     <a href="#packages" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl">
       <span>Order Aqiqah</span>
       <span class="text-yellow-400">from $150</span>
@@ -752,127 +798,146 @@ const stats = [
 
   <!-- Package Selection Modal - Step 1: Child Details -->
   <div id="aqiqah-modal" class="fixed inset-0 bg-black/50 z-[200] hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 relative">
-      <button onclick="closeAqiqahModal()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full">
+    <div class="bg-white rounded-2xl max-w-md w-full relative overflow-hidden">
+      <button onclick="closeAqiqahModal()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full z-10">
         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
 
-      <h3 class="text-2xl font-bold text-gray-800 mb-2" id="modal-package-name">Baby Boy Aqiqah</h3>
-      <p class="text-[#01534d] text-3xl font-bold mb-6">$<span id="modal-package-price">300</span></p>
+      <!-- Top bar showing package & price -->
+      <div class="bg-[#f9f9f7] border-b border-gray-200 px-6 py-3 text-center">
+        <p class="text-sm text-gray-500">
+          <span id="modal-package-name">Baby Boy Aqiqah</span> · <strong id="modal-package-price-display" class="text-gray-800">$300</strong> USD
+        </p>
+      </div>
 
-      <form id="aqiqah-form" class="space-y-4">
-        <input type="hidden" id="package-type" value="boy" />
-        <input type="hidden" id="package-amount" value="300" />
+      <div class="p-6">
+        <!-- Title -->
+        <h3 class="text-xl font-bold text-gray-800 mb-1 text-center" style="font-family: 'Signika', sans-serif;">
+          Enter Your Child's Details
+        </h3>
+        <p class="text-sm text-gray-500 text-center mb-5">
+          This information will appear on the certificate
+        </p>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Child's Name *</label>
-          <input
-            type="text"
-            id="child-name"
-            required
-            placeholder="Enter your child's name"
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
-          />
-          <p class="text-xs text-gray-500 mt-1">This name will appear on the certificate</p>
-        </div>
+        <form id="aqiqah-form" class="space-y-4">
+          <input type="hidden" id="package-type" value="boy" />
+          <input type="hidden" id="package-amount" value="300" />
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Performing Aqiqah For</label>
-          <select id="aqiqah-for" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white">
-            <option value="child">My Child</option>
-            <option value="self">Myself (Adult Aqiqah)</option>
-            <option value="other">Someone Else</option>
-          </select>
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Child's Name *</label>
+            <input
+              type="text"
+              id="child-name"
+              required
+              placeholder="Enter your child's name"
+              class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e1861d] focus:border-transparent text-sm"
+            />
+          </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Special Notes / Duas (Optional)</label>
-          <textarea
-            id="special-notes"
-            rows="2"
-            placeholder="Any special requests or duas?"
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent resize-none"
-          ></textarea>
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Performing Aqiqah For</label>
+            <select id="aqiqah-for" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e1861d] bg-white text-sm">
+              <option value="child">My Child</option>
+              <option value="self">Myself (Adult Aqiqah)</option>
+              <option value="other">Someone Else</option>
+            </select>
+          </div>
 
-        <button
-          type="submit"
-          class="w-full bg-[#01534d] hover:bg-[#013d39] text-white font-bold py-4 rounded-xl transition flex items-center justify-center gap-2"
-        >
-          <span>Continue</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-          </svg>
-        </button>
-      </form>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Special Notes / Duas (Optional)</label>
+            <textarea
+              id="special-notes"
+              rows="2"
+              placeholder="Any special requests or duas?"
+              class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e1861d] focus:border-transparent resize-none text-sm"
+            ></textarea>
+          </div>
 
-      <p class="text-center text-gray-500 text-sm mt-4">
-        Secure payment • Certificate included
-      </p>
+          <button
+            type="submit"
+            class="w-full py-4 rounded-xl font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all active:scale-[0.99] text-white"
+            style="background-color: #e1861d; font-family: 'Signika', sans-serif;"
+          >
+            CONTINUE
+          </button>
+        </form>
+
+        <p class="text-center text-gray-400 text-xs mt-3">
+          Secure payment • Certificate included
+        </p>
+      </div>
     </div>
   </div>
 
   <!-- Sadaqah Upsell Modal - Step 2 -->
   <div id="sadaqah-modal" class="fixed inset-0 bg-black/50 z-[200] hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 relative">
-      <button onclick="closeSadaqahModal()" class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
+    <div class="bg-white rounded-2xl max-w-md w-full relative overflow-hidden">
 
-      <!-- Success checkmark -->
-      <div class="flex justify-center mb-4">
-        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-          <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-        </div>
+      <!-- Top bar showing total amount (updates with toggle) -->
+      <div class="bg-[#f9f9f7] border-b border-gray-200 px-6 py-3 text-center">
+        <p class="text-sm text-gray-500">
+          Giving <strong id="sadaqah-aqiqah-amount" class="text-gray-800">$150</strong> USD
+          <button onclick="editAqiqahDetails()" class="ml-2 text-xs text-gray-800 font-bold uppercase tracking-wide hover:text-[#e1861d] transition underline">EDIT</button>
+        </p>
       </div>
 
-      <h3 class="text-xl font-bold text-gray-800 mb-2 text-center">Aqiqah Added!</h3>
-      <p class="text-gray-600 text-center mb-6">Would you like to add a 'Gift of Protection' (Sadaqah)?</p>
+      <div class="p-6">
+        <!-- Title -->
+        <h3 class="text-xl font-bold text-gray-800 mb-3 text-center" style="font-family: 'Signika', sans-serif;">
+          Would you consider something?
+        </h3>
 
-      <!-- Sadaqah Option -->
-      <div class="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-4">
-        <div class="flex items-center gap-4">
-          <div class="flex-shrink-0">
-            <svg class="w-12 h-12 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 4.24 2 7v10c0 2.76 4.48 5 10 5s10-2.24 10-5V7c0-2.76-4.48-5-10-5zm0 2c4.41 0 8 1.79 8 3s-3.59 3-8 3-8-1.79-8-3 3.59-3 8-3zm8 13c0 1.21-3.59 3-8 3s-8-1.79-8-3v-2.23c1.61 1.05 4.46 1.73 8 1.73s6.39-.68 8-1.73V17zm0-4c0 1.21-3.59 3-8 3s-8-1.79-8-3v-2.23c1.61 1.05 4.46 1.73 8 1.73s6.39-.68 8-1.73V13zm0-4c0 1.21-3.59 3-8 3s-8-1.79-8-3V6.77C5.61 7.82 8.46 8.5 12 8.5s6.39-.68 8-1.73V9z"/>
-            </svg>
+        <!-- Body text -->
+        <p id="sadaqah-body-text" class="text-sm text-gray-500 leading-relaxed mb-5 text-center">
+          The Prophet ﷺ encouraged giving Sadaqah on the day of Aqiqah. Adding a small charity brings blessings and protection.
+        </p>
+
+        <!-- Toggle card -->
+        <div id="sadaqah-toggle-card" class="rounded-lg p-4 mb-5 border border-gray-200 cursor-pointer transition-all" style="background-color: #f9f9f7;" onclick="toggleSadaqah()">
+          <div class="flex items-center gap-3">
+            <!-- Toggle switch -->
+            <button type="button" id="sadaqah-toggle" class="relative w-14 h-7 rounded-full bg-gray-300 transition-colors flex-shrink-0" role="switch" aria-checked="false">
+              <span id="sadaqah-toggle-dot" class="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform flex items-center justify-center">
+                <svg id="sadaqah-toggle-x" class="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                <svg id="sadaqah-toggle-check" class="w-3.5 h-3.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </button>
+            <span id="sadaqah-toggle-label" class="text-sm font-semibold text-gray-700">
+              Add $50 Sadaqah
+            </span>
           </div>
-          <div class="flex-grow">
-            <h4 class="font-bold text-gray-800">Sadaqah</h4>
-            <p class="text-sm text-gray-600">Give charity on behalf of your child</p>
-          </div>
-          <div class="text-right">
-            <p class="text-2xl font-bold text-orange-600">$100</p>
-          </div>
+          <p id="sadaqah-toggle-desc" class="text-xs text-gray-400 mt-2.5 leading-relaxed">
+            A beautiful Sunnah practice. Your Sadaqah will provide food, clean water, or education for those in need.
+          </p>
         </div>
-      </div>
 
-      <div class="space-y-3">
+        <!-- CTA Button -->
         <button
-          onclick="addSadaqahAndCheckout()"
-          class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition flex items-center justify-center gap-2"
+          id="sadaqah-cta-btn"
+          onclick="confirmSadaqahAndCheckout()"
+          class="w-full py-4 rounded-xl font-extrabold text-[15px] uppercase tracking-[0.1em] transition-all active:scale-[0.99] text-white"
+          style="background-color: #e1861d; font-family: 'Signika', sans-serif;"
         >
-          <span>Add Sadaqah (+$100)</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-        </button>
-
-        <button
-          onclick="skipSadaqahAndCheckout()"
-          class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-xl transition"
-        >
-          No thanks, go to cart
+          CONTINUE
         </button>
       </div>
     </div>
   </div>
+
+  <script is:inline define:vars={{ campaignSlug: campaign.slug, campaignTitle: campaign.title }}>
+    // Track campaign page view in GA4
+    if (window.trackViewItem) {
+      window.trackViewItem({
+        id: campaignSlug,
+        name: campaignTitle,
+        slug: campaignSlug,
+        campaign: campaignSlug,
+        amount: 0
+      });
+    }
+  </script>
 
   <script is:inline>
     // Store pending Aqiqah details for the upsell flow
@@ -924,7 +989,7 @@ const stats = [
       }
 
       document.getElementById('modal-package-name').textContent = name + ' Aqiqah';
-      document.getElementById('modal-package-price').textContent = price;
+      document.getElementById('modal-package-price-display').textContent = '$' + price;
       document.getElementById('package-type').value = type;
       document.getElementById('package-amount').value = price;
 
@@ -946,10 +1011,114 @@ const stats = [
       pendingAqiqah = null;
     }
 
+    function editAqiqahDetails() {
+      // Close the sadaqah upsell modal
+      const sadaqahModal = document.getElementById('sadaqah-modal');
+      sadaqahModal.classList.add('hidden');
+      sadaqahModal.classList.remove('flex');
+
+      // Re-populate the first modal with pending data
+      if (pendingAqiqah) {
+        const pkgName = pendingAqiqah.packageType === 'boy' ? 'Baby Boy' : 'Baby Girl';
+        document.getElementById('modal-package-name').textContent = pkgName + ' Aqiqah';
+        document.getElementById('modal-package-price-display').textContent = '$' + pendingAqiqah.amount;
+        document.getElementById('package-type').value = pendingAqiqah.packageType;
+        document.getElementById('package-amount').value = pendingAqiqah.amount;
+        document.getElementById('child-name').value = pendingAqiqah.childName || '';
+        document.getElementById('aqiqah-for').value = pendingAqiqah.aqiqahFor || 'child';
+        document.getElementById('special-notes').value = pendingAqiqah.notes || '';
+      }
+
+      // Show the first modal
+      const aqiqahModal = document.getElementById('aqiqah-modal');
+      aqiqahModal.classList.remove('hidden');
+      aqiqahModal.classList.add('flex');
+    }
+
+    // Sadaqah toggle state
+    let sadaqahToggleOn = false;
+    const SADAQAH_AMOUNT = 50;
+
+    function toggleSadaqah() {
+      sadaqahToggleOn = !sadaqahToggleOn;
+      const toggle = document.getElementById('sadaqah-toggle');
+      const dot = document.getElementById('sadaqah-toggle-dot');
+      const xIcon = document.getElementById('sadaqah-toggle-x');
+      const checkIcon = document.getElementById('sadaqah-toggle-check');
+      const card = document.getElementById('sadaqah-toggle-card');
+      const ctaBtn = document.getElementById('sadaqah-cta-btn');
+
+      const amountEl = document.getElementById('sadaqah-aqiqah-amount');
+      const baseAmount = pendingAqiqah ? pendingAqiqah.amount : 0;
+
+      if (sadaqahToggleOn) {
+        toggle.style.backgroundColor = '#e1861d';
+        dot.style.transform = 'translateX(28px)';
+        xIcon.classList.add('hidden');
+        checkIcon.classList.remove('hidden');
+        card.style.borderColor = '#e1861d';
+        card.style.backgroundColor = '#fef3e2';
+        const totalAmount = baseAmount + SADAQAH_AMOUNT;
+        ctaBtn.textContent = 'GIVE $' + totalAmount;
+        if (amountEl) amountEl.textContent = '$' + totalAmount;
+      } else {
+        toggle.style.backgroundColor = '';
+        dot.style.transform = '';
+        xIcon.classList.remove('hidden');
+        checkIcon.classList.add('hidden');
+        card.style.borderColor = '';
+        card.style.backgroundColor = '#f9f9f7';
+        ctaBtn.textContent = 'GIVE $' + baseAmount;
+        if (amountEl) amountEl.textContent = '$' + baseAmount;
+      }
+    }
+
     function showSadaqahUpsell() {
+      // Reset toggle state
+      sadaqahToggleOn = false;
+      const toggle = document.getElementById('sadaqah-toggle');
+      const dot = document.getElementById('sadaqah-toggle-dot');
+      const xIcon = document.getElementById('sadaqah-toggle-x');
+      const checkIcon = document.getElementById('sadaqah-toggle-check');
+      const card = document.getElementById('sadaqah-toggle-card');
+      if (toggle) { toggle.style.backgroundColor = ''; }
+      if (dot) { dot.style.transform = ''; }
+      if (xIcon) { xIcon.classList.remove('hidden'); }
+      if (checkIcon) { checkIcon.classList.add('hidden'); }
+      if (card) { card.style.borderColor = ''; card.style.backgroundColor = '#f9f9f7'; }
+
+      // Set the Aqiqah amount in the top bar
+      const amountEl = document.getElementById('sadaqah-aqiqah-amount');
+      if (amountEl && pendingAqiqah) {
+        amountEl.textContent = '$' + pendingAqiqah.amount;
+      }
+
+      // Set CTA button text
+      const ctaBtn = document.getElementById('sadaqah-cta-btn');
+      if (ctaBtn && pendingAqiqah) {
+        ctaBtn.textContent = 'GIVE $' + pendingAqiqah.amount;
+      }
+
+      // Set dynamic toggle label based on who aqiqah is for
+      const toggleLabel = document.getElementById('sadaqah-toggle-label');
+      if (toggleLabel && pendingAqiqah) {
+        const forText = pendingAqiqah.aqiqahFor === 'self' ? 'for myself'
+          : pendingAqiqah.aqiqahFor === 'other' ? 'for ' + (pendingAqiqah.childName || 'them')
+          : 'for ' + (pendingAqiqah.childName || 'my child');
+        toggleLabel.textContent = 'Add $' + SADAQAH_AMOUNT + ' Sadaqah ' + forText;
+      }
+
       const modal = document.getElementById('sadaqah-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+    }
+
+    function confirmSadaqahAndCheckout() {
+      if (sadaqahToggleOn) {
+        addSadaqahAndCheckout();
+      } else {
+        skipSadaqahAndCheckout();
+      }
     }
 
     function addAqiqahToCart() {
@@ -985,8 +1154,8 @@ const stats = [
       if (typeof window.addToCart === 'function') {
         window.addToCart({
           id: `sadaqah-${Date.now()}`,
-          name: `Sadaqah for ${pendingAqiqah.childName}`,
-          amount: 100,
+          name: pendingAqiqah.aqiqahFor === 'self' ? 'Sadaqah for myself' : `Sadaqah for ${pendingAqiqah.childName}`,
+          amount: SADAQAH_AMOUNT,
           type: 'single',
           campaign: 'aqiqah',
           label: 'Sadaqah',
@@ -1037,6 +1206,25 @@ const stats = [
       if (e.target.id === 'sadaqah-modal') closeSadaqahModal();
     });
 
+    // Hide sticky mobile CTA when packages section is visible
+    (function() {
+      const packagesSection = document.getElementById('packages');
+      const stickyBar = document.getElementById('mobile-sticky-cta');
+      if (!packagesSection || !stickyBar) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            stickyBar.style.transform = 'translateY(100%)';
+          } else {
+            stickyBar.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+
+      observer.observe(packagesSection);
+    })();
+
     // Form submission - Step 1: Collect details, then show Sadaqah upsell
     document.getElementById('aqiqah-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1066,6 +1254,49 @@ const stats = [
       showSadaqahUpsell();
     });
   </script>
+
+  <!-- FAQ Structured Data for Google Rich Results -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  })} />
+
+  <!-- Service Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Aqiqah for Newborn",
+    "description": "Perform aqiqah for your newborn following the Sunnah. Shariah-compliant sacrifice with meat distributed to families in need and personalized certificate included.",
+    "provider": {
+      "@type": "NGO",
+      "name": "Qurbani Foundation USA",
+      "url": "https://qurbani.com"
+    },
+    "serviceType": "Aqiqah Sacrifice",
+    "areaServed": "US",
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Baby Girl Aqiqah",
+        "price": String(packages[0].price),
+        "priceCurrency": "USD"
+      },
+      {
+        "@type": "Offer",
+        "name": "Baby Boy Aqiqah",
+        "price": String(packages[1].price),
+        "priceCurrency": "USD"
+      }
+    ]
+  })} />
 
   <style>
     .font-arabic {
