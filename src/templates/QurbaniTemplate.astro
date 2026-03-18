@@ -31,9 +31,19 @@ interface Props {
     template_config?: Record<string, unknown>;
   };
   donationBoxTemplate?: string;
+  /** Landing page SEO overrides — keeps design intact, swaps text */
+  heroOverrides?: {
+    headlineLine1?: string;
+    headlineLine2?: string;
+    subheadline?: string;
+    ctaText?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    trustBadgeText?: string;
+  };
 }
 
-const { campaign, donationBoxTemplate } = Astro.props;
+const { campaign, donationBoxTemplate, heroOverrides } = Astro.props;
 
 // Define animal option types
 interface AnimalOption {
@@ -757,7 +767,7 @@ const testimonials = [
 ];
 ---
 
-<Layout title={`${campaign.title} - Global Qurbani Service | Qurbani Foundation`}>
+<Layout title={heroOverrides?.metaTitle || `${campaign.title} - Global Qurbani Service | Qurbani Foundation`} description={heroOverrides?.metaDescription}>
   <Navbar />
 
   <!-- Hero Section -->
@@ -779,14 +789,15 @@ const testimonials = [
 
         <!-- Main Headline -->
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
-          Give Your Qurbani<br/>
-          <span class="text-[#D97718]">Where It's Needed Most</span>
+          {heroOverrides?.headlineLine1 || 'Give Your Qurbani'}<br/>
+          <span class="text-[#D97718]">{heroOverrides?.headlineLine2 || "Where It's Needed Most"}</span>
         </h1>
 
         <!-- Subheadline -->
         <p class="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed max-w-2xl mx-auto">
-          Fulfill your obligation with 100% Shariah-compliant Qurbani.<br class="hidden md:block"/>
-          Fresh meat delivered to families in 70+ countries within 24 hours.
+          {heroOverrides?.subheadline || (
+            <>Fulfill your obligation with 100% Shariah-compliant Qurbani.<br class="hidden md:block"/>Fresh meat delivered to families in 70+ countries within 24 hours.</>
+          )}
         </p>
 
         <!-- Key Points -->
@@ -819,7 +830,7 @@ const testimonials = [
 
         <!-- CTA Button -->
         <a href="#select-qurbani" class="inline-flex items-center gap-3 bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-xl">
-          <span>Give Your Qurbani Now</span>
+          <span>{heroOverrides?.ctaText || 'Give Your Qurbani Now'}</span>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
           </svg>
@@ -828,7 +839,7 @@ const testimonials = [
         <!-- Trust Badge - positioned below CTA for conversion -->
         <div class="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
           <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-          <span class="text-white/90 text-sm font-medium">2 Million+ People Fed Globally</span>
+          <span class="text-white/90 text-sm font-medium">{heroOverrides?.trustBadgeText || '2 Million+ People Fed Globally'}</span>
         </div>
       </div>
     </div>
@@ -909,6 +920,7 @@ const testimonials = [
             class="country-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1"
             data-categories={country.category.join(',')}
             data-country={country.id}
+            data-min-price={Math.min(...country.animals.map((a: any) => a.price))}
           >
             <!-- Country Header -->
             <div class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200">
@@ -1006,13 +1018,13 @@ const testimonials = [
               </div>
               <!-- On Behalf Of (Hidden by default) -->
               <div class="behalf-container hidden mb-4">
-                <div class="flex gap-2">
+                <div class="flex items-center gap-2">
                   <input
                     type="text"
-                    class="behalf-input flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-sm"
+                    class="behalf-input flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#01534d] text-[16px] sm:text-sm"
                     placeholder="e.g. Muhammad"
                   />
-                  <button type="button" class="behalf-clear px-2 text-gray-400 hover:text-gray-600">
+                  <button type="button" class="behalf-clear p-1.5 text-gray-400 hover:text-gray-600 flex-shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -1204,17 +1216,31 @@ const testimonials = [
   </section>
 
   <!-- Sticky Mobile CTA -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg">
-    <a href="#select-qurbani" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl">
-      <span>Give Qurbani</span>
+  <div id="qurbani-sticky-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg transition-transform duration-300">
+    <button id="qurbani-sticky-btn" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl cursor-pointer">
+      <span>Qurbani</span>
       <span class="text-[#D97718]">from $50</span>
-    </a>
+    </button>
   </div>
 
   <Footer />
 
+  <script is:inline define:vars={{ campaignSlug: campaign.slug, campaignTitle: campaign.title }}>
+    // Track campaign page view in GA4
+    if (window.trackViewItem) {
+      window.trackViewItem({
+        id: campaignSlug,
+        name: campaignTitle,
+        slug: campaignSlug,
+        campaign: campaignSlug,
+        amount: 0
+      });
+    }
+  </script>
+
   <script is:inline>
     // Category Tab Filtering
+    var countriesGrid = document.getElementById('countries-grid');
     document.querySelectorAll('.category-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         // Update active tab
@@ -1225,17 +1251,35 @@ const testimonials = [
         tab.classList.add('active', 'bg-[#01534d]', 'text-white');
         tab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
 
-        const category = tab.dataset.category;
+        var category = tab.dataset.category;
 
         // Filter countries
         document.querySelectorAll('.country-card').forEach(card => {
-          const categories = card.dataset.categories.split(',');
+          var categories = card.dataset.categories.split(',');
           if (category === 'all' || categories.includes(category)) {
             card.classList.remove('hidden');
           } else {
             card.classList.add('hidden');
           }
         });
+
+        // Sort: lowest-price by price ascending, everything else alphabetical
+        if (countriesGrid) {
+          var cards = Array.from(countriesGrid.querySelectorAll('.country-card'));
+          if (category === 'lowest-price') {
+            cards.sort(function(a, b) {
+              return (parseFloat(a.dataset.minPrice) || 999) - (parseFloat(b.dataset.minPrice) || 999);
+            });
+          } else {
+            // Alphabetical by country name
+            cards.sort(function(a, b) {
+              var nameA = (a.querySelector('h3')?.textContent || '').trim();
+              var nameB = (b.querySelector('h3')?.textContent || '').trim();
+              return nameA.localeCompare(nameB);
+            });
+          }
+          cards.forEach(function(card) { countriesGrid.appendChild(card); });
+        }
       });
     });
 
@@ -1349,7 +1393,7 @@ const testimonials = [
         const container = card.querySelector('.behalf-container');
         container.classList.remove('hidden');
         btn.classList.add('hidden');
-        card.querySelector('.behalf-input').focus();
+        card.querySelector('.behalf-input').focus({ preventScroll: true });
       });
     });
 
@@ -1527,6 +1571,35 @@ const testimonials = [
       setTimeout(() => {
         matchedCards[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 500);
+    })();
+  </script>
+
+  <!-- Sticky bar: hide when donation section visible, smooth scroll on click -->
+  <script is:inline>
+    (function() {
+      var stickyBar = document.getElementById('qurbani-sticky-bar');
+      var stickyBtn = document.getElementById('qurbani-sticky-btn');
+      var donationSection = document.getElementById('select-qurbani');
+      if (!stickyBar || !donationSection) return;
+
+      // Smooth scroll to donation section
+      if (stickyBtn) {
+        stickyBtn.addEventListener('click', function() {
+          var rect = donationSection.getBoundingClientRect();
+          var scrollTarget = window.pageYOffset + rect.top - 20;
+          window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+        });
+      }
+
+      // IntersectionObserver: hide sticky when donation section is visible
+      var observer = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) {
+          stickyBar.classList.add('translate-y-full');
+        } else {
+          stickyBar.classList.remove('translate-y-full');
+        }
+      }, { threshold: 0.05 });
+      observer.observe(donationSection);
     })();
   </script>
 

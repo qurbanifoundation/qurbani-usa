@@ -115,80 +115,102 @@ if (page?.content) {
     <div id="toast" class="hidden fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2"></div>
 
     <!-- Page Settings -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">Page Settings</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
-          <input
-            type="text"
-            id="pageTitle"
-            value={page?.title || ''}
-            placeholder="e.g., About Us"
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
-            required
-          />
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 collapsible-section">
+      <button type="button" class="collapsible-header w-full flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors">
+        <div class="text-left">
+          <h2 class="text-lg font-bold text-gray-800">Page Settings</h2>
+          <p class="text-sm text-gray-500">Title, slug, status, template, and donation box settings</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">URL Slug *</label>
-          <div class="flex">
-            <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-200 rounded-l-lg text-gray-500 text-sm">/</span>
+        <svg class="collapsible-arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="collapsible-body hidden px-6 pb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Page Title *</label>
             <input
               type="text"
-              id="pageSlug"
-              value={page?.slug?.replace(/^\/+/, '') || ''}
-              placeholder="about-us"
-              class="flex-1 px-4 py-2 border border-gray-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+              id="pageTitle"
+              value={page?.title || ''}
+              placeholder="e.g., About Us"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
               required
             />
           </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-          <select
-            id="pageStatus"
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
-          >
-            <option value="draft" selected={page?.status === 'draft'}>Draft</option>
-            <option value="published" selected={page?.status === 'published'}>Published</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Template</label>
-          <select
-            id="pageTemplate"
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
-          >
-            <option value="default" selected={page?.template === 'default'}>Default</option>
-            <option value="home" selected={page?.template === 'home'}>Home</option>
-            <option value="landing" selected={page?.template === 'landing'}>Landing Page</option>
-            <option value="contact" selected={page?.template === 'contact'}>Contact</option>
-            <option value="legal" selected={page?.template === 'legal'}>Legal (Privacy, Terms)</option>
-            <option value="blog" selected={page?.template === 'blog'}>Blog Article</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
-          <select
-            id="donationBoxTemplate"
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
-          >
-            <option value="" selected={!page?.donation_box_template}>Use Site Default</option>
-            {donationBoxTemplates.map((template) => (
-              <option value={template.template_key} selected={page?.donation_box_template === template.template_key}>
-                {template.template_label}
-              </option>
-            ))}
-          </select>
-          <p class="text-xs text-gray-400 mt-1">Override the default donation box for this page</p>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL Slug *</label>
+            <div class="flex">
+              <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-200 rounded-l-lg text-gray-500 text-sm">/</span>
+              <input
+                type="text"
+                id="pageSlug"
+                value={page?.slug?.replace(/^\/+/, '') || ''}
+                placeholder="about-us"
+                class="flex-1 px-4 py-2 border border-gray-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              id="pageStatus"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+            >
+              <option value="draft" selected={page?.status === 'draft'}>Draft</option>
+              <option value="published" selected={page?.status === 'published'}>Published</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Template</label>
+            <select
+              id="pageTemplate"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+            >
+              <option value="default" selected={page?.template === 'default'}>Default</option>
+              <option value="home" selected={page?.template === 'home'}>Home</option>
+              <option value="landing" selected={page?.template === 'landing'}>Landing Page</option>
+              <option value="contact" selected={page?.template === 'contact'}>Contact</option>
+              <option value="legal" selected={page?.template === 'legal'}>Legal (Privacy, Terms)</option>
+              <option value="blog" selected={page?.template === 'blog'}>Blog Article</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Donation Box Template</label>
+            <select
+              id="donationBoxTemplate"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white"
+            >
+              <option value="" selected={!page?.donation_box_template}>Use Site Default</option>
+              {donationBoxTemplates.map((template) => (
+                <option value={template.template_key} selected={page?.donation_box_template === template.template_key}>
+                  {template.template_label}
+                </option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Override the default donation box for this page</p>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Expand/Collapse All -->
+    <div class="flex justify-end mb-3">
+      <button type="button" id="toggleAllSections" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1.5 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"></path></svg>
+        <span>Expand All</span>
+      </button>
+    </div>
+
     <!-- CW Donation Box Settings (shown when donation box = cw-donation) -->
-    <div id="cwDonationSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hidden">
-      <h2 class="text-lg font-bold text-gray-800 mb-2">Donation Box Settings</h2>
-      <p class="text-sm text-gray-500 mb-6">Configure amounts, impact texts, and labels for the CW Donation Box on this page</p>
+    <div id="cwDonationSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 collapsible-section hidden">
+      <button type="button" class="collapsible-header w-full flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors">
+        <div class="text-left">
+          <h2 class="text-lg font-bold text-gray-800">Default Donation Box Settings</h2>
+          <p class="text-sm text-gray-500">Configure amounts, impact texts, and labels for the CW Donation Box on this page</p>
+        </div>
+        <svg class="collapsible-arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="collapsible-body hidden px-6 pb-6">
 
       <!-- Frequency Tabs Selector -->
       <div class="mb-8">
@@ -223,87 +245,116 @@ if (page?.content) {
           <p class="text-xs text-gray-400 mt-1">Shown below the monthly toggle on the upsell page</p>
         </div>
       </div>
+      </div><!-- /collapsible-body -->
     </div>
 
     <!-- Hero Campaign Slides (shown only for home page) -->
-    <div id="heroSlidesSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 hidden">
-      <div class="flex items-center justify-between mb-2">
-        <div>
+    <div id="heroSlidesSettings" class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 collapsible-section hidden">
+      <button type="button" class="collapsible-header w-full flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors">
+        <div class="text-left">
           <h2 class="text-lg font-bold text-gray-800">Hero Campaign Slides</h2>
           <p class="text-sm text-gray-500">Configure the homepage hero carousel. Each slide has its own content and donation box.</p>
         </div>
-        <button type="button" id="addHeroSlideBtn"
-          class="flex items-center gap-2 px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        <svg class="collapsible-arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="collapsible-body hidden px-6 pb-6">
+        <div class="flex justify-end mb-3">
+          <button type="button" id="addHeroSlideBtn"
+            class="flex items-center gap-2 px-3 py-1.5 bg-[#01534d] text-white text-sm rounded-lg hover:bg-[#01433f]">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Slide
+          </button>
+        </div>
+
+        <div id="heroSlidesContainer" class="space-y-3">
+          <!-- Slide cards rendered by JS -->
+        </div>
+
+        <div id="heroSlidesEmpty" class="hidden text-center py-8 border-2 border-dashed border-gray-300 rounded-lg mt-4">
+          <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
-          Add Slide
-        </button>
-      </div>
-
-      <div id="heroSlidesContainer" class="space-y-3 mt-4">
-        <!-- Slide cards rendered by JS -->
-      </div>
-
-      <div id="heroSlidesEmpty" class="hidden text-center py-8 border-2 border-dashed border-gray-300 rounded-lg mt-4">
-        <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        <p class="text-gray-500 mb-2">No hero slides configured</p>
-        <p class="text-gray-400 text-sm">The homepage will use default hardcoded slides</p>
+          <p class="text-gray-500 mb-2">No hero slides configured</p>
+          <p class="text-gray-400 text-sm">The homepage will use default hardcoded slides</p>
+        </div>
       </div>
     </div>
 
     <!-- SEO Settings -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">SEO Settings</h2>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
-          <input
-            type="text"
-            id="metaTitle"
-            value={page?.meta_title || ''}
-            placeholder="Page title for search engines"
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
-          />
-          <p class="text-xs text-gray-500 mt-1">Leave empty to use page title</p>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 collapsible-section">
+      <button type="button" class="collapsible-header w-full flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors">
+        <div class="text-left">
+          <h2 class="text-lg font-bold text-gray-800">SEO Settings</h2>
+          <p class="text-sm text-gray-500">Meta title and description for search engines</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-          <textarea
-            id="metaDescription"
-            rows="2"
-            placeholder="Brief description for search results"
-            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
-          >{page?.meta_description || ''}</textarea>
+        <svg class="collapsible-arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="collapsible-body hidden px-6 pb-6">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
+            <input
+              type="text"
+              id="metaTitle"
+              value={page?.meta_title || ''}
+              placeholder="Page title for search engines"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            />
+            <p class="text-xs text-gray-500 mt-1">Leave empty to use page title</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
+            <textarea
+              id="metaDescription"
+              rows="2"
+              placeholder="Brief description for search results"
+              class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d]"
+            >{page?.meta_description || ''}</textarea>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Page Content -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold text-gray-800">Page Content</h2>
-        <button
-          id="addSectionBtn"
-          class="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Add Section
-        </button>
-      </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 collapsible-section">
+      <button type="button" class="collapsible-header w-full flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors">
+        <div class="text-left">
+          <h2 class="text-lg font-bold text-gray-800">Page Content</h2>
+          <p class="text-sm text-gray-500">Build your page with content sections</p>
+        </div>
+        <svg class="collapsible-arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="collapsible-body hidden px-6 pb-6">
+        <div class="flex justify-end mb-4">
+          <button
+            id="addSectionBtn"
+            class="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Section
+          </button>
+        </div>
 
-      <div id="sectionsContainer" class="space-y-4">
-        <!-- Sections will be rendered here -->
+        <div id="sectionsContainer" class="space-y-4">
+          <!-- Sections will be rendered here -->
+        </div>
       </div>
     </div>
 
     <!-- Featured Image -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">Featured Image</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 collapsible-section">
+      <button type="button" class="collapsible-header w-full flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 rounded-xl transition-colors">
+        <div class="text-left">
+          <h2 class="text-lg font-bold text-gray-800">Featured Image</h2>
+          <p class="text-sm text-gray-500">Upload a featured image for the page</p>
+        </div>
+        <svg class="collapsible-arrow w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="collapsible-body hidden px-6 pb-6">
       <div class="flex gap-4">
         <div class="w-48 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
           <img
@@ -339,6 +390,7 @@ if (page?.content) {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -1076,35 +1128,43 @@ if (page?.content) {
         '<!-- Donation Box Config -->' +
         '<div class="border-t border-gray-100 pt-4 space-y-3">' +
           '<h4 class="font-semibold text-gray-700 text-sm flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Donation Box Config</h4>' +
-          '<p class="text-xs text-gray-400">Leave blank to use the default donation box settings from above</p>' +
+          '<!-- Use Campaign Toggle -->' +
+          '<div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">' +
+            '<input type="checkbox" class="hs-use-campaign-box rounded border-gray-300 text-amber-600 focus:ring-amber-500" ' + (slide.useCampaignDonation ? 'checked' : '') + ' />' +
+            '<div>' +
+              '<label class="text-sm font-medium text-gray-700 cursor-pointer">Pull donation box from campaign</label>' +
+              '<p class="text-xs text-gray-400">Uses the donation box config from the campaign page. Changes to the campaign will auto-update here.</p>' +
+            '</div>' +
+          '</div>' +
+          '<!-- Campaign slug (always visible) -->' +
           '<div class="grid grid-cols-2 gap-3">' +
             '<div>' +
               '<label class="block text-xs font-medium text-gray-600 mb-1">Campaign Slug</label>' +
-              '<input type="text" placeholder="e.g., where-needed" value="' + (donation.campaignSlug || '').replace(/"/g, '&quot;') + '" class="hs-campaign-slug w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
+              '<input type="text" placeholder="e.g., zakat, sponsor-an-orphan" value="' + (donation.campaignSlug || slide.campaignSlug || '').replace(/"/g, '&quot;') + '" class="hs-campaign-slug w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
             '</div>' +
-            '<div>' +
+            '<div class="hs-manual-fields" ' + (slide.useCampaignDonation ? 'style="display:none"' : '') + '>' +
               '<label class="block text-xs font-medium text-gray-600 mb-1">Campaign Title</label>' +
               '<input type="text" placeholder="e.g., Where Most Needed" value="' + (donation.campaignTitle || '').replace(/"/g, '&quot;') + '" class="hs-campaign-title w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
             '</div>' +
           '</div>' +
-          '<div>' +
+          '<div class="hs-manual-fields" ' + (slide.useCampaignDonation ? 'style="display:none"' : '') + '>' +
             '<label class="block text-xs font-medium text-gray-600 mb-1">Donation Box Heading</label>' +
             '<input type="text" placeholder="e.g., Be the Reason They Smile" value="' + (donation.donationBoxHeading || '').replace(/"/g, '&quot;') + '" class="hs-donation-heading w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
           '</div>' +
-          '<div>' +
+          '<div class="hs-manual-fields" ' + (slide.useCampaignDonation ? 'style="display:none"' : '') + '>' +
             '<label class="block text-xs font-medium text-gray-600 mb-1">Tab Icon / Emoji</label>' +
             '<input type="text" placeholder="e.g., 🤲 💧 🌙 (auto-detects if blank)" value="' + (donation.tabEmoji || '').replace(/"/g, '&quot;') + '" class="hs-tab-emoji w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />' +
           '</div>' +
           '<!-- Frequency Tabs Selector -->' +
-          '<div>' +
+          '<div class="hs-manual-fields" ' + (slide.useCampaignDonation ? 'style="display:none"' : '') + '>' +
             '<label class="text-xs font-medium text-gray-600 mb-2 block">Frequency Tabs (leave blank to use page defaults)</label>' +
             '<div id="' + slideFreqContainerId + '" class="hs-freq-list space-y-2"></div>' +
           '</div>' +
-          '<div>' +
+          '<div class="hs-manual-fields" ' + (slide.useCampaignDonation ? 'style="display:none"' : '') + '>' +
             '<label class="block text-xs font-medium text-gray-600 mb-1">Upsell Body Text</label>' +
             '<textarea placeholder="By making a monthly donation..." rows="2" class="hs-upsell-body w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">' + (donation.upsellBody || '') + '</textarea>' +
           '</div>' +
-          '<div>' +
+          '<div class="hs-manual-fields" ' + (slide.useCampaignDonation ? 'style="display:none"' : '') + '>' +
             '<label class="block text-xs font-medium text-gray-600 mb-1">Upsell Sub Text</label>' +
             '<textarea placeholder="Please consider joining..." rows="2" class="hs-upsell-sub w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">' + (donation.upsellSubText || '') + '</textarea>' +
           '</div>' +
@@ -1181,6 +1241,17 @@ if (page?.content) {
             }
           })
           .catch(function() { showToast('Upload failed', true); });
+      });
+    }
+
+    // "Use campaign donation box" checkbox toggle
+    var useCampaignCheckbox = card.querySelector('.hs-use-campaign-box');
+    if (useCampaignCheckbox) {
+      useCampaignCheckbox.addEventListener('change', function() {
+        var manualFields = card.querySelectorAll('.hs-manual-fields');
+        manualFields.forEach(function(el) {
+          el.style.display = useCampaignCheckbox.checked ? 'none' : '';
+        });
       });
     }
 
@@ -1280,32 +1351,41 @@ if (page?.content) {
       }
 
       // Donation config
-      var donation = {};
+      var useCampaignBox = card.querySelector('.hs-use-campaign-box')?.checked || false;
       var campaignSlug = card.querySelector('.hs-campaign-slug')?.value;
-      var campaignTitle = card.querySelector('.hs-campaign-title')?.value;
-      var donationHeading = card.querySelector('.hs-donation-heading')?.value;
-      var tabEmojiVal = card.querySelector('.hs-tab-emoji')?.value;
-      var upsellBody = card.querySelector('.hs-upsell-body')?.value;
-      var upsellSub = card.querySelector('.hs-upsell-sub')?.value;
 
-      if (campaignSlug) donation.campaignSlug = campaignSlug;
-      if (campaignTitle) donation.campaignTitle = campaignTitle;
-      if (donationHeading) donation.donationBoxHeading = donationHeading;
-      if (tabEmojiVal) donation.tabEmoji = tabEmojiVal;
-      if (upsellBody) donation.upsellBody = upsellBody;
-      if (upsellSub) donation.upsellSubText = upsellSub;
+      if (useCampaignBox) {
+        // Pull from campaign — only store the slug and flag, no custom donation config
+        slide.useCampaignDonation = true;
+        if (campaignSlug) slide.campaignSlug = campaignSlug;
+      } else {
+        // Custom donation config for this slide
+        var donation = {};
+        var campaignTitle = card.querySelector('.hs-campaign-title')?.value;
+        var donationHeading = card.querySelector('.hs-donation-heading')?.value;
+        var tabEmojiVal = card.querySelector('.hs-tab-emoji')?.value;
+        var upsellBody = card.querySelector('.hs-upsell-body')?.value;
+        var upsellSub = card.querySelector('.hs-upsell-sub')?.value;
 
-      // Collect per-slide frequencies
-      var hsFreqList = card.querySelector('.hs-freq-list');
-      if (hsFreqList && hsFreqList.id) {
-        var slideFreqs = collectFrequenciesFromContainer(hsFreqList);
-        if (slideFreqs && slideFreqs.length > 0) {
-          donation.frequencies = slideFreqs;
+        if (campaignSlug) donation.campaignSlug = campaignSlug;
+        if (campaignTitle) donation.campaignTitle = campaignTitle;
+        if (donationHeading) donation.donationBoxHeading = donationHeading;
+        if (tabEmojiVal) donation.tabEmoji = tabEmojiVal;
+        if (upsellBody) donation.upsellBody = upsellBody;
+        if (upsellSub) donation.upsellSubText = upsellSub;
+
+        // Collect per-slide frequencies
+        var hsFreqList = card.querySelector('.hs-freq-list');
+        if (hsFreqList && hsFreqList.id) {
+          var slideFreqs = collectFrequenciesFromContainer(hsFreqList);
+          if (slideFreqs && slideFreqs.length > 0) {
+            donation.frequencies = slideFreqs;
+          }
         }
-      }
 
-      if (Object.keys(donation).length > 0) {
-        slide.donation = donation;
+        if (Object.keys(donation).length > 0) {
+          slide.donation = donation;
+        }
       }
 
       slides.push(slide);
@@ -1506,6 +1586,39 @@ if (page?.content) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
       pageSlugInput.value = slug;
+    });
+  }
+
+  // Collapsible sections
+  document.querySelectorAll('.collapsible-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+      var section = header.closest('.collapsible-section');
+      var body = section.querySelector('.collapsible-body');
+      var arrow = section.querySelector('.collapsible-arrow');
+      body.classList.toggle('hidden');
+      arrow.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    });
+  });
+
+  // Expand All / Collapse All
+  var toggleAllBtn = document.getElementById('toggleAllSections');
+  if (toggleAllBtn) {
+    var allExpanded = false;
+    toggleAllBtn.addEventListener('click', function() {
+      allExpanded = !allExpanded;
+      document.querySelectorAll('.collapsible-section').forEach(function(section) {
+        if (section.classList.contains('hidden')) return; // skip hidden sections
+        var body = section.querySelector('.collapsible-body');
+        var arrow = section.querySelector('.collapsible-arrow');
+        if (allExpanded) {
+          body.classList.remove('hidden');
+          arrow.style.transform = 'rotate(180deg)';
+        } else {
+          body.classList.add('hidden');
+          arrow.style.transform = '';
+        }
+      });
+      toggleAllBtn.querySelector('span').textContent = allExpanded ? 'Collapse All' : 'Expand All';
     });
   }
 </script>

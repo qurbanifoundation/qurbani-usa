@@ -1176,32 +1176,63 @@ async function detectAndMarkRecovery(
 
   if (!checkoutId || !checkoutData) return;
 
-  // Mark as recovered
+  const previousStatus = checkoutData.status as string;
   const now = new Date().toISOString();
-  await supabaseAdmin
-    .from('abandoned_checkouts')
-    .update({
+
+  // Distinguish: was this truly abandoned, or did the donor just complete normally?
+  if (previousStatus === 'abandoned') {
+    // TRUE RECOVERY — donor left, got recovery email, came back and paid
+    await supabaseAdmin
+      .from('abandoned_checkouts')
+      .update({
+        status: 'recovered',
+        recovered_at: now,
+      })
+      .eq('id', checkoutId);
+
+    console.log(`[Recovery] Marked checkout ${checkoutId} as RECOVERED (was abandoned)`);
+
+    // Sync to GHL — move to "Recovered" pipeline stage
+    await syncCheckoutToGHL({
+      email: checkoutData.email as string,
+      firstName: checkoutData.first_name as string,
+      lastName: checkoutData.last_name as string,
       status: 'recovered',
-      recovered_at: now,
-    })
-    .eq('id', checkoutId);
+      amount: checkoutData.amount as number,
+      currency: (checkoutData.currency as string) || 'USD',
+      campaignType: checkoutData.campaign_type as string,
+      campaignSlug: checkoutData.campaign_slug as string,
+      resumeUrl: checkoutData.resume_url as string,
+      recoveryStep: checkoutData.recovery_step_last_sent as number,
+      checkoutId: checkoutId,
+    }).catch(err => console.error('[Recovery] GHL sync error:', err));
+  } else {
+    // NORMAL COMPLETION — donor entered email and paid in the same session
+    await supabaseAdmin
+      .from('abandoned_checkouts')
+      .update({
+        status: 'completed',
+        recovered_at: now,
+      })
+      .eq('id', checkoutId);
 
-  console.log(`[Recovery] Marked checkout ${checkoutId} as recovered`);
+    console.log(`[Recovery] Marked checkout ${checkoutId} as COMPLETED (normal checkout, was "${previousStatus}")`);
 
-  // Sync to GHL — move to "Recovered" pipeline stage
-  await syncCheckoutToGHL({
-    email: checkoutData.email as string,
-    firstName: checkoutData.first_name as string,
-    lastName: checkoutData.last_name as string,
-    status: 'recovered',
-    amount: checkoutData.amount as number,
-    currency: (checkoutData.currency as string) || 'USD',
-    campaignType: checkoutData.campaign_type as string,
-    campaignSlug: checkoutData.campaign_slug as string,
-    resumeUrl: checkoutData.resume_url as string,
-    recoveryStep: checkoutData.recovery_step_last_sent as number,
-    checkoutId: checkoutId,
-  }).catch(err => console.error('[Recovery] GHL sync error:', err));
+    // Sync to GHL — mark as completed (not recovered)
+    await syncCheckoutToGHL({
+      email: checkoutData.email as string,
+      firstName: checkoutData.first_name as string,
+      lastName: checkoutData.last_name as string,
+      status: 'completed',
+      amount: checkoutData.amount as number,
+      currency: (checkoutData.currency as string) || 'USD',
+      campaignType: checkoutData.campaign_type as string,
+      campaignSlug: checkoutData.campaign_slug as string,
+      resumeUrl: checkoutData.resume_url as string,
+      recoveryStep: checkoutData.recovery_step_last_sent as number,
+      checkoutId: checkoutId,
+    }).catch(err => console.error('[Recovery] GHL sync error:', err));
+  }
 }
 
 // ============================================

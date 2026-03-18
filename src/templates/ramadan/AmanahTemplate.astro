@@ -2355,7 +2355,7 @@ const {
             <label class="custom-input-label">Enter custom amount per night:</label>
             <div class="custom-amount-input-row">
               <span class="currency-symbol">$</span>
-              <input type="number" id="custom-amount-input" class="custom-input" min="1" placeholder="Enter amount" onchange="setCustomAmount(this.value)">
+              <input type="text" inputmode="numeric" pattern="[0-9]*" id="custom-amount-input" class="custom-input" min="1" placeholder="Enter amount" onchange="setCustomAmount(this.value)">
             </div>
           </div>
 
@@ -2717,7 +2717,18 @@ const {
 
   <Footer />
 
-  <script is:inline define:vars={{ googlePlacesApiKey, nights }}>
+  <script is:inline define:vars={{ googlePlacesApiKey, nights, ramadanSlug: nights === 10 ? 'ramadan-last-10-nights' : 'ramadan-30-nights', ramadanTitle: nights === 10 ? 'Last 10 Nights of Ramadan' : '30 Nights of Ramadan' }}>
+    // Track campaign page view in GA4
+    if (window.trackViewItem) {
+      window.trackViewItem({
+        id: ramadanSlug,
+        name: ramadanTitle,
+        slug: ramadanSlug,
+        campaign: ramadanSlug,
+        amount: 0
+      });
+    }
+
     // State
     let currentStep = 1;
     let state = {
@@ -3161,7 +3172,7 @@ const {
             <span class="custom-cause-name">${causeLabels[cause]}</span>
             <div class="custom-cause-input">
               <span>$</span>
-              <input type="number" value="${currentAmount}" min="1"
+              <input type="text" inputmode="numeric" pattern="[0-9]*" value="${currentAmount}" min="1"
                      onchange="updateCauseAmount('${cause}', this.value)"
                      oninput="updateCauseAmount('${cause}', this.value)">
               <span>/night</span>

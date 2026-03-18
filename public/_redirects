@@ -100,9 +100,10 @@
 /aqeeqah*            /aqiqah 301
 /appeals/aqiqah*     /aqiqah 301
 
-# Sadaqah (general charity - don't catch /sadaqah/ category routes)
+# Sadaqah (general charity - don't catch /sadaqah/ category routes or /sadaqah-jariyah)
 /sadaqah-donation*   /donate 301
-/sadaqa*             /donate 301
+/sadaqah-jariya      /sadaqah-jariyah 301
+/sadaqa-jariya*      /sadaqah-jariyah 301
 /charity*            /donate 301
 /general-donation*   /donate 301
 

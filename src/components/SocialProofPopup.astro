@@ -698,10 +698,10 @@
       monthly: { amounts: [10, 50, 100, 300], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
       single:  { amounts: [10, 50, 100, 300], suffix: 'USD', label: 'GIVE ONCE' }
     },
-    // Zakat ul-Fitr: $15/person — 1, 2, 4, 6 people
+    // Zakat ul-Fitr: $10/person — 1, 2, 4, 6 people
     'zakat-ul-fitr-2026': {
-      monthly: { amounts: [15, 30, 60, 90], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
-      single:  { amounts: [15, 30, 60, 90], suffix: 'USD', label: 'GIVE ONCE' }
+      monthly: { amounts: [10, 20, 40, 60], suffix: 'USD', label: 'GIVE ONCE', type: 'single' },
+      single:  { amounts: [10, 20, 40, 60], suffix: 'USD', label: 'GIVE ONCE' }
     },
     // My Ten Nights: per-night × 10 = $50, $100, $250, $500
     'mytennights': {
@@ -1002,7 +1002,7 @@
         customWrap.className = 'sp-cw-custom-wrap ' + spanClass + ' hidden';
         customWrap.innerHTML = '<div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color:#f4f5f0;">' +
           '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>' +
-          '<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" class="sp-cw-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400" placeholder="Other" />' +
+          '<input type="text" inputmode="numeric" pattern="[0-9]*\\.?[0-9]*" class="sp-cw-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400" placeholder="Other" />' +
           '<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">' + suffix + '</span></div>';
         rowDiv.appendChild(customWrap);
       }
@@ -1022,7 +1022,7 @@
       customWrap2.className = 'sp-cw-custom-wrap col-span-3 hidden';
       customWrap2.innerHTML = '<div class="relative rounded border border-[#e0e1dc] overflow-hidden" style="background-color:#f4f5f0;">' +
         '<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[17px]">$</span>' +
-        '<input type="text" inputmode="decimal" pattern="[0-9]*\\.?[0-9]*" class="sp-cw-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400" placeholder="Other" />' +
+        '<input type="text" inputmode="numeric" pattern="[0-9]*\\.?[0-9]*" class="sp-cw-custom w-full pl-8 pr-16 py-3 bg-transparent text-[17px] font-bold text-gray-800 focus:outline-none placeholder-gray-400" placeholder="Other" />' +
         '<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] font-medium">' + suffix + '</span></div>';
       otherRow.appendChild(customWrap2);
       container.appendChild(otherRow);

@@ -397,11 +397,11 @@ const programs = [
 
               <div class="p-8">
                 <!-- Frequency Toggle -->
-                <div class="grid grid-cols-2 gap-2 p-1.5 bg-neutral-100 rounded-xl mb-6">
-                  <button id="donate-freq-single" class="py-3 rounded-lg text-sm font-semibold transition-all bg-white text-neutral-900 shadow-sm">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                  <button id="donate-freq-single" class="inline-flex items-center justify-center py-1.5 border-0 outline-none uppercase tracking-wider transition-all text-sm font-medium justify-self-center" style="background-color: #d97706; color: #fff; padding: 6px 20px; border-radius: 4px; font-size: 14px;">
                     Give Once
                   </button>
-                  <button id="donate-freq-monthly" class="py-3 rounded-lg text-sm font-semibold transition-all text-neutral-500 hover:text-neutral-700">
+                  <button id="donate-freq-monthly" class="inline-flex items-center justify-center py-1.5 border-0 outline-none uppercase tracking-wider transition-all text-sm font-medium justify-self-center" style="background-color: transparent; color: #71716c; padding: 6px 20px; border-radius: 4px; font-size: 14px;">
                     Give Monthly
                   </button>
                 </div>
@@ -421,6 +421,7 @@ const programs = [
                   <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 font-semibold text-lg">$</span>
                   <input
                     type="number"
+                    inputmode="numeric"
                     step="0.01"
                     min="1"
                     id="donate-custom-amount"
@@ -442,11 +443,11 @@ const programs = [
                 </div>
 
                 <!-- Donate Button -->
-                <button id="donate-btn" class="w-full bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-5 rounded-xl transition-all text-lg flex items-center justify-center gap-3 shadow-xl shadow-[#d97706]/30 hover:shadow-2xl hover:shadow-[#d97706]/40 hover:-translate-y-0.5">
+                <button id="donate-btn" class="w-full hover:brightness-95 text-white font-extrabold py-4 rounded transition-all text-[15px] uppercase tracking-[0.1em] flex items-center justify-center gap-3" style="background-color: #d4710e; box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1);">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                   </svg>
-                  <span>Complete Donation</span>
+                  <span>GIVE NOW</span>
                 </button>
 
                 <!-- Trust Badges -->
@@ -724,19 +725,38 @@ const programs = [
 
     donateFreqSingle?.addEventListener('click', () => {
       donateIsMonthly = false;
-      donateFreqSingle.classList.add('bg-white', 'text-neutral-900', 'shadow-sm');
-      donateFreqSingle.classList.remove('text-neutral-500');
-      donateFreqMonthly?.classList.remove('bg-white', 'text-neutral-900', 'shadow-sm');
-      donateFreqMonthly?.classList.add('text-neutral-500');
+      donateFreqSingle.style.backgroundColor = '#d97706';
+      donateFreqSingle.style.color = '#fff';
+      if (donateFreqMonthly) {
+        donateFreqMonthly.style.backgroundColor = 'transparent';
+        donateFreqMonthly.style.color = '#71716c';
+      }
+      updateDonateBtnText();
     });
 
     donateFreqMonthly?.addEventListener('click', () => {
       donateIsMonthly = true;
-      donateFreqMonthly.classList.add('bg-white', 'text-neutral-900', 'shadow-sm');
-      donateFreqMonthly.classList.remove('text-neutral-500');
-      donateFreqSingle?.classList.remove('bg-white', 'text-neutral-900', 'shadow-sm');
-      donateFreqSingle?.classList.add('text-neutral-500');
+      donateFreqMonthly.style.backgroundColor = '#d97706';
+      donateFreqMonthly.style.color = '#fff';
+      if (donateFreqSingle) {
+        donateFreqSingle.style.backgroundColor = 'transparent';
+        donateFreqSingle.style.color = '#71716c';
+      }
+      updateDonateBtnText();
     });
+
+    // Update button text when fund changes
+    function updateDonateBtnText() {
+      const btnSpan = donateBtn?.querySelector('span');
+      if (!btnSpan) return;
+      const fund = donateFundSelect?.value || '';
+      if (fund === 'zakat') {
+        btnSpan.textContent = 'PAY YOUR ZAKAT NOW';
+      } else {
+        btnSpan.textContent = donateIsMonthly ? 'JOIN TODAY' : 'GIVE NOW';
+      }
+    }
+    donateFundSelect?.addEventListener('change', updateDonateBtnText);
 
     donateBtn?.addEventListener('click', () => {
       if (donateSelectedAmount > 0 && typeof (window as any).addToCart === 'function') {

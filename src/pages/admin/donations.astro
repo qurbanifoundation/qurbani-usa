@@ -627,6 +627,30 @@ const hasActiveFilters = search || statusFilter !== 'all' || typeFilter !== 'all
               <span class="text-gray-400 text-xs uppercase tracking-wider">Receipt Sent</span>
               <p class={donationDetail.receipt_sent ? 'text-green-600' : 'text-gray-400'}>{donationDetail.receipt_sent ? 'Yes' : 'No'}</p>
             </div>
+            {donationDetail.campaign_slug === 'aqiqah' && (
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Aqiqah Certificate</span>
+                {donationDetail.certificate_url ? (
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-green-600 text-sm">✅ Sent</span>
+                    <a
+                      href={donationDetail.certificate_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                      Download
+                    </a>
+                    {donationDetail.certificate_sent_at && (
+                      <span class="text-xs text-gray-400">{formatDate(donationDetail.certificate_sent_at)}</span>
+                    )}
+                  </div>
+                ) : (
+                  <p class="text-gray-400 text-sm">Not yet sent</p>
+                )}
+              </div>
+            )}
           </div>
           {donationDetail.metadata && Object.keys(donationDetail.metadata).length > 0 && (
             <details class="mt-6">

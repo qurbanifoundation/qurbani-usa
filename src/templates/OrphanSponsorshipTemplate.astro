@@ -1004,6 +1004,19 @@ const faqs = [
   <Footer />
 </Layout>
 
+<script is:inline define:vars={{ campaignSlug: campaign.slug, campaignTitle: campaign.title }}>
+  // Track campaign page view in GA4
+  if (window.trackViewItem) {
+    window.trackViewItem({
+      id: campaignSlug,
+      name: campaignTitle,
+      slug: campaignSlug,
+      campaign: campaignSlug,
+      amount: 0
+    });
+  }
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const sponsorBtn = document.getElementById('sponsor-btn');

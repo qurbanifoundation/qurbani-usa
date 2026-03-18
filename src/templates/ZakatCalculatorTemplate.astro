@@ -964,9 +964,61 @@ const impactItems = calcConfig.impactItems || [
   };
 
   window.goToStep = function(step) {
+    // === VALIDATION: Step 1 → 2 requires at least one asset selected ===
+    if (currentStep === 1 && step === 2) {
+      const selectedCats = document.querySelectorAll('.zw-cat-card.selected');
+      if (selectedCats.length === 0) {
+        // Shake the instruction banner to draw attention
+        const banner = document.querySelector('#zw-step-1 .bg-\\[\\#024139\\]\\/\\[0\\.06\\]');
+        if (banner) {
+          banner.style.transition = 'all 0.3s';
+          banner.style.backgroundColor = '#fef2f2';
+          banner.style.borderColor = '#fca5a5';
+          banner.innerHTML = `<p class="text-red-600 font-semibold text-base md:text-lg" style="font-family: 'Signika', sans-serif;">
+            <svg class="w-5 h-5 inline-block -mt-0.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            Please select at least one asset type to continue
+          </p>`;
+          // Scroll to banner
+          banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Reset after 3 seconds
+          setTimeout(() => {
+            banner.style.backgroundColor = '';
+            banner.style.borderColor = '';
+            banner.innerHTML = `<p class="text-[#024139] font-semibold text-base md:text-lg" style="font-family: 'Signika', sans-serif;">
+              <svg class="w-5 h-5 inline-block -mt-0.5 mr-1 text-[#024139]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              Select all asset types that apply to you
+            </p>`;
+          }, 3000);
+        }
+        return; // Don't proceed
+      }
+    }
+
     if (step === 2) buildStep2Fields();
     if (step === 3) buildStep3Fields();
     if (step === 4) calculateAndShowResults();
+
+    // === GA4 STEP TRACKING ===
+    // Track the COMPLETED step (step - 1), not the step being navigated to
+    if (typeof gtag === 'function') {
+      const completedStep = step - 1;
+      const stepNames = { 1: 'select_assets', 2: 'enter_values', 3: 'enter_liabilities', 4: 'view_results' };
+      gtag('event', 'zakat_calculator_step', {
+        event_category: 'zakat_calculator',
+        step_number: completedStep,
+        step_name: stepNames[completedStep] || 'unknown',
+        // Step 1 completed = assets selected, track which categories
+        ...(completedStep === 1 && {
+          categories_selected: Array.from(document.querySelectorAll('.zw-cat-card.selected'))
+            .map(c => c.dataset.cat).join(','),
+          categories_count: document.querySelectorAll('.zw-cat-card.selected').length,
+        }),
+        // Step 3 completed = viewing results, track the calculated amount
+        ...(completedStep === 3 && {
+          zakat_amount: parseFloat((document.getElementById('zw-zakat-amount')?.textContent || '0').replace(/[$,]/g, '')),
+        }),
+      });
+    }
 
     // Hide all steps, show target
     document.querySelectorAll('.zw-step').forEach(s => s.classList.remove('active'));
@@ -1021,7 +1073,7 @@ const impactItems = calcConfig.impactItems || [
       </div>
       <div style="position:relative">
         <span style="position:absolute;left:0.625rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:0.875rem;pointer-events:none">${prefix}</span>
-        <input type="text" inputmode="decimal"
+        <input type="text" inputmode="numeric"
           class="zw-input ${inputClass}"
           data-cat="${field.cat}" data-field-id="${fieldId}"
           placeholder="${isGrams ? '0' : '0.00'}"
@@ -1187,7 +1239,7 @@ const impactItems = calcConfig.impactItems || [
         // Input
         html += `<div style="position:relative">
           <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:1.125rem;pointer-events:none;font-weight:500">$</span>
-          <input type="text" inputmode="decimal"
+          <input type="text" inputmode="numeric"
             class="zw-input zw-asset-input"
             data-cat="property" data-field-id="${fieldId}"
             placeholder="0.00"
@@ -1217,7 +1269,7 @@ const impactItems = calcConfig.impactItems || [
             </div>`;
             html += `<div style="position:relative">
               <span style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:1rem;pointer-events:none;font-weight:500">$</span>
-              <input type="text" inputmode="decimal"
+              <input type="text" inputmode="numeric"
                 class="zw-input zw-asset-input"
                 data-cat="${field.cat}" data-field-id="${fieldId}"
                 placeholder="0.00"
@@ -1235,7 +1287,7 @@ const impactItems = calcConfig.impactItems || [
             }
             html += `<div style="position:relative">
               <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:1.125rem;pointer-events:none;font-weight:500">$</span>
-              <input type="text" inputmode="decimal"
+              <input type="text" inputmode="numeric"
                 class="zw-input zw-asset-input"
                 data-cat="${field.cat}" data-field-id="${fieldId}"
                 placeholder="0.00"
@@ -1453,7 +1505,7 @@ const impactItems = calcConfig.impactItems || [
     // Single input
     html += `<div style="position:relative">
       <span style="position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:1.125rem;pointer-events:none;font-weight:500">$</span>
-      <input type="text" inputmode="decimal"
+      <input type="text" inputmode="numeric"
         class="zw-input zw-liability-input"
         data-cat="liability" data-field-id="liability-0"
         placeholder="0.00"

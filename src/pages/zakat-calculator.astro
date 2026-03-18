@@ -966,6 +966,89 @@ const nisabSilverGrams = 595;
       }
     });
 
+    // === GA4 ZAKAT CALCULATOR FUNNEL TRACKING ===
+    // Track each meaningful step in the calculator journey
+    let trackedSteps = { asset_entered: false, zakat_calculated: false, pay_clicked: false, email_form: false };
+
+    // Track when user enters ANY asset value (first engagement)
+    function trackAssetEntry() {
+      if (trackedSteps.asset_entered) return;
+      const inputs = document.querySelectorAll('.zakat-input') as NodeListOf<HTMLInputElement>;
+      const hasValue = Array.from(inputs).some(i => parseFloat(i.value) > 0);
+      if (hasValue) {
+        trackedSteps.asset_entered = true;
+        if (typeof gtag === 'function') {
+          gtag('event', 'zakat_asset_entered', {
+            event_category: 'zakat_calculator',
+            event_label: 'first_asset_input',
+          });
+        }
+      }
+    }
+
+    // Track which asset categories user fills in
+    let trackedCategories = new Set();
+    function trackAssetCategory(category: string) {
+      if (trackedCategories.has(category)) return;
+      trackedCategories.add(category);
+      if (typeof gtag === 'function') {
+        gtag('event', 'zakat_section_filled', {
+          event_category: 'zakat_calculator',
+          section_name: category,
+          sections_completed: trackedCategories.size,
+        });
+      }
+    }
+
+    // Listen for input changes per category
+    document.querySelectorAll('.zakat-input').forEach(input => {
+      input.addEventListener('change', () => {
+        const el = input as HTMLInputElement;
+        const val = parseFloat(el.value) || 0;
+        if (val > 0) {
+          trackAssetEntry();
+          const cat = el.dataset.category || 'unknown';
+          // Map to section names
+          const sectionMap: Record<string, string> = {
+            'cash': 'cash_savings', 'gold-grams': 'gold_silver', 'silver-grams': 'gold_silver',
+            'investments': 'investments', 'business': 'business_assets',
+            'property': 'property', 'owed': 'money_owed_to_you',
+          };
+          trackAssetCategory(sectionMap[cat] || cat);
+        }
+      });
+    });
+
+    // Track when Zakat is calculated (amount > 0 shown)
+    const origCalculateZakat = calculateZakat;
+    calculateZakat = function() {
+      origCalculateZakat();
+      const zakatText = document.getElementById('zakat-amount')?.textContent || '$0.00';
+      const zakatVal = parseFloat(zakatText.replace(/[$,]/g, ''));
+      if (zakatVal > 0 && !trackedSteps.zakat_calculated) {
+        trackedSteps.zakat_calculated = true;
+        if (typeof gtag === 'function') {
+          gtag('event', 'zakat_calculated', {
+            event_category: 'zakat_calculator',
+            zakat_amount: zakatVal,
+            sections_completed: trackedCategories.size,
+          });
+        }
+      }
+    };
+
+    // Track "Email My Results" click
+    document.getElementById('show-email-form')?.addEventListener('click', () => {
+      if (!trackedSteps.email_form) {
+        trackedSteps.email_form = true;
+        if (typeof gtag === 'function') {
+          gtag('event', 'zakat_email_form_opened', {
+            event_category: 'zakat_calculator',
+          });
+        }
+      }
+    });
+
     // Initial calculation
     calculateZakat();
 

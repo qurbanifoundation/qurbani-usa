@@ -96,6 +96,34 @@ try {
   if (homePage?.template_config?.heroSlides && Array.isArray(homePage.template_config.heroSlides) && homePage.template_config.heroSlides.length > 0) {
     configuredHeroSlides = homePage.template_config.heroSlides;
   }
+
+  // For slides with useCampaignDonation=true OR no donation config but has campaignSlug,
+  // fetch the campaign's cwDonation (single source of truth)
+  if (configuredHeroSlides.length > 0) {
+    const slidesNeedingCampaign = configuredHeroSlides.filter(
+      (s: any) => s.useCampaignDonation || (!s.donation && s.campaignSlug)
+    );
+    if (slidesNeedingCampaign.length > 0) {
+      const slugs = slidesNeedingCampaign.map((s: any) => s.campaignSlug || s.donation?.campaignSlug).filter(Boolean);
+      if (slugs.length > 0) {
+        const { data: campaigns } = await supabaseAdmin
+          .from('campaigns')
+          .select('slug, title, template_config')
+          .in('slug', slugs);
+        if (campaigns) {
+          const campaignMap = new Map(campaigns.map((c: any) => [c.slug, { cwDonation: c.template_config?.cwDonation, title: c.title }]));
+          configuredHeroSlides = configuredHeroSlides.map((s: any) => {
+            const slug = s.campaignSlug || s.donation?.campaignSlug;
+            if ((s.useCampaignDonation || !s.donation) && slug && campaignMap.has(slug)) {
+              const campaign = campaignMap.get(slug);
+              return { ...s, donation: { ...campaign.cwDonation, campaignSlug: slug, campaignTitle: campaign.cwDonation?.campaignTitle || campaign.title } };
+            }
+            return s;
+          });
+        }
+      }
+    }
+  }
 } catch (e) {
   console.error('[Homepage] Error fetching donation box template setting:', e);
 }
@@ -208,15 +236,18 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
                     </a>
                   </div>
 
-                  <!-- Mobile dots (below CTA buttons, inline) -->
-                  <div class="flex lg:hidden justify-center gap-2.5 mb-10">
-                    {heroSlides.map((_: any, di: number) => (
-                      <button
-                        class={`carousel-dot w-2.5 h-2.5 rounded-full transition-all duration-300 ${di === 0 ? 'bg-[#d97706] scale-125' : 'bg-white/30 hover:bg-white/50'}`}
-                        data-goto={di}
-                        aria-label={`Go to slide ${di + 1}`}
-                      ></button>
-                    ))}
+                  <!-- Mobile arrows (below CTA buttons) -->
+                  <div class="flex lg:hidden items-center gap-3 mb-10">
+                    <button class="carousel-prev w-12 h-12 rounded-full flex items-center justify-center text-white bg-black/40 border-2 border-white/30 transition-all duration-300 active:scale-95 flex-shrink-0" aria-label="Previous slide">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                      </svg>
+                    </button>
+                    <button class="carousel-next w-12 h-12 rounded-full flex items-center justify-center text-white bg-black/40 border-2 border-white/30 transition-all duration-300 active:scale-95 flex-shrink-0" aria-label="Next slide">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -283,7 +314,7 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
                         upsellSubText={slideConfig.upsellSubText || homepageCWConfig.upsellSubText || "Monthly giving helps us plan ahead and reach more people in need."}
                         upsellMonthlyRatio={0.4}
                         buttonTextMonthly={slideConfig.buttonTextMonthly || homepageCWConfig.buttonTextMonthly || "JOIN TODAY"}
-                        buttonTextOneTime={slideConfig.buttonTextOneTime || homepageCWConfig.buttonTextOneTime || "GIVE"}
+                        buttonTextOneTime={slideConfig.buttonTextOneTime || homepageCWConfig.buttonTextOneTime || "GIVE NOW"}
                         tabEmoji={slideConfig.tabEmoji || homepageCWConfig.tabEmoji || ''}
                         tabLabelMonthly={slideConfig.tabLabelMonthly || homepageCWConfig.tabLabelMonthly || 'MONTHLY'}
                         tabLabelOneTime={slideConfig.tabLabelOneTime || homepageCWConfig.tabLabelOneTime || 'GIVE ONCE'}
@@ -313,7 +344,8 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
         </svg>
       </button>
 
-      <!-- Dots + Counter: desktop at bottom center, mobile hidden (mobile dots are inline in content) -->
+
+      <!-- Dots + Counter: desktop at bottom center -->
       <div class="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-20 items-center gap-3">
         <div class="flex items-center gap-2">
           {heroSlides.map((_: any, index: number) => (
@@ -1126,6 +1158,19 @@ const heroSlides = configuredHeroSlides.length > 0 ? configuredHeroSlides : defa
           }
         }
       }, { passive: true });
+    }
+
+    // Auto-rotate slides every 7 seconds (pause on interaction, resume after 15s)
+    if (slides.length > 1) {
+      let autoplayTimer = setInterval(nextSlide, 7000);
+      const resetAutoplay = () => {
+        clearInterval(autoplayTimer);
+        autoplayTimer = setInterval(nextSlide, 7000);
+      };
+      // Reset timer on any manual navigation
+      prevBtns.forEach(btn => btn.addEventListener('click', resetAutoplay));
+      nextBtns.forEach(btn => btn.addEventListener('click', resetAutoplay));
+      dots.forEach(dot => dot.addEventListener('click', resetAutoplay));
     }
 
     // ═══════════════════════════════════════════════════════════════

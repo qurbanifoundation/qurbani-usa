@@ -680,7 +680,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
             </button>
 
             <p class="mt-3 text-[11px] text-gray-400 text-center leading-relaxed">
-              By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline hover:text-gray-600">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline hover:text-gray-600">Privacy Policy</a>.
+              By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline hover:text-gray-600" style="white-space: nowrap;">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline hover:text-gray-600" style="white-space: nowrap;">Privacy Policy</a>.
             </p>
 
             <!-- Trust Indicators Below Button -->
@@ -991,7 +991,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
               </button>
 
               <p class="mt-3 text-[11px] text-gray-400 text-center leading-relaxed">
-                By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline hover:text-gray-600">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline hover:text-gray-600">Privacy Policy</a>.
+                By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline hover:text-gray-600" style="white-space: nowrap;">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline hover:text-gray-600" style="white-space: nowrap;">Privacy Policy</a>.
               </p>
             </div>
 
@@ -1159,7 +1159,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
             <div class="border-t border-gray-100">
               <button type="button" id="gg-add-another" class="w-full flex items-center justify-center gap-1.5 py-2 md:py-2.5 text-xs md:text-sm font-semibold text-gray-400 hover:text-[#d97706] transition">
                 <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                Add Another Project
+                <span id="gg-add-another-text">Add Another Project</span>
               </button>
             </div>
 
@@ -1350,7 +1350,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
           <!-- Terms -->
           <p class="mt-4 text-xs text-gray-400 text-center leading-relaxed">
-            By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline font-semibold text-gray-500 hover:text-gray-700">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline font-semibold text-gray-500 hover:text-gray-700">Privacy Policy</a>.
+            By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline font-semibold text-gray-500 hover:text-gray-700" style="white-space: nowrap;">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline font-semibold text-gray-500 hover:text-gray-700" style="white-space: nowrap;">Privacy Policy</a>.
           </p>
 
           <!-- Trust Signals -->
@@ -1842,6 +1842,25 @@ window.addToCart = function(item) {
   saveCart();
   try { updateCartUI(); } catch(e) { console.warn('updateCartUI error:', e); }
 
+  // Update "Add Another" button text based on last added item
+  var addAnotherText = document.getElementById('gg-add-another-text');
+  if (addAnotherText) {
+    var itemName = (item.name || item.campaign || '').toLowerCase();
+    var label = 'Add Another Project';
+    if (itemName.includes('qurbani') || itemName.includes('udhiyah')) {
+      label = 'Add Another Qurbani';
+    } else if (itemName.includes('zakat') || itemName.includes('fitr') || itemName.includes('fitrana')) {
+      label = 'Add Another Zakat';
+    } else if (itemName.includes('orphan')) {
+      label = 'Add Another Sponsorship';
+    } else if (itemName.includes('sadaqah') || itemName.includes('jariyah')) {
+      label = 'Add Another Sadaqah';
+    } else if (itemName.includes('water') || itemName.includes('well')) {
+      label = 'Add Another Water Project';
+    }
+    addAnotherText.textContent = label;
+  }
+
   // Re-capture abandoned checkout with updated cart data (if email already captured)
   if (window.donationCart._lastCapturedEmail) {
     captureAbandonedCheckout(true);
@@ -1926,6 +1945,7 @@ function updateCartUI() {
         <div class="flex justify-between items-start">
           <div class="flex-1">
             <h4 class="font-semibold text-gray-800 text-sm">${item.name}</h4>
+            ${item.label ? `<p class="text-xs text-gray-500">${item.label}</p>` : ''}
             <p class="text-xs text-gray-500">${itemTypeLabel}</p>
             ${notesHtml}
           </div>
@@ -2294,7 +2314,7 @@ function openCheckoutModal() {
         '</button>' +
 
         // Terms text
-        '<p class="mt-3 text-[11px] text-gray-400 text-center leading-relaxed">By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline hover:text-gray-600">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline hover:text-gray-600">Privacy Policy</a>.</p>' +
+        '<p class="mt-3 text-[11px] text-gray-400 text-center leading-relaxed">By making a donation to Qurbani Foundation, you agree to our <a href="/terms-of-service" target="_blank" class="underline hover:text-gray-600" style="white-space: nowrap;">Terms of Service</a> and <a href="/privacy-policy" target="_blank" class="underline hover:text-gray-600" style="white-space: nowrap;">Privacy Policy</a>.</p>' +
 
         // Trust indicators
         '<div class="mt-4 flex items-center justify-center gap-5 text-xs text-gray-500">' +
@@ -3268,6 +3288,7 @@ function updateTwoStepCart() {
       return '<div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">' +
         '<div class="flex-1 min-w-0">' +
           '<p class="text-sm font-medium text-gray-800 truncate">' + item.name + typeBadge + '</p>' +
+          (item.label ? '<p class="text-xs text-gray-400 truncate">' + item.label + '</p>' : '') +
         '</div>' +
         '<div class="flex items-center gap-2 ml-3">' +
           '<button onclick="tsTwoStepUpdateQty(' + index + ', -1)" class="w-6 h-6 bg-gray-100 rounded flex items-center justify-center text-gray-500 hover:bg-gray-200 text-xs">−</button>' +
@@ -3891,7 +3912,7 @@ window.ggToggleEdit = function(index) {
     document.querySelectorAll('[id^="gg-edit-panel-"]').forEach(function(p) { p.style.display = 'none'; });
     document.querySelectorAll('[id^="gg-edit-btn-"]').forEach(function(b) { b.textContent = 'Edit'; });
     if (isHidden) {
-      panel.style.display = 'flex';
+      panel.style.display = 'block';
       document.getElementById('gg-edit-btn-' + index).textContent = 'Done';
     }
   }
@@ -3992,8 +4013,9 @@ function updateGGCart() {
             // Name
             '<div class="flex-1 min-w-0">' +
               '<p class="text-sm font-medium text-gray-700 leading-snug">' + itemName + '</p>' +
+              (item.label ? '<p class="text-xs text-gray-400 leading-snug">' + item.label + '</p>' : '') +
             '</div>' +
-            // Price + Edit link
+            // Price + Edit button only
             '<div class="flex-shrink-0 text-right">' +
               '<span class="text-[#d97706] text-base font-bold whitespace-nowrap">$' + item.amount + (freqSuffix || '') + '</span>' +
               '<div>' +
@@ -4002,25 +4024,28 @@ function updateGGCart() {
             '</div>' +
           '</div>' +
           // Expandable edit panel (hidden by default)
-          '<div id="gg-edit-panel-' + index + '" class="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100" style="display:none;">' +
-            // Amount input + Update underneath
-            '<div class="flex flex-col items-center">' +
-              '<div class="flex items-center border border-gray-200 rounded px-2 py-1 bg-white">' +
-                '<span class="text-xs text-gray-400">$</span>' +
-                '<input type="number" value="' + item.amount + '" min="1" step="1" onchange="ggUpdateAmount(' + index + ',this.value)" class="w-12 text-sm font-bold text-gray-800 bg-transparent outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />' +
+          '<div id="gg-edit-panel-' + index + '" class="mt-3 pt-3 border-t border-gray-100" style="display:none;">' +
+            // Row 1: Amount input | One-time [toggle] Monthly (center) | Remove (right)
+            '<div class="flex items-center">' +
+              '<div class="flex items-center border border-gray-200 rounded-lg px-3 py-2 bg-white flex-shrink-0">' +
+                '<span class="text-sm text-gray-400 mr-1">$</span>' +
+                '<input type="text" inputmode="numeric" pattern="[0-9]*" value="' + item.amount + '" min="1" step="1" onchange="ggUpdateAmount(' + index + ',this.value)" class="w-14 text-base font-bold text-gray-800 bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />' +
               '</div>' +
-              '<button type="button" onclick="ggToggleEdit(' + index + ')" class="text-[10px] text-gray-400 hover:text-gray-600 font-semibold transition mt-1">Update</button>' +
+              '<div class="flex-1 flex justify-center">' +
+                '<div class="flex items-center gap-1.5">' +
+                  '<span class="text-[10px] font-medium ' + (!isRecurring ? 'text-gray-800' : 'text-gray-400') + '">One-time</span>' +
+                  '<button type="button" onclick="ggToggleType(' + index + ',' + (isRecurring ? '\'single\'' : '\'monthly\'') + ')" class="relative w-8 h-[18px] rounded-full transition-colors ' + (isRecurring ? 'bg-[#d97706]' : 'bg-gray-300') + '">' +
+                    '<span class="absolute top-[2px] ' + (isRecurring ? 'left-[14px]' : 'left-[2px]') + ' w-[14px] h-[14px] bg-white rounded-full shadow transition-all"></span>' +
+                  '</button>' +
+                  '<span class="text-[10px] font-medium ' + (isRecurring ? 'text-gray-800' : 'text-gray-400') + '">Monthly</span>' +
+                '</div>' +
+              '</div>' +
+              '<button type="button" onclick="ggRemove(' + index + ')" class="text-[11px] text-red-400 hover:text-red-600 font-medium transition" style="line-height: 1;">Remove</button>' +
             '</div>' +
-            // Frequency toggle switch: One-time [toggle] Monthly
-            '<div class="flex items-center gap-1.5">' +
-              '<span class="text-[10px] font-medium ' + (!isRecurring ? 'text-gray-800' : 'text-gray-400') + '">One-time</span>' +
-              '<button type="button" onclick="ggToggleType(' + index + ',' + (isRecurring ? '\'single\'' : '\'monthly\'') + ')" class="relative w-8 h-[18px] rounded-full transition-colors ' + (isRecurring ? 'bg-[#d97706]' : 'bg-gray-300') + '">' +
-                '<span class="absolute top-[2px] ' + (isRecurring ? 'left-[14px]' : 'left-[2px]') + ' w-[14px] h-[14px] bg-white rounded-full shadow transition-all"></span>' +
-              '</button>' +
-              '<span class="text-[10px] font-medium ' + (isRecurring ? 'text-gray-800' : 'text-gray-400') + '">Monthly</span>' +
+            // Row 2: Update text under price box
+            '<div class="mt-1">' +
+              '<button type="button" onclick="ggToggleEdit(' + index + ')" class="text-[11px] text-gray-400 hover:text-gray-600 font-medium transition" style="width: 90px; text-align: center; line-height: 1;">Update</button>' +
             '</div>' +
-            // Remove text link
-            '<button type="button" onclick="ggRemove(' + index + ')" class="ml-auto text-[10px] text-red-400 hover:text-red-600 font-medium transition">Remove</button>' +
           '</div>' +
         '</div>';
 

@@ -306,7 +306,7 @@ const ramadanWidgets = [
       description: 'Multiply your rewards this Ramadan. Every good deed is multiplied many times over during this sacred month.',
       priceTiers: [
         { price: '$10', label: 'Fidya/day', href: '/fidya' },
-        { price: '$15', label: 'Zakat ul-Fitr', href: '/zakat-ul-fitr' },
+        { price: '$10', label: 'Zakat ul-Fitr', href: '/zakat-ul-fitr' },
         { price: '$5', label: 'Feed Iftar', href: '/iftar' },
       ],
       button: {

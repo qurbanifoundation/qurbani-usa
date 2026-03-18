@@ -430,6 +430,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
           donationBoxHeading={cwConfig.donationBoxHeading}
           tabEmoji={cwConfig.tabEmoji || ''}
           frequencies={cwConfig.frequencies}
+          defaultTabIndex={cwConfig.defaultTabIndex}
         />
       </div>
     ) : isHomeDonation ? (
@@ -515,6 +516,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
             <span id="custom-amount-symbol" class={`absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold ${isDarkTeal ? 'text-white/60' : 'text-gray-500'}`}>$</span>
             <input
               type="number"
+              inputmode="numeric"
               id="custom-amount"
               min="1"
               placeholder={textSettings.customAmountPlaceholder}
@@ -654,6 +656,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                   buttonTextOneTime={cwConfig.buttonTextOneTime}
                   donationBoxHeading={cwConfig.donationBoxHeading}
                   frequencies={cwConfig.frequencies}
+                  defaultTabIndex={cwConfig.defaultTabIndex}
                 />
               </div>
             ) : isHomeDonation ? (
@@ -701,6 +704,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                   <span id="mobile-custom-amount-symbol" class={`absolute left-3 top-1/2 -translate-y-1/2 font-bold ${isDarkTeal ? 'text-white/60' : 'text-gray-500'}`}>$</span>
                   <input
                     type="number"
+                    inputmode="numeric"
                     id="mobile-custom-amount"
                     placeholder={textSettings.customAmountPlaceholder}
                     class={`w-full pl-8 pr-3 py-3 rounded-lg border-2 font-bold ${isDarkTeal ? 'bg-transparent text-white placeholder-white/50' : 'bg-white text-gray-800'}`}
@@ -919,7 +923,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                     <div class="flex-1">
                       <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-[15px]">$</span>
-                        <input type="number" id="tier-custom-amount" min="1" placeholder="Enter amount"
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" id="tier-custom-amount" min="1" placeholder="Enter amount"
                           class="w-full pl-8 pr-3 py-2 bg-white rounded border border-[#e0e1dc] focus:border-[#d97706] focus:outline-none font-bold text-[15px] text-gray-800 placeholder-gray-400" />
                       </div>
                     </div>
@@ -1092,6 +1096,17 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
   let donationType = 'single';
 
   function initGreenYellowTemplate() {
+    // Track campaign page view in GA4
+    if (window.trackViewItem) {
+      window.trackViewItem({
+        id: campaignData.slug,
+        name: campaignData.title,
+        slug: campaignData.slug,
+        campaign: campaignData.slug,
+        amount: 0
+      });
+    }
+
     // Donation box elements
     const typeButtons = document.querySelectorAll('.donation-type-btn');
     const amountButtons = document.querySelectorAll('.amount-btn');

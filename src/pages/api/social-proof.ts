@@ -92,8 +92,8 @@ const FALLBACK_CAMPAIGNS = [
 const AMOUNTS_BY_SLUG: Record<string, number[]> = {
   // Zakat: one-time presets $250, $500, $1000, $2500
   'zakat':                [250, 250, 500, 500, 1000, 1000, 2500],
-  // Zakat ul-Fitr: $15/person — multiples of 15
-  'zakat-ul-fitr-2026':   [15, 30, 45, 45, 60, 60, 75, 90],
+  // Zakat ul-Fitr: $10/person — multiples of 10
+  'zakat-ul-fitr-2026':   [10, 20, 30, 40, 40, 50, 60, 80],
   // Kaffarah: $180/day — 1, 2, 5, 10 days (matches page presets)
   'kaffarah':             [180, 180, 360, 360, 900, 1800],
   'kaffarah-2026':        [180, 180, 360, 360, 900, 1800],

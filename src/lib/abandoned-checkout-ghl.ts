@@ -107,7 +107,7 @@ export interface CheckoutSyncData {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
-  status: 'started' | 'abandoned' | 'recovered' | 'expired';
+  status: 'started' | 'abandoned' | 'recovered' | 'completed' | 'expired';
   amount?: number | null;
   currency?: string | null;
   campaignType?: string | null;
@@ -186,6 +186,8 @@ export async function syncCheckoutToGHL(data: CheckoutSyncData): Promise<{ succe
       tags.push('checkout-abandoned', 'recovery-target');
     } else if (data.status === 'recovered') {
       tags.push('checkout-recovered', 'donor');
+    } else if (data.status === 'completed') {
+      tags.push('checkout-completed', 'donor');
     }
 
     let contactId: string | undefined;
@@ -261,7 +263,7 @@ async function manageRecoveryOpportunity(
 
   // Determine target stage
   let targetStageName: string;
-  if (data.status === 'recovered') {
+  if (data.status === 'recovered' || data.status === 'completed') {
     targetStageName = 'recovered';
   } else if (data.status === 'expired') {
     targetStageName = 'closed lost';
@@ -290,7 +292,7 @@ async function manageRecoveryOpportunity(
       if (opportunities.length > 0) {
         // Move existing opportunity
         const opp = opportunities[0];
-        const oppStatus = (data.status === 'recovered') ? 'won'
+        const oppStatus = (data.status === 'recovered' || data.status === 'completed') ? 'won'
           : (data.status === 'expired') ? 'lost'
           : 'open';
 

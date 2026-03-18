@@ -56,16 +56,35 @@ const faviconType = adminFavicon
 
       // E-commerce tracking helper functions
       window.trackAddToCart = function(item) {
+        var campaignName = item.campaign || 'donation';
+        var pagePath = window.location.pathname;
+        var pageTitle = document.title;
+
+        // Standard GA4 add_to_cart event
         gtag('event', 'add_to_cart', {
           currency: 'USD',
           value: item.amount * (item.quantity || 1),
           items: [{
             item_id: item.id || item.slug,
             item_name: item.name,
-            item_category: item.campaign || 'donation',
+            item_category: campaignName,
             price: item.amount,
             quantity: item.quantity || 1
           }]
+        });
+
+        // Custom per-campaign donate button click event
+        // Shows exactly: which campaign page → how many clicked donate
+        gtag('event', 'donate_button_click', {
+          campaign_name: campaignName,
+          item_name: item.name,
+          donation_amount: item.amount,
+          donation_type: item.type || 'single',
+          page_path: pagePath,
+          page_title: pageTitle,
+          source_location: item.sourceLocation || pagePath,
+          value: item.amount * (item.quantity || 1),
+          currency: 'USD'
         });
       };
 
@@ -389,29 +408,6 @@ const faviconType = adminFavicon
     {settings.show_ramadan_popup !== false && <RamadanPopup />}
     {settings.show_social_proof !== false && <SocialProofPopup />}
 
-    <!-- Mobile auto-scroll to donation box on page load -->
-    <script is:inline>
-      (function() {
-        if (window.innerWidth >= 768) return;
-        // Only on fresh navigations, not back/forward
-        if (window.performance) {
-          var nav = window.performance.getEntriesByType('navigation');
-          if (nav.length && nav[0].type === 'back_forward') return;
-        }
-        // Don't scroll if there's already a hash in the URL
-        if (window.location.hash) return;
-
-        function scrollToDonate() {
-          var target = document.querySelector('[data-mobile-donate]');
-          if (!target) return;
-          setTimeout(function() {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 300);
-        }
-
-        // DOM is already loaded since this script is at end of body
-        scrollToDonate();
-      })();
-    </script>
+    <!-- Mobile auto-scroll removed — sticky CTA buttons handle scroll-to-donate per page -->
   </body>
 </html>

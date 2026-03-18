@@ -97,10 +97,10 @@ export async function sendEmailAndLogToGHL(params: {
     console.log('Resend not configured, skipping email send');
   }
 
-  // 2. Log to GHL as a Conversation (shows in Conversations tab)
+  // 2. Log to GHL as a Note on the contact
+  // IMPORTANT: Do NOT use conversations/messages API — it sends a real email to the donor
   if (GHL_API_KEY && GHL_LOCATION_ID) {
     try {
-      // Find contact by email
       const searchRes = await fetch(
         `https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${GHL_LOCATION_ID}&email=${encodeURIComponent(to)}`,
         {
@@ -116,9 +116,7 @@ export async function sendEmailAndLogToGHL(params: {
         const contactId = searchData.contact?.id;
 
         if (contactId) {
-          // Create outbound email message in GHL Conversations
-          // This makes it appear in the Conversations tab like a real email
-          const messageRes = await fetch('https://services.leadconnectorhq.com/conversations/messages', {
+          await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${GHL_API_KEY}`,
@@ -126,40 +124,10 @@ export async function sendEmailAndLogToGHL(params: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              type: 'Email',
-              contactId: contactId,
-              subject: subject,
-              html: html,
-              message: plainText,
-              emailFrom: 'donations@receipts.qurbani.com',
-              emailTo: to,
-              direction: 'outbound',
-              status: 'sent',
-              dateAdded: new Date().toISOString(),
+              body: `📧 EMAIL SENT: ${emailType}\n${'━'.repeat(30)}\nTo: ${to}\nSubject: ${subject}\n\n${plainText}\n\nSent: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET`,
             }),
           });
-
-          if (messageRes.ok) {
-            console.log(`Email logged to GHL Conversations for contact ${contactId}`);
-          } else {
-            // Fallback to adding as a note if conversation API fails
-            const errorText = await messageRes.text();
-            console.log('Conversations API response:', messageRes.status, errorText);
-
-            // Add as note as fallback
-            await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${GHL_API_KEY}`,
-                'Version': '2021-07-28',
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                body: `📧 EMAIL SENT: ${emailType}\n${'━'.repeat(30)}\nTo: ${to}\nSubject: ${subject}\n\n${plainText}\n\nSent: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} ET`,
-              }),
-            });
-            console.log(`Email logged as note (fallback) for contact ${contactId}`);
-          }
+          console.log(`Email logged as GHL note for contact ${contactId}`);
         }
       }
     } catch (error) {

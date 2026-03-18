@@ -406,7 +406,7 @@ function getMobileIconHtml(iconKey: string): string {
                             <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center pointer-events-none">
                               <span class="text-gray-500 text-sm font-bold">$</span>
                             </div>
-                            <input type="number" id="quick-zakat-amount" placeholder="Enter custom amount" class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:border-[#0096D6] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style="box-shadow: none;" onfocus="this.style.boxShadow='0 0 0 3px rgba(0,150,214,0.08)'" onblur="this.style.boxShadow='none'" />
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="quick-zakat-amount" placeholder="Enter custom amount" class="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:border-[#0096D6] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style="box-shadow: none;" onfocus="this.style.boxShadow='0 0 0 3px rgba(0,150,214,0.08)'" onblur="this.style.boxShadow='none'" />
                           </div>
                           <button type="button" id="quick-zakat-pay" class="group w-full text-white font-extrabold py-4 rounded transition-all text-base tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2.5 hover:shadow-xl hover:-translate-y-[1px] active:translate-y-[1px]" style="background: #0096D6; font-family: 'Signika', sans-serif;">
                             <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
@@ -523,7 +523,7 @@ function getMobileIconHtml(iconKey: string): string {
                             <p class="text-xs text-white/80">Fidya/day</p>
                           </a>
                           <a href="/ramadan" class="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors block">
-                            <p class="text-lg font-bold">$15</p>
+                            <p class="text-lg font-bold">$10</p>
                             <p class="text-xs text-white/80">Zakat ul-Fitr</p>
                           </a>
                           <a href="/ramadan" class="bg-white/20 rounded-lg p-2 hover:bg-white/30 transition-colors block">
@@ -850,7 +850,7 @@ function getMobileIconHtml(iconKey: string): string {
             <div class="flex gap-2">
               <div class="relative flex-1">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-base">$</span>
-                <input type="number" id="mobile-donate-amount" placeholder="Other" class="w-full pl-7 pr-2 py-3 rounded-lg text-base font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="mobile-donate-amount" placeholder="Other" class="w-full pl-7 pr-2 py-3 rounded-lg text-base font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
               </div>
               <button type="button" id="mobile-donate-pay" class="bg-white text-[#D97718] font-bold py-3 px-5 rounded-lg text-base transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
                 Donate &rarr;
@@ -897,7 +897,7 @@ function getMobileIconHtml(iconKey: string): string {
           </a>
         </div>
         <div class="px-5 pb-5 pt-3" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
-          <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4">
+          <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4" data-context-name="Our Work">
             <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
             <div class="grid grid-cols-4 gap-2 mb-2">
               <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
@@ -908,7 +908,7 @@ function getMobileIconHtml(iconKey: string): string {
             <div class="flex gap-2">
               <div class="relative flex-1">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-sm">$</span>
-                <input type="number" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+                <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
               </div>
               <button type="button" class="mobile-sub-donate-pay bg-white text-[#D97718] font-bold py-2.5 px-4 rounded-lg text-sm transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
                 Donate &rarr;
@@ -947,7 +947,7 @@ function getMobileIconHtml(iconKey: string): string {
               </a>
             </div>
             <div class="px-5 pb-5 pt-3" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
-              <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4">
+              <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4" data-context-name={cat.label}>
                 <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
                 <div class="grid grid-cols-4 gap-2 mb-2">
                   <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
@@ -958,7 +958,7 @@ function getMobileIconHtml(iconKey: string): string {
                 <div class="flex gap-2">
                   <div class="relative flex-1">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-sm">$</span>
-                    <input type="number" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
                   </div>
                   <button type="button" class="mobile-sub-donate-pay bg-white text-[#D97718] font-bold py-2.5 px-4 rounded-lg text-sm transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
                     Donate &rarr;
@@ -991,7 +991,7 @@ function getMobileIconHtml(iconKey: string): string {
             ))}
           </div>
           <div class="px-5 pb-5 pt-3" style="padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px))">
-            <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4">
+            <div class="bg-gradient-to-br from-[#D97718] to-[#c46a14] rounded-xl p-4" data-context-name={menu.name}>
               <p class="text-white font-extrabold text-base mb-2 tracking-tight" style="font-family: 'Signika', sans-serif;">WHERE MOST NEEDED</p>
               <div class="grid grid-cols-4 gap-2 mb-2">
                 <button type="button" class="mobile-donate-btn bg-white/20 hover:bg-white/30 text-white text-center py-2.5 rounded-lg text-sm font-bold transition cursor-pointer border-none" data-amount="25">$25</button>
@@ -1002,7 +1002,7 @@ function getMobileIconHtml(iconKey: string): string {
               <div class="flex gap-2">
                 <div class="relative flex-1">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white font-bold text-sm">$</span>
-                  <input type="number" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
+                  <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Other" class="mobile-sub-donate-amount w-full pl-7 pr-2 py-2.5 rounded-lg text-sm font-semibold text-white border-none focus:outline-none focus:ring-2 focus:ring-white/50 placeholder:text-white/70" style="background-color: rgba(255,255,255,0.2);" />
                 </div>
                 <button type="button" class="mobile-sub-donate-pay bg-white text-[#D97718] font-bold py-2.5 px-4 rounded-lg text-sm transition hover:bg-gray-100 cursor-pointer border-none whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
                   Donate &rarr;
@@ -1518,7 +1518,8 @@ function getMobileIconHtml(iconKey: string): string {
       btn.addEventListener('click', () => {
         const amount = parseInt(btn.getAttribute('data-amount') || '0');
         if (!amount || typeof window.addToCart !== 'function') return;
-        window.addToCart({ slug: 'general-donation', name: 'General Donation', amount, label: '$' + amount + ' Donation' });
+        const contextName = btn.closest('[data-context-name]')?.dataset.contextName || 'Emergency Relief';
+        window.addToCart({ slug: 'emergency-relief', name: contextName, amount, label: 'Where Most Needed', quantity: 1, campaign: 'emergency-relief', sourceLocation: 'mobile-menu-' + contextName.toLowerCase().replace(/\s+/g, '-') });
         closeMobileMenu();
         if (typeof window.openCart === 'function') window.openCart();
       });
@@ -1531,8 +1532,9 @@ function getMobileIconHtml(iconKey: string): string {
         const input = wrapper?.querySelector('.mobile-sub-donate-amount');
         const amount = input ? parseFloat(input.value) : 0;
         if (!amount || amount < 1) { if (input) { input.focus(); input.style.outline = '2px solid #fff'; } return; }
+        const contextName = btn.closest('[data-context-name]')?.dataset.contextName || 'Emergency Relief';
         if (typeof window.addToCart === 'function') {
-          window.addToCart({ slug: 'general-donation', name: 'General Donation', amount, label: '$' + amount + ' Donation' });
+          window.addToCart({ slug: 'emergency-relief', name: contextName, amount, label: 'Where Most Needed', quantity: 1, campaign: 'emergency-relief', sourceLocation: 'mobile-menu-' + contextName.toLowerCase().replace(/\s+/g, '-') });
         }
         closeMobileMenu();
         if (typeof window.openCart === 'function') window.openCart();
@@ -1636,11 +1638,14 @@ function getMobileIconHtml(iconKey: string): string {
     ourWorkMegaMenu?.addEventListener('mouseleave', closeOurWorkMenu);
 
     // Category tab click handlers
+    // Track current category for context-aware donate
+    window._currentMegaMenuCategory = 'Emergencies';
     document.querySelectorAll('.mega-category-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const categoryId = btn.dataset.category;
         const categoryLabel = btn.dataset.label;
+        window._currentMegaMenuCategory = categoryLabel;
         renderCampaigns(categoryId, categoryLabel);
       });
     });
@@ -1855,8 +1860,8 @@ function getMobileIconHtml(iconKey: string): string {
         const amount = (customVal > 0) ? customVal : quickZakatSelectedAmount;
         if (!amount || amount <= 0) return;
 
-        // Close mega menu
-        document.querySelectorAll('.mega-menu-panel').forEach(p => { p.style.display = 'none'; p.style.opacity = '0'; });
+        // Close mega menu (use classes, not inline styles, so menus can reopen)
+        document.querySelectorAll('.mega-menu-panel').forEach(p => { p.classList.remove('show'); p.classList.add('hidden'); });
 
         // Add to cart via global addToCart (from DonationCart.astro)
         if (typeof window.addToCart === 'function') {
@@ -1866,9 +1871,11 @@ function getMobileIconHtml(iconKey: string): string {
             description: 'Zakat Al Mal',
             amount: amount,
             quantity: 1,
+            campaign: 'zakat',
             category: 'zakat',
             campaignSlug: 'zakat',
             fundType: 'zakat',
+            sourceLocation: 'mega-menu-zakat',
           });
         }
       });
@@ -1930,20 +1937,24 @@ function getMobileIconHtml(iconKey: string): string {
           const customVal = customInput ? parseFloat(customInput.value) : 0;
           const amount = (customVal > 0) ? customVal : selectedAmount;
           if (!amount || amount <= 0) return;
-          // Close mega menu
-          document.querySelectorAll('.mega-menu-panel').forEach(p => { p.style.display = 'none'; p.style.opacity = '0'; });
+          // Close mega menu (use classes, not inline styles, so menus can reopen)
+          document.querySelectorAll('.mega-menu-panel').forEach(p => { p.classList.remove('show'); p.classList.add('hidden'); });
           if (typeof window.addToCart === 'function') {
             const fundType = fundTypeSelect ? fundTypeSelect.value : baseFundType;
-            const displayName = fundTypeSelect ? fundTypeSelect.options[fundTypeSelect.selectedIndex].text : itemName;
+            // Check if this widget is inside the Our Work mega menu — if so, use the active category tab
+            const isOurWorkWidget = widget.closest('#our-work-mega-menu');
+            const contextLabel = isOurWorkWidget ? (window._currentMegaMenuCategory || 'Emergency Relief') : (itemName || 'Emergency Relief');
             window.addToCart({
               id: fundType + '-quick-' + Date.now(),
-              name: displayName,
-              description: displayName,
+              name: contextLabel,
+              label: 'Where Most Needed',
               amount: amount,
               quantity: 1,
+              campaign: campaignSlug || fundType,
               category: fundType,
               campaignSlug: campaignSlug || fundType,
               fundType: fundType,
+              sourceLocation: 'mega-menu-' + (campaignSlug || fundType),
             });
           }
         });
@@ -2019,12 +2030,14 @@ function getMobileIconHtml(iconKey: string): string {
         if (typeof window.addToCart === 'function') {
           window.addToCart({
             id: fund.value + '-quick-' + Date.now(),
-            name: 'Where Most Needed',
-            description: fund.label,
+            name: 'Emergency Relief',
+            label: 'Where Most Needed',
             amount: amount,
             quantity: 1,
+            campaign: fund.value,
             category: fund.value,
             fundType: fund.value,
+            sourceLocation: 'mobile-menu-main',
           });
         }
       });
@@ -2053,12 +2066,14 @@ function getMobileIconHtml(iconKey: string): string {
         if (typeof window.addToCart === 'function') {
           window.addToCart({
             id: fund.value + '-quick-' + Date.now(),
-            name: 'Where Most Needed',
-            description: fund.label,
+            name: 'Emergency Relief',
+            label: 'Where Most Needed',
             amount: amount,
             quantity: 1,
+            campaign: fund.value,
             category: fund.value,
             fundType: fund.value,
+            sourceLocation: 'mobile-menu-main',
           });
         }
       });

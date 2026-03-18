@@ -203,7 +203,7 @@ const isInteractive = config.interactive === true;
           <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center pointer-events-none">
             <span class="text-gray-500 text-sm font-bold">$</span>
           </div>
-          <input type="number" placeholder={config.placeholder || 'Enter custom amount'} class="quick-donate-input w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style={`--focus-color: ${btnColor};`} onfocus={`this.style.borderColor='${btnColor}'; this.style.boxShadow='0 0 0 3px ${btnColor}15'`} onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder={config.placeholder || 'Enter custom amount'} class="quick-donate-input w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style={`--focus-color: ${btnColor};`} onfocus={`this.style.borderColor='${btnColor}'; this.style.boxShadow='0 0 0 3px ${btnColor}15'`} onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" />
         </div>
 
         {/* Fund Type Dropdown */}

@@ -399,11 +399,13 @@ const progressPercentage = Math.min(Math.round((raisedAmount / goalAmount) * 100
                   monthlyImpactText={cwConfig.monthlyImpactText}
                   upsellBody={cwConfig.upsellBody}
                   upsellSubText={cwConfig.upsellSubText}
-                  buttonTextMonthly={cwConfig.buttonTextMonthly}
-                  buttonTextOneTime={cwConfig.buttonTextOneTime}
+                  buttonTextMonthly={cwConfig.buttonTextMonthly || 'JOIN TODAY'}
+                  buttonTextOneTime={cwConfig.buttonTextOneTime || 'GIVE NOW'}
                   donationBoxHeading={cwConfig.donationBoxHeading}
                   tabEmoji={cwConfig.tabEmoji || ''}
                   frequencies={cwConfig.frequencies}
+                  defaultTabIndex={cwConfig.defaultTabIndex}
+                  colors={{ accentColor: '#e1861d', buttonColor: '#C41D3A' }}
                 />
               ) : isHomeDonation ? (
                 <HomeDonationBox campaignSlug={campaign.slug} campaignTitle={campaign.title} />

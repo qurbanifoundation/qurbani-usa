@@ -1,0 +1,406 @@
+---
+/**
+ * Zakat Policy Page — /zakat/zakat-policy
+ * Builds trust and transparency around Qurbani Foundation's 100% Zakat Policy
+ */
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+export const prerender = false;
+
+const metaTitle = 'Our 100% Zakat Policy — Shariah-Compliant & Transparent | Qurbani Foundation';
+const metaDescription = 'Learn how Qurbani Foundation ensures 100% of your Zakat reaches eligible recipients. Scholar-verified, Shariah-compliant distribution across 50+ countries.';
+
+const eightCategories = [
+  {
+    arabic: 'الفقراء',
+    title: 'Al-Fuqara (The Poor)',
+    description: 'Those who live below the poverty line and lack the basic necessities of life — food, shelter, and clothing.',
+    icon: '<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>',
+  },
+  {
+    arabic: 'المساكين',
+    title: 'Al-Masakin (The Needy)',
+    description: 'Those who have some income but it is not enough to meet their basic needs. They often suffer in silence.',
+    icon: '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>',
+  },
+  {
+    arabic: 'العاملين عليها',
+    title: 'Al-Amilina Alayha (Zakat Administrators)',
+    description: 'Those appointed to collect, manage, and distribute Zakat funds. At Qurbani Foundation, admin costs are covered separately.',
+    icon: '<path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>',
+  },
+  {
+    arabic: 'المؤلفة قلوبهم',
+    title: 'Al-Mu\'allafatu Qulubuhum (Reconciliation of Hearts)',
+    description: 'New Muslims and those whose hearts are inclined towards Islam, who may need financial support during their transition.',
+    icon: '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>',
+  },
+  {
+    arabic: 'في الرقاب',
+    title: 'Fir-Riqab (Freeing Captives)',
+    description: 'Those in bondage or slavery. In the modern context, this extends to helping victims of human trafficking and forced labor.',
+    icon: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 11.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"></path>',
+  },
+  {
+    arabic: 'الغارمين',
+    title: 'Al-Gharimin (Those in Debt)',
+    description: 'People who are burdened with debt they cannot repay, particularly those who incurred debt for basic needs or emergencies.',
+    icon: '<path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>',
+  },
+  {
+    arabic: 'في سبيل الله',
+    title: 'Fi Sabilillah (In the Cause of Allah)',
+    description: 'Those striving in the path of Allah — including efforts for education, dawah, and humanitarian relief.',
+    icon: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd"></path>',
+  },
+  {
+    arabic: 'ابن السبيل',
+    title: 'Ibnus-Sabil (The Wayfarer)',
+    description: 'Travelers who are stranded or lack the resources to return home, including refugees and displaced persons.',
+    icon: '<path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>',
+  },
+];
+
+const principles = [
+  {
+    title: 'Complete Segregation of Funds',
+    description: 'Zakat funds are held in a dedicated, segregated account — never mixed with general donations, Sadaqah, or operational budgets. This ensures full traceability.',
+    icon: '🔒',
+  },
+  {
+    title: 'Zero Admin Deduction',
+    description: 'We do not deduct any administrative, marketing, or operational costs from your Zakat. All overhead is covered through separate Sadaqah and general funds.',
+    icon: '💯',
+  },
+  {
+    title: 'Scholar-Guided Distribution',
+    description: 'Every Zakat disbursement is reviewed against Shariah guidelines. Our team consults with qualified Islamic scholars to ensure compliance at every stage.',
+    icon: '📖',
+  },
+  {
+    title: 'On-the-Ground Verification',
+    description: 'Our field teams verify recipient eligibility before distribution. We assess income, assets, and family size to confirm they meet Zakat criteria per Islamic law.',
+    icon: '✅',
+  },
+  {
+    title: 'Transparent Reporting',
+    description: 'We publish annual Zakat reports showing exactly where funds were distributed — by category, country, and project. Donors receive receipts for every contribution.',
+    icon: '📊',
+  },
+  {
+    title: 'Timely Distribution',
+    description: 'We prioritize swift distribution of Zakat funds. Your Zakat does not sit idle — it reaches those in need as quickly as our field operations allow.',
+    icon: '⚡',
+  },
+];
+---
+
+<Layout title={metaTitle} description={metaDescription}>
+  <Navbar />
+
+  <main>
+    <!-- Hero -->
+    <section class="relative pt-24 pb-16 lg:pt-36 lg:pb-24 overflow-hidden bg-[#1a3040]">
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute inset-0" style="background-image: url('/images/qurbani-foundation-zakat.webp'); background-size: cover; background-position: center;"></div>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1a3040]/95 to-[#1a3040]/80"></div>
+
+      <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center justify-center gap-2 text-sm text-gray-400 mb-8" style="font-family: 'Lato', sans-serif;">
+          <a href="/" class="hover:text-white transition">Home</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          <a href="/zakat" class="hover:text-white transition">Zakat</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          <span class="text-[#e1861d]">Zakat Policy</span>
+        </nav>
+
+        <!-- Shield Icon -->
+        <div class="w-20 h-20 bg-[#e1861d]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-[#e1861d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight" style="font-family: 'Signika', sans-serif;">
+          Our 100% <span class="text-[#e1861d]">Zakat Policy</span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed" style="font-family: 'Lato', sans-serif;">
+          Every dollar of your Zakat reaches those who need it most. No deductions. No exceptions. Complete Shariah compliance.
+        </p>
+
+        <!-- Trust Badges -->
+        <div class="flex flex-wrap items-center justify-center gap-3 mt-8">
+          <div class="flex items-center gap-1.5 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm text-sm text-white">
+            <svg class="w-4 h-4 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            100% Zakat Delivered
+          </div>
+          <div class="flex items-center gap-1.5 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm text-sm text-white">
+            <svg class="w-4 h-4 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            Scholar-Verified
+          </div>
+          <div class="flex items-center gap-1.5 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm text-sm text-white">
+            <svg class="w-4 h-4 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            Tax-Deductible
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What 100% Zakat Policy Means -->
+    <section class="py-16 md:py-20 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-[#1a3040] mb-4" style="font-family: 'Signika', sans-serif;">
+            What Does <span class="text-[#e1861d]">100% Zakat Policy</span> Mean?
+          </h2>
+          <p class="text-lg text-gray-600 max-w-3xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            When you give your Zakat to Qurbani Foundation, not a single penny is taken for administrative costs, salaries, or marketing. The full amount — 100% — is directed to verified, Shariah-eligible recipients across 50+ countries.
+          </p>
+        </div>
+
+        <!-- How it works visual -->
+        <div class="bg-gradient-to-br from-stone-50 to-orange-50/30 rounded-2xl p-8 md:p-10 border border-stone-200">
+          <div class="grid md:grid-cols-3 gap-6 text-center">
+            <div class="relative">
+              <div class="w-16 h-16 bg-[#e1861d] rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold" style="font-family: 'Signika', sans-serif;">1</div>
+              <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">You Give Zakat</h3>
+              <p class="text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">Your Zakat is received and placed into a dedicated, segregated Zakat fund — separate from all other donations.</p>
+              <div class="hidden md:block absolute top-8 right-0 translate-x-1/2">
+                <svg class="w-8 h-8 text-[#e1861d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </div>
+            </div>
+            <div class="relative">
+              <div class="w-16 h-16 bg-[#255764] rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold" style="font-family: 'Signika', sans-serif;">2</div>
+              <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">We Verify Recipients</h3>
+              <p class="text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">Our field teams assess eligibility based on Islamic criteria. Scholars review the process to ensure full Shariah compliance.</p>
+              <div class="hidden md:block absolute top-8 right-0 translate-x-1/2">
+                <svg class="w-8 h-8 text-[#e1861d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+              </div>
+            </div>
+            <div>
+              <div class="w-16 h-16 bg-[#0096D6] rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl font-bold" style="font-family: 'Signika', sans-serif;">3</div>
+              <h3 class="font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">100% Reaches Them</h3>
+              <p class="text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">Every dollar of your Zakat is distributed directly to eligible recipients. Admin costs are covered by separate Sadaqah funds.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Zakat Principles -->
+    <section class="py-16 md:py-20 bg-stone-50">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-[#1a3040] mb-4" style="font-family: 'Signika', sans-serif;">
+            Our Zakat Governance Principles
+          </h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            Six commitments that ensure your Zakat obligation is fulfilled with integrity and precision.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {principles.map((p) => (
+            <div class="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg transition-shadow">
+              <div class="text-3xl mb-4">{p.icon}</div>
+              <h3 class="font-bold text-gray-800 mb-2 text-lg" style="font-family: 'Signika', sans-serif;">{p.title}</h3>
+              <p class="text-sm text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">{p.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Quranic Foundation -->
+    <section class="py-14 md:py-16 bg-[#255764]">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-7 h-7 text-[#e1861d]" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path></svg>
+        </div>
+        <p class="text-white/90 text-lg md:text-xl italic leading-relaxed mb-4" style="font-family: 'Playfair Display', serif;">
+          "Zakat expenditures are only for the poor and for the needy and for those employed to collect [Zakat] and for bringing hearts together [for Islam] and for freeing captives and for those in debt and for the cause of Allah and for the [stranded] traveler — an obligation [imposed] by Allah. And Allah is Knowing and Wise."
+        </p>
+        <p class="text-[#e1861d] font-bold text-sm" style="font-family: 'Signika', sans-serif;">— Surah At-Tawbah (9:60)</p>
+      </div>
+    </section>
+
+    <!-- Eight Categories of Zakat -->
+    <section class="py-16 md:py-20 bg-white">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-[#1a3040] mb-4" style="font-family: 'Signika', sans-serif;">
+            The Eight <span class="text-[#e1861d]">Eligible Recipients</span> of Zakat
+          </h2>
+          <p class="text-lg text-gray-600 max-w-3xl mx-auto" style="font-family: 'Lato', sans-serif;">
+            As defined in Surah At-Tawbah (9:60), Allah has designated eight specific categories of people who are eligible to receive Zakat. We distribute across all applicable categories.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5">
+          {eightCategories.map((cat, index) => (
+            <div class="flex gap-4 p-5 rounded-xl bg-stone-50 border border-stone-100 hover:border-[#e1861d]/30 hover:shadow-md transition-all">
+              <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#1a3040]">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <Fragment set:html={cat.icon} />
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs bg-[#e1861d]/10 text-[#e1861d] px-2 py-0.5 rounded-full font-bold" style="font-family: 'Lato', sans-serif;">{index + 1}</span>
+                  <span class="text-sm text-gray-400" style="font-family: 'Lato', sans-serif;">{cat.arabic}</span>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-1" style="font-family: 'Signika', sans-serif;">{cat.title}</h3>
+                <p class="text-sm text-gray-600 leading-relaxed" style="font-family: 'Lato', sans-serif;">{cat.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Our Commitment / Trust Stats -->
+    <section class="py-16 md:py-20 bg-[#e8e6e1]">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-[#1a3040] mb-4" style="font-family: 'Signika', sans-serif;">
+          Our Track Record
+        </h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-12" style="font-family: 'Lato', sans-serif;">
+          Numbers that reflect our commitment to delivering your Zakat with excellence.
+        </p>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-10">
+          <div class="bg-white rounded-xl p-6 shadow-sm">
+            <p class="text-3xl md:text-4xl font-black text-[#1a3040]" style="font-family: 'Signika', sans-serif;">2M+</p>
+            <p class="text-sm text-gray-500 mt-2" style="font-family: 'Lato', sans-serif;">Lives Changed Worldwide</p>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm">
+            <p class="text-3xl md:text-4xl font-black text-[#1a3040]" style="font-family: 'Signika', sans-serif;">53+</p>
+            <p class="text-sm text-gray-500 mt-2" style="font-family: 'Lato', sans-serif;">Countries Reached</p>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm">
+            <p class="text-3xl md:text-4xl font-black text-[#e1861d]" style="font-family: 'Signika', sans-serif;">100%</p>
+            <p class="text-sm text-gray-500 mt-2" style="font-family: 'Lato', sans-serif;">Zakat Delivered to Recipients</p>
+          </div>
+          <div class="bg-white rounded-xl p-6 shadow-sm">
+            <p class="text-3xl md:text-4xl font-black text-[#1a3040]" style="font-family: 'Signika', sans-serif;">8</p>
+            <p class="text-sm text-gray-500 mt-2" style="font-family: 'Lato', sans-serif;">Quranic Categories Served</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-16 md:py-20 bg-white">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-[#1a3040] mb-4" style="font-family: 'Signika', sans-serif;">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div class="space-y-4" id="zp-faq">
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <button class="zp-faq-toggle w-full flex items-center justify-between px-6 py-4 text-left font-bold text-gray-800 hover:bg-stone-50 transition" style="font-family: 'Signika', sans-serif;">
+              How do you ensure 100% of my Zakat is used for eligible recipients?
+              <svg class="zp-faq-arrow w-5 h-5 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div class="zp-faq-body hidden px-6 pb-5 text-gray-600 text-sm leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              We maintain a strict policy of segregating Zakat funds from all other donations. Administrative costs — including staff salaries, marketing, and operations — are covered entirely through Sadaqah and general donations. This means your Zakat is never diminished by overhead.
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <button class="zp-faq-toggle w-full flex items-center justify-between px-6 py-4 text-left font-bold text-gray-800 hover:bg-stone-50 transition" style="font-family: 'Signika', sans-serif;">
+              Who verifies that your Zakat distribution is Shariah-compliant?
+              <svg class="zp-faq-arrow w-5 h-5 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div class="zp-faq-body hidden px-6 pb-5 text-gray-600 text-sm leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Our Zakat programs are guided by qualified Islamic scholars who review our distribution criteria, recipient eligibility assessments, and reporting. This ensures every disbursement aligns with the eight categories defined in Surah At-Tawbah (9:60).
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <button class="zp-faq-toggle w-full flex items-center justify-between px-6 py-4 text-left font-bold text-gray-800 hover:bg-stone-50 transition" style="font-family: 'Signika', sans-serif;">
+              Can I give my Zakat to a specific country or cause?
+              <svg class="zp-faq-arrow w-5 h-5 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div class="zp-faq-body hidden px-6 pb-5 text-gray-600 text-sm leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes. When you donate through our Zakat page, you can choose specific categories such as emergency relief, food distribution, or education. Your Zakat is then distributed within that category to verified eligible recipients, while still maintaining full Shariah compliance.
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <button class="zp-faq-toggle w-full flex items-center justify-between px-6 py-4 text-left font-bold text-gray-800 hover:bg-stone-50 transition" style="font-family: 'Signika', sans-serif;">
+              Is my Zakat donation tax-deductible?
+              <svg class="zp-faq-arrow w-5 h-5 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div class="zp-faq-body hidden px-6 pb-5 text-gray-600 text-sm leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. All donations, including Zakat, are tax-deductible to the fullest extent permitted by law. You will receive a tax receipt for every donation.
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <button class="zp-faq-toggle w-full flex items-center justify-between px-6 py-4 text-left font-bold text-gray-800 hover:bg-stone-50 transition" style="font-family: 'Signika', sans-serif;">
+              How quickly is my Zakat distributed after I donate?
+              <svg class="zp-faq-arrow w-5 h-5 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div class="zp-faq-body hidden px-6 pb-5 text-gray-600 text-sm leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              We prioritize timely distribution. Depending on the program and region, Zakat funds are typically deployed within days to weeks of receipt. During Ramadan and emergency situations, distribution is accelerated to reach those in need as fast as possible.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="py-16 md:py-20 bg-gradient-to-r from-[#1a3040] to-[#255764] text-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-8 h-8 text-[#e1861d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4" style="font-family: 'Signika', sans-serif;">
+          Fulfill Your Zakat With Confidence
+        </h2>
+        <p class="text-lg text-gray-300 mb-8 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          100% of your Zakat reaches eligible recipients. Shariah-compliant. Tax-deductible. Trusted by thousands of donors across America.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4">
+          <a href="/zakat" class="inline-flex items-center gap-2 bg-[#e1861d] hover:bg-[#c97418] text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg text-lg" style="font-family: 'Signika', sans-serif;">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+            Pay Your Zakat Now
+          </a>
+          <a href="/zakat-calculator" class="inline-flex items-center gap-2 border-2 border-white/30 text-white hover:bg-white/10 font-bold px-8 py-4 rounded-xl transition-all text-lg" style="font-family: 'Signika', sans-serif;">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm0 2h8v2H6V4zm0 4h2v2H6V8zm0 3h2v2H6v-2zm0 3h2v2H6v-2zm3-6h2v2H9V8zm0 3h2v2H9v-2zm0 3h2v2H9v-2zm3-6h2v2h-2V8zm0 3h2v5h-2v-5z"></path></svg>
+            Calculate Your Zakat
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // FAQ accordion
+    document.querySelectorAll('.zp-faq-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const body = btn.nextElementSibling as HTMLElement;
+        const arrow = btn.querySelector('.zp-faq-arrow') as HTMLElement;
+        const isOpen = !body.classList.contains('hidden');
+
+        // Close all others
+        document.querySelectorAll('.zp-faq-body').forEach((b) => b.classList.add('hidden'));
+        document.querySelectorAll('.zp-faq-arrow').forEach((a) => (a as HTMLElement).style.transform = '');
+
+        if (!isOpen) {
+          body.classList.remove('hidden');
+          if (arrow) arrow.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+  });
+</script>

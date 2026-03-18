@@ -1,7 +1,8 @@
 ---
 /**
  * Feed Iftar Page
- * Explains Iftar feeding programs and provides donation options ($5/meal)
+ * Hero with donation box on right, content on left
+ * Conversion-optimized for older donors, $5/meal
  */
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
@@ -11,216 +12,368 @@ import Footer from '../components/Footer.astro';
 <Layout title="Feed Iftar - Qurbani Foundation USA" description="Provide iftar meals to fasting people in need. Just $5 provides a nutritious iftar meal. Earn immense rewards by feeding those who are fasting.">
   <Navbar />
 
-  <!-- Hero Section -->
-  <section class="relative pt-24 pb-20 overflow-hidden">
-    <!-- Background gradient -->
-    <div class="absolute inset-0 bg-gradient-to-br from-[#c2410c] via-[#ea580c] to-[#f97316]"></div>
-    <!-- Decorative pattern -->
-    <div class="absolute inset-0 opacity-10">
-      <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.4\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+  <!-- Scroll boundary for sticky donation box — box stops at the end of this wrapper -->
+  <div id="donate-scroll-boundary" class="relative">
+
+  <!-- Hero Section — Split Layout with Image Background -->
+  <section class="relative pt-32 lg:pt-40 pb-12 lg:pb-20 min-h-[600px] lg:min-h-[750px]">
+    <!-- Background image -->
+    <div class="absolute inset-0">
+      <img
+        src="/images/ramadan/ramadan-bg1.webp"
+        alt="Iftar gathering"
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#1a1a2e]/90 via-[#1a1a2e]/75 to-[#1a1a2e]/50"></div>
     </div>
 
     <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center max-w-3xl mx-auto">
-        <!-- Breadcrumb -->
-        <div class="flex items-center justify-center gap-2 text-white/60 text-sm mb-6">
-          <a href="/" class="hover:text-white transition">Home</a>
-          <span>/</span>
-          <a href="/ramadan" class="hover:text-white transition">Ramadan 2026</a>
-          <span>/</span>
-          <span class="text-white">Feed Iftar</span>
+      <div class="lg:max-w-[55%]">
+        <div class="text-white pt-4 lg:pt-8">
+          <!-- Breadcrumb -->
+          <div class="flex items-center gap-2 text-white/50 text-sm mb-6">
+            <a href="/" class="hover:text-white/80 transition">Home</a>
+            <span>/</span>
+            <a href="/ramadan" class="hover:text-white/80 transition">Ramadan 2026</a>
+            <span>/</span>
+            <span class="text-white/80">Feed Iftar</span>
+          </div>
+
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight" style="font-family: 'Signika', sans-serif;">
+            Feed <span class="text-[#fdc448]">Iftar</span>
+          </h1>
+
+          <p class="text-lg md:text-xl text-white/85 mb-6 leading-relaxed max-w-lg" style="font-family: 'Lato', sans-serif;">
+            Share the blessing of breaking fast with those in need. Just <strong class="text-[#fdc448]">$5</strong> provides a nutritious iftar meal.
+          </p>
+
+          <!-- Hadith Quote -->
+          <div class="bg-white/10 backdrop-blur-sm border-l-4 border-[#fdc448] p-4 rounded-r-lg mb-8 max-w-lg">
+            <p class="text-sm text-white/90 italic leading-relaxed">
+              "Whoever feeds a fasting person will have a reward like that of the fasting person, without any reduction in his reward."
+            </p>
+            <p class="text-xs text-[#fdc448] mt-2 font-semibold">— Prophet Muhammad ﷺ, Tirmidhi</p>
+          </div>
+
+          <!-- Trust Badges -->
+          <div class="flex flex-wrap gap-4 mb-6">
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <span class="text-sm text-white/90 font-medium">50,000+ Meals Served</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <span class="text-sm text-white/90 font-medium">15+ Countries</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-[#fdc448]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              <span class="text-sm text-white/90 font-medium">100% Donation Policy</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Icon -->
-        <div class="w-20 h-20 mx-auto mb-6 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
-          <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M6 3a1 1 0 011-1h.01a1 1 0 010 2H7a1 1 0 01-1-1zm2 3a1 1 0 00-2 0v1a2 2 0 00-2 2v1a2 2 0 00-2 2v.683a3.7 3.7 0 011.055.485 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0 3.704 3.704 0 014.11 0 1.704 1.704 0 001.89 0A3.7 3.7 0 0118 12.683V12a2 2 0 00-2-2V9a2 2 0 00-2-2V6a1 1 0 10-2 0v1h-1V6a1 1 0 10-2 0v1H8V6zm10 8.868a3.704 3.704 0 01-4.055-.036 1.704 1.704 0 00-1.89 0 3.704 3.704 0 01-4.11 0 1.704 1.704 0 00-1.89 0A3.704 3.704 0 012 14.868V17a1 1 0 001 1h14a1 1 0 001-1v-2.132z" clip-rule="evenodd"></path>
-          </svg>
+      </div>
+    </div>
+
+    <!-- Fixed Donation Box — floats on right side on desktop, always visible -->
+    <div id="fixed-donate-box" class="hidden lg:block fixed z-40 w-[470px]" style="top: 112px; right: max(2rem, calc((100vw - 1400px) / 2 + 16px));" data-mobile-donate>
+      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-[#ea580c] to-[#f97316] px-6 py-4 text-center">
+          <h3 class="text-xl font-bold text-white mb-0.5" style="font-family: 'Signika', sans-serif;">
+            🌙 Feed Iftar
+          </h3>
+          <p class="text-white/90 text-xs">$5 per meal · 100% goes to iftar</p>
         </div>
 
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
-          Feed <span class="text-[#fdc448]">Iftar</span>
-        </h1>
+        <div class="p-5">
+          <!-- Amount Selection -->
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Choose Your Impact</label>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all" data-amount="25" data-meals="5">
+              <span class="text-lg font-bold text-gray-800 group-hover:text-[#ea580c]">$25</span>
+              <span class="text-xs text-gray-500">5 meals</span>
+            </button>
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-[#ea580c] rounded-xl bg-[#ea580c]/5 transition-all" data-amount="50" data-meals="10">
+              <span class="text-lg font-bold text-[#ea580c]">$50</span>
+              <span class="text-xs text-[#ea580c]/70">10 meals</span>
+              <span class="absolute -top-2 -right-2 bg-[#ea580c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Popular</span>
+            </button>
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all" data-amount="150" data-meals="30">
+              <span class="text-lg font-bold text-gray-800 group-hover:text-[#ea580c]">$150</span>
+              <span class="text-xs text-gray-500">1 person's Ramadan</span>
+            </button>
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all" data-amount="300" data-meals="60">
+              <span class="text-lg font-bold text-gray-800 group-hover:text-[#ea580c]">$300</span>
+              <span class="text-xs text-gray-500">2 people's Ramadan</span>
+            </button>
+          </div>
 
-        <p class="text-lg md:text-xl text-white/90 mb-4 leading-relaxed" style="font-family: 'Lato', sans-serif;">
-          Share the blessing of breaking fast with those in need
-        </p>
+          <!-- Family Package -->
+          <button class="iftar-amount-btn w-full flex items-center justify-between p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all mb-3" data-amount="750" data-meals="150">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">👨‍👩‍👧‍👦</span>
+              <div class="text-left">
+                <span class="text-base font-bold text-gray-800">$750</span>
+                <span class="text-xs text-gray-500 block">Feed a family of 5 for all of Ramadan</span>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
 
-        <div class="inline-block bg-white/20 backdrop-blur-sm text-white text-xl font-bold px-6 py-3 rounded-full border border-white/30">
-          $5 per meal
+          <!-- Meal Counter (+ / -) -->
+          <div class="flex items-center justify-between bg-gray-50 rounded-xl p-3 mb-3 border border-gray-200">
+            <span class="text-sm font-medium text-gray-700">Number of meals</span>
+            <div class="flex items-center gap-0">
+              <button id="iftar-minus" class="w-9 h-9 flex items-center justify-center rounded-l-lg bg-white border border-gray-300 hover:bg-gray-100 transition text-gray-600 font-bold text-xl leading-none">−</button>
+              <span id="iftar-meal-count" class="w-12 h-9 flex items-center justify-center bg-white border-t border-b border-gray-300 text-base font-bold text-gray-800">10</span>
+              <button id="iftar-plus" class="w-9 h-9 flex items-center justify-center rounded-r-lg bg-white border border-gray-300 hover:bg-gray-100 transition text-[#ea580c] font-bold text-xl leading-none">+</button>
+            </div>
+          </div>
+
+          <!-- Description line -->
+          <p class="text-sm text-gray-600 text-center mb-4" id="iftar-description">
+            <span class="font-semibold text-[#ea580c]" id="iftar-meals-display">10</span> iftar meals for those in need — <span class="font-bold text-gray-800" id="iftar-total">$50</span>
+          </p>
+
+          <!-- Donate Button -->
+          <button
+            id="iftar-add-to-cart"
+            class="w-full bg-gradient-to-r from-[#ea580c] to-[#c2410c] hover:from-[#c2410c] hover:to-[#9a3412] text-white font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-lg"
+            style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+            </svg>
+            Donate Now
+          </button>
+
+          <!-- Trust Text -->
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+            <span class="text-xs text-gray-500">Secure · Tax-deductible · Instant receipt</span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Wave divider -->
     <div class="absolute bottom-0 left-0 right-0">
-      <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-16">
+      <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-12 lg:h-16">
         <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
       </svg>
     </div>
   </section>
 
-  <!-- Main Content -->
+  <!-- Mobile Donation Box (inline, visible only on mobile) -->
+  <section class="lg:hidden py-8 bg-white" data-mobile-donate-inline>
+    <div class="max-w-md mx-auto px-4">
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-[#ea580c] to-[#f97316] px-6 py-4 text-center">
+          <h3 class="text-xl font-bold text-white mb-0.5" style="font-family: 'Signika', sans-serif;">
+            🌙 Feed Iftar
+          </h3>
+          <p class="text-white/90 text-xs">$5 per meal · 100% goes to iftar</p>
+        </div>
+
+        <div class="p-5">
+          <!-- Amount Selection -->
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Choose Your Impact</label>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all" data-amount="25" data-meals="5">
+              <span class="text-lg font-bold text-gray-800 group-hover:text-[#ea580c]">$25</span>
+              <span class="text-xs text-gray-500">5 meals</span>
+            </button>
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-[#ea580c] rounded-xl bg-[#ea580c]/5 transition-all" data-amount="50" data-meals="10">
+              <span class="text-lg font-bold text-[#ea580c]">$50</span>
+              <span class="text-xs text-[#ea580c]/70">10 meals</span>
+              <span class="absolute -top-2 -right-2 bg-[#ea580c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Popular</span>
+            </button>
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all" data-amount="150" data-meals="30">
+              <span class="text-lg font-bold text-gray-800 group-hover:text-[#ea580c]">$150</span>
+              <span class="text-xs text-gray-500">1 person's Ramadan</span>
+            </button>
+            <button class="iftar-amount-btn group relative flex flex-col items-center p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all" data-amount="300" data-meals="60">
+              <span class="text-lg font-bold text-gray-800 group-hover:text-[#ea580c]">$300</span>
+              <span class="text-xs text-gray-500">2 people's Ramadan</span>
+            </button>
+          </div>
+
+          <!-- Family Package -->
+          <button class="iftar-amount-btn w-full flex items-center justify-between p-2.5 border-2 border-gray-200 rounded-xl bg-white hover:border-[#ea580c] hover:bg-[#ea580c]/5 transition-all mb-3" data-amount="750" data-meals="150">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">👨‍👩‍👧‍👦</span>
+              <div class="text-left">
+                <span class="text-base font-bold text-gray-800">$750</span>
+                <span class="text-xs text-gray-500 block">Feed a family of 5 for all of Ramadan</span>
+              </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+
+          <!-- Meal Counter (+ / -) -->
+          <div class="flex items-center justify-between bg-gray-50 rounded-xl p-3 mb-3 border border-gray-200">
+            <span class="text-sm font-medium text-gray-700">Number of meals</span>
+            <div class="flex items-center gap-0">
+              <button class="iftar-minus-btn w-9 h-9 flex items-center justify-center rounded-l-lg bg-white border border-gray-300 hover:bg-gray-100 transition text-gray-600 font-bold text-xl leading-none">−</button>
+              <span class="iftar-meal-count-display w-12 h-9 flex items-center justify-center bg-white border-t border-b border-gray-300 text-base font-bold text-gray-800">10</span>
+              <button class="iftar-plus-btn w-9 h-9 flex items-center justify-center rounded-r-lg bg-white border border-gray-300 hover:bg-gray-100 transition text-[#ea580c] font-bold text-xl leading-none">+</button>
+            </div>
+          </div>
+
+          <!-- Description line -->
+          <p class="text-sm text-gray-600 text-center mb-4">
+            <span class="font-semibold text-[#ea580c] iftar-meals-text">10</span> iftar meals for those in need — <span class="font-bold text-gray-800 iftar-total-text">$50</span>
+          </p>
+
+          <!-- Donate Button -->
+          <button
+            class="iftar-donate-btn w-full bg-gradient-to-r from-[#ea580c] to-[#c2410c] hover:from-[#c2410c] hover:to-[#9a3412] text-white font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-lg"
+            style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 20px rgba(234, 88, 12, 0.4);"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+            </svg>
+            Donate Now
+          </button>
+
+          <!-- Trust Text -->
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+            <span class="text-xs text-gray-500">Secure · Tax-deductible · Instant receipt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content Section -->
   <section class="py-16 bg-white">
-    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid lg:grid-cols-2 gap-12 items-start">
-        <!-- Left Column - Information -->
-        <div>
-          <h2 class="text-3xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="lg:max-w-[calc(100%-510px)]">
+          <!-- The Reward of Feeding Iftar -->
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
             The Reward of Feeding <span class="text-[#ea580c]">Iftar</span>
           </h2>
 
-          <div class="prose prose-lg max-w-none text-gray-600" style="font-family: 'Lato', sans-serif;">
-            <p class="mb-4">
-              Iftar is the evening meal with which Muslims break their daily fast during Ramadan. Providing iftar to those who are fasting carries immense spiritual rewards and is one of the most beloved acts of charity during the blessed month.
+          <p class="text-lg text-gray-700 leading-relaxed mb-6" style="font-family: 'Lato', sans-serif;">
+            Iftar is the evening meal with which Muslims break their daily fast during Ramadan. Providing iftar to those who are fasting carries immense spiritual rewards and is one of the most beloved acts of charity during the blessed month.
+          </p>
+
+          <!-- Hadith Quote -->
+          <div class="bg-[#fef3e2] border-l-4 border-[#ea580c] p-5 rounded-r-lg mb-6">
+            <p class="text-gray-700 italic leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              "Whoever feeds a fasting person will have a reward like that of the fasting person, without any reduction in his reward."
             </p>
-
-            <div class="bg-[#ea580c]/10 border-l-4 border-[#ea580c] p-4 rounded-r-lg mb-6">
-              <p class="text-sm text-gray-700 italic">
-                "Whoever feeds a fasting person will have a reward like that of the fasting person, without any reduction in his reward."
-                <span class="block mt-1 font-semibold">- Prophet Muhammad (PBUH), Tirmidhi</span>
-              </p>
-            </div>
-
-            <p class="mb-6">
-              This hadith tells us that by providing iftar to someone who is fasting, you receive the same reward as their entire fast - without their reward being diminished at all. This is the beautiful multiplication of rewards that Allah provides during Ramadan.
-            </p>
-
-            <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
-              What Does Your Donation Provide?
-            </h3>
-
-            <ul class="space-y-3 mb-6">
-              <li class="flex items-start gap-3">
-                <svg class="w-6 h-6 text-[#ea580c] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <span><strong>Nutritious iftar meal</strong> including dates, water, and a balanced meal</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <svg class="w-6 h-6 text-[#ea580c] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <span><strong>Community gatherings</strong> where people can break their fast together</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <svg class="w-6 h-6 text-[#ea580c] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <span><strong>Support for orphans, widows, and refugees</strong> who struggle to provide for themselves</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <svg class="w-6 h-6 text-[#ea580c] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                </svg>
-                <span><strong>Distribution in multiple countries</strong> where food insecurity is prevalent</span>
-              </li>
-            </ul>
-
-            <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
-              Where Do We Distribute Iftar?
-            </h3>
-
-            <p class="mb-4">
-              We distribute iftar meals across multiple countries including Pakistan, Bangladesh, Syria, Yemen, Somalia, and other regions where poverty and hunger are widespread. Our local partners ensure that meals reach the most vulnerable - orphans, widows, elderly, and displaced families.
-            </p>
-
-            <div class="bg-gray-50 rounded-xl p-6 mb-6">
-              <h4 class="font-bold text-gray-800 mb-3">Your Impact:</h4>
-              <ul class="space-y-2 text-sm">
-                <li>$5 = 1 iftar meal</li>
-                <li>$25 = 5 iftar meals</li>
-                <li>$150 = Feed 1 person for entire Ramadan (30 days)</li>
-                <li>$750 = Feed a family of 5 for entire Ramadan</li>
-              </ul>
-            </div>
+            <p class="text-[#ea580c] font-semibold mt-2 text-sm">— Prophet Muhammad (PBUH), Tirmidhi</p>
           </div>
-        </div>
 
-        <!-- Right Column - Donation Box -->
-        <div class="lg:sticky lg:top-24" data-mobile-donate>
-          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-[#ea580c] to-[#f97316] p-6 text-center">
-              <h3 class="text-2xl font-bold text-white mb-2" style="font-family: 'Signika', sans-serif;">
-                Feed Iftar
-              </h3>
-              <p class="text-white/80 text-sm">$5 per meal</p>
-            </div>
+          <p class="text-gray-700 leading-relaxed mb-10" style="font-family: 'Lato', sans-serif;">
+            This hadith tells us that by providing iftar to someone who is fasting, you receive the same reward as their entire fast — without their reward being diminished at all. This is the beautiful multiplication of rewards that Allah provides during Ramadan.
+          </p>
 
-            <div class="p-6">
-              <!-- Meals Selection -->
-              <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Number of Meals</label>
-                <div class="grid grid-cols-4 gap-2 mb-3">
-                  <button class="iftar-meals-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#ea580c] transition" data-meals="1">1</button>
-                  <button class="iftar-meals-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#ea580c] transition" data-meals="5">5</button>
-                  <button class="iftar-meals-btn py-3 border-2 border-[#ea580c] rounded-lg bg-[#ea580c]/10 text-[#ea580c] font-bold text-sm" data-meals="10">10</button>
-                  <button class="iftar-meals-btn py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-700 font-bold text-sm hover:border-[#ea580c] transition" data-meals="30">30</button>
-                </div>
-                <div class="relative">
-                  <input type="text" inputmode="numeric" pattern="[0-9]*" id="iftar-custom-meals" placeholder="Custom number of meals" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#ea580c] focus:border-[#ea580c] outline-none transition" />
-                </div>
-              </div>
+          <!-- What Does Your Donation Provide? -->
+          <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+            What Does Your <span class="text-[#ea580c]">Donation</span> Provide?
+          </h2>
 
-              <!-- Total Amount -->
-              <div class="bg-[#ea580c]/10 rounded-xl p-4 mb-6 text-center">
-                <p class="text-sm text-gray-600 mb-1">Total Amount</p>
-                <p class="text-4xl font-bold text-[#ea580c]" id="iftar-total">$50</p>
-                <p class="text-xs text-gray-500 mt-1"><span id="iftar-meals-display">10</span> meals x $5</p>
-              </div>
-
-              <!-- Special Packages -->
-              <div class="border border-gray-200 rounded-lg p-4 mb-6">
-                <p class="text-sm font-semibold text-gray-700 mb-3">Special Packages:</p>
-                <div class="space-y-2">
-                  <button class="iftar-package-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-meals="30">
-                    <span class="text-sm">Feed 1 person for Ramadan</span>
-                    <span class="text-sm font-bold text-[#ea580c]">$150</span>
-                  </button>
-                  <button class="iftar-package-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-meals="60">
-                    <span class="text-sm">Feed 2 people for Ramadan</span>
-                    <span class="text-sm font-bold text-[#ea580c]">$300</span>
-                  </button>
-                  <button class="iftar-package-btn w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition text-left" data-meals="150">
-                    <span class="text-sm">Feed family of 5 for Ramadan</span>
-                    <span class="text-sm font-bold text-[#ea580c]">$750</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Add to Cart Button -->
-              <button
-                id="iftar-add-to-cart"
-                class="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white font-bold py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
-                style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          <ul class="space-y-4 mb-10" style="font-family: 'Lato', sans-serif;">
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-[#ea580c]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-[#ea580c]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                 </svg>
-                Add Iftar Meals to Cart
-              </button>
+              </div>
+              <div>
+                <strong class="text-gray-800">Nutritious iftar meal</strong>
+                <span class="text-gray-600"> including dates, water, and a balanced meal</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-[#ea580c]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-[#ea580c]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div>
+                <strong class="text-gray-800">Community gatherings</strong>
+                <span class="text-gray-600"> where people can break their fast together</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-[#ea580c]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-[#ea580c]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div>
+                <strong class="text-gray-800">Support for orphans, widows, and refugees</strong>
+                <span class="text-gray-600"> who struggle to provide for themselves</span>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-[#ea580c]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-[#ea580c]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div>
+                <strong class="text-gray-800">Distribution in multiple countries</strong>
+                <span class="text-gray-600"> where food insecurity is prevalent</span>
+              </div>
+            </li>
+          </ul>
 
-              <p class="text-center text-xs text-gray-500 mt-4">
-                Earn the reward of every fast you help nourish
-              </p>
+          <!-- Where Do We Distribute Iftar? -->
+          <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+            Where Do We Distribute <span class="text-[#ea580c]">Iftar?</span>
+          </h2>
+
+          <p class="text-gray-700 leading-relaxed mb-6" style="font-family: 'Lato', sans-serif;">
+            We distribute iftar meals across multiple countries including Pakistan, Bangladesh, Syria, Yemen, Somalia, and other regions where poverty and hunger are widespread. Our local partners ensure that meals reach the most vulnerable — orphans, widows, elderly, and displaced families.
+          </p>
+
+          <!-- Impact at a Glance -->
+          <h2 class="text-2xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+            Your <span class="text-[#ea580c]">Impact</span> at a Glance
+          </h2>
+
+          <div class="space-y-3 mb-10">
+            <div class="flex items-center justify-between p-4 bg-[#ea580c]/5 rounded-xl border border-[#ea580c]/10">
+              <span class="text-gray-700 font-medium">1 iftar meal</span>
+              <span class="text-[#ea580c] font-bold text-lg">$5</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-[#ea580c]/5 rounded-xl border border-[#ea580c]/10">
+              <span class="text-gray-700 font-medium">5 iftar meals</span>
+              <span class="text-[#ea580c] font-bold text-lg">$25</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-[#ea580c]/5 rounded-xl border border-[#ea580c]/10">
+              <span class="text-gray-700 font-medium">1 person — entire Ramadan</span>
+              <span class="text-[#ea580c] font-bold text-lg">$150</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-[#ea580c]/5 rounded-xl border border-[#ea580c]/10">
+              <span class="text-gray-700 font-medium">Family of 5 — entire Ramadan</span>
+              <span class="text-[#ea580c] font-bold text-lg">$750</span>
             </div>
           </div>
 
           <!-- Quick Links -->
-          <div class="mt-6 bg-gray-50 rounded-xl p-4">
+          <div class="bg-gray-50 rounded-xl p-5">
             <p class="text-sm font-semibold text-gray-700 mb-3">Other Ramadan Giving:</p>
             <div class="space-y-2">
-              <a href="/fidya" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
-                <span class="text-sm font-medium text-gray-700">Fidya</span>
-                <span class="text-xs text-gray-500">$10/day</span>
+              <a href="/fidya" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition group">
+                <span class="text-sm font-medium text-gray-700 group-hover:text-[#ea580c]">Fidya</span>
+                <span class="text-xs text-gray-500 font-semibold">$10/day</span>
               </a>
-              <a href="/kaffarah" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
-                <span class="text-sm font-medium text-gray-700">Kaffarah</span>
-                <span class="text-xs text-gray-500">$180</span>
+              <a href="/kaffarah" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition group">
+                <span class="text-sm font-medium text-gray-700 group-hover:text-[#ea580c]">Kaffarah</span>
+                <span class="text-xs text-gray-500 font-semibold">$180</span>
               </a>
-              <a href="/food-packs" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition">
-                <span class="text-sm font-medium text-gray-700">Food Packs</span>
-                <span class="text-xs text-gray-500">From $50</span>
+              <a href="/food-packs" class="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition group">
+                <span class="text-sm font-medium text-gray-700 group-hover:text-[#ea580c]">Food Packs</span>
+                <span class="text-xs text-gray-500 font-semibold">From $50</span>
               </a>
             </div>
           </div>
@@ -229,47 +382,40 @@ import Footer from '../components/Footer.astro';
     </div>
   </section>
 
-  <!-- Impact Section -->
-  <section class="py-16 bg-[#f8f9fa]">
-    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
-          The Impact of Your <span class="text-[#ea580c]">Iftar</span> Donation
-        </h2>
-        <p class="text-gray-600 max-w-2xl mx-auto">
-          Every meal you provide brings hope and nourishment to those struggling to survive.
-        </p>
-      </div>
+  </div><!-- end donate-scroll-boundary -->
 
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="bg-white rounded-2xl p-6 shadow-sm text-center">
-          <div class="w-16 h-16 bg-[#ea580c]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Impact Stats Section -->
+  <section id="impact-stats-section" class="py-14 bg-[#f8f9fa]">
+    <div class="max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl p-6 shadow-sm text-center border border-gray-100">
+          <div class="w-14 h-14 bg-[#ea580c]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">50,000+</h3>
-          <p class="text-gray-600 text-sm">Meals served last Ramadan</p>
+          <h3 class="text-2xl font-bold text-gray-800 mb-1" style="font-family: 'Signika', sans-serif;">50,000+</h3>
+          <p class="text-gray-500 text-sm">Meals served last Ramadan</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-sm text-center">
-          <div class="w-16 h-16 bg-[#ea580c]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-2xl p-6 shadow-sm text-center border border-gray-100">
+          <div class="w-14 h-14 bg-[#ea580c]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">15+</h3>
-          <p class="text-gray-600 text-sm">Countries reached</p>
+          <h3 class="text-2xl font-bold text-gray-800 mb-1" style="font-family: 'Signika', sans-serif;">15+</h3>
+          <p class="text-gray-500 text-sm">Countries reached</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-sm text-center">
-          <div class="w-16 h-16 bg-[#ea580c]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-2xl p-6 shadow-sm text-center border border-gray-100">
+          <div class="w-14 h-14 bg-[#ea580c]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-[#ea580c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">100%</h3>
-          <p class="text-gray-600 text-sm">Of donations go to iftar</p>
+          <h3 class="text-2xl font-bold text-gray-800 mb-1" style="font-family: 'Signika', sans-serif;">100%</h3>
+          <p class="text-gray-500 text-sm">Of donations go to iftar</p>
         </div>
       </div>
     </div>
@@ -288,25 +434,21 @@ import Footer from '../components/Footer.astro';
         As the sun sets and families gather to break their fast, let your generosity be the reason someone has food on their table.
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a
-          href="/zakat"
-          class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#ea580c] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+        <button
+          class="iftar-cta-donate inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#ea580c] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 cursor-pointer"
           style="font-family: 'Signika', sans-serif;"
         >
-          Give Your Zakat
+          Feed Iftar Now — $5/meal
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
           </svg>
-        </a>
+        </button>
         <a
           href="/zakat/calculator"
           class="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 border-2 border-white/30"
           style="font-family: 'Signika', sans-serif;"
         >
           Calculate Your Zakat
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-          </svg>
         </a>
       </div>
     </div>
@@ -317,78 +459,158 @@ import Footer from '../components/Footer.astro';
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const mealsButtons = document.querySelectorAll('.iftar-meals-btn');
-    const packageButtons = document.querySelectorAll('.iftar-package-btn');
-    const customMealsInput = document.getElementById('iftar-custom-meals') as HTMLInputElement;
-    const totalDisplay = document.getElementById('iftar-total');
-    const mealsDisplay = document.getElementById('iftar-meals-display');
-    const addToCartBtn = document.getElementById('iftar-add-to-cart');
+    // All donation box elements (both desktop fixed + mobile inline share same classes)
+    const amountButtons = document.querySelectorAll('.iftar-amount-btn');
+    const totalDisplays = document.querySelectorAll('.iftar-total-text');
+    const mealsDisplays = document.querySelectorAll('.iftar-meals-text');
+    const mealCountDisplays = document.querySelectorAll('.iftar-meal-count-display');
+    const donateButtons = document.querySelectorAll('.iftar-donate-btn');
+    const minusButtons = document.querySelectorAll('.iftar-minus-btn');
+    const plusButtons = document.querySelectorAll('.iftar-plus-btn');
+
+    // Also grab by ID for the desktop fixed box
+    const totalById = document.getElementById('iftar-total');
+    const mealsById = document.getElementById('iftar-meals-display');
+    const mealCountById = document.getElementById('iftar-meal-count');
+    const addToCartById = document.getElementById('iftar-add-to-cart');
+    const minusById = document.getElementById('iftar-minus');
+    const plusById = document.getElementById('iftar-plus');
+
+    const ctaDonateButtons = document.querySelectorAll('.iftar-cta-donate');
+    const donationBox = document.querySelector('[data-mobile-donate]') || document.querySelector('[data-mobile-donate-inline]');
 
     const IFTAR_RATE = 5;
-    let selectedMeals = 10;
+    let mealCount = 10;
 
-    function updateTotal() {
-      const total = selectedMeals * IFTAR_RATE;
-      if (totalDisplay) totalDisplay.textContent = `$${total}`;
-      if (mealsDisplay) mealsDisplay.textContent = selectedMeals.toString();
-    }
-
-    function selectMeals(meals: number) {
-      selectedMeals = meals;
-      mealsButtons.forEach(btn => {
-        btn.classList.remove('border-[#ea580c]', 'bg-[#ea580c]/10', 'text-[#ea580c]');
-        btn.classList.add('border-gray-200', 'text-gray-700');
-        if (parseInt(btn.getAttribute('data-meals') || '0') === meals) {
-          btn.classList.add('border-[#ea580c]', 'bg-[#ea580c]/10', 'text-[#ea580c]');
-          btn.classList.remove('border-gray-200', 'text-gray-700');
+    function updateDisplay() {
+      const amount = mealCount * IFTAR_RATE;
+      // Update all displays (desktop + mobile)
+      if (totalById) totalById.textContent = `$${amount}`;
+      if (mealsById) mealsById.textContent = mealCount.toString();
+      if (mealCountById) mealCountById.textContent = mealCount.toString();
+      totalDisplays.forEach(el => el.textContent = `$${amount}`);
+      mealsDisplays.forEach(el => el.textContent = mealCount.toString());
+      mealCountDisplays.forEach(el => el.textContent = mealCount.toString());
+      // Disable minus at 1
+      const allMinus = [minusById, ...Array.from(minusButtons)].filter(Boolean);
+      allMinus.forEach(btn => {
+        if (mealCount <= 1) {
+          btn!.classList.add('opacity-40', 'cursor-not-allowed');
+        } else {
+          btn!.classList.remove('opacity-40', 'cursor-not-allowed');
         }
       });
-      updateTotal();
     }
 
-    mealsButtons.forEach(btn => {
+    function highlightButtons(targetAmount: number) {
+      amountButtons.forEach(btn => {
+        const btnAmount = parseInt(btn.getAttribute('data-amount') || '0');
+        const spans = btn.querySelectorAll('span');
+
+        btn.classList.remove('border-[#ea580c]', 'bg-[#ea580c]/5');
+        btn.classList.add('border-gray-200');
+        if (spans[0]) { spans[0].classList.remove('text-[#ea580c]'); spans[0].classList.add('text-gray-800'); }
+        if (spans[1]) { spans[1].classList.remove('text-[#ea580c]/70'); spans[1].classList.add('text-gray-500'); }
+
+        if (btnAmount === targetAmount) {
+          btn.classList.add('border-[#ea580c]', 'bg-[#ea580c]/5');
+          btn.classList.remove('border-gray-200');
+          if (spans[0]) { spans[0].classList.add('text-[#ea580c]'); spans[0].classList.remove('text-gray-800'); }
+          if (spans[1]) { spans[1].classList.add('text-[#ea580c]/70'); spans[1].classList.remove('text-gray-500'); }
+        }
+      });
+    }
+
+    function selectAmount(amount: number) {
+      mealCount = Math.floor(amount / IFTAR_RATE);
+      highlightButtons(amount);
+      updateDisplay();
+    }
+
+    // Amount button clicks
+    amountButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        const meals = parseInt(btn.getAttribute('data-meals') || '10');
-        if (customMealsInput) customMealsInput.value = '';
-        selectMeals(meals);
+        const amount = parseInt(btn.getAttribute('data-amount') || '50');
+        selectAmount(amount);
       });
     });
 
-    packageButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const meals = parseInt(btn.getAttribute('data-meals') || '10');
-        if (customMealsInput) customMealsInput.value = '';
-        selectMeals(meals);
-      });
-    });
+    // Plus / Minus buttons (both desktop ID-based and mobile class-based)
+    function handlePlus() {
+      mealCount++;
+      highlightButtons(mealCount * IFTAR_RATE);
+      updateDisplay();
+    }
+    function handleMinus() {
+      if (mealCount <= 1) return;
+      mealCount--;
+      highlightButtons(mealCount * IFTAR_RATE);
+      updateDisplay();
+    }
 
-    customMealsInput?.addEventListener('input', () => {
-      const meals = parseInt(customMealsInput.value) || 1;
-      selectedMeals = Math.max(1, meals);
-      mealsButtons.forEach(btn => {
-        btn.classList.remove('border-[#ea580c]', 'bg-[#ea580c]/10', 'text-[#ea580c]');
-        btn.classList.add('border-gray-200', 'text-gray-700');
-      });
-      updateTotal();
-    });
+    plusById?.addEventListener('click', handlePlus);
+    minusById?.addEventListener('click', handleMinus);
+    plusButtons.forEach(btn => btn.addEventListener('click', handlePlus));
+    minusButtons.forEach(btn => btn.addEventListener('click', handleMinus));
 
-    addToCartBtn?.addEventListener('click', () => {
-      const total = selectedMeals * IFTAR_RATE;
+    // Add to cart
+    function addIftarToCart() {
+      if (mealCount < 1) return;
+      const amount = mealCount * IFTAR_RATE;
 
       if (typeof (window as any).addToCart === 'function') {
         (window as any).addToCart({
-          id: `iftar-${selectedMeals}-${Date.now()}`,
+          id: `iftar-${mealCount}-${Date.now()}`,
           type: 'donation',
           name: 'Feed Iftar',
-          amount: total,
+          amount: amount,
           quantity: 1,
-          description: `${selectedMeals} meals x $${IFTAR_RATE}`,
+          description: `${mealCount} iftar meals x $${IFTAR_RATE}`,
           frequency: 'single'
         });
       }
+    }
+
+    addToCartById?.addEventListener('click', addIftarToCart);
+    donateButtons.forEach(btn => btn.addEventListener('click', addIftarToCart));
+
+    // CTA donate buttons (bottom section + sticky bar) — scroll to donation box
+    ctaDonateButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (donationBox) {
+          donationBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          addIftarToCart();
+        }
+      });
     });
 
+    // Stop fixed donation box at end of content (before Impact Stats)
+    // Stays fixed but slides up so its bottom never goes past the boundary
+    const fixedDonateBox = document.getElementById('fixed-donate-box');
+    const scrollBoundary = document.getElementById('donate-scroll-boundary');
+    if (fixedDonateBox && scrollBoundary) {
+      const FIXED_TOP = 112; // top-28 = 7rem = 112px
+
+      function positionDonateBox() {
+        const boundaryBottom = scrollBoundary!.getBoundingClientRect().bottom;
+        const boxHeight = fixedDonateBox!.offsetHeight;
+        const desiredBottom = FIXED_TOP + boxHeight;
+
+        if (boundaryBottom < desiredBottom) {
+          // Slide box up so its bottom stays at the boundary bottom
+          fixedDonateBox!.style.top = `${boundaryBottom - boxHeight}px`;
+        } else {
+          fixedDonateBox!.style.top = `${FIXED_TOP}px`;
+        }
+      }
+
+      window.addEventListener('scroll', positionDonateBox, { passive: true });
+      window.addEventListener('resize', positionDonateBox, { passive: true });
+      positionDonateBox();
+    }
+
     // Initialize
-    updateTotal();
+    updateDisplay();
   });
 </script>

@@ -854,6 +854,17 @@ const clientConfig = JSON.stringify({
     (function() {
       var cfg = JSON.parse(clientConfig);
 
+      // Track campaign page view in GA4
+      if (window.trackViewItem) {
+        window.trackViewItem({
+          id: cfg.slug,
+          name: cfg.title,
+          slug: cfg.slug,
+          campaign: cfg.slug,
+          amount: 0
+        });
+      }
+
       // ===== ANIMATED COUNTERS =====
       var counterObserver = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
