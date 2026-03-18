@@ -141,6 +141,27 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
 ---
 
 <Layout title={metaTitle} description={metaDescription}>
+  <!-- FAQ Structured Data for SEO (Google Rich Results) -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "What is Zakat?", "acceptedAnswer": { "@type": "Answer", "text": "Zakat is one of the Five Pillars of Islam. It is a mandatory act of charity requiring eligible Muslims to give 2.5% of their qualifying wealth annually to those in need. Unlike voluntary charity (Sadaqah), Zakat is an obligation prescribed in the Quran and is a means of purifying one's wealth and helping the most vulnerable." }},
+      { "@type": "Question", "name": "How much is Zakat?", "acceptedAnswer": { "@type": "Answer", "text": "Zakat is 2.5% of your total qualifying wealth that has been held for one full lunar year (Hawl). Qualifying wealth includes cash, savings, gold, silver, investments, and business assets — minus any outstanding debts." }},
+      { "@type": "Question", "name": "What is Nisab?", "acceptedAnswer": { "@type": "Answer", "text": "Nisab is the minimum amount of wealth a person must own before Zakat becomes obligatory. It is calculated using the value of either 87.48 grams of gold or 612.36 grams of silver." }},
+      { "@type": "Question", "name": "What is Hawl?", "acceptedAnswer": { "@type": "Answer", "text": "Hawl refers to the completion of one full year of wealth ownership above the nisab threshold. Traditionally based on the lunar calendar (354 days), many scholars also accept the solar calendar (365 days)." }},
+      { "@type": "Question", "name": "Who is eligible to receive Zakat?", "acceptedAnswer": { "@type": "Answer", "text": "The Quran (Surah At-Tawbah 9:60) defines eight categories: the poor, the needy, Zakat administrators, those whose hearts are to be reconciled, those in bondage, those in debt, in the cause of Allah, and the stranded traveler." }},
+      { "@type": "Question", "name": "Do non-Muslims have to pay Zakat?", "acceptedAnswer": { "@type": "Answer", "text": "No. Zakat is a religious obligation specific to Muslims and one of the Five Pillars of Islam. Non-Muslims are welcome to make voluntary charitable donations." }},
+      { "@type": "Question", "name": "What is Zakat al-Mal?", "acceptedAnswer": { "@type": "Answer", "text": "Zakat al-Mal is the standard form of Zakat — 2.5% of accumulated wealth above the nisab held for one year. This is distinct from Zakat al-Fitr (Fitrana), which is a fixed amount given before Eid al-Fitr." }},
+      { "@type": "Question", "name": "Can I pay Zakat in advance?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, the majority of scholars permit paying Zakat in advance before the Hawl completes, especially during blessed times like Ramadan." }},
+      { "@type": "Question", "name": "Is Zakat due on rental property?", "acceptedAnswer": { "@type": "Answer", "text": "A rental property itself is not zakatable, but the rental income saved is part of your zakatable wealth. If a property was purchased with the intention of resale, its market value is zakatable." }},
+      { "@type": "Question", "name": "Should Hajj savings be included in Zakat?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Money saved for Hajj is still part of your total wealth and is included in your Zakat calculation until it is spent." }},
+      { "@type": "Question", "name": "I paid Zakat last year. This year my wealth increased. What value do I take the 2.5% from?", "acceptedAnswer": { "@type": "Answer", "text": "You calculate 2.5% on your total current zakatable wealth at the time your Hawl completes — not just the increase. Previous Zakat payments do not reduce your current obligation." }},
+      { "@type": "Question", "name": "Is Zakat due on stocks, retirement accounts, and cryptocurrency?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Stocks, mutual funds, 401(k)/IRA accounts, and cryptocurrency are generally zakatable at their current market value. For retirement accounts, the majority view is Zakat is due on the current value minus early withdrawal penalties." }},
+      { "@type": "Question", "name": "Can I deduct my mortgage from zakatable wealth?", "acceptedAnswer": { "@type": "Answer", "text": "Only the payments due within the current year (typically 12 monthly payments) can be deducted, not the entire mortgage balance." }},
+      { "@type": "Question", "name": "How do I calculate Zakat on a business?", "acceptedAnswer": { "@type": "Answer", "text": "For a business, Zakat is calculated on trade inventory at market value, plus cash, receivables, and savings — minus business debts due within the year. Fixed assets used in operations are not subject to Zakat." }}
+    ]
+  })} />
   <Navbar />
 
   <main>
@@ -370,6 +391,573 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
       </div>
     </section>
 
+    <!-- Your Zakat Saves Lives — Impact Cards -->
+    <section class="py-14 md:py-20 bg-[#0096D6]">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-black text-white text-center mb-10 uppercase tracking-tight" style="font-family: 'Signika', sans-serif;">
+          Your Zakat Saves Lives
+        </h2>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <!-- $100 -->
+          <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div class="h-40 md:h-48 overflow-hidden">
+              <img src="/images/food-aid-qurbani-foundation.webp" alt="Feed families in need" class="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div class="p-4 text-center">
+              <p class="text-2xl md:text-3xl font-black text-[#1a3040] mb-1" style="font-family: 'Signika', sans-serif;">$100</p>
+              <p class="text-xs md:text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">can provide emergency food packages for a family</p>
+              <button class="zakat-impact-donate-btn mt-3 bg-[#DC1A34] hover:bg-[#b8162c] text-white font-bold px-5 py-2 rounded-lg text-sm transition-all cursor-pointer" data-amount="100" style="font-family: 'Signika', sans-serif;">Donate now</button>
+            </div>
+          </div>
+
+          <!-- $250 -->
+          <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div class="h-40 md:h-48 overflow-hidden">
+              <img src="/images/qurbani-foundation-zakat-livelihood-support.webp" alt="Zakat livelihood support for orphans and widows — Qurbani Foundation USA" class="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div class="p-4 text-center">
+              <p class="text-2xl md:text-3xl font-black text-[#1a3040] mb-1" style="font-family: 'Signika', sans-serif;">$250</p>
+              <p class="text-xs md:text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">can provide livelihood support to orphans and widows</p>
+              <button class="zakat-impact-donate-btn mt-3 bg-[#DC1A34] hover:bg-[#b8162c] text-white font-bold px-5 py-2 rounded-lg text-sm transition-all cursor-pointer" data-amount="250" style="font-family: 'Signika', sans-serif;">Donate now</button>
+            </div>
+          </div>
+
+          <!-- $500 -->
+          <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div class="h-40 md:h-48 overflow-hidden">
+              <img src="/images/water-well-qurbani-foundation.webp" alt="Clean water projects" class="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div class="p-4 text-center">
+              <p class="text-2xl md:text-3xl font-black text-[#1a3040] mb-1" style="font-family: 'Signika', sans-serif;">$500</p>
+              <p class="text-xs md:text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">can provide clean water access for an entire community</p>
+              <button class="zakat-impact-donate-btn mt-3 bg-[#DC1A34] hover:bg-[#b8162c] text-white font-bold px-5 py-2 rounded-lg text-sm transition-all cursor-pointer" data-amount="500" style="font-family: 'Signika', sans-serif;">Donate now</button>
+            </div>
+          </div>
+
+          <!-- $1000 -->
+          <div class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+            <div class="h-40 md:h-48 overflow-hidden">
+              <img src="/images/qurbani-foundation-zakat-financial-aid.webp" alt="Zakat financial aid for families facing extreme hardship — Qurbani Foundation USA" class="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div class="p-4 text-center">
+              <p class="text-2xl md:text-3xl font-black text-[#1a3040] mb-1" style="font-family: 'Signika', sans-serif;">$1000</p>
+              <p class="text-xs md:text-sm text-gray-600" style="font-family: 'Lato', sans-serif;">can provide financial support to families facing extreme hardship</p>
+              <button class="zakat-impact-donate-btn mt-3 bg-[#DC1A34] hover:bg-[#b8162c] text-white font-bold px-5 py-2 rounded-lg text-sm transition-all cursor-pointer" data-amount="1000" style="font-family: 'Signika', sans-serif;">Donate now</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Donate Zakat: Your Donations Enable Us to Save Lives -->
+    <section class="py-14 md:py-20 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0096D6] mb-8 leading-tight" style="font-family: 'Signika', sans-serif;">
+          Donate Zakat: Your Donations<br class="hidden md:block" /> Enable Us to Save Lives
+        </h2>
+
+        <div class="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
+          <!-- Left Column: Text -->
+          <div class="space-y-5 text-gray-700 text-base md:text-lg leading-relaxed" style="font-family: 'Lato', sans-serif;">
+            <p>
+              Your Zakat has funded some of our most critical work with people and communities living in disaster and conflict zones: drought and famine-struck regions across East Africa, communities affected by earthquakes in Türkiye and Syria, and our brothers and sisters in Gaza.
+            </p>
+            <p>
+              We strive to ensure that <strong class="text-gray-900">your Zakat empowers the individuals and families who receive it,</strong> ultimately contributing to bringing them out of the difficult circumstances they are in. We ensure your Zakat reaches the hands of those who need it most, providing rights-holders with the tools to support themselves and pass it on to the next generation.
+            </p>
+            <p>
+              This means your donations help generations of families access food, medical care, clean water, and education in a dignified manner for years to come.
+            </p>
+            <p>
+              Alhamdulillah, you have the power to transform people's lives. <a href="#" id="give-zakat-today-link" class="text-[#0096D6] hover:text-[#0077b3] font-bold underline underline-offset-2 transition">Give your Zakat today!</a>
+            </p>
+          </div>
+
+          <!-- Right Column: YouTube Video -->
+          <div class="relative rounded-xl overflow-hidden shadow-xl aspect-video">
+            <iframe
+              src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+              title="Qurbani Foundation Zakat Policy — How Your Zakat Saves Lives"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              class="absolute inset-0 w-full h-full"
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- See the Impact of Your Zakat — Image Carousel -->
+    <section class="py-14 md:py-20 bg-[#fef5eb]">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-black text-[#1a3040] text-center mb-10" style="font-family: 'Signika', sans-serif;">
+          See the Impact of Your Zakat
+        </h2>
+
+        <!-- Carousel -->
+        <div class="relative">
+          <div id="zakat-carousel" class="overflow-hidden rounded-xl shadow-2xl">
+            <div id="zakat-carousel-track" class="flex transition-transform duration-500 ease-in-out">
+              <div class="w-full flex-shrink-0">
+                <img src="/images/qurbani-foundation-zakat-food-aid.webp" alt="Zakat food aid distribution by Qurbani Foundation USA" class="w-full h-[300px] md:h-[500px] object-cover" loading="lazy" />
+              </div>
+              <div class="w-full flex-shrink-0">
+                <img src="/images/food-aid-qurbani-foundation.webp" alt="Food aid packages delivered to families in need through Zakat" class="w-full h-[300px] md:h-[500px] object-cover" loading="lazy" />
+              </div>
+              <div class="w-full flex-shrink-0">
+                <img src="/images/qurbani-foundation-zakat-livelihood-support-1.webp" alt="Zakat livelihood support for orphans and widows — Qurbani Foundation" class="w-full h-[300px] md:h-[500px] object-cover" loading="lazy" />
+              </div>
+              <div class="w-full flex-shrink-0">
+                <img src="/images/qurbani-foundation-zakat-livelihood-support-2.webp" alt="Qurbani Foundation providing Zakat-funded livelihood assistance" class="w-full h-[300px] md:h-[500px] object-cover" loading="lazy" />
+              </div>
+              <div class="w-full flex-shrink-0">
+                <img src="/images/water-well-qurbani-foundation.webp" alt="Clean water well project funded by Zakat — Qurbani Foundation USA" class="w-full h-[300px] md:h-[500px] object-cover" loading="lazy" />
+              </div>
+              <div class="w-full flex-shrink-0">
+                <img src="/images/qurbani-foundation-zakat-financial-aid.webp" alt="Zakat financial aid for families facing extreme hardship" class="w-full h-[300px] md:h-[500px] object-cover" loading="lazy" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Prev/Next arrows -->
+          <button id="zakat-carousel-prev" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#0096D6]/70 hover:bg-[#0096D6] rounded-full flex items-center justify-center transition cursor-pointer">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+          </button>
+          <button id="zakat-carousel-next" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#0096D6]/70 hover:bg-[#0096D6] rounded-full flex items-center justify-center transition cursor-pointer">
+            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+          </button>
+
+          <!-- Dots -->
+          <div class="flex justify-center gap-2 mt-6">
+            <button class="zakat-carousel-dot w-3 h-3 rounded-full bg-[#0096D6] transition" data-slide="0"></button>
+            <button class="zakat-carousel-dot w-3 h-3 rounded-full bg-[#0096D6]/30 transition" data-slide="1"></button>
+            <button class="zakat-carousel-dot w-3 h-3 rounded-full bg-[#0096D6]/30 transition" data-slide="2"></button>
+            <button class="zakat-carousel-dot w-3 h-3 rounded-full bg-[#0096D6]/30 transition" data-slide="3"></button>
+            <button class="zakat-carousel-dot w-3 h-3 rounded-full bg-[#0096D6]/30 transition" data-slide="4"></button>
+            <button class="zakat-carousel-dot w-3 h-3 rounded-full bg-[#0096D6]/30 transition" data-slide="5"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Nisab, Eligibility & How Much — Unique Card-Based Design -->
+    <section class="py-14 md:py-20 bg-gradient-to-b from-white to-gray-50">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Section Header -->
+        <div class="text-center mb-12">
+          <p class="text-[#e1861d] font-bold text-sm uppercase tracking-widest mb-3" style="font-family: 'Oswald', sans-serif;">Understanding Your Obligation</p>
+          <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-[#1a3040] leading-tight" style="font-family: 'Signika', sans-serif;">
+            Everything You Need to Know<br class="hidden md:block" /> About <span class="text-[#e1861d]">Zakat</span>
+          </h2>
+        </div>
+
+        <!-- Three Info Cards -->
+        <div class="grid md:grid-cols-3 gap-6 mb-16">
+          <!-- Nisab Card -->
+          <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition">
+            <div class="bg-[#255764] p-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h3 class="text-white font-bold text-lg" style="font-family: 'Signika', sans-serif;">What is Nisab?</h3>
+              </div>
+            </div>
+            <div class="p-5">
+              <p class="text-gray-600 text-sm leading-relaxed mb-4" style="font-family: 'Lato', sans-serif;">
+                The nisab is the <strong class="text-gray-800">minimum wealth threshold</strong> before Zakat becomes obligatory — equivalent to 87.48g of gold or 612.36g of silver.
+              </p>
+              <div class="bg-[#f8f6f3] rounded-lg p-4 space-y-2">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-bold" id="nisab-date-label">Current Nisab</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Silver (612.36g)</span>
+                  <span class="font-bold text-[#1a3040]" id="nisab-silver-val" style="font-family: 'Signika', sans-serif;">Loading...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Gold (87.48g)</span>
+                  <span class="font-bold text-[#1a3040]" id="nisab-gold-val" style="font-family: 'Signika', sans-serif;">Loading...</span>
+                </div>
+              </div>
+              <a href="/zakat-calculator" class="inline-flex items-center gap-1 text-[#0096D6] text-sm font-bold mt-4 hover:underline">
+                Check latest values →
+              </a>
+            </div>
+          </div>
+
+          <!-- How Much Card -->
+          <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition">
+            <div class="bg-[#e1861d] p-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm0 2h8v2H6V4zm0 4h2v2H6V8zm0 3h2v2H6v-2zm0 3h2v2H6v-2zm3-6h2v2H9V8zm0 3h2v2H9v-2zm0 3h2v2H9v-2zm3-6h2v2h-2V8zm0 3h2v5h-2v-5z"></path></svg>
+                </div>
+                <h3 class="text-white font-bold text-lg" style="font-family: 'Signika', sans-serif;">How Much is Zakat?</h3>
+              </div>
+            </div>
+            <div class="p-5">
+              <p class="text-gray-600 text-sm leading-relaxed mb-4" style="font-family: 'Lato', sans-serif;">
+                Zakat is <strong class="text-gray-800">2.5% of your total zakatable wealth</strong> held for one full lunar year above the nisab.
+              </p>
+              <div class="bg-[#f8f6f3] rounded-lg p-4">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Example Calculation</p>
+                <div class="space-y-1">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Your assets</span>
+                    <span class="text-gray-800">$10,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">× 2.5%</span>
+                    <span class="text-gray-800"></span>
+                  </div>
+                  <div class="border-t border-gray-300 pt-1 flex justify-between">
+                    <span class="text-sm font-bold text-gray-800">Your Zakat</span>
+                    <span class="font-bold text-[#e1861d] text-lg" style="font-family: 'Signika', sans-serif;">$250</span>
+                  </div>
+                </div>
+              </div>
+              <a href="/zakat-calculator" class="inline-flex items-center gap-1 text-[#0096D6] text-sm font-bold mt-4 hover:underline">
+                Calculate your Zakat →
+              </a>
+            </div>
+          </div>
+
+          <!-- Eligibility Card -->
+          <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition">
+            <div class="bg-[#0096D6] p-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h3 class="text-white font-bold text-lg" style="font-family: 'Signika', sans-serif;">Am I Eligible?</h3>
+              </div>
+            </div>
+            <div class="p-5">
+              <p class="text-gray-600 text-sm leading-relaxed mb-4" style="font-family: 'Lato', sans-serif;">
+                Zakat is obligatory for every <strong class="text-gray-800">sane, adult Muslim</strong> whose wealth exceeds the nisab for one full lunar year.
+              </p>
+              <div class="bg-[#f8f6f3] rounded-lg p-4">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Quick Checklist</p>
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-sm text-gray-700">
+                    <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    Muslim
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-gray-700">
+                    <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    Adult &amp; sane
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-gray-700">
+                    <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    Wealth above nisab
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-gray-700">
+                    <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    Held for 1 lunar year
+                  </div>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500 mt-4" style="font-family: 'Lato', sans-serif;">
+                Not sure? Call our scholars: <a href="tel:18009000027" class="text-[#0096D6] font-bold">1-800-900-0027</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trust Reasons — Horizontal Banner -->
+        <div class="bg-[#1a3040] rounded-2xl p-8 md:p-10">
+          <h3 class="text-xl md:text-2xl font-bold text-white text-center mb-8" style="font-family: 'Signika', sans-serif;">
+            Why Trust Qurbani Foundation With Your Zakat?
+          </h3>
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="text-center">
+              <div class="w-14 h-14 bg-[#e1861d] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+              </div>
+              <h4 class="text-white font-bold mb-2" style="font-family: 'Signika', sans-serif;">Scholar Verified</h4>
+              <p class="text-gray-400 text-sm" style="font-family: 'Lato', sans-serif;">Qualified Islamic scholars oversee our Zakat policy to ensure full Shariah compliance across all eight categories.</p>
+            </div>
+            <div class="text-center">
+              <div class="w-14 h-14 bg-[#e1861d] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>
+              </div>
+              <h4 class="text-white font-bold mb-2" style="font-family: 'Signika', sans-serif;">100% Transparent</h4>
+              <p class="text-gray-400 text-sm" style="font-family: 'Lato', sans-serif;">Every dollar of your Zakat goes directly to eligible recipients. Operational costs are covered separately — no exceptions.</p>
+            </div>
+            <div class="text-center">
+              <div class="w-14 h-14 bg-[#e1861d] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.029 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path></svg>
+              </div>
+              <h4 class="text-white font-bold mb-2" style="font-family: 'Signika', sans-serif;">Global Reach</h4>
+              <p class="text-gray-400 text-sm" style="font-family: 'Lato', sans-serif;">Your Zakat reaches verified recipients across 53+ countries through trusted local partners on the ground.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zakat FAQs -->
+    <section class="py-14 md:py-20 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl font-bold text-[#0096D6] mb-4" style="font-family: 'Signika', sans-serif;">
+          Zakat FAQs
+        </h2>
+        <div class="space-y-3 text-gray-600 text-base mb-8" style="font-family: 'Lato', sans-serif;">
+          <p>Please note that for any specific queries, it is advisable to contact your local imam.</p>
+          <p>You can use our <a href="/zakat-calculator" class="text-[#0096D6] font-bold underline underline-offset-2">Zakat Calculator</a> to calculate how much you need to give.</p>
+          <p>Here's a list of <strong class="text-gray-800">Frequently Asked Questions</strong> that you can use for further guidance:</p>
+        </div>
+
+        <!-- FAQ Accordion -->
+        <div class="divide-y divide-gray-200 border-t border-gray-200" id="zakat-faq-list">
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">What is Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Zakat is one of the Five Pillars of Islam. It is a mandatory act of charity requiring eligible Muslims to give 2.5% of their qualifying wealth annually to those in need. Unlike voluntary charity (Sadaqah), Zakat is an obligation prescribed in the Quran and is a means of purifying one's wealth and helping the most vulnerable.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">How much is Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Zakat is 2.5% of your total qualifying wealth that has been held for one full lunar year (Hawl). Qualifying wealth includes cash, savings, gold, silver, investments, and business assets — minus any outstanding debts. For example, if your net zakatable assets total $20,000, your Zakat would be $500.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">What is Nisab?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Nisab is the minimum amount of wealth a person must own before Zakat becomes obligatory. It is calculated using the value of either 87.48 grams of gold or 612.36 grams of silver. Most scholars recommend using the silver standard as it has a lower threshold, meaning more people are eligible to pay and more people in need can benefit.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">What is Hawl, and should it be based on lunar or solar years?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Hawl refers to the completion of one full year of wealth ownership above the nisab threshold. Traditionally, Hawl is based on the lunar calendar (approximately 354 days). However, many scholars accept the solar calendar (365 days) as well, especially for ease of calculation. If using the solar year, some scholars recommend paying slightly more (2.578%) to account for the extra days.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Who is eligible to receive Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              The Quran (Surah At-Tawbah 9:60) defines eight categories of Zakat recipients: (1) Al-Fuqara — the poor, (2) Al-Masakin — the needy, (3) Amil Zakah — administrators of Zakat, (4) Mu'allafat al-Quloob — those whose hearts are to be reconciled, (5) Ar-Riqab — those in bondage, (6) Al-Gharimin — those in debt, (7) Fi Sabilillah — in the cause of Allah, and (8) Ibn as-Sabil — the stranded traveler.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Do non-Muslims have to pay Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              No. Zakat is a religious obligation specific to Muslims. It is one of the Five Pillars of Islam. However, non-Muslims are welcome to make voluntary charitable donations (Sadaqah) through our platform to support humanitarian causes.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">What is Zakat al-Mal?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Zakat al-Mal (Zakat on wealth) is the standard form of Zakat — 2.5% of accumulated wealth above the nisab held for one year. This is distinct from Zakat al-Fitr (Fitrana), which is a fixed amount given before Eid al-Fitr prayers at the end of Ramadan. Both are obligations, but they serve different purposes.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I give a lot to charity throughout the year. Do I still have to pay Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes. Voluntary charity (Sadaqah) and Zakat are separate obligations. Sadaqah does not replace or reduce your Zakat obligation. However, if you explicitly made a donation with the intention (niyyah) of it being Zakat at the time of giving, that amount can count toward your Zakat. Intention matters in Islam.
+            </div>
+          </div>
+        </div>
+
+        <!-- Miscellaneous Questions -->
+        <h3 class="text-xl md:text-2xl font-bold text-[#0096D6] mt-12 mb-6" style="font-family: 'Signika', sans-serif;">
+          Common Scenarios
+        </h3>
+        <div class="divide-y divide-gray-200 border-t border-gray-200" id="zakat-faq-misc">
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I owe several years of Zakat. How do I pay?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              You should calculate Zakat for each missed year based on the wealth you held at that time. Start from the earliest year you missed and work forward. If exact figures are unavailable, estimate to the best of your ability. It's better to pay slightly more to ensure the obligation is fulfilled. You can pay all accumulated Zakat at once.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Is Zakat due on a child's wealth if it exceeds the nisab?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              This is a matter of scholarly difference. The majority of scholars (including the Shafi'i, Maliki, and Hanbali schools) hold that Zakat is due on a child's wealth if it meets the nisab and has been held for one year — the guardian should pay it on their behalf. The Hanafi school holds that Zakat is not obligatory until the child reaches puberty. Consult your local scholar for guidance specific to your situation.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">How do I calculate Zakat on gold, silver, and mixed jewelry?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              For pure gold or silver, calculate the current market value and pay 2.5%. For mixed jewelry containing gold, silver, and precious stones, only the gold and silver portions are zakatable — precious stones are generally exempt. Have a jeweler assess the weight of gold and silver separately, then calculate 2.5% of each based on current market prices.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Can I pay Zakat in advance before my Hawl is complete?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes, the majority of scholars permit paying Zakat in advance (before the Hawl completes), especially during blessed times like Ramadan. If you pay early and your wealth drops below the nisab before your Hawl completes, what you paid would count as voluntary charity (Sadaqah) rather than Zakat.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Is Zakat due on rental property or a home I plan to sell?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              A property you live in is not subject to Zakat. A rental property itself is also not zakatable, but the rental income you receive and save is part of your zakatable wealth. However, if you purchased a property with the intention of selling it for profit (business inventory), then its market value is zakatable. If you later decide to sell a personal home, Zakat becomes due from the point you made that intention.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Should I include savings for Hajj when calculating Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes. Money saved for Hajj is still part of your total wealth and is included in your Zakat calculation. Even though it is earmarked for a specific purpose, it remains in your possession and contributes to your overall zakatable assets until it is spent.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I paid Zakat last year. This year my wealth has increased. What value do I take the 2.5% from?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              You calculate 2.5% on your <strong>total current zakatable wealth</strong> at the time your Hawl completes — not just the increase. For example, if you paid Zakat on $4,000 last year and now have $10,000 in total zakatable wealth, you pay 2.5% of the full $10,000 (which is $250). Previous Zakat payments do not reduce your current obligation because Zakat is assessed on the wealth you hold today, not the growth from last year.
+            </div>
+          </div>
+        </div>
+
+        <!-- Business, Property and Debt -->
+        <h3 class="text-xl md:text-2xl font-bold text-[#0096D6] mt-12 mb-6" style="font-family: 'Signika', sans-serif;">
+          Business, Property &amp; Debt
+        </h3>
+        <div class="divide-y divide-gray-200 border-t border-gray-200" id="zakat-faq-business">
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I lent money to a friend who says they can return it. Do I include this in my Zakat calculation?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes. If you have a reasonable expectation that the money will be returned (the debtor acknowledges the debt and has the ability to pay), then that amount is considered part of your wealth. You should include it in your Zakat calculation. However, if there is doubt about whether the money will be recovered, some scholars say you can defer Zakat on that portion until you actually receive it — at which point you would pay Zakat for the years it was owed.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I lent money years ago to someone poor and didn't expect repayment. They've now repaid me. Is this liable for Zakat?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              When you receive unexpected repayment of a loan you had written off, the money becomes part of your zakatable wealth from the moment you receive it. According to most scholars, you should pay Zakat on this amount for the current year. Some scholars hold that you should also pay Zakat retroactively for the years the debt was outstanding, while others say only for the current year since you had no access to it. The safer position is to pay for at least one full year upon receipt.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">My Zakat is due in Dhul-Qa'dah but I want to pay early in Ramadan. I also have a debt due after Ramadan. Can I deduct this debt?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              This is a nuanced scenario. If you choose to pay Zakat early in Ramadan (which is permissible), you should calculate based on your wealth at that time. Regarding the upcoming debt: debts that are due within the year can generally be deducted from your zakatable wealth. So yes, if you have a known debt due in Shawwal, you can subtract that amount before calculating your 2.5%. However, long-term debts (like a mortgage) are treated differently — only the current year's installments are typically deducted. Consult a scholar for your specific situation.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I bought a house to rent out 5 years ago but recently decided to sell it. How do I pay Zakat on this?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              When a property is held for rental income, the property itself is not subject to Zakat — only the rental income you save is zakatable. However, the moment you change your intention to selling the property for profit, it becomes classified as a trade asset. From that point forward, the market value of the property is included in your zakatable wealth. So if you decided to sell last year, you would calculate Zakat on its current market value from the date you formed that intention, provided one full Hawl has passed since then.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">I own a shop or business. How do I calculate Zakat on it?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              For a business, Zakat is calculated on the trade inventory (goods available for sale at current market value), plus any cash, receivables, and savings held by the business — minus any business debts due within the year. Fixed assets used in operations (equipment, premises, vehicles) are not subject to Zakat. For a clothing shop, for example, you would calculate the wholesale or market value of all unsold stock, add your business cash and receivables, subtract short-term liabilities, and pay 2.5% on the total.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Is Zakat due on stocks, mutual funds, and retirement accounts (401k/IRA)?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes, stocks and mutual funds are generally zakatable at their current market value. For actively traded stocks (bought for resale), Zakat is on the full market value. For long-term investments (held for dividends), many scholars say Zakat is only on the dividends received. Retirement accounts like 401(k) and IRA: if accessible (even with penalties), the majority view is that Zakat is due on the current value minus any early withdrawal penalties and taxes. Some scholars defer Zakat on locked accounts until the money becomes accessible. Use our <a href="/zakat-calculator" class="text-[#0096D6] underline font-semibold">Zakat Calculator</a> to help with these calculations.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Can I deduct my mortgage from my zakatable wealth?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              You cannot deduct the entire mortgage balance from your zakatable wealth. Scholars generally agree that only the payments due within the current year (typically 12 monthly payments) can be deducted. This is because a mortgage is a long-term liability and deducting the full amount would exempt most homeowners from Zakat entirely, which goes against the spirit of the obligation. So if your annual mortgage payments total $24,000, you deduct that from your total wealth before calculating 2.5%.
+            </div>
+          </div>
+
+          <div class="zakat-faq-item">
+            <button class="zakat-faq-toggle w-full flex items-center gap-4 py-5 text-left cursor-pointer group">
+              <svg class="zakat-faq-icon w-5 h-5 text-gray-400 group-hover:text-[#0096D6] transition flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              <span class="font-bold text-gray-700 text-base md:text-lg" style="font-family: 'Signika', sans-serif;">Is Zakat due on cryptocurrency (Bitcoin, Ethereum, etc.)?</span>
+            </button>
+            <div class="zakat-faq-body hidden pb-5 pl-9 text-gray-600 text-sm md:text-base leading-relaxed" style="font-family: 'Lato', sans-serif;">
+              Yes. Contemporary scholars generally agree that cryptocurrency is a form of digital wealth and is subject to Zakat. If held for trading purposes, Zakat is due on the full market value. If held as a long-term investment, it is still considered zakatable wealth similar to cash savings. Calculate the market value of your crypto holdings on your Zakat due date and include it in your total zakatable assets. The 2.5% rate applies as with any other form of wealth.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Where Your Zakat Goes — Category Cards (only if items exist) -->
     {categoryCards.length > 0 && (
       <section class="py-14 md:py-16 bg-white">
@@ -517,6 +1105,133 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
     document.getElementById('what-is-zakat-donate-btn')?.addEventListener('click', scrollToDonationBox);
     // Final CTA button
     document.getElementById('final-cta-btn')?.addEventListener('click', scrollToDonationBox);
+
+    // Impact card donate buttons — add to cart and open checkout directly
+    document.querySelectorAll('.zakat-impact-donate-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const amount = parseInt((btn as HTMLElement).dataset.amount || '0', 10);
+        if (amount > 0 && typeof (window as any).addToCart === 'function') {
+          (window as any).addToCart({
+            id: 'zakat-' + amount,
+            name: 'Zakat',
+            label: 'Zakat',
+            amount: amount,
+            quantity: 1,
+            type: 'single',
+            recurringInterval: null,
+            image: document.querySelector('[data-zakat-donate] img')?.getAttribute('src') || '',
+            campaign: 'zakat'
+          });
+        }
+      });
+    });
+
+    // Fetch live metal prices for Nisab display
+    (async () => {
+      try {
+        const res = await fetch('/api/metal-prices');
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json();
+        if (!data.success) throw new Error('no data');
+        const goldNisab = data.gold * 87.48;
+        const silverNisab = data.silver * 612.36;
+        const fmt = (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const goldEl = document.getElementById('nisab-gold-val');
+        const silverEl = document.getElementById('nisab-silver-val');
+        const dateEl = document.getElementById('nisab-date-label');
+        if (goldEl) goldEl.textContent = '~' + fmt(goldNisab);
+        if (silverEl) silverEl.textContent = '~' + fmt(silverNisab);
+        if (dateEl) {
+          const d = data.timestamp ? new Date(data.timestamp) : new Date();
+          dateEl.textContent = 'Nisab as of ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+      } catch (e) {
+        // Fallback values
+        const goldEl = document.getElementById('nisab-gold-val');
+        const silverEl = document.getElementById('nisab-silver-val');
+        if (goldEl) goldEl.textContent = '~$19,324';
+        if (silverEl) silverEl.textContent = '~$2,180';
+      }
+    })();
+
+    // FAQ accordion toggle
+    document.querySelectorAll('.zakat-faq-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const body = btn.nextElementSibling as HTMLElement;
+        const icon = btn.querySelector('.zakat-faq-icon') as SVGElement;
+        const isOpen = !body.classList.contains('hidden');
+        // Close all
+        document.querySelectorAll('.zakat-faq-body').forEach(b => b.classList.add('hidden'));
+        document.querySelectorAll('.zakat-faq-icon').forEach(i => {
+          (i as SVGElement).style.transform = '';
+          i.classList.remove('text-[#0096D6]');
+          i.classList.add('text-gray-400');
+        });
+        // Open this one if it was closed
+        if (!isOpen) {
+          body.classList.remove('hidden');
+          if (icon) {
+            icon.style.transform = 'rotate(45deg)';
+            icon.classList.remove('text-gray-400');
+            icon.classList.add('text-[#0096D6]');
+          }
+        }
+      });
+    });
+
+    // "Give your Zakat today" link
+    document.getElementById('give-zakat-today-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      scrollToDonationBox();
+    });
+
+    // Add to cart and open checkout helper for impact cards
+    window.addToCartAndCheckout = function(name: string, amount: number, campaign: string) {
+      if (window.addToCart) {
+        window.addToCart({
+          id: campaign + '-' + amount,
+          name: name,
+          campaign: campaign,
+          amount: amount,
+          type: 'single',
+          quantity: 1
+        });
+      }
+    };
+
+    // Impact carousel
+    const carouselTrack = document.getElementById('zakat-carousel-track');
+    const carouselDots = document.querySelectorAll('.zakat-carousel-dot');
+    const totalSlides = carouselDots.length;
+    let currentSlide = 0;
+
+    function goToSlide(index: number) {
+      currentSlide = ((index % totalSlides) + totalSlides) % totalSlides;
+      if (carouselTrack) {
+        carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+      }
+      carouselDots.forEach((dot, i) => {
+        dot.classList.toggle('bg-[#0096D6]', i === currentSlide);
+        dot.classList.toggle('bg-[#0096D6]/30', i !== currentSlide);
+      });
+    }
+
+    document.getElementById('zakat-carousel-prev')?.addEventListener('click', () => goToSlide(currentSlide - 1));
+    document.getElementById('zakat-carousel-next')?.addEventListener('click', () => goToSlide(currentSlide + 1));
+    carouselDots.forEach(dot => {
+      dot.addEventListener('click', () => goToSlide(parseInt((dot as HTMLElement).dataset.slide || '0', 10)));
+    });
+
+    // Touch swipe support for carousel
+    let touchStartX = 0;
+    const carouselEl = document.getElementById('zakat-carousel');
+    carouselEl?.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    carouselEl?.addEventListener('touchend', (e) => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) {
+        goToSlide(diff > 0 ? currentSlide + 1 : currentSlide - 1);
+      }
+    }, { passive: true });
 
     // Mobile sticky bar — show when donation box is NOT visible, hide when it IS
     const stickyBar = document.getElementById('zakat-sticky-bar');
