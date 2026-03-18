@@ -207,42 +207,6 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
     display: block;
   }
 
-  /* ── Mobile checkout scroll fix ──────────────────────────────── */
-  /* Body lock: position:fixed is required on iOS to fully prevent background scroll */
-  html.checkout-open body {
-    position: fixed !important;
-    overflow: hidden !important;
-    width: 100% !important;
-    /* NOTE: no top offset — modal covers viewport so jump is invisible */
-  }
-  /* The checkout modal itself must use fixed+inset to fill the viewport */
-  #gg-checkout,
-  #two-step-checkout {
-    /* already has fixed inset-0 via classes, but enforce for iOS */
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    height: 100% !important;
-    height: 100dvh !important; /* dynamic viewport height — respects iOS keyboard */
-  }
-  /* The scroll container inside the modal */
-  .checkout-scroll-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 100%;
-    height: 100dvh;
-    overflow-y: scroll !important;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    background: white;
-    z-index: 1;
-  }
 </style>
 
 <!-- Checkout template setting for client-side JS -->
@@ -846,7 +810,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
 <!-- ==================== 2-STEP CHECKOUT MODAL ==================== -->
 <div id="two-step-checkout" class="fixed inset-0 z-[10001] hidden">
-  <div class="checkout-scroll-container">
+  <div class="absolute inset-0 bg-white overflow-y-auto">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
     <div class="sticky top-0 z-20 bg-gradient-to-r from-[#e1861d] to-[#d97706] shadow-sm">
@@ -1151,7 +1115,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
 <!-- ==================== GG ONE-STEP CHECKOUT MODAL ==================== -->
 <div id="gg-checkout" class="fixed inset-0 z-[10001] hidden">
-  <div class="checkout-scroll-container">
+  <div class="absolute inset-0 bg-white overflow-y-auto">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
     <div class="sticky top-0 z-20 bg-gradient-to-r from-[#e1861d] to-[#d97706] shadow-sm">
@@ -3759,9 +3723,12 @@ function openGGCheckout() {
   // Sync cover-fees checkbox default state
   var ggCoverFeesEl = document.getElementById('gg-cover-fees');
   if (ggCoverFeesEl) window.donationCart.coverFees = ggCoverFeesEl.checked;
-  // Lock body scroll (position:fixed required for iOS to fully lock background)
+  // Lock body scroll (iOS Safari fix: position:fixed prevents scroll-through)
   window._ggScrollY = window.scrollY;
-  document.documentElement.classList.add('checkout-open');
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + window._ggScrollY + 'px';
+  document.body.style.width = '100%';
   // Hide any page-level sticky bars (e.g. Zakat calculator's sticky CTA)
   var stickyBar = document.getElementById('zw-sticky-bar');
   if (stickyBar) stickyBar.style.display = 'none';
@@ -3782,29 +3749,16 @@ function openGGCheckout() {
   _ggPlacesRetries = 0; // reset retries for fresh attempt
   setTimeout(function() { initGGPlaces(); }, 300);
 
-  // iOS Safari fix: when keyboard closes after filling card/address,
-  // force a layout recalc so scroll container stays responsive.
-  var scrollEl = modal.querySelector('.checkout-scroll-container');
-  if (scrollEl && !scrollEl._ggFocusFix) {
-    scrollEl._ggFocusFix = true;
-    scrollEl.addEventListener('focusout', function() {
-      var el = this;
-      setTimeout(function() {
-        var currentScroll = el.scrollTop;
-        el.style.overflow = 'hidden';
-        el.offsetHeight; // force reflow
-        el.style.overflow = '';
-        el.scrollTop = currentScroll;
-      }, 150);
-    });
-  }
 }
 
 function closeGGCheckout() {
   var modal = document.getElementById('gg-checkout');
   if (modal) modal.classList.add('hidden');
-  // Restore body scroll
-  document.documentElement.classList.remove('checkout-open');
+  // Restore body scroll (iOS Safari fix)
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
   window.scrollTo(0, window._ggScrollY || 0);
   // Restore page-level sticky bars
   var stickyBar = document.getElementById('zw-sticky-bar');
