@@ -1,37 +1,26 @@
 ---
 /**
- * Zakat Page — Conversion-optimized landing page
- * Pulls ALL content from the campaigns DB (editable via /admin/campaigns)
- * Uses the conversion layout with mobile-first design, sticky CTA, and trust signals
+ * Islamic Zakat Relief — Google Ads Landing Page
+ * Route: /islamic-zakat-relief
  *
- * Data Mapping (from campaign admin):
- * - Hero badge text       → campaign.subtitle2 (default: "100% Zakat Policy")
- * - Hero title            → campaign.hero_title (supports *italic* for orange text)
- * - Hero description      → campaign.subtitle
- * - Hero background image → campaign.featured_image
- * - Hero trust badges     → template_config.heroBadges[]
- * - Donation box config   → template_config.cwDonation (heading, amounts, impact, etc.)
- * - Category cards        → template_config.pageContent.howDonationHelps.items[]
- * - Why Give benefits     → content_sections[] (title + content)
- * - Why Give image        → gallery_images[0]
- * - Why Give heading      → template_config.pageContent.whyMonthly.heading
- * - Impact stat badge     → impact_stats[0] { value, label }
- * - Hadith/banner         → template_config.pageContent.midCta { heading, subtext }
- * - Quick links           → template_config.quickLinks[]
- * - Final CTA             → template_config.pageContent.finalCta { heading, subtext, primaryButtonText }
- * - SEO                   → meta_title, meta_description
- * - Sticky bar text       → template_config.stickyBar { title, subtitle, buttonText }
+ * Keyword-optimized landing page for:
+ *   - "pay zakat online"
+ *   - "islamic zakat relief"
+ *   - "zakat donation online"
+ *
+ * Exact copy of /zakat with SEO-optimized hero text, meta tags, and headings.
+ * Pulls same campaign data from DB so admin changes apply here too.
  */
-import Layout from '../../layouts/Layout.astro';
-import Navbar from '../../components/Navbar.astro';
-import Footer from '../../components/Footer.astro';
-import CWDonationBox from '../../components/donation/CWDonationBox.astro';
-import { supabaseAdmin } from '../../lib/supabase';
-import { DEFAULT_PAGE_CONTENT } from '../../lib/page-content-defaults';
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import CWDonationBox from '../components/donation/CWDonationBox.astro';
+import { supabaseAdmin } from '../lib/supabase';
+import { DEFAULT_PAGE_CONTENT } from '../lib/page-content-defaults';
 
 export const prerender = false;
 
-// Fetch campaign data
+// Fetch campaign data — same as /zakat
 let campaign: any = null;
 try {
   const { data } = await supabaseAdmin
@@ -41,9 +30,7 @@ try {
     .eq('is_active', true)
     .single();
   campaign = data;
-} catch (e) {
-  // Fallback — try by slug
-}
+} catch (e) {}
 if (!campaign) {
   try {
     const { data } = await supabaseAdmin
@@ -56,21 +43,22 @@ if (!campaign) {
   } catch (e) {}
 }
 
-// If no campaign found, use sensible defaults
 const tc = campaign?.template_config || {};
 const cwConfig = tc.cwDonation || {};
 const savedPC = tc.pageContent || {};
 
-// ── Hero ────────────────────────────────────────────────────────────
-const heroTitle = campaign?.hero_title || 'Your Zakat';
-const heroTitleAccent = campaign?.hero_title_accent || 'Their Relief';
-const heroDescription = campaign?.subtitle || '100% Zakat distributed according to Islamic guidelines to verified eligible recipients across 50+ countries.';
+// ── SEO OVERRIDES for this landing page ─────────────────────────────
+const metaTitle = 'Islamic Zakat Relief — Pay Zakat Online | Qurbani Foundation USA';
+const metaDescription = 'Provide Islamic Zakat relief to those in need. Pay your Zakat online with 100% Zakat policy — every dollar reaches verified eligible recipients across 50+ countries. Tax-deductible.';
+const heroTitle = 'Zakat Relief Program';
+const heroTitleAccent = 'Give Zakat 2026';
 const heroBadgeText = campaign?.subtitle2 || '100% Zakat Policy';
+
+// ── Same data as /zakat ─────────────────────────────────────────────
+const heroDescription = campaign?.subtitle || '100% Zakat distributed according to Islamic guidelines to verified eligible recipients across 50+ countries.';
 const heroImage = campaign?.featured_image || '/images/qurbani-foundation-zakat.webp';
 const heroBadges: string[] = tc.heroBadges || ['Shariah Compliant', 'Tax-Deductible', 'Secure Payment'];
 
-// ── Donation Box ────────────────────────────────────────────────────
-// Build frequencies from cwDonation config
 const cwFrequencies = cwConfig.frequencies || null;
 const cwOneTimeAmounts = cwConfig.oneTimeAmounts || [100, 250, 500, 1000];
 const cwMonthlyAmounts = cwConfig.monthlyAmounts || [25, 50, 100, 250];
@@ -81,7 +69,6 @@ const cwHeading = cwConfig.donationBoxHeading || 'Pay Your Zakat';
 const cwSkipUpsell = cwConfig.skipUpsell !== false;
 const cwTabEmoji = cwConfig.tabEmoji || '🕌';
 
-// ── Category cards ──────────────────────────────────────────────────
 const pageContent = {
   howDonationHelps: {
     heading: savedPC.howDonationHelps?.heading || 'Where Your Zakat Goes',
@@ -107,13 +94,11 @@ const cardIcons = [
   '<path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"></path>',
 ];
 
-// ── Why Give section ────────────────────────────────────────────────
 const whyGiveHeading = pageContent.whyMonthly.heading || 'Why Pay Your Zakat Through Us?';
 const contentSections = campaign?.content_sections || [];
 const whyGiveImage = campaign?.gallery_images?.[0] || '/images/qurbani-foundation-zakat.webp';
 const imageOverlay = tc.imageOverlay ?? 30;
 
-// ── Impact stats badge ──────────────────────────────────────────────
 const rawImpactStats = campaign?.impact_stats;
 let statBadge = { value: '20+', label: 'Countries Served' };
 if (Array.isArray(rawImpactStats) && rawImpactStats.length > 0) {
@@ -123,21 +108,13 @@ if (Array.isArray(rawImpactStats) && rawImpactStats.length > 0) {
   if (entries.length > 0) statBadge = { value: String(entries[0][1]), label: entries[0][0] };
 }
 
-// ── Quick links ─────────────────────────────────────────────────────
 const quickLinks = (tc.quickLinks || [
   { title: 'What is Zakat?', description: 'Learn about the third pillar of Islam', url: '/what-is-zakat', color: '#D97706' },
   { title: 'Zakat Calculator', description: 'Calculate exactly how much you owe', url: '/zakat-calculator', color: '#0096D6' },
   { title: 'Zakat FAQ', description: 'Answers to common Zakat questions', url: '/zakat-faq', color: '#7c3aed' },
 ]).filter((l: any) => !l.url?.includes('calculator'));
 
-// ── Sticky bar ──────────────────────────────────────────────────────
 const stickyBar = tc.stickyBar || { title: 'Pay Your Zakat', subtitle: '100% Zakat Policy · Tax-Deductible', buttonText: 'Pay Zakat Now' };
-
-// ── SEO ─────────────────────────────────────────────────────────────
-const metaTitle = campaign?.meta_title || 'Pay Your Zakat Online 2026 — 100% Zakat Policy | Qurbani Foundation USA';
-const metaDescription = campaign?.meta_description || 'Pay your Zakat online with confidence. 100% Zakat policy ensures every dollar reaches those in need. Shariah-compliant, tax-deductible.';
-
-// No renderHeroTitle needed — hero uses two separate fields
 ---
 
 <Layout title={metaTitle} description={metaDescription}>
@@ -145,7 +122,7 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
 
   <main>
     <!-- Hero Section -->
-    <section class="relative pt-20 pb-6 lg:pt-32 lg:pb-20 overflow-hidden">
+    <section class="relative pt-20 pb-6 lg:pt-24 lg:pb-20 overflow-hidden">
       <!-- Background -->
       <div class="absolute inset-0">
         <div class="absolute inset-0" style={`background-image: url('${heroImage}'); background-size: cover; background-position: center;`}></div>
@@ -162,13 +139,12 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
               {heroBadgeText}
             </div>
 
-            <h1 class="text-4xl leading-[1.1] md:text-5xl lg:text-6xl font-bold mb-2 lg:mb-4" style="font-family: 'Signika', sans-serif;">
+            <h1 class="text-3xl leading-[1.1] md:text-5xl lg:text-6xl font-bold mb-2 lg:mb-4" style="font-family: 'Signika', sans-serif;">
               {heroTitle}
               {heroTitleAccent && (
                 <>
                   <br />
                   <span class="text-[#e1861d] italic" style="font-family: 'Playfair Display', serif;">{heroTitleAccent}</span>
-                  <span class="text-[#e1861d]"> 2026</span>
                 </>
               )}
             </h1>
@@ -202,11 +178,12 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
             </div>
           </div>
 
-          <!-- Right Column: Donation Box — shows on first fold on mobile -->
+          <!-- Right Column: Donation Box -->
           <div data-zakat-donate>
             <CWDonationBox
               campaignSlug={campaign?.slug || 'zakat'}
-              campaignTitle={campaign?.title || 'Zakat'}
+              campaignTitle="Zakat Al-Maal"
+              cartLabel="Where Most Needed"
               campaignImage={campaign?.featured_image}
               donationBoxHeading={cwHeading}
               tabEmoji={cwTabEmoji}
@@ -219,7 +196,6 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
               buttonTextOneTime={cwButtonTextOneTime}
               buttonTextMonthly={cwButtonTextMonthly}
             />
-            <!-- Calculator link — right under donation box -->
             <p class="text-center mt-3 text-sm text-white/60">
               Not sure of your amount?
               <a href="/zakat-calculator" class="text-[#e1861d] hover:text-[#fdc448] font-semibold underline underline-offset-2 transition">Calculate your Zakat</a>
@@ -227,7 +203,7 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
           </div>
         </div>
 
-        <!-- Mobile trust row — compact, below donation box -->
+        <!-- Mobile trust row -->
         <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-5 lg:hidden">
           <div class="flex items-center gap-1.5 text-white/50 text-xs">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -400,7 +376,7 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
       </section>
     )}
 
-    <!-- Hadith / Mid CTA Banner (only if heading exists) -->
+    <!-- Hadith / Mid CTA Banner -->
     {pageContent.midCta.heading && savedPC.midCta?.heading && (
       <section class="py-10 md:py-12 bg-[#255764]">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -487,7 +463,7 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
           <p class="text-sm font-bold text-gray-800">{stickyBar.title}</p>
           <p class="text-xs text-gray-500">{stickyBar.subtitle}</p>
         </div>
-        <button id="zakat-sticky-btn" class="bg-[#DC1A34] hover:bg-[#b8162c] text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
+        <button id="zakat-sticky-btn" class="bg-[#e1861d] hover:bg-[#c97418] text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap" style="font-family: 'Signika', sans-serif;">
           <span id="sticky-btn-text">{stickyBar.buttonText}</span>
           <span id="sticky-btn-amount" class="hidden bg-white/20 rounded-lg px-2 py-0.5 text-xs font-bold"></span>
         </button>
@@ -502,7 +478,6 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
   document.addEventListener('DOMContentLoaded', () => {
     const donationBox = document.querySelector('[data-zakat-donate]');
 
-    // Scroll to donation box
     function scrollToDonationBox() {
       if (donationBox) {
         const rect = donationBox.getBoundingClientRect();
@@ -511,20 +486,15 @@ const metaDescription = campaign?.meta_description || 'Pay your Zakat online wit
       }
     }
 
-    // Hero button
     document.getElementById('hero-give-btn')?.addEventListener('click', scrollToDonationBox);
-    // What is Zakat donate button
     document.getElementById('what-is-zakat-donate-btn')?.addEventListener('click', scrollToDonationBox);
-    // Final CTA button
     document.getElementById('final-cta-btn')?.addEventListener('click', scrollToDonationBox);
 
-    // Mobile sticky bar — show when donation box is NOT visible, hide when it IS
     const stickyBar = document.getElementById('zakat-sticky-bar');
     const stickyBtn = document.getElementById('zakat-sticky-btn');
 
     stickyBtn?.addEventListener('click', scrollToDonationBox);
 
-    // Update sticky button with selected amount
     const stickyBtnAmount = document.getElementById('sticky-btn-amount');
     document.addEventListener('cw:amount-change', (e) => {
       const amt = (e as CustomEvent).detail?.amount;
