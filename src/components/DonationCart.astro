@@ -207,6 +207,16 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
     display: block;
   }
 
+  /* iOS Safari: improve scroll inside checkout modals */
+  #gg-checkout > div {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  /* Prevent Stripe iframe from swallowing touch scroll events */
+  #gg-card-element {
+    touch-action: pan-y;
+    -webkit-touch-callout: none;
+  }
 </style>
 
 <!-- Checkout template setting for client-side JS -->
