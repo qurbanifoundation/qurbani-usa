@@ -207,30 +207,22 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
     display: block;
   }
 
-  /* Fix Stripe iframe blocking scroll on mobile checkout */
-  #gg-checkout > div,
-  #two-step-checkout > div {
+  /* ── Mobile checkout scroll fix ──────────────────────────────── */
+  /* Body lock class — applied via JS instead of inline styles */
+  html.checkout-open,
+  html.checkout-open body {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+  /* The checkout modal scroll container */
+  .checkout-scroll-container {
+    position: absolute;
+    inset: 0;
+    overflow-y: scroll !important;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-  /* Prevent Stripe iframe from capturing scroll — allow vertical pass-through */
-  #gg-card-element,
-  #ts-card-element,
-  #card-element {
-    touch-action: pan-y pan-x;
-    position: relative;
-  }
-  /* Ensure form inputs allow normal touch interactions */
-  #gg-checkout input,
-  #gg-checkout select,
-  #two-step-checkout input,
-  #two-step-checkout select {
-    touch-action: manipulation;
-  }
-  /* The scrollable modal content must always allow vertical scrolling */
-  #gg-checkout,
-  #two-step-checkout {
-    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    background: white;
   }
 </style>
 
@@ -835,7 +827,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
 <!-- ==================== 2-STEP CHECKOUT MODAL ==================== -->
 <div id="two-step-checkout" class="fixed inset-0 z-[10001] hidden">
-  <div class="absolute inset-0 bg-white overflow-y-auto">
+  <div class="checkout-scroll-container">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
     <div class="sticky top-0 z-20 bg-gradient-to-r from-[#e1861d] to-[#d97706] shadow-sm">
@@ -1140,7 +1132,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
 <!-- ==================== GG ONE-STEP CHECKOUT MODAL ==================== -->
 <div id="gg-checkout" class="fixed inset-0 z-[10001] hidden">
-  <div class="absolute inset-0 bg-white overflow-y-auto">
+  <div class="checkout-scroll-container">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
     <div class="sticky top-0 z-20 bg-gradient-to-r from-[#e1861d] to-[#d97706] shadow-sm">
@@ -3748,12 +3740,9 @@ function openGGCheckout() {
   // Sync cover-fees checkbox default state
   var ggCoverFeesEl = document.getElementById('gg-cover-fees');
   if (ggCoverFeesEl) window.donationCart.coverFees = ggCoverFeesEl.checked;
-  // Lock body scroll (iOS Safari fix: position:fixed prevents scroll-through)
+  // Lock body scroll
   window._ggScrollY = window.scrollY;
-  document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.top = '-' + window._ggScrollY + 'px';
-  document.body.style.width = '100%';
+  document.documentElement.classList.add('checkout-open');
   // Hide any page-level sticky bars (e.g. Zakat calculator's sticky CTA)
   var stickyBar = document.getElementById('zw-sticky-bar');
   if (stickyBar) stickyBar.style.display = 'none';
@@ -3773,16 +3762,48 @@ function openGGCheckout() {
   // Init Google Places for GG address field
   _ggPlacesRetries = 0; // reset retries for fresh attempt
   setTimeout(function() { initGGPlaces(); }, 300);
+
+  // iOS Safari fix: when keyboard closes after filling card/address,
+  // the scroll container can become unresponsive. Force a layout recalc.
+  var scrollEl = modal.querySelector('.checkout-scroll-container');
+  if (scrollEl && !scrollEl._ggFocusFix) {
+    scrollEl._ggFocusFix = true;
+    scrollEl.addEventListener('focusout', function() {
+      var el = this;
+      setTimeout(function() {
+        // Force scroll container to recalculate its scrollable area
+        var currentScroll = el.scrollTop;
+        el.style.overflow = 'hidden';
+        el.offsetHeight; // force reflow
+        el.style.overflow = '';
+        el.scrollTop = currentScroll;
+      }, 100);
+    });
+    // Also handle visualViewport resize (keyboard open/close)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function() {
+        if (!modal.classList.contains('hidden')) {
+          scrollEl.style.height = window.visualViewport.height + 'px';
+        }
+      });
+      window.visualViewport.addEventListener('scroll', function() {
+        if (!modal.classList.contains('hidden')) {
+          scrollEl.style.height = window.visualViewport.height + 'px';
+        }
+      });
+    }
+  }
 }
 
 function closeGGCheckout() {
   var modal = document.getElementById('gg-checkout');
-  if (modal) modal.classList.add('hidden');
-  // Restore body scroll (iOS Safari fix)
-  document.body.style.overflow = '';
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.width = '';
+  if (modal) {
+    modal.classList.add('hidden');
+    var scrollEl = modal.querySelector('.checkout-scroll-container');
+    if (scrollEl) scrollEl.style.height = '';
+  }
+  // Restore body scroll
+  document.documentElement.classList.remove('checkout-open');
   window.scrollTo(0, window._ggScrollY || 0);
   // Restore page-level sticky bars
   var stickyBar = document.getElementById('zw-sticky-bar');
@@ -4364,6 +4385,7 @@ function mountGGPaymentElement() {
     paymentElement.on('change', function(event) {
       document.getElementById('gg-card-errors').textContent = event.error ? event.error.message : '';
     });
+
   } catch (err) {
     document.getElementById('gg-card-errors').textContent = 'Failed to load payment form. Please try again.';
     console.error('GG Payment Element mount error:', err);
