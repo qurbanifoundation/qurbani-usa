@@ -369,7 +369,7 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
       body: JSON.stringify({
         from: 'Qurbani USA <notifications@receipts.qurbani.com>',
         to: ADMIN_EMAIL,
-        subject: `${config.emoji} ${data.title}`,
+        subject: `${config.emoji} ${data.title} — ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' })}`,
         html: htmlContent,
       }),
     });
