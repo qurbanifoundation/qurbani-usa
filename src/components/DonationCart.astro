@@ -206,6 +206,32 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
   .custom-checkbox-orange input:checked + .checkmark:after {
     display: block;
   }
+
+  /* Fix Stripe iframe blocking scroll on mobile checkout */
+  #gg-checkout > div,
+  #two-step-checkout > div {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* Prevent Stripe iframe from capturing scroll — allow vertical pass-through */
+  #gg-card-element,
+  #ts-card-element,
+  #card-element {
+    touch-action: pan-y pan-x;
+    position: relative;
+  }
+  /* Ensure form inputs allow normal touch interactions */
+  #gg-checkout input,
+  #gg-checkout select,
+  #two-step-checkout input,
+  #two-step-checkout select {
+    touch-action: manipulation;
+  }
+  /* The scrollable modal content must always allow vertical scrolling */
+  #gg-checkout,
+  #two-step-checkout {
+    touch-action: pan-y;
+  }
 </style>
 
 <!-- Checkout template setting for client-side JS -->
