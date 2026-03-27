@@ -13,12 +13,21 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import Donate2026Template from '../templates/Donate2026Template.astro';
 import { supabaseAdmin } from '../lib/supabase';
 
-// Fetch active campaigns grouped by category
+// Check which template to use
+const { data: templateSetting } = await supabaseAdmin
+  .from('site_settings')
+  .select('donate_page_template')
+  .eq('id', 'main')
+  .single();
+const donateTemplate = templateSetting?.donate_page_template || 'classic';
+
+// Fetch active campaigns grouped by category (expanded fields for donate2026)
 const { data: campaigns } = await supabaseAdmin
   .from('campaigns')
-  .select('id, name, slug, category, short_description, image_url, goal_amount, raised_amount')
+  .select('id, name, slug, category, description, image_url, featured_image, goal_amount, raised_amount, donation_options, content_sections, template_config')
   .eq('is_active', true)
   .order('sort_order', { ascending: true });
 
@@ -51,6 +60,9 @@ const quickCauses = [
 const presetAmounts = [25, 50, 100, 250, 500, 1000];
 ---
 
+{donateTemplate === 'donate2026' ? (
+  <Donate2026Template campaigns={campaigns || []} categories={categories || []} />
+) : (
 <Layout title="Donate Now | Qurbani Foundation USA" description="Make a difference today. Your donation provides food, water, healthcare, and education to those in need. 100% Zakat policy.">
   <Navbar />
 
@@ -771,3 +783,4 @@ const presetAmounts = [25, 50, 100, 250, 500, 1000];
     background: #a1a1a1;
   }
 </style>
+)}

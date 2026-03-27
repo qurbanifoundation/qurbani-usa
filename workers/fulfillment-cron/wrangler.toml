@@ -4,7 +4,8 @@ compatibility_date = "2024-01-01"
 no_bundle = false
 
 [triggers]
-crons = ["*/15 * * * *"]
+crons = ["*/15 * * * *", "0 15 * * *"]
 
 [vars]
 FULFILLMENT_URL = "https://www.qurbani.com/api/fulfillment/process"
+AQIQAH_CERT_URL = "https://www.qurbani.com/api/cron/aqiqah-certificates"

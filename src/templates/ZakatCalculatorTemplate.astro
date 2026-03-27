@@ -396,6 +396,10 @@ const impactItems = calcConfig.impactItems || [
             {heroTitle}
           </h1>
           <p class="hidden md:block text-white/80 mt-2 max-w-xl" style="font-size:16px;line-height:1.5">{heroSubtitle}</p>
+          <a href="/zakat" class="inline-flex items-center gap-2 mt-3 bg-[#E1861D] hover:bg-[#c97518] text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition" style="font-family: 'Signika', sans-serif;">
+            Already know your Zakat? Give now
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
         </div>
         <div class="bg-white/[0.07] backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-4 md:px-6 md:py-5 w-full md:w-auto md:min-w-[320px]">
           <!-- Header row with LIVE badge -->
@@ -456,10 +460,10 @@ const impactItems = calcConfig.impactItems || [
         </div>
 
         <!-- Instruction banner above category cards -->
-        <div class="bg-[#024139]/[0.06] border border-[#024139]/10 rounded-xl px-4 py-3 mb-4 text-center">
+        <div class="mb-2" id="zw-asset-banner">
           <p class="text-[#024139] font-semibold text-base md:text-lg" style="font-family: 'Signika', sans-serif;">
             <svg class="w-5 h-5 inline-block -mt-0.5 mr-1 text-[#024139]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-            Select all asset types that apply to you
+            What do you own? Select all that apply
           </p>
         </div>
 
@@ -969,7 +973,7 @@ const impactItems = calcConfig.impactItems || [
       const selectedCats = document.querySelectorAll('.zw-cat-card.selected');
       if (selectedCats.length === 0) {
         // Shake the instruction banner to draw attention
-        const banner = document.querySelector('#zw-step-1 .bg-\\[\\#024139\\]\\/\\[0\\.06\\]');
+        const banner = document.getElementById('zw-asset-banner');
         if (banner) {
           banner.style.transition = 'all 0.3s';
           banner.style.backgroundColor = '#fef2f2';
@@ -986,7 +990,7 @@ const impactItems = calcConfig.impactItems || [
             banner.style.borderColor = '';
             banner.innerHTML = `<p class="text-[#024139] font-semibold text-base md:text-lg" style="font-family: 'Signika', sans-serif;">
               <svg class="w-5 h-5 inline-block -mt-0.5 mr-1 text-[#024139]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-              Select all asset types that apply to you
+              What do you own? Select all that apply
             </p>`;
           }, 3000);
         }

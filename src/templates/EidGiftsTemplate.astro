@@ -1,0 +1,295 @@
+---
+/**
+ * EID GIFTS TEMPLATE
+ *
+ * A charitable gifts page template showing a grid of gift cards
+ * that users can add to their cart.
+ *
+ * Features:
+ * - Teal hero section with overlay image
+ * - Intro section with Islamic messaging
+ * - Responsive gift card grid (3 col desktop, 2 tablet, 1 mobile)
+ * - Orange "ADD TO BASKET" buttons with cart integration
+ * - Trust badges footer section
+ *
+ * Color Palette:
+ * - Primary: #01534d (dark teal)
+ * - Accent: #ef7c01 (orange)
+ * - Accent Hover: #d97706 (amber)
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    id: string;
+    name: string;
+    slug: string;
+    title: string;
+    description: string;
+    featured_image: string;
+    template_config: any;
+    content_sections: any[];
+    donation_options: any[];
+  };
+  donationBoxTemplate: string;
+}
+
+const { campaign, donationBoxTemplate } = Astro.props;
+
+const pageTitle = campaign.title || 'Eid Gifts';
+const campaignSlug = campaign.slug || 'eid-gift';
+const heroImage = campaign.featured_image || '/images/qurbani-foundation-eid-gift.webp';
+
+const defaultGifts = [
+  {
+    label: 'Water Hand Pump',
+    amount: 300,
+    description: 'Provide clean and safe water through our water programmes, helping families across Asia, Africa, and the Middle East live healthier.',
+    image: '/images/africa-clean-water-qurbani-foundation.webp',
+  },
+  {
+    label: 'Emergency Kit for 1 Family',
+    amount: 50,
+    description: 'Help families survive crisis with life-saving emergency essentials: food, clean water, shelter, and basic supplies.',
+    image: '/images/qurbani-foundation-sudan-crisis-appeal.webp',
+  },
+  {
+    label: 'Food Pack for a Family',
+    amount: 35,
+    description: 'Provide a nutritious food package to feed an entire family for a month.',
+    image: '/images/qurbani-foundation-zakat-food-aid.webp',
+  },
+  {
+    label: 'Olive Tree',
+    amount: 10,
+    description: 'Plant an olive tree and help a struggling family rebuild their livelihood with dignity.',
+    image: '/images/qurbani-foundation-zakat-livelihood-support-1.webp',
+  },
+  {
+    label: 'Solar Lamp',
+    amount: 20,
+    description: 'Light up lives with the gift of a solar lamp and provide safe, sustainable light to families without electricity.',
+    image: '/images/qurbani-foundation-eid-gift.webp',
+  },
+  {
+    label: 'Wheelchair',
+    amount: 100,
+    description: 'Give the gift of mobility and dignity. A wheelchair can restore independence for someone with limited mobility.',
+    image: '/images/qurbani-foundation-zakat-financial-aid.png',
+  },
+  {
+    label: 'Sewing Machine',
+    amount: 120,
+    description: 'Empower a woman to transform her life with a sewing machine by turning aid into self-reliance and hope.',
+    image: '/images/qurbani-foundation-zakat-livelihood-support.webp',
+  },
+  {
+    label: 'Dignity Kit',
+    amount: 50,
+    description: 'Help women and girls in crisis stay safe, clean, and dignified with the essentials they cannot go without.',
+    image: '/images/qurbani-foundation-orphan-sponsorship1.webp',
+  },
+  {
+    label: 'School Supplies Pack',
+    amount: 25,
+    description: 'Give a child the tools they need to learn - books, pencils, and school essentials for a full year.',
+    image: '/images/qurbani-foundation-orphan-sponsorship4.webp',
+  },
+];
+
+const giftItems = (campaign.donation_options && campaign.donation_options.length > 0)
+  ? campaign.donation_options
+  : defaultGifts;
+
+const templateConfig = campaign.template_config || {};
+const introHeading = templateConfig.intro_heading || 'FROM YOUR HANDS TO THEIR HEARTS';
+const introText = templateConfig.intro_text || 'Your gift is more than just a gesture. It is a powerful act of compassion that helps those in need while earning blessings in this life and the hereafter. By giving to those living in extreme poverty, you can fulfill the teachings of Islam, alleviate suffering, and gain the pleasure of Allah (Glory be to Him).';
+---
+
+<Layout title={pageTitle} description={campaign.description || 'Choose a meaningful charitable gift that transforms lives. Each gift delivers real impact to families in need.'}>
+  <Navbar />
+
+  <!-- Hero Section -->
+  <section class="relative pt-28 pb-16 md:pt-36 md:pb-20 overflow-hidden">
+    <div class="absolute inset-0 bg-[#01534d]">
+      <img
+        src={heroImage}
+        class="w-full h-full object-cover opacity-30"
+        alt=""
+        loading="eager"
+        onerror="this.remove()"
+      />
+      <div class="absolute inset-0 bg-gradient-to-b from-[#01534d]/60 to-[#01534d]/90"></div>
+    </div>
+    <div class="relative max-w-4xl mx-auto px-4 text-center">
+      <span
+        class="inline-block text-white/70 text-sm tracking-widest uppercase mb-4"
+        style="font-family: 'Lato', sans-serif;"
+      >
+        Charitable Gifts
+      </span>
+      <h1
+        class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4"
+        style="font-family: 'Signika', sans-serif;"
+      >
+        Select an Inspiring Gift
+      </h1>
+      {campaign.description && (
+        <p class="text-white/80 text-lg md:text-xl max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          {campaign.description}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <!-- Intro Section -->
+  <section class="py-14 md:py-20 bg-white">
+    <div class="max-w-3xl mx-auto px-4 text-center">
+      <h2
+        class="text-[#01534d] text-xs md:text-sm tracking-[0.25em] uppercase font-bold mb-6"
+        style="font-family: 'Lato', sans-serif;"
+      >
+        {introHeading}
+      </h2>
+      <p
+        class="text-gray-600 text-base md:text-lg leading-relaxed"
+        style="font-family: 'Lato', sans-serif;"
+      >
+        {introText}
+      </p>
+    </div>
+  </section>
+
+  <!-- Gift Cards Grid -->
+  <section class="py-14 md:py-20 bg-gradient-to-b from-white via-[#faf8f5] to-[#f5f0ea]">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {giftItems.map((gift: any) => {
+          const giftName = gift.label || gift.name || 'Gift';
+          const giftAmount = gift.amount || 0;
+          const giftDescription = gift.description || '';
+          const giftImage = gift.image || heroImage;
+          const giftSlug = giftName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+          return (
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
+              <div class="aspect-[4/3] overflow-hidden">
+                <img
+                  src={giftImage}
+                  alt={giftName}
+                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                  onerror="this.parentElement.style.background='linear-gradient(135deg,#01534d,#0a7a6e)';this.remove()"
+                />
+              </div>
+              <div class="p-5 flex flex-col flex-1">
+                <h3
+                  class="font-bold text-gray-800 text-lg mb-1"
+                  style="font-family: 'Signika', sans-serif;"
+                >
+                  {giftName}
+                </h3>
+                <div
+                  class="text-xl font-bold text-[#ef7c01] mb-2"
+                  style="font-family: 'Signika', sans-serif;"
+                >
+                  ${giftAmount}
+                </div>
+                {giftDescription && (
+                  <p
+                    class="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-1"
+                    style="font-family: 'Lato', sans-serif;"
+                  >
+                    {giftDescription}
+                  </p>
+                )}
+                <button
+                  class="gift-add-btn w-full bg-[#ef7c01] hover:bg-[#d97706] text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 text-sm uppercase tracking-wider mt-auto"
+                  data-gift-name={giftName}
+                  data-gift-amount={String(giftAmount)}
+                  data-gift-image={giftImage}
+                  data-gift-slug={giftSlug}
+                  style="font-family: 'Signika', sans-serif;"
+                >
+                  ADD TO BASKET
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badges Section -->
+  <section class="py-12 md:py-16 bg-[#01534d]">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+        <div class="flex flex-col items-center">
+          <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h4 class="text-white font-bold text-sm mb-1" style="font-family: 'Signika', sans-serif;">100% Secure</h4>
+          <p class="text-white/60 text-xs" style="font-family: 'Lato', sans-serif;">All donations are processed securely via Stripe</p>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <h4 class="text-white font-bold text-sm mb-1" style="font-family: 'Signika', sans-serif;">100% Donation Policy</h4>
+          <p class="text-white/60 text-xs" style="font-family: 'Lato', sans-serif;">Every dollar of your gift goes directly to those in need</p>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h4 class="text-white font-bold text-sm mb-1" style="font-family: 'Signika', sans-serif;">Global Reach</h4>
+          <p class="text-white/60 text-xs" style="font-family: 'Lato', sans-serif;">Delivering aid across Asia, Africa, and the Middle East</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</Layout>
+
+<script define:vars={{ campaignSlug }}>
+  document.querySelectorAll('.gift-add-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var name = btn.dataset.giftName;
+      var amount = parseInt(btn.dataset.giftAmount, 10);
+      var image = btn.dataset.giftImage || '';
+      var slug = btn.dataset.giftSlug || 'eid-gift';
+
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          id: 'gift-' + slug + '-' + amount + '-' + Date.now(),
+          name: name,
+          amount: amount,
+          quantity: 1,
+          type: 'single',
+          image: image,
+          campaign: campaignSlug,
+          description: name + ' - $' + amount
+        });
+      }
+
+      // Button feedback
+      btn.textContent = 'ADDED!';
+      btn.style.backgroundColor = '#16a34a';
+      setTimeout(function() {
+        btn.textContent = 'ADD TO BASKET';
+        btn.style.backgroundColor = '#ef7c01';
+      }, 1500);
+    });
+  });
+</script>

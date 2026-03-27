@@ -1,0 +1,538 @@
+---
+/**
+ * ZAKAT AL-FITR (FITRANA) HERO TEMPLATE
+ *
+ * Variant of ZakatAlFitrTemplate with donation box embedded IN the hero section.
+ * Split layout: content left, donation box right on desktop; stacked on mobile.
+ *
+ * Features:
+ *   - Hero with text left, donation box right (overlaps into content)
+ *   - Eid countdown timer
+ *   - Person stepper (big number, minus/plus)
+ *   - Dynamic total calculation
+ *   - Sticky donation box on desktop (follows scroll)
+ *   - Single-column info + FAQ below hero
+ *   - Mobile sticky CTA bar
+ *   - Add-to-cart integration
+ *
+ * template_config options:
+ *   - fitr_rate: price per person (default: 10)
+ *   - eid_date: countdown target date ISO string (default: "2026-03-20T00:00:00")
+ *   - default_people: default selected people count (default: 4)
+ *
+ * Usage: Select "Zakat al-Fitr (Hero Box)" from page template dropdown in campaign admin
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    id?: string;
+    title: string;
+    hero_title?: string;
+    subtitle?: string;
+    subtitle2?: string;
+    slug: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: Array<{ title?: string; content?: string; question?: string; answer?: string }>;
+    donation_options?: Array<{ amount: number; label?: string }>;
+    gallery_images?: string[];
+    goal_amount?: number;
+    raised_amount?: number;
+    country?: string;
+    category?: string;
+    is_zakat_eligible?: boolean;
+    impact_stats?: Array<{ value: string; label: string }> | Record<string, string>;
+    template_config?: Record<string, any>;
+  };
+  donationBoxTemplate?: string;
+}
+
+const { campaign, donationBoxTemplate = 'cw-donation' } = Astro.props;
+
+// Template config
+const config = campaign.template_config || {};
+const fitrRate = config.fitr_rate || 10;
+const eidDate = config.eid_date || '2026-03-20T00:00:00';
+const defaultPeople = config.default_people || 4;
+
+// Page content
+const heroTitle = campaign.hero_title || campaign.title || 'Pay Your Zakat Al Fitr';
+const heroAccent = campaign.subtitle2 || '';
+const subtitle = campaign.subtitle || 'Your Zakat Al Fitr provides a meal to a person in need on Eid.';
+const metaTitle = campaign.meta_title || `Pay Zakat al-Fitr (Fitrana) 2026 - $${fitrRate}/Person | Qurbani Foundation USA`;
+const metaDescription = campaign.meta_description || `Pay your Zakat al-Fitr (Fitrana) 2026 online. $${fitrRate} per person before Eid prayer. Obligatory charity that purifies your fast and provides food for the needy on Eid.`;
+
+// FAQ items
+const defaultFAQs = [
+  {
+    question: 'What is the difference between Zakat and Zakat al-Fitr?',
+    answer: 'Zakat is the annual obligatory charity (2.5% of wealth above nisab), while Zakat al-Fitr is a flat amount paid per person at the end of Ramadan before Eid prayer. Zakat al-Fitr is obligatory on all Muslims regardless of wealth, while Zakat is only obligatory on those who meet the nisab threshold.',
+  },
+  {
+    question: 'Can I pay Zakat al-Fitr early in Ramadan?',
+    answer: 'Yes, you can pay Zakat al-Fitr any time during Ramadan. In fact, paying early is encouraged to ensure the charity reaches those in need in time for them to benefit from it on Eid day.',
+  },
+  {
+    question: 'Do I need to pay for a baby born during Ramadan?',
+    answer: 'If a baby is born before the Eid prayer, Zakat al-Fitr should be paid on their behalf. If the baby is born after the Eid prayer, Zakat al-Fitr is not obligatory for that child for this year.',
+  },
+  {
+    question: 'Who receives Zakat al-Fitr?',
+    answer: 'Zakat al-Fitr is distributed to those eligible for Zakat - primarily the poor and needy who do not have enough food for themselves and their families. The goal is to enable them to celebrate Eid without worrying about food.',
+  },
+];
+
+const faqItems = (campaign.content_sections && campaign.content_sections.length > 0
+  ? campaign.content_sections.map(s => ({
+      question: s.question || s.title || '',
+      answer: s.answer || s.content || '',
+    })).filter(f => f.question && f.answer)
+  : []);
+
+const faqs = faqItems.length > 0 ? faqItems : defaultFAQs;
+
+// Default total for initial render
+const defaultTotal = defaultPeople * fitrRate;
+---
+
+<Layout title={metaTitle} description={metaDescription}>
+  <Navbar />
+
+  <!-- Full-page wrapper: Hero bg is absolute, grid spans hero + content -->
+  <div class="relative">
+    <!-- Hero Background (absolutely positioned, covers top portion) -->
+    <div class="absolute top-0 left-0 right-0 h-[750px] overflow-hidden">
+      {campaign.featured_image ? (
+        <div class="absolute inset-0 bg-cover bg-center" style={`background-image: url('${campaign.featured_image}');`}></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/50"></div>
+      ) : (
+        <div class="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]"></div>
+      )}
+    </div>
+
+    <!-- 2-Column Grid spanning hero + content area -->
+    <div class="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-32 md:pt-40">
+      <div class="lg:grid lg:grid-cols-[1fr_420px] lg:gap-12 lg:items-start">
+
+        <!-- LEFT COLUMN -->
+        <div>
+          <!-- Hero Text (white, over dark bg) -->
+          <div class="pb-16 lg:pb-24">
+            <!-- Badge -->
+            <span class="inline-flex items-center gap-1.5 bg-[#fdc448]/20 text-[#fdc448] text-xs font-bold px-4 py-2 rounded-full border border-[#fdc448]/30 mb-6">
+              &#9770; Obligatory Before Eid
+            </span>
+
+            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight" style="font-family: 'Signika', sans-serif;">
+              {heroTitle}
+              {heroAccent && (
+                <span class="block text-[#fdc448]">{heroAccent}</span>
+              )}
+            </h1>
+
+            <p class="text-lg md:text-xl text-white/80 mb-6 leading-relaxed max-w-xl" style="font-family: 'Lato', sans-serif;">
+              {subtitle}
+            </p>
+
+            <!-- Countdown -->
+            <div id="fitr-countdown" class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-5 py-2.5 mb-8">
+              <span class="text-[#fdc448] text-sm font-bold">&#9200;</span>
+              <span id="fitr-countdown-text" class="text-white text-sm font-semibold" style="font-family: 'Signika', sans-serif;">Loading...</span>
+            </div>
+
+            <!-- Trust badges -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <div class="flex items-center gap-2 text-white/60 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Secure Payment
+              </div>
+              <div class="flex items-center gap-2 text-white/60 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Tax-Deductible
+              </div>
+              <div class="flex items-center gap-2 text-white/60 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                100% Donation Policy
+              </div>
+            </div>
+          </div>
+
+          <!-- Content (dark text, below hero bg) -->
+          <div class="pb-16 bg-white rounded-t-2xl pt-12 px-6 lg:px-8 -mx-6 lg:-mx-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6" style="font-family: 'Signika', sans-serif;">
+              What is <span class="text-[#0096D6]">Zakat al-Fitr</span> (Fitrana 2026)?
+            </h2>
+
+            <div class="prose prose-lg max-w-none text-gray-600" style="font-family: 'Lato', sans-serif;">
+              <p class="mb-4">
+                Zakat al-Fitr, also known as Fitrana or Sadaqat ul-Fitr, is an obligatory charity that every Muslim must pay before the Eid ul-Fitr prayer at the end of Ramadan. It serves two important purposes: to purify the fasting person from any indecent act or speech, and to provide food for the needy so they can also celebrate Eid.
+              </p>
+
+              <p class="mb-6">
+                Unlike Zakat (annual wealth tax), Zakat al-Fitr is obligatory on every Muslim, regardless of age, who possesses food in excess of their needs. It must be paid on behalf of yourself and all dependents in your household.
+              </p>
+
+              <div class="bg-[#0096D6]/10 border-l-4 border-[#0096D6] p-4 rounded-r-lg mb-6">
+                <p class="text-sm text-gray-700 italic">
+                  "The Messenger of Allah (PBUH) enjoined Zakat al-Fitr on the one who fasts to shield him from any indecent act or speech, and for the purpose of providing food for the needy."
+                  <span class="block mt-1 font-semibold">- Abu Dawud</span>
+                </p>
+              </div>
+
+              <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+                Who Must Pay Zakat al-Fitr?
+              </h3>
+
+              <ul class="space-y-3 mb-6">
+                <li class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Every Muslim who has food beyond their immediate needs</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Parents must pay on behalf of minor children</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Paid for all dependents in the household</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <svg class="w-6 h-6 text-[#0096D6] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Includes newborns if born before Eid prayer</span>
+                </li>
+              </ul>
+
+              <h3 class="text-xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
+                When Should It Be Paid?
+              </h3>
+
+              <p class="mb-4">
+                Zakat al-Fitr must be paid <strong>before the Eid prayer</strong>. The preferred time is the day or two before Eid. However, you can pay earlier during Ramadan to ensure the charity reaches those in need in time for Eid celebrations.
+              </p>
+
+              <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
+                <p class="text-sm text-gray-700">
+                  <strong>Important:</strong> If Zakat al-Fitr is paid after the Eid prayer, it becomes a regular sadaqah (charity) and does not fulfill the obligation. Please pay before Eid prayer to ensure your obligation is met.
+                </p>
+              </div>
+
+              <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <h4 class="font-bold text-gray-800 mb-3">Quick Calculation:</h4>
+                <ul class="space-y-2 text-sm">
+                  <li>1 person = ${fitrRate}</li>
+                  <li>Family of 4 = ${fitrRate * 4}</li>
+                  <li>Family of 5 = ${fitrRate * 5}</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="mt-12">
+              <h2 class="text-3xl font-bold text-gray-800 mb-8" style="font-family: 'Signika', sans-serif;">
+                Frequently Asked Questions
+              </h2>
+              <div class="space-y-4">
+                {faqs.map((faq) => (
+                  <div class="bg-[#f8f9fa] rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">{faq.question}</h3>
+                    <p class="text-gray-600">{faq.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Sticky Donation Box (starts at hero level, sticks on scroll) -->
+        <div class="lg:sticky lg:top-24 pt-4 lg:pt-8 pb-16">
+          <div data-fitr-donate class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 sm:p-8">
+            <!-- Box Header -->
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-bold text-gray-800 mb-1" style="font-family: 'Signika', sans-serif;">
+                Pay Your Fitrana
+              </h3>
+              <p class="text-sm text-gray-500">${fitrRate} per person &middot; Obligatory before Eid</p>
+              <p class="text-sm text-gray-600 mt-3 leading-relaxed">Zakat al-Fitr is obligatory for every Muslim and must be given before the Eid prayer. It is required for each member of the household, including children.</p>
+            </div>
+
+            <!-- Person Stepper -->
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+              <p class="text-sm font-semibold text-gray-600 text-center mb-4" style="font-family: 'Signika', sans-serif;">
+                How many people?
+              </p>
+              <div class="flex items-center justify-center gap-6">
+                <button id="fitr-minus" class="w-12 h-12 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center justify-center text-2xl font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer" aria-label="Decrease people">
+                  &minus;
+                </button>
+                <div class="text-center">
+                  <span id="fitr-stepper-count" class="text-5xl font-bold text-[#0096D6] block transition-transform" style="font-family: 'Signika', sans-serif;">
+                    {defaultPeople}
+                  </span>
+                  <span class="text-xs text-gray-500 mt-1 block">people</span>
+                </div>
+                <button id="fitr-plus" class="w-12 h-12 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center justify-center text-2xl font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer" aria-label="Increase people">
+                  +
+                </button>
+              </div>
+            </div>
+
+            <!-- Impact text -->
+            <p id="fitr-impact" class="text-sm text-gray-500 text-center mb-6">
+              This amount will be used to provide food to {defaultPeople} {defaultPeople === 1 ? 'person' : 'people'} in need on your behalf.
+            </p>
+
+            <!-- Add to Cart Button -->
+            <button
+              id="fitr-add-to-cart"
+              class="w-full bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold py-4 rounded-xl text-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              style="font-family: 'Signika', sans-serif;"
+            >
+              Donate Zakat-al-Fitr (${defaultTotal})
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </button>
+
+            <!-- Trust -->
+            <div class="flex items-center justify-center gap-4 mt-4 text-xs text-gray-400">
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Secure
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Tax-Deductible
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                100% Policy
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-br from-[#0096D6] to-[#0077b3] relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Share the Joy of Eid
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        Your Zakat al-Fitr ensures that everyone can celebrate Eid with dignity. Pay for your family and help others experience the joy of this blessed day.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/zakat"
+          class="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#0096D6] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Give Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </a>
+        <a
+          href="/zakat/calculator"
+          class="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 border-2 border-white/30"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Calculate Your Zakat
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Links -->
+  <section class="py-12 bg-white">
+    <div class="max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="text-sm font-semibold text-gray-700 mb-4">Other Ramadan Giving:</p>
+      <div class="grid sm:grid-cols-3 gap-3">
+        <a href="/fidya" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:shadow-md transition">
+          <span class="text-sm font-medium text-gray-700">Fidya</span>
+          <span class="text-xs text-gray-500">$10/day</span>
+        </a>
+        <a href="/kaffarah" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:shadow-md transition">
+          <span class="text-sm font-medium text-gray-700">Kaffarah</span>
+          <span class="text-xs text-gray-500">$180</span>
+        </a>
+        <a href="/iftar" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:shadow-md transition">
+          <span class="text-sm font-medium text-gray-700">Feed Iftar</span>
+          <span class="text-xs text-gray-500">$5/meal</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Sticky CTA Bar -->
+  <div id="fitr-sticky-bar" class="fixed bottom-0 left-0 right-0 z-50 lg:hidden translate-y-full transition-transform duration-300">
+    <div class="bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3">
+      <div class="flex items-center justify-between gap-3 max-w-lg mx-auto">
+        <div>
+          <p class="text-sm font-bold text-gray-800">Fitrana 2026</p>
+          <p class="text-xs text-gray-500">${fitrRate} per person &middot; Before Eid</p>
+        </div>
+        <button id="fitr-sticky-btn" class="bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition-all cursor-pointer" style="font-family: 'Signika', sans-serif;">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+          Pay Fitrana Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script is:inline define:vars={{ fitrRate, eidDate, defaultPeople }}>
+  document.addEventListener('DOMContentLoaded', function() {
+    var totalDisplay = document.getElementById('fitr-total');
+    var stepperCount = document.getElementById('fitr-stepper-count');
+    var minusBtn = document.getElementById('fitr-minus');
+    var plusBtn = document.getElementById('fitr-plus');
+    var addToCartBtn = document.getElementById('fitr-add-to-cart');
+    var impactText = document.getElementById('fitr-impact');
+
+    var FITR_RATE = fitrRate;
+    var selectedPeople = defaultPeople;
+
+    function updateUI() {
+      var total = selectedPeople * FITR_RATE;
+      if (stepperCount) {
+        stepperCount.textContent = selectedPeople.toString();
+        stepperCount.style.transform = 'scale(1.08)';
+        setTimeout(function() { if (stepperCount) stepperCount.style.transform = 'scale(1)'; }, 150);
+      }
+      if (totalDisplay) {
+        totalDisplay.textContent = '$' + total;
+      }
+      if (addToCartBtn) {
+        addToCartBtn.innerHTML = 'Donate Zakat-al-Fitr ($' + total + ') <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>';
+      }
+      if (impactText) {
+        var personWord = selectedPeople === 1 ? 'person' : 'people';
+        impactText.textContent = 'This amount will be used to provide food to ' + selectedPeople + ' ' + personWord + ' in need on your behalf.';
+      }
+    }
+
+    // Stepper buttons
+    if (minusBtn) {
+      minusBtn.addEventListener('click', function() {
+        if (selectedPeople > 1) {
+          selectedPeople--;
+          updateUI();
+        }
+      });
+    }
+
+    if (plusBtn) {
+      plusBtn.addEventListener('click', function() {
+        if (selectedPeople < 99) {
+          selectedPeople++;
+          updateUI();
+        }
+      });
+    }
+
+    // Add to cart
+    if (addToCartBtn) {
+      addToCartBtn.addEventListener('click', function() {
+        var total = selectedPeople * FITR_RATE;
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({
+            id: 'zakat-ul-fitr-' + selectedPeople + '-' + Date.now(),
+            type: 'donation',
+            name: 'Zakat al-Fitr (' + selectedPeople + ' ' + (selectedPeople === 1 ? 'person' : 'people') + ')',
+            amount: total,
+            quantity: 1,
+            description: selectedPeople + ' ' + (selectedPeople === 1 ? 'person' : 'people') + ' \u00d7 $' + FITR_RATE + '/person',
+            frequency: 'single'
+          });
+        }
+      });
+    }
+
+    // Scroll to donation box function
+    var donationBox = document.querySelector('[data-fitr-donate]');
+    function scrollToDonationBox() {
+      if (donationBox) {
+        var rect = donationBox.getBoundingClientRect();
+        var scrollTarget = window.pageYOffset + rect.top - 20;
+        window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+      }
+    }
+
+    // Mobile sticky bar
+    var stickyBar = document.getElementById('fitr-sticky-bar');
+    var stickyBtn = document.getElementById('fitr-sticky-btn');
+
+    if (stickyBtn) stickyBtn.addEventListener('click', scrollToDonationBox);
+
+    if (stickyBar && donationBox) {
+      var observer = new IntersectionObserver(
+        function(entries) {
+          if (entries[0].isIntersecting) {
+            stickyBar.classList.add('translate-y-full');
+          } else {
+            stickyBar.classList.remove('translate-y-full');
+          }
+        },
+        { threshold: 0.1 }
+      );
+      observer.observe(donationBox);
+    }
+
+    // Countdown to Eid
+    var eidDateTime = new Date(eidDate).getTime();
+    var countdownText = document.getElementById('fitr-countdown-text');
+
+    function updateCountdown() {
+      var now = new Date().getTime();
+      var diff = eidDateTime - now;
+
+      if (diff <= 0) {
+        if (countdownText) countdownText.textContent = 'Eid is here \u2014 pay now if you haven\'t!';
+        return;
+      }
+
+      var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+      if (countdownText) {
+        if (days > 1) {
+          countdownText.textContent = 'Only ' + days + ' days left before Eid prayer';
+        } else if (days === 1) {
+          countdownText.textContent = 'Only 1 day and ' + hours + ' hours left!';
+        } else {
+          countdownText.textContent = 'Only ' + hours + ' hours left \u2014 pay now!';
+        }
+      }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+
+    // Initialize
+    updateUI();
+  });
+</script>

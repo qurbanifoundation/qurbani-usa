@@ -1,0 +1,66 @@
+---
+/**
+ * Islamic Qurbani Relief — Google Ads Landing Page
+ * Route: /islamic-qurbani-relief
+ *
+ * Keyword-optimized landing page for:
+ *   - "aqiqah for newborn" → separate page
+ *   - "islamic qurbani relief"
+ *   - "donate qurbani online"
+ *
+ * Uses the same QurbaniTemplate with heroOverrides for SEO text,
+ * keeping the exact same design and conversion flow.
+ */
+
+import QurbaniTemplate from '../templates/QurbaniTemplate.astro';
+import DonationCart from '../components/DonationCart.astro';
+import { getSettings } from '../lib/settings';
+import { supabaseAdmin } from '../lib/supabase';
+
+export const prerender = false;
+
+const settings = await getSettings();
+
+// Fetch the same Qurbani campaign data (pricing, config)
+let dbCampaign: Record<string, unknown> | null = null;
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('slug', 'qurbani')
+    .eq('is_active', true)
+    .single();
+  dbCampaign = data;
+} catch (e) {
+  // fallback to defaults
+}
+
+const campaign = {
+  id: (dbCampaign?.id as string) || 'qurbani-global',
+  title: (dbCampaign?.name as string) || (dbCampaign?.title as string) || 'Global Qurbani',
+  subtitle: (dbCampaign?.subtitle as string) || 'Give Your Qurbani Where It\'s Needed Most',
+  slug: 'qurbani',
+  featured_image: (dbCampaign?.featured_image as string) || (dbCampaign?.hero_image_url as string) || '/images/qurbani-hero.webp',
+  description: (dbCampaign?.long_description as string) || (dbCampaign?.description as string) || 'Fulfill your Qurbani obligation with 100% Shariah-compliant sacrifice. Fresh meat delivered to families in 70+ countries within 24 hours.',
+  goal_amount: (dbCampaign?.goal_amount as number) || 500000,
+  raised_amount: (dbCampaign?.raised_amount as number) || 245000,
+  is_zakat_eligible: (dbCampaign?.is_zakat_eligible as boolean) ?? false,
+  template_config: (dbCampaign?.template_config as Record<string, unknown>) || {},
+};
+
+// SEO-optimized hero text for Google Ads Quality Score
+// Keywords: "islamic qurbani relief", "donate qurbani online"
+// Written naturally — reads like ad copy, not keyword stuffing
+const heroOverrides = {
+  metaTitle: 'Islamic Qurbani Relief — Donate Qurbani Online | Qurbani Foundation USA',
+  metaDescription: 'Provide Islamic Qurbani relief to families in need. Donate Qurbani online — 100% Shariah-compliant, fresh meat delivered to 70+ countries. From $50. Tax deductible.',
+  headlineLine1: 'Qurbani Relief Program',
+  headlineLine2: 'Fulfil Islamic Obligation',
+  subheadline: 'Bring relief to families in need through your Qurbani donation. 100% Shariah-compliant sacrifice with fresh meat delivered to 70+ countries.',
+  ctaText: 'Give Your Qurbani Now',
+  trustBadgeText: '2 Million+ People Received Qurbani Relief',
+};
+---
+
+<QurbaniTemplate campaign={campaign} heroOverrides={heroOverrides} />
+<DonationCart showSidecartMonthly={settings.show_sidecart_monthly !== false} showSidecartJummah={settings.show_sidecart_jummah !== false} />

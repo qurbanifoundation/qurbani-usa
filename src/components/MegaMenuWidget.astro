@@ -154,80 +154,121 @@ const isInteractive = config.interactive === true;
   </div>
 )}
 
-{/* Quick Form Widget */}
-{widget_type === 'quick-form' && (() => {
-  const btnColor = config.buttonColor || menuColor;
-  const darkerColor = config.buttonColorDark || btnColor;
+{/* Dynamic Highlight Widget - Changes based on hovered link */}
+{widget_type === 'dynamic-highlight' && (() => {
+  const defaultCard = config.defaultCard || {};
+  const highlights = config.highlights || {};
+  const highlightsJSON = JSON.stringify(highlights);
   return (
-  <div class="widget-quick-form">
-    <div class="qf-card rounded-lg overflow-hidden" style={`box-shadow: 0 20px 60px ${btnColor}30, 0 4px 12px rgba(0,0,0,0.1);`} data-quick-donate data-fund-type={config.fundType || 'donation'} data-campaign-slug={config.campaignSlug || ''} data-item-name={config.itemName || title || config.title || 'Donation'}>
-      {/* ── Header ── */}
-      <div class="relative px-6 pt-6 pb-5 text-center overflow-hidden" style={`background: linear-gradient(160deg, ${btnColor} 0%, ${darkerColor} 100%);`}>
-        {/* Decorative circles */}
+    <div class="widget-dynamic-highlight" data-highlights={highlightsJSON}>
+      <a href={defaultCard.href || '/donate'} class="dh-card group block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all bg-white h-full relative">
+        <!-- Large hero image -->
+        <div class="dh-image-wrap relative h-44 overflow-hidden">
+          <img src={defaultCard.image || ''} alt="" class="dh-image w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          {defaultCard.badge && (
+            <span class="dh-badge absolute top-3 left-3 text-[10px] font-bold text-white px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg" style={`background-color: ${defaultCard.badgeColor || '#ef7c01'};`}>
+              {defaultCard.badge}
+            </span>
+          )}
+          <!-- Title overlaid on image bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4">
+            <h4 class="dh-title font-extrabold text-white text-lg leading-tight drop-shadow-md" style="font-family: 'Signika', sans-serif;">
+              {defaultCard.title || 'Make a Difference'}
+            </h4>
+          </div>
+        </div>
+        <!-- Description + CTA -->
+        <div class="p-4">
+          <p class="dh-desc text-[13px] text-gray-600 leading-relaxed mb-4 line-clamp-2">
+            {defaultCard.description || ''}
+          </p>
+          <span class="dh-btn w-full inline-flex items-center justify-center gap-2 text-sm font-bold text-white px-5 py-3 rounded-xl transition-all group-hover:shadow-lg group-hover:scale-[1.02]" style="background: linear-gradient(135deg, #ef7c01, #d97706);">
+            <span class="dh-btn-text">{defaultCard.buttonText || 'Donate Now'}</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+    </div>
+  );
+})()}
+
+{/* Featured Cards Widget - Campaign highlights with images */}
+{widget_type === 'featured-cards' && (
+  <div class="widget-featured-cards flex flex-col gap-3">
+    {(config.cards || []).map((card: any) => (
+      <a href={card.href || '#'} class="group flex items-stretch bg-white rounded-xl overflow-hidden border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all">
+        <div class="w-28 h-24 flex-shrink-0 overflow-hidden relative">
+          {card.image && (
+            <img src={card.image} alt={card.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          )}
+          {card.badge && (
+            <span class="absolute top-1.5 left-1.5 text-[9px] font-bold text-white px-1.5 py-0.5 rounded-sm uppercase tracking-wider" style={`background-color: ${card.badgeColor || '#ef7c01'};`}>{card.badge}</span>
+          )}
+        </div>
+        <div class="flex-1 px-4 py-3 flex flex-col justify-center">
+          <h4 class="font-bold text-gray-800 text-sm leading-tight mb-0.5" style="font-family: 'Signika', sans-serif;">{card.title}</h4>
+          {card.subtitle && (
+            <p class="text-xs text-gray-500">{card.subtitle}</p>
+          )}
+          <span class="text-[11px] font-semibold mt-1.5 inline-flex items-center gap-1" style={`color: ${card.badgeColor || '#ef7c01'};`}>
+            Donate Now
+            <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </a>
+    ))}
+  </div>
+)}
+
+{/* Quick Form Widget — renders default form, JS swaps content on hover */}
+{widget_type === 'quick-form' && (() => {
+  const formConfig = config.defaultForm || config;
+  const btnColor = formConfig.buttonColor || config.buttonColor || menuColor;
+  const darkerColor = formConfig.buttonColorDark || btnColor;
+  const formsJSON = config.forms ? JSON.stringify(config.forms) : '';
+  return (
+  <div class="widget-quick-form" data-dynamic-forms={formsJSON}>
+    <div class="qf-card rounded-lg overflow-hidden" style={`box-shadow: 0 20px 60px ${btnColor}30, 0 4px 12px rgba(0,0,0,0.1);`} data-quick-donate data-fund-type={formConfig.fundType || config.fundType || 'donation'} data-campaign-slug={formConfig.campaignSlug || config.campaignSlug || ''} data-item-name={formConfig.itemName || config.itemName || title || config.title || 'Donation'}>
+      <div class="qf-header relative px-6 pt-6 pb-5 text-center overflow-hidden" style={`background: linear-gradient(160deg, ${btnColor} 0%, ${darkerColor} 100%);`}>
         <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10" style="background: white;"></div>
         <div class="absolute -bottom-4 -left-4 w-16 h-16 rounded-full opacity-[0.07]" style="background: white;"></div>
         <div class="relative z-10">
-          {(title || config.title) && <h4 class="text-[22px] font-extrabold text-white tracking-tight" style="font-family: 'Signika', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">{title || config.title}</h4>}
-          {config.subtitle && <p class="text-[13px] text-white/75 mt-1">{config.subtitle}</p>}
+          <h4 class="qf-title text-[22px] font-extrabold text-white tracking-tight" style="font-family: 'Signika', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">{formConfig.title || title || config.title}</h4>
+          {(formConfig.subtitle || config.subtitle) && <p class="qf-subtitle text-[13px] text-white/75 mt-1">{formConfig.subtitle || config.subtitle}</p>}
         </div>
       </div>
-
-      {/* ── Body ── */}
       <div class="bg-white px-6 pt-5 pb-6">
-        {/* Amount buttons */}
-        {config.amounts && config.amounts.length > 0 && (
-          <div class="grid grid-cols-3 gap-3 mb-5">
-            {config.amounts.slice(0, 3).map((amount: number) => {
-              const isDefault = amount === (config.defaultAmount || config.amounts[1] || config.amounts[config.amounts.length - 1]);
-              return (
-                <button
-                  class:list={[
-                    'qf-amount-btn zakat-amount-btn relative py-3.5 rounded font-bold text-[17px] transition-all duration-200 cursor-pointer border-2',
-                    isDefault
-                      ? 'text-white shadow-lg ring-2 ring-offset-1'
-                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
-                  ]}
-                  style={isDefault ? `background: ${btnColor}; border-color: ${btnColor}; color: white; --tw-ring-color: ${btnColor}44;` : ''}
-                  data-amount={amount}
-                >
-                  {isDefault && <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase tracking-[0.08em] px-2.5 py-[3px] rounded-full text-white whitespace-nowrap shadow-sm" style={`background: ${darkerColor};`}>Popular</span>}
-                  ${amount}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Custom amount */}
+        <div class="qf-amounts grid grid-cols-3 gap-3 mb-5">
+          {(formConfig.amounts || config.amounts || [25, 50, 100]).slice(0, 3).map((amount: number) => {
+            const defAmt = formConfig.defaultAmount || config.defaultAmount || (formConfig.amounts || config.amounts || [])[1];
+            const isDefault = amount === defAmt;
+            return (
+              <button
+                class={`qf-amount-btn zakat-amount-btn relative py-3.5 rounded font-bold text-[17px] transition-all duration-200 cursor-pointer border-2 ${isDefault ? 'text-white shadow-lg ring-2 ring-offset-1' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300'}`}
+                style={isDefault ? `background: ${btnColor}; border-color: ${btnColor}; color: white; --tw-ring-color: ${btnColor}44;` : ''}
+                data-amount={amount}
+              >
+                {isDefault && <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase tracking-[0.08em] px-2.5 py-[3px] rounded-full text-white whitespace-nowrap shadow-sm" style={`background: ${darkerColor};`}>Popular</span>}
+                ${amount}
+              </button>
+            );
+          })}
+        </div>
         <div class="relative mb-5">
           <div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center pointer-events-none">
             <span class="text-gray-500 text-sm font-bold">$</span>
           </div>
-          <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder={config.placeholder || 'Enter custom amount'} class="quick-donate-input w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" style={`--focus-color: ${btnColor};`} onfocus={`this.style.borderColor='${btnColor}'; this.style.boxShadow='0 0 0 3px ${btnColor}15'`} onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" />
+          <input type="text" inputmode="numeric" pattern="[0-9]*" placeholder={formConfig.placeholder || config.placeholder || 'Enter custom amount'} class="quick-donate-input w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" />
         </div>
-
-        {/* Fund Type Dropdown */}
-        {config.fundTypes && config.fundTypes.length > 0 && (
-          <div class="relative mb-4">
-            <select class="quick-donate-fund-type w-full py-3 px-4 border-2 border-gray-200 rounded bg-white text-[15px] font-semibold text-[#333] appearance-none cursor-pointer focus:outline-none transition" style={`background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center;`} onfocus={`this.style.borderColor='${btnColor}'; this.style.boxShadow='0 0 0 3px ${btnColor}15'`} onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
-              {config.fundTypes.map((ft: any) => (
-                <option value={ft.value} selected={ft.default}>{ft.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* CTA */}
         <button type="button" class="quick-donate-pay group w-full text-white font-extrabold py-4 rounded transition-all duration-200 text-base tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2.5 hover:shadow-xl hover:translate-y-[-1px] active:translate-y-[1px]" style={`background: ${btnColor}; font-family: 'Signika', sans-serif;`}>
           <svg class="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-          {config.button?.label || config.buttonText || 'Donate Now'}
+          {formConfig.button?.label || formConfig.buttonText || config.buttonText || 'Donate Now'}
           <svg class="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path></svg>
         </button>
-
-        {/* Trust row */}
-        {config.trustBadges && config.trustBadges.length > 0 && (
-          <div class="mt-5 flex items-center justify-between px-1">
-            {config.trustBadges.map((badge: any) => (
+        {(formConfig.trustBadges || config.trustBadges) && (formConfig.trustBadges || config.trustBadges).length > 0 && (
+          <div class="qf-trust mt-5 flex items-center justify-between px-1">
+            {(formConfig.trustBadges || config.trustBadges).map((badge: any) => (
               <span class="flex items-center gap-1.5 text-[11px] text-gray-500">
                 <svg class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -716,4 +757,485 @@ const isInteractive = config.interactive === true;
   .widget-link-list a.mega-link:hover {
     background-color: var(--hover-bg, #fbefdd);
   }
+
+  /* Dynamic highlight transitions */
+  .dh-card { transition: all 0.3s ease; }
+  .dh-image { transition: all 0.5s ease; }
+  .dh-title, .dh-desc, .dh-btn-text, .dh-badge { transition: opacity 0.2s ease; }
 </style>
+
+<script is:inline>
+  // Dynamic Highlight: change center card when hovering left-side links
+  document.addEventListener('DOMContentLoaded', function() {
+    var highlightWidgets = document.querySelectorAll('.widget-dynamic-highlight');
+
+    highlightWidgets.forEach(function(widget) {
+      var highlights = {};
+      try { highlights = JSON.parse(widget.dataset.highlights || '{}'); } catch(e) {}
+
+      // Find sibling link-list in the same mega menu
+      var megaMenu = widget.closest('.mega-menu-panel') || widget.closest('[class*="mega"]') || widget.parentElement?.parentElement;
+      if (!megaMenu) return;
+
+      var linkItems = megaMenu.querySelectorAll('.widget-link-list a.mega-link');
+      if (!linkItems.length) return;
+
+      var card = widget.querySelector('.dh-card');
+      var image = widget.querySelector('.dh-image');
+      var badge = widget.querySelector('.dh-badge');
+      var title = widget.querySelector('.dh-title');
+      var desc = widget.querySelector('.dh-desc');
+      var btnText = widget.querySelector('.dh-btn-text');
+
+      // Store defaults
+      var defaultHref = card?.getAttribute('href') || '/donate';
+      var defaultImage = image?.getAttribute('src') || '';
+      var defaultBadge = badge?.textContent || '';
+      var defaultTitle = title?.textContent || '';
+      var defaultDesc = desc?.textContent || '';
+      var defaultBtn = btnText?.textContent || 'Donate Now';
+
+      function updateCard(data) {
+        if (!card) return;
+        card.setAttribute('href', data.href || defaultHref);
+        if (image) image.setAttribute('src', data.image || defaultImage);
+        if (badge) badge.textContent = data.badge || defaultBadge;
+        if (title) title.textContent = data.title || defaultTitle;
+        if (desc) desc.textContent = data.description || defaultDesc;
+        if (btnText) btnText.textContent = data.buttonText || defaultBtn;
+        // Update button color
+        var btnEl = widget.querySelector('.dh-btn');
+        if (btnEl) {
+          if (data.buttonColor) {
+            btnEl.style.background = data.buttonColor;
+            btnEl.style.color = data.buttonTextColor || '#000';
+          } else {
+            btnEl.style.background = 'linear-gradient(135deg, #ef7c01, #d97706)';
+            btnEl.style.color = '#fff';
+          }
+        }
+        // Update badge color
+        if (badge && data.badgeColor) {
+          badge.style.backgroundColor = data.badgeColor;
+        } else if (badge) {
+          badge.style.backgroundColor = '';
+        }
+      }
+
+      function resetCard() {
+        updateCard({
+          href: defaultHref,
+          image: defaultImage,
+          badge: defaultBadge,
+          title: defaultTitle,
+          description: defaultDesc,
+          buttonText: defaultBtn
+        });
+      }
+
+      var currentHighlight = null;
+      var resetTimer = null;
+
+      function scheduleReset() {
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(function() {
+          // Only reset if nothing relevant is hovered
+          var hoveredLink = megaMenu.querySelector('.widget-link-list a.mega-link:hover');
+          var hoveredCard = widget.querySelector('.dh-card:hover');
+          if (!hoveredLink && !hoveredCard) {
+            currentHighlight = null;
+            resetCard();
+          }
+        }, 800);
+      }
+
+      linkItems.forEach(function(link) {
+        link.addEventListener('mouseenter', function() {
+          clearTimeout(resetTimer);
+          var href = link.getAttribute('href') || '';
+          var match = highlights[href];
+          if (!match) {
+            for (var key in highlights) {
+              if (href.includes(key) || key.includes(href)) {
+                match = highlights[key];
+                break;
+              }
+            }
+          }
+          if (match) {
+            currentHighlight = match;
+            updateCard(match);
+          }
+        });
+
+        link.addEventListener('mouseleave', function() {
+          scheduleReset();
+        });
+      });
+
+      // Keep highlight when hovering over the center card itself
+      if (card) {
+        card.addEventListener('mouseenter', function() {
+          clearTimeout(resetTimer);
+        });
+        card.addEventListener('mouseleave', function() {
+          scheduleReset();
+        });
+      }
+    });
+
+    // ─── Dynamic Quick Form Switching (full HTML replacement) ──────────────
+    var quickFormWidgets = document.querySelectorAll('.widget-quick-form[data-dynamic-forms]');
+    quickFormWidgets.forEach(function(formWidget) {
+      var formsJSON = formWidget.getAttribute('data-dynamic-forms');
+      if (!formsJSON) return;
+      var forms;
+      try { forms = JSON.parse(formsJSON); } catch(e) { return; }
+      if (!forms || Object.keys(forms).length === 0) return;
+
+      var megaMenu = formWidget.closest('.mega-menu-panel') || formWidget.closest('[class*="mega-menu"]') || formWidget.parentElement?.parentElement?.parentElement;
+      if (!megaMenu) return;
+
+      var linkItems = megaMenu.querySelectorAll('.widget-link-list a.mega-link');
+      var formResetTimer;
+      var origHTML = formWidget.innerHTML;
+      var currentKey = 'default';
+
+      function trustHTML(badges) {
+        if (!badges || !badges.length) return '';
+        return '<div class="mt-4 flex items-center justify-between px-1">' + badges.map(function(b) {
+          return '<span class="flex items-center gap-1 text-[11px] text-gray-500"><svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg><span class="font-semibold">' + (b.text || b) + '</span></span>';
+        }).join('') + '</div>';
+      }
+
+      function buildAmountForm(fc) {
+        var color = fc.buttonColor || '#d97706';
+        var darker = fc.buttonColorDark || color;
+        var amounts = fc.amounts || [25, 50, 100];
+        var defAmt = fc.defaultAmount || amounts[1] || amounts[0];
+        return '<div class="qf-card rounded-lg overflow-hidden" style="box-shadow: 0 20px 60px ' + color + '30, 0 4px 12px rgba(0,0,0,0.1);" data-quick-donate data-fund-type="' + (fc.fundType || 'donation') + '" data-campaign-slug="' + (fc.campaignSlug || '') + '" data-item-name="' + (fc.itemName || fc.title || '') + '">'
+          + '<div class="qf-header relative px-6 pt-6 pb-5 text-center overflow-hidden" style="background: linear-gradient(160deg, ' + color + ' 0%, ' + darker + ' 100%);"><div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10" style="background:white"></div><div class="relative z-10"><h4 class="qf-title text-[22px] font-extrabold text-white tracking-tight" style="font-family:Signika,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.15)">' + (fc.title || '') + '</h4>' + (fc.subtitle ? '<p class="text-[13px] text-white/75 mt-1">' + fc.subtitle + '</p>' : '') + '</div></div>'
+          + '<div class="bg-white px-6 pt-5 pb-5">'
+          + '<div class="grid grid-cols-3 gap-3 mb-5">' + amounts.slice(0,3).map(function(a) {
+              var pop = a === defAmt;
+              return '<button class="qf-amount-btn zakat-amount-btn relative py-3.5 rounded font-bold text-[17px] transition-all duration-200 cursor-pointer border-2 ' + (pop ? 'text-white shadow-lg' : 'bg-gray-50 text-gray-700 border-gray-200') + '" style="' + (pop ? 'background:' + color + ';border-color:' + color + ';color:white' : '') + '" data-amount="' + a + '">' + (pop ? '<span class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase px-2 py-[3px] rounded-full text-white shadow-sm" style="background:' + darker + '">Popular</span>' : '') + '$' + a + '</button>';
+            }).join('') + '</div>'
+          + '<div class="relative mb-5"><div class="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center pointer-events-none"><span class="text-gray-500 text-sm font-bold">$</span></div><input type="text" inputmode="numeric" placeholder="' + (fc.placeholder || 'Enter custom amount') + '" class="quick-donate-input w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded bg-white text-base font-semibold text-[#333] focus:outline-none transition placeholder:text-gray-400 placeholder:font-normal" /></div>'
+          + '<button type="button" class="quick-donate-pay group w-full text-white font-extrabold py-4 rounded transition-all text-base tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2" style="background:' + color + ';font-family:Signika,sans-serif"><svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> ' + (fc.buttonText || 'Donate Now') + ' <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg></button>'
+          + trustHTML(fc.trustBadges)
+          + '</div></div>';
+      }
+
+      function buildAqiqahForm(fc) {
+        var color = fc.buttonColor || '#d97706';
+        return '<div class="qf-card rounded-lg overflow-hidden" style="box-shadow: 0 20px 60px ' + color + '30, 0 4px 12px rgba(0,0,0,0.1);" data-quick-donate data-fund-type="aqiqah" data-campaign-slug="aqiqah" data-item-name="Aqiqah">'
+          + '<div class="qf-header relative px-6 pt-5 pb-4 text-center overflow-hidden" style="background: linear-gradient(160deg, #01534d 0%, #013d38 100%);"><div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10" style="background:white"></div><div class="relative z-10"><h4 class="text-[20px] font-extrabold text-white" style="font-family:Signika,sans-serif">Order Aqiqah</h4><p class="text-[12px] text-white/70 mt-1">Celebrate your newborn according to Sunnah</p></div></div>'
+          + '<div class="bg-white px-5 pt-4 pb-5">'
+          // Package cards - only Baby Girl and Baby Boy
+          + '<div class="grid grid-cols-2 gap-3 mb-4">'
+          + '<button class="aq-pkg-btn border-2 rounded-lg py-4 px-3 text-center cursor-pointer transition-all border-gray-200 hover:border-[#01534d]" data-pkg-id="girl" data-pkg-amount="150" data-pkg-label="Baby Girl" data-pkg-needs-name="true"><div class="text-sm font-bold text-gray-700" style="font-family:Signika,sans-serif">Baby Girl</div><div class="text-[10px] text-gray-400 mt-0.5">1 sheep</div><div class="text-xl font-bold text-[#01534d] mt-1">$150</div></button>'
+          + '<button class="aq-pkg-btn border-2 rounded-lg py-4 px-3 text-center cursor-pointer transition-all border-gray-200 hover:border-[#01534d]" data-pkg-id="boy" data-pkg-amount="300" data-pkg-label="Baby Boy" data-pkg-needs-name="true"><div class="text-sm font-bold text-gray-700" style="font-family:Signika,sans-serif">Baby Boy</div><div class="text-[10px] text-gray-400 mt-0.5">2 sheep</div><div class="text-xl font-bold text-[#01534d] mt-1">$300</div></button>'
+          + '</div>'
+          // Child name + Aqiqah For (hidden until Boy/Girl selected)
+          + '<div id="mm-aq-name-section" class="hidden">'
+          + '<div class="mb-3"><label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Child\'s Name</label><input type="text" id="mm-aq-child-name" placeholder="Enter child\'s name" class="w-full mt-1 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#01534d]" /></div>'
+          + '<div class="mb-3"><label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Aqiqah For</label><select id="mm-aq-for" class="w-full mt-1 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[#01534d]"><option value="My Child">My Child</option><option value="Myself">Myself</option><option value="Gift">Gift for Someone</option></select></div>'
+          + '</div>'
+          // Sadaqah upsell (soft green box)
+          + '<div class="mb-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-3">'
+          + '<label class="flex items-center gap-2 cursor-pointer">'
+          + '<input type="checkbox" id="mm-aq-sadaqah" class="w-4 h-4 rounded border-gray-300 text-[#16a34a] focus:ring-[#16a34a]" />'
+          + '<div><span class="text-sm font-semibold text-gray-700">Add Sadaqah</span> <span class="text-sm font-bold text-[#d97706]">+$50</span><div class="text-[10px] text-gray-500 mt-0.5">The Prophet encouraged giving Sadaqah on the day of Aqiqah. Adding a small charity brings blessings and protection.</div></div>'
+          + '</label></div>'
+          // Submit
+          + '<button type="button" class="mm-aq-submit group w-full text-black font-extrabold py-3.5 rounded-lg transition-all text-sm tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2" style="background:#FDC700;font-family:Signika,sans-serif">COMPLETE AQIQAH <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg></button>'
+          + trustHTML(fc.trustBadges || [{ text: 'Shariah Compliant' }, { text: 'Certificate Included' }, { text: '24hr Delivery' }])
+          + '</div></div>';
+      }
+
+      function buildQurbaniForm(fc) {
+        var color = fc.buttonColor || '#17401c';
+        var darker = fc.buttonColorDark || '#0f2d12';
+        var countries = fc.countries || [];
+        return '<div class="qf-card rounded-lg overflow-hidden" style="box-shadow: 0 20px 60px ' + color + '30, 0 4px 12px rgba(0,0,0,0.1);" data-quick-donate data-fund-type="qurbani" data-campaign-slug="qurbani" data-item-name="Qurbani">'
+          + '<div class="qf-header relative px-6 pt-5 pb-4 text-center overflow-hidden" style="background: linear-gradient(160deg, ' + color + ' 0%, ' + darker + ' 100%);"><div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10" style="background:white"></div><div class="relative z-10"><h4 class="text-[20px] font-extrabold text-white" style="font-family:Signika,sans-serif">Give Qurbani</h4><p class="text-[12px] text-white/70 mt-1">Fresh meat distributed to families in need</p></div></div>'
+          + '<div class="bg-white px-5 pt-4 pb-5">'
+          // Two quick-select columns
+          + '<div class="grid grid-cols-2 gap-3 mb-4">'
+          + '<button class="mm-qb-quick border-2 border-[' + color + '] bg-[' + color + ']/5 rounded-lg py-3 px-2 text-center cursor-pointer transition-all" data-quick-price="75" data-quick-name="Where Most Needed"><div class="text-[11px] font-bold text-gray-600 uppercase tracking-wider">Where Most Needed</div><div class="text-xl font-bold text-[' + color + '] mt-1" style="font-family:Signika,sans-serif">$75</div></button>'
+          + '<button class="mm-qb-quick border-2 border-gray-200 rounded-lg py-3 px-2 text-center cursor-pointer transition-all hover:border-[' + color + ']" data-quick-price="50" data-quick-name="Lowest Price"><div class="text-[11px] font-bold text-gray-600 uppercase tracking-wider">Lowest Price</div><div class="text-xl font-bold text-[' + color + '] mt-1" style="font-family:Signika,sans-serif">$50</div></button>'
+          + '</div>'
+          // Divider
+          + '<div class="flex items-center gap-3 mb-3"><div class="flex-1 h-px bg-gray-200"></div><span class="text-[10px] font-bold text-gray-400 uppercase">or choose a country</span><div class="flex-1 h-px bg-gray-200"></div></div>'
+          // Country dropdown
+          + '<div class="mb-3"><select id="mm-qb-country" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[' + color + '] font-semibold"><option value="" data-price="0">Select a country...</option>'
+          + countries.filter(function(c) { return c.id !== 'where-most-needed'; }).map(function(c) { return '<option value="' + c.id + '" data-price="' + c.price + '">' + c.name + ' - $' + c.price + '</option>'; }).join('')
+          + '</select></div>'
+          // Quantity
+          + '<div class="mb-3"><div class="flex items-center justify-between"><label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Quantity</label><div class="flex items-center gap-2"><button class="mm-qb-minus w-8 h-8 border border-gray-200 rounded-md flex items-center justify-center text-lg font-bold text-gray-500 hover:border-gray-400 cursor-pointer">-</button><span id="mm-qb-qty" class="text-lg font-bold text-gray-800 w-6 text-center">1</span><button class="mm-qb-plus w-8 h-8 border border-gray-200 rounded-md flex items-center justify-center text-lg font-bold text-gray-500 hover:border-gray-400 cursor-pointer">+</button></div></div></div>'
+          // Total
+          + '<div class="bg-gray-50 rounded-lg p-3 mb-4 flex items-center justify-between"><span class="text-sm text-gray-600">Total:</span><span id="mm-qb-total" class="text-xl font-bold text-[' + color + ']" style="font-family:Signika,sans-serif">$75</span></div>'
+          // Submit
+          + '<button type="button" class="mm-qb-submit group w-full text-white font-extrabold py-3.5 rounded-lg transition-all text-sm tracking-wide cursor-pointer border-none shadow-lg flex items-center justify-center gap-2" style="background:' + color + ';font-family:Signika,sans-serif">GIVE QURBANI <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg></button>'
+          + trustHTML(fc.trustBadges || [{ text: '15+ Countries' }, { text: 'Tax Deductible' }, { text: 'Fresh Meat' }])
+          + '</div></div>';
+      }
+
+      function bindQurbaniEvents() {
+        var countrySelect = document.getElementById('mm-qb-country');
+        var qtyEl = document.getElementById('mm-qb-qty');
+        var totalEl = document.getElementById('mm-qb-total');
+        var quickBtns = formWidget.querySelectorAll('.mm-qb-quick');
+        var qty = 1;
+        var selectedPrice = 75;
+        var selectedName = 'Where Most Needed';
+        var selectedId = 'where-most-needed';
+        var useQuick = true;
+
+        function updateTotal() {
+          var total = selectedPrice * qty;
+          if (totalEl) totalEl.textContent = '$' + total.toLocaleString();
+        }
+
+        // Quick select buttons (Where Most Needed / Lowest Price)
+        quickBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            useQuick = true;
+            selectedPrice = parseInt(btn.dataset.quickPrice || '75');
+            selectedName = btn.dataset.quickName || 'Where Most Needed';
+            selectedId = selectedName === 'Lowest Price' ? 'lowest-price' : 'where-most-needed';
+            // Reset country dropdown
+            if (countrySelect) countrySelect.selectedIndex = 0;
+            // Update button styles
+            quickBtns.forEach(function(b) { b.classList.remove('border-[#17401c]', 'bg-[#17401c]/5'); b.classList.add('border-gray-200'); });
+            btn.classList.add('border-[#17401c]', 'bg-[#17401c]/5'); btn.classList.remove('border-gray-200');
+            updateTotal();
+          });
+        });
+
+        // Country dropdown
+        if (countrySelect) {
+          countrySelect.addEventListener('change', function() {
+            var opt = countrySelect.options[countrySelect.selectedIndex];
+            var price = parseInt(opt?.dataset?.price || '0');
+            if (price > 0) {
+              useQuick = false;
+              selectedPrice = price;
+              selectedName = opt.textContent?.split(' - ')[0] || '';
+              selectedId = opt.value || '';
+              // Deselect quick buttons
+              quickBtns.forEach(function(b) { b.classList.remove('border-[#17401c]', 'bg-[#17401c]/5'); b.classList.add('border-gray-200'); });
+              updateTotal();
+            }
+          });
+        }
+
+        // Quantity +/-
+        var minusBtn = formWidget.querySelector('.mm-qb-minus');
+        var plusBtn = formWidget.querySelector('.mm-qb-plus');
+        if (minusBtn) minusBtn.addEventListener('click', function() { if (qty > 1) { qty--; if (qtyEl) qtyEl.textContent = qty; updateTotal(); } });
+        if (plusBtn) plusBtn.addEventListener('click', function() { if (qty < 20) { qty++; if (qtyEl) qtyEl.textContent = qty; updateTotal(); } });
+
+        // Submit
+        var submitBtn = formWidget.querySelector('.mm-qb-submit');
+        if (submitBtn) {
+          submitBtn.addEventListener('click', function() {
+            var total = selectedPrice * qty;
+            if (typeof window.addToCart === 'function') {
+              window.addToCart({
+                id: 'qurbani-' + selectedId + '-' + qty + '-' + Date.now(),
+                name: 'Qurbani - ' + selectedName + (qty > 1 ? ' x' + qty : ''),
+                amount: total,
+                quantity: 1,
+                type: 'single',
+                campaign: 'qurbani',
+                description: qty + ' Qurbani in ' + selectedName + ' ($' + selectedPrice + ' each)',
+                sourceLocation: 'mega-menu-qurbani'
+              });
+            }
+          });
+        }
+      }
+
+      function renderForm(key, fc) {
+        if (key === currentKey) return;
+        currentKey = key;
+        if (fc.formType === 'aqiqah') {
+          formWidget.innerHTML = buildAqiqahForm(fc);
+          bindAqiqahEvents();
+        } else if (fc.formType === 'qurbani') {
+          formWidget.innerHTML = buildQurbaniForm(fc);
+          bindQurbaniEvents();
+        } else {
+          formWidget.innerHTML = buildAmountForm(fc);
+        }
+        bindQuickDonateEvents(formWidget);
+      }
+
+      function bindAqiqahEvents() {
+        var selectedPkg = { id: '', amount: 0, label: '' };
+        var pkgBtns = formWidget.querySelectorAll('.aq-pkg-btn');
+        var nameSection = document.getElementById('mm-aq-name-section');
+        pkgBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            selectedPkg = { id: btn.dataset.pkgId, amount: parseInt(btn.dataset.pkgAmount), label: btn.dataset.pkgLabel };
+            pkgBtns.forEach(function(b) { b.classList.remove('border-[#01534d]', 'bg-[#01534d]/5'); b.classList.add('border-gray-200'); });
+            btn.classList.add('border-[#01534d]', 'bg-[#01534d]/5'); btn.classList.remove('border-gray-200');
+            // Show/hide name section based on package type
+            if (nameSection) {
+              if (btn.dataset.pkgNeedsName === 'true') {
+                nameSection.classList.remove('hidden');
+              } else {
+                nameSection.classList.add('hidden');
+              }
+            }
+          });
+        });
+        var submitBtn = formWidget.querySelector('.mm-aq-submit');
+        if (submitBtn) {
+          submitBtn.addEventListener('click', function() {
+            if (!selectedPkg.id) { alert('Please select Baby Girl or Baby Boy'); return; }
+            var childName = (document.getElementById('mm-aq-child-name') || {}).value || '';
+            var aqFor = (document.getElementById('mm-aq-for') || {}).value || 'My Child';
+            var sadaqahChecked = (document.getElementById('mm-aq-sadaqah') || {}).checked || false;
+            if (typeof window.addToCart === 'function') {
+              // Add main Aqiqah package
+              window.addToCart({
+                id: 'aqiqah-' + selectedPkg.id + '-' + Date.now(),
+                name: selectedPkg.label + ' Aqiqah' + (childName ? ' for ' + childName : ''),
+                amount: selectedPkg.amount,
+                quantity: 1,
+                type: 'single',
+                campaign: 'aqiqah',
+                label: 'Aqiqah (' + selectedPkg.label + ')',
+                metadata: { childName: childName, aqiqahFor: aqFor, packageType: selectedPkg.id },
+                sourceLocation: 'mega-menu-aqiqah'
+              });
+              // Add Sadaqah if checked
+              if (sadaqahChecked) {
+                window.addToCart({
+                  id: 'aqiqah-sadaqah-' + Date.now(),
+                  name: 'Sadaqah Aqiqah' + (childName ? ' for ' + childName : ''),
+                  amount: 50,
+                  quantity: 1,
+                  type: 'single',
+                  campaign: 'aqiqah',
+                  label: 'Sadaqah (Aqiqah)',
+                  metadata: { childName: childName, aqiqahFor: aqFor, packageType: 'sadaqah' },
+                  sourceLocation: 'mega-menu-aqiqah'
+                });
+              }
+            }
+          });
+        }
+      }
+
+      function bindQuickDonateEvents(widget) {
+        // Re-init the quick donate handlers for the new form
+        var qd = widget.querySelector('[data-quick-donate]');
+        if (!qd) return;
+        var amountBtns = qd.querySelectorAll('.qf-amount-btn, .zakat-amount-btn');
+        var customInput = qd.querySelector('.quick-donate-input');
+        var payBtn = qd.querySelector('.quick-donate-pay');
+        var selectedAmount = 0;
+        var btnColor = payBtn?.style?.background?.match(/#[0-9a-fA-F]{6}/)?.[0] || '#d97706';
+
+        amountBtns.forEach(function(b) { if (b.classList.contains('text-white')) selectedAmount = parseInt(b.dataset.amount); });
+        if (!selectedAmount && amountBtns.length) selectedAmount = parseInt(amountBtns[0].dataset.amount);
+
+        amountBtns.forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            selectedAmount = parseInt(btn.dataset.amount);
+            amountBtns.forEach(function(b) {
+              b.style.background = 'white'; b.style.borderColor = '#e5e7eb'; b.style.color = '#374151';
+              b.classList.remove('text-white', 'shadow-lg');
+              var badge = b.querySelector('span.absolute'); if (badge) badge.style.display = 'none';
+            });
+            btn.style.background = 'linear-gradient(135deg, ' + btnColor + ', ' + btnColor + 'dd)';
+            btn.style.borderColor = btnColor; btn.style.color = 'white';
+            btn.classList.add('text-white', 'shadow-lg');
+            var badge = btn.querySelector('span.absolute'); if (badge) badge.style.display = '';
+            if (customInput) customInput.value = '';
+          });
+        });
+
+        if (customInput) {
+          customInput.addEventListener('input', function() {
+            var val = parseInt(customInput.value);
+            if (val > 0) {
+              selectedAmount = val;
+              amountBtns.forEach(function(b) {
+                b.style.background = 'white'; b.style.borderColor = '#e5e7eb'; b.style.color = '#374151';
+                b.classList.remove('text-white', 'shadow-lg');
+              });
+            }
+          });
+        }
+
+        if (payBtn) {
+          payBtn.addEventListener('click', function() {
+            if (selectedAmount <= 0) return;
+            var fundType = qd.dataset.fundType || 'donation';
+            var slug = qd.dataset.campaignSlug || '';
+            var itemName = qd.dataset.itemName || 'Donation';
+            if (typeof window.addToCart === 'function') {
+              window.addToCart({
+                id: fundType + '-' + selectedAmount + '-' + Date.now(),
+                name: itemName,
+                amount: selectedAmount,
+                quantity: 1,
+                type: 'single',
+                campaign: slug,
+                sourceLocation: 'mega-menu-' + fundType
+              });
+            }
+          });
+        }
+      }
+
+      function resetToDefault() {
+        if (currentKey === 'default') return;
+        currentKey = 'default';
+        formWidget.innerHTML = origHTML;
+        bindQuickDonateEvents(formWidget);
+      }
+
+      function scheduleFormReset() {
+        formResetTimer = setTimeout(resetToDefault, 1000);
+      }
+
+      function cancelFormReset() {
+        clearTimeout(formResetTimer);
+      }
+
+      linkItems.forEach(function(link) {
+        link.addEventListener('mouseenter', function() {
+          cancelFormReset();
+          var href = link.getAttribute('href') || '';
+          var match = forms[href];
+          if (!match) {
+            for (var key in forms) {
+              if (href.includes(key) || key.includes(href)) { match = forms[key]; break; }
+            }
+          }
+          if (match) renderForm(href, match);
+        });
+        link.addEventListener('mouseleave', function() { scheduleFormReset(); });
+      });
+
+      // Keep form alive when hovering over the donation box itself
+      formWidget.addEventListener('mouseenter', function() { cancelFormReset(); });
+      formWidget.addEventListener('mouseleave', function() { scheduleFormReset(); });
+
+      // Also keep alive when hovering over the center card or anywhere in the mega menu panel
+      var centerWidget = megaMenu.querySelector('.widget-dynamic-highlight');
+      if (centerWidget) {
+        centerWidget.addEventListener('mouseenter', function() { cancelFormReset(); });
+        centerWidget.addEventListener('mouseleave', function() { scheduleFormReset(); });
+      }
+
+      // Keep alive when mouse is anywhere in the mega menu panel
+      megaMenu.addEventListener('mouseleave', function() { scheduleFormReset(); })
+    });
+  });
+</script>

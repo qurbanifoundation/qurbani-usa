@@ -305,7 +305,14 @@ export const POST: APIRoute = async ({ request }) => {
       subscriptionParams.proration_behavior = 'none';
     }
 
-    const subscription = await stripe.subscriptions.create(subscriptionParams);
+    // Generate idempotency key to prevent duplicate subscriptions on retry
+    // Based on customer + amount + interval — same customer retrying same subscription = same key
+    // 5-minute window: same customer + amount + interval within 5 min = same idempotency key
+    const idempotencyKey = `sub_${customerId}_${Math.round(subscriptionAmount * 100)}_${interval}_${Math.floor(Date.now() / 300000)}`;
+
+    const subscription = await stripe.subscriptions.create(subscriptionParams, {
+      idempotencyKey,
+    });
 
     // Get payment info from first invoice — with null safety
     // For weekly subs with billing_cycle_anchor + no proration, invoice may be null/$0

@@ -14,7 +14,15 @@ import OrphanSponsorshipTemplate from '../../templates/OrphanSponsorshipTemplate
 import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTemplate.astro';
 import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
 import ZakatCalculatorTemplate from '../../templates/ZakatCalculatorTemplate.astro';
+import ZakatHubTemplate from '../../templates/ZakatHubTemplate.astro';
+import ZakatAlFitrTemplate from '../../templates/ZakatAlFitrTemplate.astro';
+import ZakatAlFitrHeroTemplate from '../../templates/ZakatAlFitrHeroTemplate.astro';
 import FoodAidTemplate from '../../templates/FoodAidTemplate.astro';
+import EidGiftsTemplate from '../../templates/EidGiftsTemplate.astro';
+import SadaqahSacrificeTemplate from '../../templates/SadaqahSacrificeTemplate.astro';
+import SadaqahTemplate from '../../templates/SadaqahTemplate.astro';
+import SadaqahJariyahTemplate from '../../templates/SadaqahJariyahTemplate.astro';
+import QurbaniTemplate from '../../templates/QurbaniTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -46,20 +54,24 @@ try {
   // url_path lookup failed
 }
 
-// If not found by url_path, try by slug + category as fallback
+// If not found by url_path, try by slug alone as fallback
 if (!campaign) {
   try {
     const { data } = await supabaseAdmin
       .from('campaigns')
       .select('*')
       .eq('slug', slug)
-      .eq('category', category)
       .eq('is_active', true)
       .single();
     campaign = data;
   } catch (e2) {
     // Not in campaigns table — will check campaign_pages below
   }
+}
+
+// If campaign found but its url_path doesn't match current URL, return 404
+if (campaign && campaign.url_path && campaign.url_path !== urlPath) {
+  campaign = null;
 }
 
 // If no campaign found, check campaign_pages table
@@ -136,6 +148,33 @@ try {
   console.error('Error fetching site settings:', e);
 }
 
+// Transform database fields to match template props (same as appeals/[slug].astro)
+const campaignProps = {
+  id: campaign.id,
+  title: campaign.name || campaign.title,
+  hero_title: campaign.hero_title || '',
+  hero_title_accent: campaign.hero_title_accent || '',
+  subtitle: campaign.subtitle || campaign.description,
+  subtitle2: campaign.subtitle2 || '',
+  slug: campaign.slug,
+  featured_image: campaign.featured_image || campaign.hero_image_url || campaign.image_url,
+  description: campaign.long_description || campaign.description,
+  meta_title: campaign.meta_title,
+  meta_description: campaign.meta_description,
+  content_sections: campaign.content_sections || [],
+  donation_options: campaign.donation_options || [],
+  gallery_images: campaign.gallery_images || [],
+  goal_amount: campaign.goal_amount,
+  raised_amount: campaign.raised_amount,
+  country: campaign.country,
+  category: campaign.category,
+  is_zakat_eligible: campaign.is_zakat_eligible,
+  impact_stats: campaign.impact_stats || [],
+  template_config: campaign.template_config || {},
+  hero_image_position: campaign.hero_image_position || 'center center',
+  hero_image_position_mobile: campaign.hero_image_position_mobile || 'center center',
+};
+
 // Determine which template to use — page_template is set directly on each campaign in the database
 const templateKey = campaign.page_template || siteSettings?.default_campaign_page_template || 'green-with-yellow';
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
@@ -149,10 +188,18 @@ const templateMap: Record<string, any> = {
   'tile-stack-sponsorship': TileStackSponsorshipTemplate,
   'aqiqah': AqiqahTemplate,
   'zakat-calculator': ZakatCalculatorTemplate,
+  'zakat-hub': ZakatHubTemplate,
+  'zakat-al-fitr': ZakatAlFitrTemplate,
+  'zakat-al-fitr-hero': ZakatAlFitrHeroTemplate,
   'food-aid': FoodAidTemplate,
+  'eid-gifts': EidGiftsTemplate,
+  'sadaqah-sacrifice': SadaqahSacrificeTemplate,
+  'sadaqah-template': SadaqahTemplate,
+  'sadaqah-jariyah': SadaqahJariyahTemplate,
+  'qurbani-template': QurbaniTemplate,
 };
 
 const TemplateComponent = templateMap[templateKey] || GreenWithYellowTemplate;
 ---
 
-<TemplateComponent campaign={campaign} donationBoxTemplate={donationBoxTemplate} />
+<TemplateComponent campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />

@@ -1,0 +1,106 @@
+---
+/**
+ * Zakat al-Fitr Page
+ * Campaign-driven page that fetches data from DB and renders via ZakatAlFitrTemplate.
+ * Falls back to template defaults if no campaign record exists.
+ */
+import ZakatAlFitrTemplate from '../templates/ZakatAlFitrTemplate.astro';
+import ZakatAlFitrHeroTemplate from '../templates/ZakatAlFitrHeroTemplate.astro';
+import { supabaseAdmin } from '../lib/supabase';
+
+export const prerender = false;
+
+const SLUG = 'zakat-al-fitr';
+
+// Fetch campaign by slug — try new slug first, fall back to old slug
+let campaign: any = null;
+let siteSettings: any = null;
+
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('slug', SLUG)
+    .eq('is_active', true)
+    .single();
+  campaign = data;
+} catch (e) {
+  // Try old slug as fallback
+  try {
+    const { data } = await supabaseAdmin
+      .from('campaigns')
+      .select('*')
+      .eq('slug', 'zakat-ul-fitr')
+      .eq('is_active', true)
+      .single();
+    campaign = data;
+  } catch (e2) {
+    console.error('Zakat al-Fitr campaign not found, using template defaults');
+  }
+}
+
+// Fetch site settings for default templates
+try {
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('default_campaign_page_template, default_donation_box_template')
+    .limit(1);
+
+  if (!error && data && data.length > 0) {
+    siteSettings = data[0];
+  }
+} catch (e) {
+  console.error('Error fetching site settings:', e);
+}
+
+// Transform database fields to match template props (or provide empty defaults)
+const campaignProps = campaign ? {
+  id: campaign.id,
+  title: campaign.name || campaign.title || 'Zakat al-Fitr (Fitrana)',
+  hero_title: campaign.hero_title || '',
+  hero_title_accent: campaign.hero_title_accent || '',
+  subtitle: campaign.subtitle || campaign.description || '',
+  subtitle2: campaign.subtitle2 || '',
+  slug: campaign.slug,
+  featured_image: campaign.featured_image || campaign.hero_image_url || campaign.image_url,
+  description: campaign.long_description || campaign.description,
+  meta_title: campaign.meta_title,
+  meta_description: campaign.meta_description,
+  content_sections: campaign.content_sections || [],
+  donation_options: campaign.donation_options || [],
+  gallery_images: campaign.gallery_images || [],
+  goal_amount: campaign.goal_amount,
+  raised_amount: campaign.raised_amount,
+  country: campaign.country,
+  category: campaign.category,
+  is_zakat_eligible: campaign.is_zakat_eligible,
+  impact_stats: campaign.impact_stats || [],
+  template_config: campaign.template_config || {},
+  hero_image_position: campaign.hero_image_position || 'center center',
+  hero_image_position_mobile: campaign.hero_image_position_mobile || 'center center',
+} : {
+  id: 'default',
+  title: 'Zakat al-Fitr (Fitrana)',
+  hero_title: '',
+  hero_title_accent: '',
+  subtitle: '',
+  subtitle2: '',
+  slug: SLUG,
+  featured_image: '',
+  description: '',
+  content_sections: [],
+  donation_options: [],
+  gallery_images: [],
+  template_config: {},
+  hero_image_position: 'center center',
+  hero_image_position_mobile: 'center center',
+};
+
+const donationBoxTemplate = campaign?.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
+---
+
+{(campaign?.page_template === 'zakat-al-fitr-hero') ? (
+  <ZakatAlFitrHeroTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : (
+  <ZakatAlFitrTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+)}

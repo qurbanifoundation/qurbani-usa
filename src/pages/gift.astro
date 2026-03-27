@@ -1,0 +1,55 @@
+---
+/**
+ * Eid Gifts Page
+ * Campaign-driven gifts catalog page for Eid celebrations.
+ * Uses EidGiftsTemplate to display charitable gift items.
+ */
+import EidGiftsTemplate from '../templates/EidGiftsTemplate.astro';
+import { supabaseAdmin } from '../lib/supabase';
+
+export const prerender = false;
+
+const SLUG = 'eid-gifts';
+
+// Fetch campaign by slug
+let campaign: any = null;
+
+try {
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('*')
+    .eq('slug', SLUG)
+    .eq('is_active', true)
+    .single();
+  campaign = data;
+} catch (e) {
+  console.error('Eid Gifts campaign not found, using template defaults');
+}
+
+// Build campaign props
+const campaignProps = campaign ? {
+  id: campaign.id,
+  name: campaign.name || 'Eid Gifts',
+  slug: campaign.slug || SLUG,
+  title: campaign.title || campaign.name || 'Eid Gifts',
+  description: campaign.description || '',
+  featured_image: campaign.featured_image || '/images/qurbani-foundation-eid-gift.webp',
+  template_config: campaign.template_config || {},
+  content_sections: campaign.content_sections || [],
+  donation_options: campaign.donation_options || [],
+} : {
+  id: 'default',
+  name: 'Eid Gifts',
+  slug: SLUG,
+  title: 'Eid Gifts',
+  description: '',
+  featured_image: '/images/qurbani-foundation-eid-gift.webp',
+  template_config: {},
+  content_sections: [],
+  donation_options: [],
+};
+
+const donationBoxTemplate = campaign?.donation_box_template || 'none';
+---
+
+<EidGiftsTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />

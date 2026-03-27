@@ -1232,7 +1232,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
                 const visClass = vis === 'mobile' ? 'flex md:hidden' : vis === 'desktop' ? 'hidden md:flex' : 'flex';
                 return (
                 <label class={`${visClass} items-center gap-3 p-3 bg-gray-50 rounded cursor-pointer hover:bg-amber-50 transition border border-transparent hover:border-amber-200`}>
-                  <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} />
+                  <input type="checkbox" class="gg-upsell-checkbox w-4 h-4 text-[#d97706] rounded-sm focus:ring-[#d97706]" data-upsell-id={upsell.id} data-upsell-title={upsell.title} data-upsell-amount={upsell.amount} data-upsell-type={upsell.type || 'single'} data-upsell-cart-label={upsell.cart_label || ''} />
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-gray-800">{upsell.title}</p>
                     {upsell.description && <p class="text-xs text-gray-500">{upsell.description}</p>}
@@ -3785,13 +3785,14 @@ document.querySelectorAll('#gg-checkout .gg-upsell-checkbox').forEach(function(c
   checkbox.addEventListener('change', function() {
     var upsellId = this.dataset.upsellId;
     var upsellTitle = this.dataset.upsellTitle;
+    var upsellCartLabel = this.dataset.upsellCartLabel || '';
     var upsellAmount = parseFloat(this.dataset.upsellAmount) || 0;
     var upsellType = this.dataset.upsellType || 'single';
     if (this.checked) {
       // Remove ALL existing items with same ID first, then add once
       window.donationCart.items = window.donationCart.items.filter(function(i) { return i.id !== upsellId; });
       window.donationCart.items.push({
-        id: upsellId, name: upsellTitle, amount: upsellAmount, type: upsellType,
+        id: upsellId, name: upsellCartLabel || upsellTitle, amount: upsellAmount, type: upsellType,
         quantity: 1, isUpsell: true, originalType: upsellType,
         recurringInterval: (upsellType === 'monthly' || upsellType === 'weekly') ? upsellType : undefined
       });

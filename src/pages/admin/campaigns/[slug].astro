@@ -48,20 +48,54 @@ try {
   categories = data || [];
 } catch (e) {}
 
-// Fetch media for image selection
+// Fetch media for image selection (from both Supabase Storage + campaign images)
 let mediaFiles: any[] = [];
 try {
-  const { data } = await supabaseAdmin.storage.from('media').list('', { limit: 100 });
-  if (data) {
-    const { data: { publicUrl } } = supabaseAdmin.storage.from('media').getPublicUrl('');
-    mediaFiles = data
-      .filter(file => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-      .map(file => ({
-        name: file.name,
-        url: `${publicUrl}${file.name}`
-      }));
+  // 1. Supabase Storage files
+  try {
+    const { data: storageData } = await supabaseAdmin.storage.from('media').list('', { limit: 200 });
+    if (storageData) {
+      const { data: { publicUrl: baseUrl } } = supabaseAdmin.storage.from('media').getPublicUrl('');
+      for (const file of storageData) {
+        if (file.name && file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          mediaFiles.push({ name: file.name, url: `${baseUrl}${file.name}` });
+        }
+      }
+    }
+  } catch (storageErr) {
+    console.error('Storage list error:', storageErr);
   }
-} catch (e) {}
+
+  // 2. Static images from campaigns (featured_image + donation_options)
+  try {
+    const { data: allCampaignsMedia } = await supabaseAdmin
+      .from('campaigns')
+      .select('featured_image, donation_options')
+      .eq('is_active', true);
+
+    const seenUrls = new Set(mediaFiles.map((f: any) => f.url));
+    if (allCampaignsMedia) {
+      for (const c of allCampaignsMedia) {
+        if (c.featured_image && c.featured_image.startsWith('/images/') && !seenUrls.has(c.featured_image)) {
+          seenUrls.add(c.featured_image);
+          mediaFiles.push({ name: c.featured_image.replace('/images/', ''), url: c.featured_image });
+        }
+        if (Array.isArray(c.donation_options)) {
+          for (const opt of c.donation_options) {
+            if (opt.image && opt.image.startsWith('/images/') && !seenUrls.has(opt.image)) {
+              seenUrls.add(opt.image);
+              mediaFiles.push({ name: opt.image.replace('/images/', ''), url: opt.image });
+            }
+          }
+        }
+      }
+    }
+  } catch (campaignErr) {
+    console.error('Campaign media scan error:', campaignErr);
+  }
+} catch (e) {
+  console.error('Media fetch error:', e);
+}
 
 // Parse existing URL to detect category prefix
 const existingUrlPath = campaign?.url_path || '';
@@ -231,9 +265,101 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
               </button>
             </div>
             <div id="featuredImagePreview" class={(campaign.featured_image || campaign.hero_image_url || campaign.image_url) ? 'mb-4' : 'hidden mb-4'}>
-              <img id="featuredImg" src={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} alt="" class="w-full max-h-48 object-cover rounded-lg" />
+              <img id="featuredImg" src={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} alt="" class="w-full max-h-48 object-cover rounded-lg cursor-pointer" style={`object-position: ${campaign.hero_image_position || 'center center'}`} onclick="openImagePositioner()" title="Click to adjust image position" />
+              <p class="text-xs text-gray-400 mt-1 text-center">Click image to adjust position</p>
             </div>
             <input type="hidden" name="featured_image" id="featured_image" value={campaign.featured_image || campaign.hero_image_url || campaign.image_url || ''} />
+            <input type="hidden" name="hero_image_position" id="hero_image_position" value={campaign.hero_image_position || 'center center'} />
+            <input type="hidden" name="hero_image_position_mobile" id="hero_image_position_mobile" value={campaign.hero_image_position_mobile || 'center center'} />
+
+            <!-- Image Position Adjuster Modal -->
+            <div id="imagePositionerModal" class="hidden fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4">
+              <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden">
+                <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                  <h3 class="font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Adjust Hero Image Position</h3>
+                  <button type="button" onclick="closeImagePositioner()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+
+                <!-- Device Toggle -->
+                <div class="flex items-center gap-2 px-4 pt-3 pb-1">
+                  <button type="button" id="posDeviceDesktop" onclick="setPositionDevice('desktop')" class="pos-device-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-[#01534d] text-white transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Desktop
+                  </button>
+                  <button type="button" id="posDeviceMobile" onclick="setPositionDevice('mobile')" class="pos-device-btn inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    Mobile
+                  </button>
+                  <span id="posDeviceLabel" class="text-xs text-gray-400 ml-2">Adjusting desktop position</span>
+                </div>
+
+                <!-- Hero Preview -->
+                <div id="positionerPreviewContainer" class="relative mx-4 mb-2 rounded-lg overflow-hidden" style="height: 300px; background: #1a3040;">
+                  <img id="positionerImg" src="" alt="" class="w-full h-full object-cover" style="object-position: center center;" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+                  <div class="absolute bottom-6 left-6 text-white pointer-events-none">
+                    <p class="text-sm opacity-70">Preview: Hero Section</p>
+                    <h2 class="text-2xl font-bold" style="font-family: 'Signika', sans-serif;">Campaign Title</h2>
+                  </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <p class="text-sm text-gray-600">Use arrows or click presets to position the focal point of your image.</p>
+                    <span id="positionValue" class="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-600 font-mono">center center</span>
+                  </div>
+
+                  <!-- Arrow Controls -->
+                  <div class="flex items-center gap-6">
+                    <!-- Direction Pad -->
+                    <div class="flex flex-col items-center gap-1">
+                      <button type="button" onclick="nudgePosition(0, -5)" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition" title="Move Up">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                      </button>
+                      <div class="flex gap-1">
+                        <button type="button" onclick="nudgePosition(-5, 0)" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition" title="Move Left">
+                          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button type="button" onclick="resetPosition()" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-xs font-bold text-gray-500" title="Reset to Center">
+                          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        </button>
+                        <button type="button" onclick="nudgePosition(5, 0)" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition" title="Move Right">
+                          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                      </div>
+                      <button type="button" onclick="nudgePosition(0, 5)" class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition" title="Move Down">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </button>
+                    </div>
+
+                    <!-- Quick Presets -->
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Quick Presets</p>
+                      <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="setPosition('left top')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Top Left</button>
+                        <button type="button" onclick="setPosition('center top')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Top Center</button>
+                        <button type="button" onclick="setPosition('right top')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Top Right</button>
+                        <button type="button" onclick="setPosition('left center')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Center Left</button>
+                        <button type="button" onclick="setPosition('center center')" class="px-3 py-2 text-xs bg-[#01534d]/10 hover:bg-[#01534d]/20 border border-[#01534d]/30 rounded-lg transition text-[#01534d] font-medium">Center</button>
+                        <button type="button" onclick="setPosition('right center')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Center Right</button>
+                        <button type="button" onclick="setPosition('left bottom')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Bottom Left</button>
+                        <button type="button" onclick="setPosition('center bottom')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Bottom Center</button>
+                        <button type="button" onclick="setPosition('right bottom')" class="px-3 py-2 text-xs bg-gray-50 hover:bg-[#01534d]/10 border border-gray-200 rounded-lg transition text-gray-600 hover:text-[#01534d]">Bottom Right</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Save -->
+                  <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="closeImagePositioner()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition">Cancel</button>
+                    <button type="button" onclick="applyPosition()" class="px-6 py-2 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#013d38] transition">Apply Position</button>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="flex gap-3 flex-wrap">
               <button type="button" onclick="openMediaModal('featured')" class="px-4 py-2 bg-[#01534d] text-white rounded-lg text-sm hover:bg-[#01433f]">Choose from Gallery</button>
               <input type="url" id="featuredImageUrl" placeholder="Or paste image URL" class="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
@@ -538,9 +664,27 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
           </button>
           <div class="admin-collapse-body hidden px-6 pb-6 space-y-6">
 
+            <!-- Auto-Generate Button -->
+            <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-[#01534d]/5 to-transparent border border-[#01534d]/20 rounded-lg">
+              <div class="flex-1">
+                <p class="text-sm font-medium text-gray-700">Auto-generate content based on campaign title, category, and donation options.</p>
+                <p class="text-xs text-gray-400 mt-0.5">This will fill in empty fields only — existing content won't be overwritten.</p>
+              </div>
+              <button type="button" id="fetchContentBtn" onclick="fetchPageContent()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#01534d] text-white rounded-lg text-sm font-medium hover:bg-[#013d38] transition flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Generate Content
+              </button>
+            </div>
+
             <!-- The Crisis -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">The Crisis</h3>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-gray-700">The Crisis</h3>
+                <button type="button" onclick="fetchPageContent('theCrisis')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  Generate
+                </button>
+              </div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -556,7 +700,13 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
             <!-- How Your Donation Helps -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">How Your Donation Helps</h3>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-gray-700">How Your Donation Helps</h3>
+                <button type="button" onclick="fetchPageContent('howDonationHelps')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  Generate
+                </button>
+              </div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -576,7 +726,13 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
             <!-- Mid-Page CTA -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">Mid-Page CTA</h3>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-gray-700">Mid-Page CTA</h3>
+                <button type="button" onclick="fetchPageContent('midCta')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  Generate
+                </button>
+              </div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -601,7 +757,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
             <!-- Choose Your Impact -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">Choose Your Impact</h3>
+              <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-gray-700">Choose Your Impact</h3><button type="button" onclick="fetchPageContent('chooseYourImpact')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Generate</button></div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -626,7 +782,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
             <!-- Why Monthly -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">Why Monthly</h3>
+              <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-gray-700">Why Monthly</h3><button type="button" onclick="fetchPageContent('whyMonthly')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Generate</button></div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -649,7 +805,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
             <!-- FAQ -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">FAQ</h3>
+              <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-gray-700">FAQ</h3><button type="button" onclick="fetchPageContent('faq')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Generate</button></div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -668,7 +824,7 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
             <!-- Final CTA -->
             <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-semibold text-gray-700 mb-3">Final CTA</h3>
+              <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-gray-700">Final CTA</h3><button type="button" onclick="fetchPageContent('finalCta')" class="text-xs text-[#01534d] hover:text-[#013d38] font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-[#01534d]/10 transition"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Generate</button></div>
               <div class="space-y-3">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
@@ -891,18 +1047,36 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       </div>
 
       <!-- Gallery Section -->
-      <div class="p-4 overflow-y-auto max-h-[40vh]">
-        <p class="text-sm text-gray-500 mb-3 font-medium">Or choose from gallery:</p>
+      <div class="p-4 overflow-y-auto max-h-[50vh]">
+        <div class="flex items-center gap-3 mb-3">
+          <p class="text-sm text-gray-500 font-medium">Choose from gallery:</p>
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input
+              type="text"
+              id="gallerySearchInput"
+              placeholder="Search images..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none"
+            />
+          </div>
+          <span id="galleryCount" class="text-xs text-gray-400">{mediaFiles.length} images</span>
+        </div>
         {mediaFiles.length === 0 ? (
           <p class="text-center text-gray-400 py-4">No images in gallery yet</p>
         ) : (
-          <div class="grid grid-cols-4 gap-3">
+          <div id="galleryGrid" class="grid grid-cols-4 md:grid-cols-5 gap-3">
             {mediaFiles.map((file) => (
               <div
-                class="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 hover:shadow-lg transition media-item"
+                class="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-[#01534d] hover:shadow-lg transition media-item relative group"
                 data-url={file.url}
+                data-name={file.name.toLowerCase()}
               >
-                <img src={file.url} alt={file.name} class="w-full h-full object-cover" />
+                <img src={file.url} alt={file.name} class="w-full h-full object-cover" loading="lazy" />
+                <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition">
+                  {file.name}
+                </div>
               </div>
             ))}
           </div>
@@ -1138,6 +1312,27 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     document.getElementById('mediaModal').classList.add('hidden');
   };
 
+  // Gallery search filter
+  const gallerySearchInput = document.getElementById('gallerySearchInput');
+  const galleryCountEl = document.getElementById('galleryCount');
+  if (gallerySearchInput) {
+    gallerySearchInput.addEventListener('input', function() {
+      var query = gallerySearchInput.value.toLowerCase().trim();
+      var items = document.querySelectorAll('#galleryGrid .media-item');
+      var visible = 0;
+      items.forEach(function(item) {
+        var name = item.dataset.name || '';
+        if (!query || name.includes(query)) {
+          item.style.display = '';
+          visible++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      if (galleryCountEl) galleryCountEl.textContent = visible + ' images';
+    });
+  }
+
   // Featured Image
   window.selectFeaturedImage = function(url) {
     document.getElementById('featured_image').value = url;
@@ -1149,6 +1344,147 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
     const url = document.getElementById('featuredImageUrl').value;
     if (url) selectFeaturedImage(url);
   };
+
+  // Image Position Adjuster
+  let posX = 50;
+  let posY = 50;
+  let posDevice = 'desktop'; // 'desktop' or 'mobile'
+  let desktopPos = { x: 50, y: 50 };
+  let mobilePos = { x: 50, y: 50 };
+
+  function parsePosition(pos) {
+    if (!pos) return { x: 50, y: 50 };
+    const map = { left: 0, center: 50, right: 100, top: 0, bottom: 100 };
+    const parts = pos.trim().split(/\s+/);
+    let x = 50, y = 50;
+    if (parts.length >= 1) {
+      x = map[parts[0]] !== undefined ? map[parts[0]] : parseInt(parts[0]) || 50;
+    }
+    if (parts.length >= 2) {
+      y = map[parts[1]] !== undefined ? map[parts[1]] : parseInt(parts[1]) || 50;
+    }
+    return { x, y };
+  }
+
+  window.openImagePositioner = function() {
+    const img = document.getElementById('featuredImg');
+    const modal = document.getElementById('imagePositionerModal');
+    const posImg = document.getElementById('positionerImg');
+    if (!img || !img.src || !modal) return;
+
+    posImg.src = img.src;
+
+    // Load saved positions
+    const deskPos = document.getElementById('hero_image_position').value || 'center center';
+    const mobPos = document.getElementById('hero_image_position_mobile').value || 'center center';
+    desktopPos = parsePosition(deskPos);
+    mobilePos = parsePosition(mobPos);
+
+    posDevice = 'desktop';
+    posX = desktopPos.x;
+    posY = desktopPos.y;
+    setPositionDevice('desktop');
+    updatePositionPreview();
+    modal.classList.remove('hidden');
+  };
+
+  window.closeImagePositioner = function() {
+    document.getElementById('imagePositionerModal').classList.add('hidden');
+  };
+
+  window.setPositionDevice = function(device) {
+    // Save current position to the current device before switching
+    if (posDevice === 'desktop') {
+      desktopPos = { x: posX, y: posY };
+    } else {
+      mobilePos = { x: posX, y: posY };
+    }
+
+    posDevice = device;
+    const container = document.getElementById('positionerPreviewContainer');
+    const deskBtn = document.getElementById('posDeviceDesktop');
+    const mobBtn = document.getElementById('posDeviceMobile');
+    const label = document.getElementById('posDeviceLabel');
+
+    // Style buttons
+    [deskBtn, mobBtn].forEach(b => {
+      b.classList.remove('bg-[#01534d]', 'text-white');
+      b.classList.add('bg-gray-100', 'text-gray-600');
+    });
+    const activeBtn = device === 'desktop' ? deskBtn : mobBtn;
+    activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+    activeBtn.classList.add('bg-[#01534d]', 'text-white');
+
+    // Adjust preview size for mobile
+    if (device === 'mobile') {
+      container.style.maxWidth = '375px';
+      container.style.height = '250px';
+      container.style.margin = '0 auto 8px';
+      label.textContent = 'Adjusting mobile position';
+      posX = mobilePos.x;
+      posY = mobilePos.y;
+    } else {
+      container.style.maxWidth = 'none';
+      container.style.height = '300px';
+      container.style.margin = '0 16px 8px';
+      label.textContent = 'Adjusting desktop position';
+      posX = desktopPos.x;
+      posY = desktopPos.y;
+    }
+
+    updatePositionPreview();
+  };
+
+  window.nudgePosition = function(dx, dy) {
+    posX = Math.max(0, Math.min(100, posX + dx));
+    posY = Math.max(0, Math.min(100, posY + dy));
+    updatePositionPreview();
+  };
+
+  window.setPosition = function(pos) {
+    const parsed = parsePosition(pos);
+    posX = parsed.x;
+    posY = parsed.y;
+    updatePositionPreview();
+  };
+
+  window.resetPosition = function() {
+    posX = 50;
+    posY = 50;
+    updatePositionPreview();
+  };
+
+  function updatePositionPreview() {
+    const posImg = document.getElementById('positionerImg');
+    const posLabel = document.getElementById('positionValue');
+    if (posImg) posImg.style.objectPosition = posX + '% ' + posY + '%';
+    if (posLabel) posLabel.textContent = posX + '% ' + posY + '% (' + posDevice + ')';
+  }
+
+  window.applyPosition = function() {
+    // Save current device position
+    if (posDevice === 'desktop') {
+      desktopPos = { x: posX, y: posY };
+    } else {
+      mobilePos = { x: posX, y: posY };
+    }
+
+    const deskValue = desktopPos.x + '% ' + desktopPos.y + '%';
+    const mobValue = mobilePos.x + '% ' + mobilePos.y + '%';
+
+    document.getElementById('hero_image_position').value = deskValue;
+    document.getElementById('hero_image_position_mobile').value = mobValue;
+
+    const featuredImg = document.getElementById('featuredImg');
+    if (featuredImg) featuredImg.style.objectPosition = deskValue;
+
+    closeImagePositioner();
+  };
+
+  // Close on backdrop click
+  document.getElementById('imagePositionerModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeImagePositioner();
+  });
 
   // Gallery Images
   window.addGalleryImage = function(url) {
@@ -1240,6 +1576,127 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
 
   window.removeStat = function(idx) {
     document.getElementById(`stat-${idx}`).remove();
+  };
+
+  // Fetch Page Content (all sections or single section)
+  window.fetchPageContent = async function(sectionOnly) {
+    var title = document.querySelector('input[name="title"]').value;
+    if (!title) { showToast('Please enter a campaign title first', 'error'); return; }
+
+    var btn = sectionOnly ? event.target.closest('button') : document.getElementById('fetchContentBtn');
+    var origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';
+
+    // Gather donation options from section 4
+    var donOpts = [];
+    document.querySelectorAll('#donationOptionsList .donation-option-row').forEach(function(row) {
+      var amount = row.querySelector('.do-amount')?.value;
+      var label = row.querySelector('.do-label')?.value;
+      if (amount) donOpts.push({ amount: parseInt(amount), label: label || '' });
+    });
+
+    try {
+      var res = await fetch('/api/campaigns/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: title,
+          category: campaignCategory,
+          country: campaignCountry,
+          section: sectionOnly || null,
+          donationOptions: donOpts
+        })
+      });
+      var data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Failed');
+
+      var c = data.content;
+
+      // Apply content to fields (only fill empty fields unless sectionOnly)
+      function setIfEmpty(id, val) {
+        var el = document.getElementById(id);
+        if (!el || !val) return;
+        if (sectionOnly || !el.value.trim()) el.value = val;
+      }
+
+      // The Crisis
+      if (c.theCrisis) {
+        setIfEmpty('pcCrisisHeading', c.theCrisis.heading);
+        setIfEmpty('pcCrisisContent', c.theCrisis.content);
+      }
+
+      // How Donation Helps
+      if (c.howDonationHelps) {
+        setIfEmpty('pcDonationHelpsHeading', c.howDonationHelps.heading);
+        if (c.howDonationHelps.items && c.howDonationHelps.items.length > 0) {
+          var existing = document.querySelectorAll('#pcDonationHelpsList .pc-help-row');
+          if (sectionOnly || existing.length === 0) {
+            document.getElementById('pcDonationHelpsList').innerHTML = '';
+            c.howDonationHelps.items.forEach(function(item) {
+              addPCDonationHelp(item.amount, item.label);
+            });
+          }
+        }
+      }
+
+      // Mid CTA
+      if (c.midCta) {
+        setIfEmpty('pcMidCtaHeading', c.midCta.heading);
+        setIfEmpty('pcMidCtaSubtext', c.midCta.subtext);
+        setIfEmpty('pcMidCtaPrimary', c.midCta.primaryButtonText);
+        setIfEmpty('pcMidCtaSecondary', c.midCta.secondaryButtonText);
+      }
+
+      // Choose Your Impact
+      if (c.chooseYourImpact) {
+        setIfEmpty('pcImpactHeading', c.chooseYourImpact.heading);
+        setIfEmpty('pcImpactSubtext', c.chooseYourImpact.subtext);
+        setIfEmpty('pcImpactSingleTab', c.chooseYourImpact.singleTabText);
+        setIfEmpty('pcImpactMonthlyTab', c.chooseYourImpact.monthlyTabText);
+      }
+
+      // Why Monthly
+      if (c.whyMonthly) {
+        setIfEmpty('pcWhyMonthlyHeading', c.whyMonthly.heading);
+        setIfEmpty('pcWhyMonthlyFooter', c.whyMonthly.footerText);
+        if (c.whyMonthly.benefits && c.whyMonthly.benefits.length > 0) {
+          var existingBenefits = document.querySelectorAll('#pcBenefitsList .pc-benefit');
+          if (sectionOnly || existingBenefits.length === 0) {
+            document.getElementById('pcBenefitsList').innerHTML = '';
+            c.whyMonthly.benefits.forEach(function(b) { addPCBenefit(b); });
+          }
+        }
+      }
+
+      // FAQ
+      if (c.faq) {
+        setIfEmpty('pcFaqHeading', c.faq.heading);
+        if (c.faq.items && c.faq.items.length > 0) {
+          var existingFaqs = document.querySelectorAll('#pcFaqList .pc-faq-row');
+          if (sectionOnly || existingFaqs.length === 0) {
+            document.getElementById('pcFaqList').innerHTML = '';
+            c.faq.items.forEach(function(f) { addPCFaq(f.question, f.answer); });
+          }
+        }
+      }
+
+      // Final CTA
+      if (c.finalCta) {
+        setIfEmpty('pcFinalCtaHeading', c.finalCta.heading);
+        setIfEmpty('pcFinalCtaSubtext', c.finalCta.subtext);
+        setIfEmpty('pcFinalCtaPrimary', c.finalCta.primaryButtonText);
+        setIfEmpty('pcFinalCtaSecondary', c.finalCta.secondaryButtonText);
+      }
+
+      showToast(sectionOnly ? 'Section content generated' : 'All page content generated!', 'success');
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+
+    btn.innerHTML = origHtml;
+    btn.disabled = false;
   };
 
   // Fetch Crisis Stats from API
@@ -2432,6 +2889,8 @@ const autoMonthlyImpact = getDefaultMonthlyImpact(campaignSlug);
       subtitle2: formData.get('subtitle2') || null,
       description: formData.get('description') || null,
       featured_image: formData.get('featured_image') || null,
+      hero_image_position: formData.get('hero_image_position') || 'center center',
+      hero_image_position_mobile: formData.get('hero_image_position_mobile') || 'center center',
       gallery_images: galleryImages,
       content_sections: getContentSections(),
       donation_options: getDonationOptions(),

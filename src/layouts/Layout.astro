@@ -246,8 +246,8 @@ const faviconType = adminFavicon
             return hasAny ? utms : null;
           }
 
-          // Expire after 24 hours — start fresh session
-          if (!tracking || (now - tracking.session_started > 86400000)) {
+          // Expire after 30 days — preserve first-touch attribution for returning donors
+          if (!tracking || (now - tracking.session_started > 2592000000)) {
             var dev = detectDevice();
             var currentUtms = getCurrentUTMs();
             // Google Ads parameters from tracking template

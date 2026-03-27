@@ -1246,10 +1246,10 @@ const testimonials = [
         // Update active tab
         document.querySelectorAll('.category-tab').forEach(t => {
           t.classList.remove('active', 'bg-[#01534d]', 'text-white');
-          t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+          t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-100');
         });
         tab.classList.add('active', 'bg-[#01534d]', 'text-white');
-        tab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+        tab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-100');
 
         var category = tab.dataset.category;
 
@@ -1294,7 +1294,7 @@ const testimonials = [
           // Reset all tabs to inactive
           document.querySelectorAll('.category-tab').forEach(t => {
             t.classList.remove('active', 'bg-[#01534d]', 'text-white');
-            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-100');
           });
 
           // Filter by search term
@@ -1519,10 +1519,20 @@ const testimonials = [
       }
     });
 
-    // URL parameter deep-linking: ?country=pakistan or ?country=pakistan,india
+    // URL parameter deep-linking: ?country=pakistan or ?country=pakistan,india or ?gaza
     (function() {
       const params = new URLSearchParams(window.location.search);
-      const countryParam = params.get('country');
+      let countryParam = params.get('country');
+
+      // Support bare parameter like ?gaza (no key=value, just the key)
+      if (!countryParam) {
+        for (const [key, value] of params.entries()) {
+          if (!value || value === '') {
+            countryParam = key;
+            break;
+          }
+        }
+      }
       if (!countryParam) return;
 
       // Support comma-separated countries
@@ -1553,12 +1563,12 @@ const testimonials = [
       // Update tabs — deactivate all, activate "All Countries"
       document.querySelectorAll('.category-tab').forEach(t => {
         t.classList.remove('active', 'bg-[#01534d]', 'text-white');
-        t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+        t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-100');
       });
       const allTab = document.querySelector('[data-category="all"]');
       if (allTab) {
         allTab.classList.add('active', 'bg-[#01534d]', 'text-white');
-        allTab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+        allTab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-100');
       }
 
       // Hide show-more, show view-all button
@@ -1571,6 +1581,41 @@ const testimonials = [
       setTimeout(() => {
         matchedCards[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 500);
+    })();
+
+    // Tab filter via URL: ?tab=lowest-price or ?lowest or ?emergency
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      let tabParam = params.get('tab');
+
+      // Support bare params like ?lowest or ?emergency
+      if (!tabParam) {
+        var tabAliases = {
+          'lowest': 'lowest-price',
+          'lowest-price': 'lowest-price',
+          'cheap': 'lowest-price',
+          'cheapest': 'lowest-price',
+          'emergency': 'emergency',
+          'urgent': 'emergency',
+          'all': 'all',
+          'most-needed': 'most-needed',
+          'popular': 'most-needed'
+        };
+        for (var entry of params.entries()) {
+          if (!entry[1] || entry[1] === '') {
+            var mapped = tabAliases[entry[0].toLowerCase()];
+            if (mapped) { tabParam = mapped; break; }
+          }
+        }
+      }
+
+      if (!tabParam) return;
+
+      // Click the matching tab
+      var targetTab = document.querySelector('[data-category="' + tabParam + '"]');
+      if (targetTab) {
+        setTimeout(function() { targetTab.click(); }, 300);
+      }
     })();
   </script>
 

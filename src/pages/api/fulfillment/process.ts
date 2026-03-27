@@ -106,61 +106,18 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // ============================================
-    // PHASE 2: SEND fulfillment emails that are due
+    // PHASE 2: FULFILLMENT EMAILS — PERMANENTLY DISABLED
+    // Mark any queued emails as sent so they don't pile up
     // ============================================
-
-    const { data: readyToEmail, error: emailFetchError } = await supabaseAdmin
+    await supabaseAdmin
       .from('donations')
-      .select('*')
+      .update({ fulfillment_email_sent: true })
       .eq('fulfillment_status', 'fulfilled')
       .eq('fulfillment_email_sent', false)
-      .lte('fulfillment_email_scheduled_at', now)
-      .not('fulfillment_email_scheduled_at', 'is', null)
-      .order('fulfillment_email_scheduled_at', { ascending: true })
-      .limit(50);
+      .not('fulfillment_email_scheduled_at', 'is', null);
 
-    if (emailFetchError) {
-      console.error('Error fetching email queue:', emailFetchError);
-    }
-
-    let emailsSent = 0;
-    let emailsFailed = 0;
-
-    for (const donation of readyToEmail || []) {
-      try {
-        if (!donation.donor_email) continue;
-
-        // Parse items
-        let items: Array<{ name: string; amount: number }> = [];
-        if (donation.items) {
-          items = typeof donation.items === 'string'
-            ? JSON.parse(donation.items)
-            : donation.items;
-        }
-
-        await sendFulfillmentEmail({
-          donorEmail: donation.donor_email,
-          donorName: donation.donor_name || 'Donor',
-          amount: parseFloat(donation.amount),
-          items,
-          campaignName: donation.campaign_name || 'General Donation',
-          fulfilledAt: new Date(donation.fulfilled_at || now),
-          certificateUrl: donation.certificate_url || undefined,
-        });
-
-        // Mark email as sent
-        await supabaseAdmin
-          .from('donations')
-          .update({ fulfillment_email_sent: true })
-          .eq('id', donation.id);
-
-        emailsSent++;
-        console.log(`Fulfillment email sent for donation ${donation.id} (${donation.donor_email})`);
-      } catch (err) {
-        console.error('Fulfillment email error for', donation.id, err);
-        emailsFailed++;
-      }
-    }
+    const emailsSent = 0;
+    const emailsFailed = 0;
 
     return new Response(JSON.stringify({
       phase1_fulfillment: {

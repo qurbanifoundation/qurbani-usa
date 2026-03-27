@@ -24,6 +24,7 @@ export interface PageContent {
     subtext: string;
     singleTabText: string;
     monthlyTabText: string;
+    hideMonthlyTab?: boolean;
   };
   whyMonthly: {
     heading: string;

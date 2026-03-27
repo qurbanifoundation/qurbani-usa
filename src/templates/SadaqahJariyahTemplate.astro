@@ -1,0 +1,997 @@
+---
+/**
+ * SADAQAH JARIYAH TEMPLATE
+ * High-converting layout: Donation box RIGHT IN the hero (above the fold)
+ * Deep teal/emerald color scheme
+ * Multiple campaign options below for maximum impact
+ */
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaign: {
+    id: string;
+    name: string;
+    slug: string;
+    title: string;
+    hero_title?: string;
+    hero_title_accent?: string;
+    subtitle?: string;
+    subtitle2?: string;
+    featured_image?: string;
+    description?: string;
+    meta_title?: string;
+    meta_description?: string;
+    content_sections?: any[];
+    donation_options?: any[];
+    template_config?: any;
+    [key: string]: any;
+  };
+  donationBoxTemplate: string;
+}
+
+const { campaign, donationBoxTemplate } = Astro.props;
+const pageTitle = campaign.meta_title || campaign.title || 'Sadaqah Jariyah - Ongoing Charity | Qurbani Foundation USA';
+const pageDescription = campaign.meta_description || campaign.description || 'Give Sadaqah Jariyah — charity that keeps giving. Build wells, fund education, and create lasting change. Rewards continue even after you pass away.';
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <Navbar />
+
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
+      50% { box-shadow: 0 0 20px 8px rgba(13, 148, 136, 0.15); }
+    }
+    .sj-fade-in { animation: fadeInUp 0.6s ease-out both; }
+    .sj-fade-in-d1 { animation: fadeInUp 0.6s ease-out 0.1s both; }
+    .sj-fade-in-d2 { animation: fadeInUp 0.6s ease-out 0.2s both; }
+    .sj-fade-in-d3 { animation: fadeInUp 0.6s ease-out 0.3s both; }
+    .sj-pulse { animation: pulseGlow 2s ease-in-out infinite; }
+    .sj-project-card { transition: all 0.25s ease; cursor: pointer; }
+    .sj-project-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .sj-project-card.active { border-color: #0d9488 !important; background: rgba(13, 148, 136, 0.05); }
+    details summary::-webkit-details-marker { display: none; }
+    details summary { list-style: none; }
+  </style>
+
+  <!-- ===== HERO SECTION — Donation box visible immediately ===== -->
+  <section class="relative overflow-hidden" style="background: linear-gradient(135deg, #0d2b2e 0%, #134e4a 60%, #1a5c4e 100%);">
+    <!-- Background image -->
+    <div class="absolute inset-0 z-0">
+      <img src="/images/ramadan/ramadan-bg1.webp" alt="" class="w-full h-full object-cover opacity-15" loading="eager" />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#0d2b2e]/95 via-[#0d2b2e]/80 to-[#134e4a]/60"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 pt-28 sm:pt-36 pb-12 sm:pb-16">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
+
+        <!-- Left: Hero Content (3 cols) -->
+        <div class="lg:col-span-3 text-center lg:text-left">
+          <!-- Badges -->
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-4 sj-fade-in">
+            <span class="bg-[#4dd4ac]/20 text-[#4dd4ac] text-xs font-bold px-3 py-1.5 rounded-full border border-[#4dd4ac]/30">
+              🌿 Rewards Never Stop
+            </span>
+            <span class="bg-white/10 text-white/90 text-xs font-medium px-3 py-1.5 rounded-full border border-white/20">
+              100% Donation Policy
+            </span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-white leading-tight mb-4 sj-fade-in" style="font-family: 'Signika', sans-serif;">
+            Sadaqah <span class="text-[#4dd4ac]">Jariyah</span>
+          </h1>
+
+          <p class="text-base sm:text-lg text-white/80 mb-6 max-w-xl mx-auto lg:mx-0 sj-fade-in-d1" style="font-family: 'Lato', sans-serif; line-height: 1.7;">
+            Give once. Earn rewards forever. Sadaqah Jariyah is the charity that <strong class="text-[#4dd4ac]">never stops giving</strong> — for you, for your loved ones, and for generations to come.
+          </p>
+
+          <!-- Hadith -->
+          <div class="bg-white/8 backdrop-blur-sm border-l-4 border-[#4dd4ac] p-4 rounded-r-lg mb-6 max-w-lg mx-auto lg:mx-0 sj-fade-in-d2">
+            <p class="text-sm text-white/85 italic leading-relaxed">
+              "When a person dies, their deeds come to an end except for three: ongoing charity, knowledge that benefits others, or a righteous child who prays for them."
+            </p>
+            <p class="text-xs text-[#4dd4ac] mt-2 font-semibold">— Prophet Muhammad ﷺ, Sahih Muslim</p>
+          </div>
+
+          <!-- Trust badges -->
+          <div class="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 mt-6 sj-fade-in-d2">
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">Secure Payment</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">501(c)(3) Nonprofit</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">Tax-Deductible</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-white/60 text-xs">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span style="font-family: 'Lato', sans-serif;">15+ Countries</span>
+            </div>
+          </div>
+
+          <!-- Mobile: scroll to donation box -->
+          <div class="mt-8 lg:hidden sj-fade-in-d3">
+            <button onclick="document.getElementById('sj-mobile-donate')?.scrollIntoView({behavior:'smooth', block:'center'})" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-white font-bold text-lg transition-all hover:scale-105 bg-[#0d9488]" style="font-family: 'Signika', sans-serif; box-shadow: 0 4px 15px rgba(13,148,136,0.4);">
+              Give Sadaqah Jariyah
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Donation Box (2 cols) — VISIBLE IMMEDIATELY on desktop -->
+        <div class="lg:col-span-2 sj-fade-in-d2 hidden lg:block" id="sj-desktop-donate">
+          <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-[#0d9488] to-[#14b8a6] px-6 py-4 text-center">
+              <h3 class="text-xl font-bold text-white mb-0.5" style="font-family: 'Signika', sans-serif;">
+                🌿 Sadaqah Jariyah
+              </h3>
+              <p class="text-white/90 text-xs">Ongoing charity · Rewards that never end</p>
+            </div>
+
+            <div class="p-5">
+              <!-- Frequency Toggle -->
+              <div class="flex bg-gray-100 rounded-xl p-1 mb-4">
+                <button class="sj-freq-btn flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all bg-white text-[#0d9488] shadow-sm" data-freq="single">
+                  One-Time
+                </button>
+                <button class="sj-freq-btn flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all text-gray-500 hover:text-gray-700" data-freq="monthly">
+                  Monthly 💚
+                </button>
+              </div>
+
+              <!-- Impact Selection -->
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Choose Your Impact</label>
+              <div class="flex flex-col gap-2 mb-3">
+                <button class="sj-amount-btn group flex items-center gap-3 p-3 border-2 border-gray-200 rounded-xl bg-white hover:border-[#0d9488] hover:bg-[#0d9488]/5 transition-all text-left" data-amount="600" data-project="Orphan Full Year">
+                  <span class="w-9 h-9 rounded-lg bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-bold text-gray-800 group-hover:text-[#0d9488]">One Year Orphan Sponsorship</span>
+                    <span class="block text-xs text-gray-500">Food, school, healthcare — full year</span>
+                  </div>
+                  <span class="text-base font-bold text-[#0d9488] flex-shrink-0">$600</span>
+                </button>
+                <button class="sj-amount-btn group flex items-center gap-3 p-3 border-2 border-[#0d9488] rounded-xl bg-[#0d9488]/5 transition-all text-left relative" data-amount="300" data-project="Water Hand Pump">
+                  <span class="absolute -top-2 -right-2 bg-[#0d9488] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Popular</span>
+                  <span class="w-9 h-9 rounded-lg bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 011.414-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 011.415-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-bold text-[#0d9488]">Water Hand Pump</span>
+                    <span class="block text-xs text-[#0d9488]/70">Clean water for 50 families</span>
+                  </div>
+                  <span class="text-base font-bold text-[#0d9488] flex-shrink-0">$300</span>
+                </button>
+                <button class="sj-amount-btn group flex items-center gap-3 p-3 border-2 border-gray-200 rounded-xl bg-white hover:border-[#0d9488] hover:bg-[#0d9488]/5 transition-all text-left" data-amount="50" data-project="Cataract Surgery">
+                  <span class="w-9 h-9 rounded-lg bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-bold text-gray-800 group-hover:text-[#0d9488]">Cataract Surgery</span>
+                    <span class="block text-xs text-gray-500">Restore someone's sight</span>
+                  </div>
+                  <span class="text-base font-bold text-[#0d9488] flex-shrink-0">$50</span>
+                </button>
+              </div>
+
+              <!-- Custom Amount -->
+              <div class="relative mb-4">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                <input
+                  type="number"
+                  placeholder="Other amount"
+                  min="1"
+                  class="sj-custom-input w-full pl-7 pr-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:border-[#0d9488] focus:ring-2 focus:ring-[#0d9488]/20 outline-none transition"
+                />
+              </div>
+
+              <!-- Dedicate toggle -->
+              <label class="flex items-center gap-2 mb-3 cursor-pointer group">
+                <input type="checkbox" class="sj-dedicate w-4 h-4 text-[#0d9488] border-gray-300 rounded focus:ring-[#0d9488]" />
+                <span class="text-sm text-gray-600 group-hover:text-gray-800 transition">Give on behalf of a loved one</span>
+              </label>
+              <div class="sj-dedicate-name-wrap hidden mb-3">
+                <input type="text" placeholder="Name of your loved one" class="sj-dedicate-name w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm text-gray-800 focus:border-[#0d9488] focus:ring-2 focus:ring-[#0d9488]/20 outline-none transition" />
+              </div>
+
+              <!-- Donate Button -->
+              <button
+                class="sj-donate-btn w-full bg-gradient-to-r from-[#0d9488] to-[#0f766e] hover:from-[#0f766e] hover:to-[#115e59] text-white font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-lg sj-pulse"
+                style="font-family: 'Signika', sans-serif;"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                </svg>
+                Give Sadaqah Jariyah
+              </button>
+
+              <!-- Trust -->
+              <div class="flex items-center justify-center gap-2 mt-3">
+                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                <span class="text-xs text-gray-500">Secure · Tax-deductible · Instant receipt</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== IMPACT COUNTER STRIP ===== -->
+  <section class="py-5 sm:py-6" style="background: #0a1f21;">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">10,000+</div>
+          <div class="text-xs sm:text-sm text-white/50 uppercase tracking-wider" style="font-family: 'Lato', sans-serif;">Lives Impacted</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">15+</div>
+          <div class="text-xs sm:text-sm text-white/50 uppercase tracking-wider" style="font-family: 'Lato', sans-serif;">Countries</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">100%</div>
+          <div class="text-xs sm:text-sm text-white/50 uppercase tracking-wider" style="font-family: 'Lato', sans-serif;">Donation Policy</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl font-bold text-white mb-1" style="font-family: 'Signika', sans-serif;">∞</div>
+          <div class="text-xs sm:text-sm text-white/50 uppercase tracking-wider" style="font-family: 'Lato', sans-serif;">Ongoing Reward</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MOBILE DONATION BOX ===== -->
+  <section class="lg:hidden py-8 bg-gray-50" id="sj-mobile-donate">
+    <div class="max-w-md mx-auto px-4">
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <div class="bg-gradient-to-r from-[#0d9488] to-[#14b8a6] px-6 py-4 text-center">
+          <h3 class="text-xl font-bold text-white mb-0.5" style="font-family: 'Signika', sans-serif;">🌿 Sadaqah Jariyah</h3>
+          <p class="text-white/90 text-xs">Ongoing charity · Rewards that never end</p>
+        </div>
+        <div class="p-5">
+          <!-- Frequency -->
+          <div class="flex bg-gray-100 rounded-xl p-1 mb-4">
+            <button class="sj-freq-btn flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all bg-white text-[#0d9488] shadow-sm" data-freq="single">One-Time</button>
+            <button class="sj-freq-btn flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all text-gray-500 hover:text-gray-700" data-freq="monthly">Monthly 💚</button>
+          </div>
+          <!-- Impact Selection -->
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Choose Your Impact</label>
+          <div class="flex flex-col gap-2 mb-3">
+            <button class="sj-amount-btn group flex items-center gap-3 p-3 border-2 border-gray-200 rounded-xl bg-white hover:border-[#0d9488] hover:bg-[#0d9488]/5 transition-all text-left" data-amount="600" data-project="Orphan Full Year">
+              <span class="w-9 h-9 rounded-lg bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+              </span>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-gray-800 group-hover:text-[#0d9488]">One Year Orphan Sponsorship</span>
+                <span class="block text-xs text-gray-500">Food, school, healthcare — full year</span>
+              </div>
+              <span class="text-base font-bold text-[#0d9488] flex-shrink-0">$600</span>
+            </button>
+            <button class="sj-amount-btn group flex items-center gap-3 p-3 border-2 border-[#0d9488] rounded-xl bg-[#0d9488]/5 transition-all text-left relative" data-amount="300" data-project="Water Hand Pump">
+              <span class="absolute -top-2 -right-2 bg-[#0d9488] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Popular</span>
+              <span class="w-9 h-9 rounded-lg bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 011.414-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 011.415-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+              </span>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-[#0d9488]">Water Hand Pump</span>
+                <span class="block text-xs text-[#0d9488]/70">Clean water for 50 families</span>
+              </div>
+              <span class="text-base font-bold text-[#0d9488] flex-shrink-0">$300</span>
+            </button>
+            <button class="sj-amount-btn group flex items-center gap-3 p-3 border-2 border-gray-200 rounded-xl bg-white hover:border-[#0d9488] hover:bg-[#0d9488]/5 transition-all text-left" data-amount="50" data-project="Cataract Surgery">
+              <span class="w-9 h-9 rounded-lg bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path></svg>
+              </span>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-gray-800 group-hover:text-[#0d9488]">Cataract Surgery</span>
+                <span class="block text-xs text-gray-500">Restore someone's sight</span>
+              </div>
+              <span class="text-base font-bold text-[#0d9488] flex-shrink-0">$50</span>
+            </button>
+          </div>
+          <!-- Custom -->
+          <div class="relative mb-4">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+            <input type="number" placeholder="Other amount" min="1" class="sj-custom-input w-full pl-7 pr-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-800 focus:border-[#0d9488] focus:ring-2 focus:ring-[#0d9488]/20 outline-none transition" />
+          </div>
+          <!-- Dedicate -->
+          <label class="flex items-center gap-2 mb-3 cursor-pointer group">
+            <input type="checkbox" class="sj-dedicate w-4 h-4 text-[#0d9488] border-gray-300 rounded focus:ring-[#0d9488]" />
+            <span class="text-sm text-gray-600 group-hover:text-gray-800 transition">Give on behalf of a loved one</span>
+          </label>
+          <div class="sj-dedicate-name-wrap hidden mb-3">
+            <input type="text" placeholder="Name of your loved one" class="sj-dedicate-name w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm text-gray-800 focus:border-[#0d9488] focus:ring-2 focus:ring-[#0d9488]/20 outline-none transition" />
+          </div>
+          <!-- Donate -->
+          <button class="sj-donate-btn w-full bg-gradient-to-r from-[#0d9488] to-[#0f766e] hover:from-[#0f766e] hover:to-[#115e59] text-white font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-lg" style="font-family: 'Signika', sans-serif;">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+            Give Sadaqah Jariyah
+          </button>
+          <div class="flex items-center justify-center gap-2 mt-3">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+            <span class="text-xs text-gray-500">Secure · Tax-deductible · Instant receipt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SADAQAH JARIYAH PROJECTS — Choose Your Impact ===== -->
+  <section class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3" style="font-family: 'Signika', sans-serif;">
+          Build Your Impact. <span class="text-[#0d9488]">Choose a Project.</span>
+        </h2>
+        <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          Every project below is a seed of ongoing reward. Pick one, donate, and earn reward for as long as people benefit — even after you pass away.
+        </p>
+      </div>
+
+      <!-- ——— WATER WELLS ——— -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Water Wells</h3>
+            <p class="text-xs text-gray-500">Every sip earns you ongoing reward</p>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Water Hand Pump</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Serves 50 families daily</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$300</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">Women and children walk miles every day just to find water. A hand pump placed within their village changes everything — children go to school, mothers save hours, and every sip is a reward flowing back to you.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Water Hand Pump" data-amount="300">
+              Donate $300 — Give 50 Families Water
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30 relative overflow-hidden">
+            <span class="absolute top-3 right-3 bg-[#0d9488] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Most Popular</span>
+            <div class="flex items-start justify-between mb-3 mt-5 sm:mt-0">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Electric Water Well</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Serves 100 families daily</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$500</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">An electric-powered well that pumps clean water all day long for 100 families. No manual effort, no waiting in line — just safe, running water steps from their homes. You receive a photo and report upon completion.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Electric Water Well" data-amount="500">
+              Donate $500 — Give 100 Families Water
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Solar Community Well</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Serves a full village · 2,000+ people</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$2,500</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">The ultimate Sadaqah Jariyah. A solar-powered well providing clean water to an entire village of 2,000+ people — every single day, for years. Named after you or a loved one. Donors receive a photo and completion report.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Solar Community Well" data-amount="2500">
+              Donate $2,500 — Transform a Village
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ——— BUILD A MASJID ——— -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"></path></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Build a Masjid</h3>
+            <p class="text-xs text-gray-500">Every prayer inside earns you reward until the Day of Judgment</p>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Masjid Contribution</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Help build a house of Allah</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$100</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">Imagine a community with no place to pray — children learning Quran under trees, families praying in the dirt. Your $100 helps lay the foundation of a masjid where every salah, every du'a, every tear shed in prayer earns you reward.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Masjid Contribution" data-amount="100">
+              Donate $100 — Build a House of Allah
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Masjid Brick Sponsor</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Sponsor walls, roof & structure</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$500</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">Every brick you sponsor becomes part of a standing masjid — a place where hundreds gather for Jumu'ah, children memorize the Quran, and travelers find shelter. Your name may be forgotten on earth, but it's written with Allah forever.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Masjid Brick Sponsor" data-amount="500">
+              Donate $500 — Sponsor a Masjid Structure
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Full Masjid Build</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Build an entire masjid</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$5,000</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">The Prophet ﷺ said: "Whoever builds a masjid for Allah, Allah will build for him a house in Paradise." This is your chance — an entire masjid in your name. Five daily prayers, Taraweeh, Eid, weddings, funerals — every single act of worship inside is reward flowing back to you until the Day of Judgment.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Full Masjid Build" data-amount="5000">
+              Donate $5,000 — Build an Entire Masjid
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ——— ORPHAN SPONSORSHIP ——— -->
+      <div class="mb-10">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Orphan Sponsorship</h3>
+            <p class="text-xs text-gray-500">"I and the caretaker of an orphan will be in Paradise like this" — The Prophet (PBUH) held up his two fingers</p>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Orphan Essentials</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Food, clothing & supplies for one child</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$50</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">Right now, a child is going to sleep hungry, wearing torn clothes, with no one to call family. For just $50, you can put warm food in their hands, clean clothes on their back, and a glimmer of hope in their eyes. That child will remember you in their du'a.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Orphan Essentials" data-amount="50">
+              Donate $50 — Feed & Clothe a Child
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30 relative overflow-hidden">
+            <span class="absolute top-3 right-3 bg-[#0d9488] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Most Popular</span>
+            <div class="flex items-start justify-between mb-3 mt-5 sm:mt-0">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Monthly Sponsorship</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Ongoing care · food, school & health</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$50/mo</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">Become the reason an orphan eats every day, goes to school, and sees a doctor when they're sick. Monthly sponsorship doesn't just help — it transforms a life. A child raised with your support who grows up righteous? That's Sadaqah Jariyah that never stops.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Orphan Sponsorship" data-amount="50" data-freq="monthly">
+              Donate $50/mo — Be Their Guardian
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Full Year Sponsorship</h4>
+                <p class="text-xs text-gray-500 mt-0.5">12 months of complete care</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$600</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">One payment. One full year. One child's entire life changed. Meals every day, school fees covered, healthcare when they need it, and a safe place to sleep. The Prophet ﷺ said the caretaker of an orphan will be with him in Jannah — this is your path there.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Orphan Full Year" data-amount="600">
+              Donate $600 — Sponsor a Full Year
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ——— HEALTHCARE ——— -->
+      <div>
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800" style="font-family: 'Signika', sans-serif;">Healthcare</h3>
+            <p class="text-xs text-gray-500">Medical care that heals communities for years</p>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Medical Supplies</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Medicines for families in need</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$50</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">A mother watches her child burn with fever and has nothing — no medicine, no clinic, no hope. For $50, you can stock a village clinic with antibiotics, painkillers, and life-saving supplies. Every patient healed is a life you helped save.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Medical Supplies" data-amount="50">
+              Donate $50 — Send Life-Saving Medicine
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Health Camp</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Mobile clinic · serves 200+ patients</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$250</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">In remote villages, the nearest doctor is hours away — and most families can't afford the journey. Your $250 sends a team of doctors directly to them. Check-ups, treatments, and surgeries for over 200 patients who would otherwise suffer in silence.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Health Camp" data-amount="250">
+              Donate $250 — Send Doctors to a Village
+            </button>
+          </div>
+          <div class="sj-project-card bg-white rounded-xl border-2 border-gray-100 p-3.5 sm:p-5 hover:border-[#0d9488]/30">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base" style="font-family: 'Signika', sans-serif;">Build a Clinic</h4>
+                <p class="text-xs text-gray-500 mt-0.5">Permanent facility · serves 500+ families</p>
+              </div>
+              <span class="bg-[#0d9488]/10 text-[#0d9488] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ml-3">$3,000</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4 hidden sm:block">A permanent clinic means a community never has to choose between food and medicine again. Doctors, equipment, and medicine serving 500+ families for years — mothers giving birth safely, children vaccinated, elders cared for. This is Sadaqah Jariyah that heals for generations.</p>
+            <button class="sj-project-donate w-full bg-[#0d9488] hover:bg-[#0f766e] text-white font-bold py-2.5 rounded-xl transition-all text-sm" data-project="Build a Clinic" data-amount="3000">
+              Donate $3,000 — Build a Clinic for 500+ Families
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== WHAT IS SADAQAH JARIYAH ===== -->
+  <section class="py-16 bg-[#f8fafb]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center" style="font-family: 'Signika', sans-serif;">
+        What is Sadaqah <span class="text-[#0d9488]">Jariyah?</span>
+      </h2>
+
+      <p class="text-lg text-gray-700 leading-relaxed mb-6 text-center max-w-3xl mx-auto" style="font-family: 'Lato', sans-serif;">
+        Unlike regular Sadaqah, Sadaqah Jariyah is <strong>ongoing charity</strong> — an investment whose rewards continue for as long as people benefit, even after you have passed away. It is one of only three deeds that continue to benefit you in the grave.
+      </p>
+
+      <!-- Hadith Box -->
+      <div class="bg-white border-l-4 border-[#0d9488] p-6 rounded-r-xl shadow-sm mb-10 max-w-3xl mx-auto">
+        <p class="text-gray-700 italic leading-relaxed text-lg" style="font-family: 'Lato', sans-serif;">
+          "When a person dies, their deeds come to an end except for three: ongoing charity (Sadaqah Jariyah), beneficial knowledge, or a righteous child who prays for them."
+        </p>
+        <p class="text-[#0d9488] font-semibold mt-3 text-sm">— Prophet Muhammad (PBUH), Sahih Muslim</p>
+      </div>
+
+      <!-- Benefits Grid -->
+      <div class="grid md:grid-cols-2 gap-6 mb-10">
+        <div class="flex items-start gap-4 bg-white p-5 rounded-xl shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <strong class="text-gray-800 block mb-1">Rewards continue after death</strong>
+            <span class="text-gray-600 text-sm">One of only three deeds that benefit you in the grave</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 bg-white p-5 rounded-xl shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <strong class="text-gray-800 block mb-1">Multiplied on blessed nights</strong>
+            <span class="text-gray-600 text-sm">Give during Ramadan or Laylatul Qadr for exponential blessings</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 bg-white p-5 rounded-xl shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <strong class="text-gray-800 block mb-1">Honor your loved ones</strong>
+            <span class="text-gray-600 text-sm">Dedicate your Sadaqah Jariyah on behalf of a deceased parent, spouse, or child</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 bg-white p-5 rounded-xl shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#0d9488]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <strong class="text-gray-800 block mb-1">Create lasting change</strong>
+            <span class="text-gray-600 text-sm">Your gift transforms communities for generations, not just today</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dedicate Section -->
+      <div class="bg-gradient-to-r from-[#f0fdfa] to-[#ecfdf5] border border-[#0d9488]/20 rounded-2xl p-6 flex items-start gap-5">
+        <div class="w-14 h-14 rounded-xl bg-[#0d9488]/10 flex items-center justify-center flex-shrink-0 text-3xl">🤲</div>
+        <div>
+          <h3 class="text-lg font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Give on Behalf of a Loved One</h3>
+          <p class="text-gray-600 leading-relaxed text-sm" style="font-family: 'Lato', sans-serif;">
+            One of the most beautiful aspects of Sadaqah Jariyah is that you can give it on behalf of someone who has passed away. The rewards reach them in their grave and continue for as long as people benefit. It is one of the greatest gifts you can give to someone you have lost.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MORE WAYS TO MAKE AN IMPACT ===== -->
+  <section class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3" style="font-family: 'Signika', sans-serif;">
+          More Ways to Make an <span class="text-[#0d9488]">Impact</span>
+        </h2>
+        <p class="text-gray-600 max-w-2xl mx-auto" style="font-family: 'Lato', sans-serif;">
+          Every act of charity brings you closer to Allah. Explore more ways to give.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Zakat -->
+        <a href="/zakat" class="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-green-200 transition-all">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">⭐</div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800 group-hover:text-green-700 transition" style="font-family: 'Signika', sans-serif;">Zakat</h3>
+              <p class="text-xs text-gray-500 font-semibold">Obligatory · Purify your wealth</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">Fulfill your obligation and purify your wealth. Calculate and pay your Zakat with confidence.</p>
+        </a>
+
+        <!-- Feed Iftar -->
+        <a href="/iftar" class="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-orange-200 transition-all">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">🌙</div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800 group-hover:text-orange-700 transition" style="font-family: 'Signika', sans-serif;">Feed Iftar</h3>
+              <p class="text-xs text-gray-500 font-semibold">$5 per meal</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">Earn the same reward as the person fasting by providing nutritious iftar meals.</p>
+        </a>
+
+        <!-- Zakat ul-Fitr -->
+        <a href="/zakat-ul-fitr" class="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-yellow-200 transition-all">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center text-2xl">🌿</div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800 group-hover:text-yellow-700 transition" style="font-family: 'Signika', sans-serif;">Zakat ul-Fitr</h3>
+              <p class="text-xs text-gray-500 font-semibold">$10 per person</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">Due before Eid — pay for your household so every Muslim can celebrate.</p>
+        </a>
+
+        <!-- Orphan Sponsorship -->
+        <a href="/appeals/sponsor-an-orphan" class="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-rose-200 transition-all">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-2xl">👶</div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800 group-hover:text-rose-700 transition" style="font-family: 'Signika', sans-serif;">Orphan Sponsorship</h3>
+              <p class="text-xs text-gray-500 font-semibold">From $50/month</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">Provide a child with food, education, healthcare, and a chance for a better future.</p>
+        </a>
+
+        <!-- Emergency Relief -->
+        <a href="/category/appeals" class="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-red-200 transition-all">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-2xl">🆘</div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800 group-hover:text-red-700 transition" style="font-family: 'Signika', sans-serif;">Emergency Relief</h3>
+              <p class="text-xs text-gray-500 font-semibold">Urgent · Immediate impact</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">Provide immediate relief to families affected by conflict, disaster, and crisis.</p>
+        </a>
+
+        <!-- General Donation -->
+        <a href="/donate" class="group bg-white border-2 border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:border-[#0d9488]/30 transition-all">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-[#0d9488]/10 flex items-center justify-center text-2xl">❤️</div>
+            <div>
+              <h3 class="text-lg font-bold text-gray-800 group-hover:text-[#0d9488] transition" style="font-family: 'Signika', sans-serif;">General Sadaqah</h3>
+              <p class="text-xs text-gray-500 font-semibold">Any amount · Where most needed</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">Your donation goes where it's needed most — feeding the hungry, sheltering the displaced, healing the sick.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="py-16 bg-[#f8fafb]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center" style="font-family: 'Signika', sans-serif;">
+        Frequently Asked <span class="text-[#0d9488]">Questions</span>
+      </h2>
+
+      <div class="space-y-3">
+        <details class="group bg-white rounded-xl border border-gray-200 shadow-sm">
+          <summary class="flex items-center justify-between p-5 cursor-pointer">
+            <span class="text-base font-semibold text-gray-800 pr-4">What is the difference between Sadaqah and Sadaqah Jariyah?</span>
+            <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </summary>
+          <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-3">
+            Sadaqah is any voluntary act of charity. Sadaqah Jariyah specifically refers to ongoing charity — a gift that continues to benefit people over time, earning you continuous reward. A well that provides water for years is Sadaqah Jariyah; giving someone a meal is Sadaqah.
+          </div>
+        </details>
+
+        <details class="group bg-white rounded-xl border border-gray-200 shadow-sm">
+          <summary class="flex items-center justify-between p-5 cursor-pointer">
+            <span class="text-base font-semibold text-gray-800 pr-4">Can I give Sadaqah Jariyah on behalf of someone who has passed away?</span>
+            <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </summary>
+          <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-3">
+            Yes, absolutely. Giving Sadaqah Jariyah on behalf of a deceased loved one is one of the most highly recommended acts in Islam. The reward reaches them and continues for as long as people benefit from the charity.
+          </div>
+        </details>
+
+        <details class="group bg-white rounded-xl border border-gray-200 shadow-sm">
+          <summary class="flex items-center justify-between p-5 cursor-pointer">
+            <span class="text-base font-semibold text-gray-800 pr-4">What are the best forms of Sadaqah Jariyah?</span>
+            <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </summary>
+          <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-3">
+            The most impactful forms include building water wells, funding education, constructing mosques, planting trees, and establishing sustainable food programs. Any charity that creates lasting benefit counts as Sadaqah Jariyah.
+          </div>
+        </details>
+
+        <details class="group bg-white rounded-xl border border-gray-200 shadow-sm">
+          <summary class="flex items-center justify-between p-5 cursor-pointer">
+            <span class="text-base font-semibold text-gray-800 pr-4">Is my donation tax-deductible?</span>
+            <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </summary>
+          <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-3">
+            Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. All donations are tax-deductible to the fullest extent of the law and you will receive an instant receipt.
+          </div>
+        </details>
+
+        <details class="group bg-white rounded-xl border border-gray-200 shadow-sm">
+          <summary class="flex items-center justify-between p-5 cursor-pointer">
+            <span class="text-base font-semibold text-gray-800 pr-4">Can I set up monthly Sadaqah Jariyah?</span>
+            <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </summary>
+          <div class="px-5 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-3">
+            Yes! Monthly giving is one of the best ways to maximize your Sadaqah Jariyah. It allows us to plan ahead and provide consistent, ongoing support to communities. You can set up monthly donations through our donation form.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FINAL CTA ===== -->
+  <section class="py-16 bg-gradient-to-br from-[#0d9488] to-[#0f766e] relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6" style="font-family: 'Signika', sans-serif;">
+        Plant a Seed That Never Stops Growing
+      </h2>
+      <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+        Your Sadaqah Jariyah today becomes a river of reward that flows back to you — in this life, in the grave, and on the Day of Judgment.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button
+          class="sj-cta-donate inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-[#0d9488] font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 cursor-pointer"
+          style="font-family: 'Signika', sans-serif;"
+        >
+          Give Sadaqah Jariyah Now
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+        </button>
+        <a href="/zakat/calculator" class="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-white font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 border-2 border-white/30" style="font-family: 'Signika', sans-serif;">
+          Calculate Your Zakat
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sticky Mobile CTA -->
+  <div id="sj-sticky-bar" class="fixed bottom-0 left-0 right-0 z-50 lg:hidden translate-y-full transition-transform duration-300">
+    <div class="bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] px-4 py-3">
+      <div class="flex items-center justify-between gap-3 max-w-lg mx-auto">
+        <div>
+          <p class="text-sm font-bold text-gray-800">Sadaqah Jariyah</p>
+          <p class="text-xs text-gray-500">Ongoing charity · From $50</p>
+        </div>
+        <button class="sj-cta-donate bg-gradient-to-r from-[#0d9488] to-[#0f766e] text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 hover:from-[#0f766e] hover:to-[#115e59] transition-all" style="font-family: 'Signika', sans-serif;">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+          Donate Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // State
+    let selectedAmount = 300;
+    let selectedProject = 'Water Hand Pump';
+    let frequency: 'single' | 'monthly' = 'single';
+
+    // Elements
+    const amountButtons = document.querySelectorAll('.sj-amount-btn');
+    const customInputs = document.querySelectorAll('.sj-custom-input');
+    const freqButtons = document.querySelectorAll('.sj-freq-btn');
+    const donateButtons = document.querySelectorAll('.sj-donate-btn');
+    const projectDonateButtons = document.querySelectorAll('.sj-project-donate');
+    const ctaButtons = document.querySelectorAll('.sj-cta-donate');
+    const dedicateChecks = document.querySelectorAll('.sj-dedicate') as NodeListOf<HTMLInputElement>;
+    const dedicateWraps = document.querySelectorAll('.sj-dedicate-name-wrap');
+    const dedicateNames = document.querySelectorAll('.sj-dedicate-name') as NodeListOf<HTMLInputElement>;
+    const stickyBar = document.getElementById('sj-sticky-bar');
+    const mobileBox = document.getElementById('sj-mobile-donate');
+
+    function highlightAmountButtons() {
+      amountButtons.forEach(btn => {
+        const amt = parseInt(btn.getAttribute('data-amount') || '0');
+        const isActive = amt === selectedAmount;
+
+        // Reset
+        btn.classList.remove('border-[#0d9488]', 'bg-[#0d9488]/5');
+        btn.classList.add('border-gray-200');
+
+        // Find the title and subtitle spans inside the flex-1 div
+        const titleSpan = btn.querySelector('.flex-1 .text-sm');
+        const subtitleSpan = btn.querySelector('.flex-1 .text-xs');
+
+        if (isActive) {
+          btn.classList.add('border-[#0d9488]', 'bg-[#0d9488]/5');
+          btn.classList.remove('border-gray-200');
+          if (titleSpan) { titleSpan.classList.add('text-[#0d9488]'); titleSpan.classList.remove('text-gray-800'); }
+          if (subtitleSpan) { subtitleSpan.classList.add('text-[#0d9488]/70'); subtitleSpan.classList.remove('text-gray-500'); }
+        } else {
+          if (titleSpan) { titleSpan.classList.remove('text-[#0d9488]'); titleSpan.classList.add('text-gray-800'); }
+          if (subtitleSpan) { subtitleSpan.classList.remove('text-[#0d9488]/70'); subtitleSpan.classList.add('text-gray-500'); }
+        }
+      });
+    }
+
+    function highlightFreqButtons() {
+      freqButtons.forEach(btn => {
+        const freq = btn.getAttribute('data-freq');
+        btn.classList.remove('bg-white', 'text-[#0d9488]', 'shadow-sm');
+        btn.classList.add('text-gray-500');
+        if (freq === frequency) {
+          btn.classList.add('bg-white', 'text-[#0d9488]', 'shadow-sm');
+          btn.classList.remove('text-gray-500');
+        }
+      });
+    }
+
+    // Amount clicks
+    amountButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedAmount = parseInt(btn.getAttribute('data-amount') || '300');
+        selectedProject = btn.getAttribute('data-project') || 'General';
+        customInputs.forEach(input => (input as HTMLInputElement).value = '');
+        highlightAmountButtons();
+      });
+    });
+
+    // Custom amount
+    customInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        const val = parseInt((input as HTMLInputElement).value);
+        if (val && val > 0) {
+          selectedAmount = val;
+          selectedProject = 'General';
+          customInputs.forEach(other => {
+            if (other !== input) (other as HTMLInputElement).value = val.toString();
+          });
+          highlightAmountButtons();
+        }
+      });
+    });
+
+    // Frequency toggle
+    freqButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        frequency = (btn.getAttribute('data-freq') as 'single' | 'monthly') || 'single';
+        highlightFreqButtons();
+      });
+    });
+
+    // Dedicate toggles (sync)
+    dedicateChecks.forEach(cb => {
+      cb.addEventListener('change', () => {
+        dedicateChecks.forEach(other => other.checked = cb.checked);
+        dedicateWraps.forEach(wrap => wrap.classList.toggle('hidden', !cb.checked));
+      });
+    });
+
+    // Add to cart function
+    function addToCart(name: string, amount: number, freq?: string) {
+      if (amount < 1) return;
+      const dedicateName = Array.from(dedicateNames).find(el => el.value)?.value || '';
+      let description = `Sadaqah Jariyah — ${name}`;
+      if (dedicateName) description += ` (In memory of ${dedicateName})`;
+
+      if (typeof (window as any).addToCart === 'function') {
+        (window as any).addToCart({
+          id: `sadaqah-jariyah-${Date.now()}`,
+          type: 'donation',
+          name: `Sadaqah Jariyah - ${name}`,
+          amount: amount,
+          quantity: 1,
+          description: description,
+          frequency: (freq || frequency) === 'monthly' ? 'monthly' : 'single'
+        });
+      }
+    }
+
+    // Main donate buttons
+    donateButtons.forEach(btn => {
+      btn.addEventListener('click', () => addToCart(selectedProject, selectedAmount));
+    });
+
+    // Project donate buttons
+    projectDonateButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const project = btn.getAttribute('data-project') || 'General';
+        const amount = parseInt(btn.getAttribute('data-amount') || '50');
+        const freq = btn.getAttribute('data-freq') || 'single';
+        addToCart(project, amount, freq);
+      });
+    });
+
+    // CTA buttons — scroll to donation box
+    ctaButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = document.getElementById('sj-mobile-donate') || document.getElementById('sj-desktop-donate');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          addToCart('General', selectedAmount);
+        }
+      });
+    });
+
+    // Mobile sticky bar — show when mobile donation box scrolls out of view
+    if (stickyBar && mobileBox) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            stickyBar.classList.add('translate-y-full');
+          } else {
+            stickyBar.classList.remove('translate-y-full');
+          }
+        },
+        { threshold: 0.1 }
+      );
+      observer.observe(mobileBox);
+    }
+
+    // Init
+    highlightAmountButtons();
+    highlightFreqButtons();
+  });
+</script>

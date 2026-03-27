@@ -1,0 +1,275 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// ─── Helpers ───
+function formatDate(dateStr: string | null | undefined, includeTime = true) {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  const opts: Intl.DateTimeFormatOptions = {
+    month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York',
+  };
+  if (includeTime) { opts.hour = '2-digit'; opts.minute = '2-digit'; }
+  return date.toLocaleDateString('en-US', opts);
+}
+
+function formatAmount(amount: number | string | null | undefined) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+}
+
+function getAqiqahInfo(donation: any) {
+  let items: any[] = [];
+  try {
+    items = typeof donation.items === 'string' ? JSON.parse(donation.items) : (donation.items || []);
+  } catch { items = []; }
+  const aqiqahItem = items.find((i: any) => i.packageType === 'boy' || i.packageType === 'girl');
+  return {
+    childName: aqiqahItem?.childName?.trim() || 'Unknown',
+    packageType: aqiqahItem?.packageType || 'unknown',
+  };
+}
+
+function getPerformanceDate(createdAt: string): Date {
+  const d = new Date(createdAt);
+  d.setDate(d.getDate() + 2);
+  return d;
+}
+
+function getCertStatus(donation: any): { label: string; cls: string; date?: string } {
+  if (donation.certificate_sent_at) {
+    return { label: 'Sent', cls: 'bg-green-100 text-green-800', date: formatDate(donation.certificate_sent_at, false) };
+  }
+  const perfDate = getPerformanceDate(donation.created_at);
+  if (perfDate <= new Date()) {
+    return { label: 'Ready', cls: 'bg-yellow-100 text-yellow-800' };
+  }
+  return { label: 'Pending', cls: 'bg-gray-100 text-gray-600' };
+}
+
+// ─── Query ───
+const { data: donations } = await supabaseAdmin
+  .from('donations')
+  .select('*')
+  .eq('campaign_slug', 'aqiqah')
+  .eq('status', 'completed')
+  .order('created_at', { ascending: false });
+
+const allDonations = donations || [];
+
+// ─── Stats ───
+const now = new Date();
+const totalOrders = allDonations.length;
+const certsSent = allDonations.filter((d: any) => d.certificate_sent_at).length;
+const pendingCerts = allDonations.filter((d: any) => {
+  if (d.certificate_sent_at) return false;
+  return getPerformanceDate(d.created_at) <= now;
+}).length;
+const totalRevenue = allDonations.reduce((sum: number, d: any) => sum + (parseFloat(d.amount) || 0), 0);
+---
+
+<AdminLayout title="Aqiqah Certificates">
+
+  <!-- Page Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Aqiqah Certificates</h1>
+      <p class="text-sm text-gray-500 mt-1">Manage and send Aqiqah certificates to donors</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 mb-0.5">Total Aqiqah Orders</p>
+      <p class="text-xl font-bold text-blue-600">{totalOrders}</p>
+    </div>
+    <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 mb-0.5">Certificates Sent</p>
+      <p class="text-xl font-bold text-green-600">{certsSent}</p>
+    </div>
+    <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 mb-0.5">Ready to Send</p>
+      <p class="text-xl font-bold text-yellow-600">{pendingCerts}</p>
+    </div>
+    <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-500 mb-0.5">Total Revenue</p>
+      <p class="text-lg font-bold text-purple-600">{formatAmount(totalRevenue)}</p>
+    </div>
+  </div>
+
+  <!-- Certificates Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Order Date</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Donor</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Child Name</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Package</th>
+            <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Amount</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Performance Date</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Certificate</th>
+            <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {allDonations.length > 0 ? (
+            allDonations.map((donation: any) => {
+              const { childName, packageType } = getAqiqahInfo(donation);
+              const perfDate = getPerformanceDate(donation.created_at);
+              const certStatus = getCertStatus(donation);
+
+              return (
+                <tr class="hover:bg-gray-50 transition" data-id={donation.id}>
+                  <td class="px-4 py-4">
+                    <p class="text-sm text-gray-800 whitespace-nowrap">{formatDate(donation.created_at)}</p>
+                  </td>
+                  <td class="px-4 py-4">
+                    <div>
+                      <p class="text-sm font-medium text-gray-800">{donation.donor_name || 'Anonymous'}</p>
+                      <p class="text-xs text-gray-500">{donation.donor_email || 'No email'}</p>
+                    </div>
+                  </td>
+                  <td class="px-4 py-4">
+                    <p class="text-sm text-gray-800 font-medium">{childName}</p>
+                  </td>
+                  <td class="px-4 py-4">
+                    {packageType === 'boy' ? (
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Boy</span>
+                    ) : packageType === 'girl' ? (
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">Girl</span>
+                    ) : (
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Unknown</span>
+                    )}
+                  </td>
+                  <td class="px-4 py-4 text-right">
+                    <p class="text-sm font-semibold text-gray-800">{formatAmount(donation.amount)}</p>
+                  </td>
+                  <td class="px-4 py-4">
+                    <p class="text-sm text-gray-800 whitespace-nowrap">{formatDate(perfDate.toISOString(), false)}</p>
+                  </td>
+                  <td class="px-4 py-4">
+                    <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${certStatus.cls}`}>
+                      {certStatus.label}
+                    </span>
+                    {certStatus.date && (
+                      <p class="text-xs text-gray-400 mt-0.5">{certStatus.date}</p>
+                    )}
+                  </td>
+                  <td class="px-4 py-4">
+                    <div class="flex items-center gap-2">
+                      {donation.certificate_url && (
+                        <a
+                          href={donation.certificate_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                          Download
+                        </a>
+                      )}
+                      {certStatus.label === 'Ready' && (
+                        <button
+                          class="cert-action-btn inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-[#01534d] rounded-lg hover:bg-[#013d38] transition"
+                          data-donation-id={donation.id}
+                          data-action="send"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                          Send
+                        </button>
+                      )}
+                      {certStatus.label === 'Sent' && (
+                        <button
+                          class="cert-action-btn inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                          data-donation-id={donation.id}
+                          data-action="resend"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                          Resend
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colspan="8" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center">
+                  <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <p class="text-gray-500 font-medium">No Aqiqah orders found</p>
+                  <p class="text-gray-400 text-sm">Completed Aqiqah donations will appear here</p>
+                </div>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- JavaScript for Send/Resend -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const buttons = document.querySelectorAll('.cert-action-btn');
+
+      buttons.forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const button = e.currentTarget as HTMLButtonElement;
+          const donationId = button.dataset.donationId;
+          const action = button.dataset.action;
+
+          if (!donationId) return;
+
+          const originalText = button.innerHTML;
+          button.disabled = true;
+          button.innerHTML = `
+            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            ${action === 'send' ? 'Sending...' : 'Resending...'}
+          `;
+
+          try {
+            const res = await fetch('/api/certificates/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ donationId, action }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+              button.innerHTML = `
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Done!
+              `;
+              button.classList.remove('bg-[#01534d]', 'hover:bg-[#013d38]', 'bg-gray-100', 'hover:bg-gray-200');
+              button.classList.add('bg-green-100', 'text-green-800');
+
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              alert(`Error: ${data.error || 'Failed to send certificate'}`);
+              button.innerHTML = originalText;
+              button.disabled = false;
+            }
+          } catch (err) {
+            alert('Network error. Please try again.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+          }
+        });
+      });
+    });
+  </script>
+
+</AdminLayout>

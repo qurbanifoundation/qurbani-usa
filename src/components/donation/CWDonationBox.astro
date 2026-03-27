@@ -142,7 +142,7 @@ function getEmojiForCampaign(slug: string): string {
   if (s.includes('medical') || s.includes('health') || s.includes('clinic') || s.includes('eye-care')) return '🏥';
 
   // Qurbani
-  if (s.includes('qurbani') || s.includes('aqiqah') || s.includes('udhiyah')) return '🐑';
+  if (s.includes('qurbani') || s.includes('aqiqah') || s.includes('udhiyah') || s.includes('sacrifice')) return '🐑';
 
   // Mosque
   if (s.includes('mosque') || s.includes('masjid')) return '🕌';
@@ -599,6 +599,9 @@ const tabTextSize = frequencyTabs.length > 2 ? 'text-[11px]' : 'text-[13px]';
       _origUpdateImpact(isCustom);
       dispatchAmountChange();
     };
+
+    // Fire initial amount after a tick so external listeners (sticky bars) are registered first
+    setTimeout(function() { dispatchAmountChange(); }, 0);
 
     function addItemToCart(amount, type) {
       var freq = getActiveFreq();

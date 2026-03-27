@@ -241,7 +241,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     fulfillment_mode: fulfillmentMode,
     fulfillment_status: 'pending',
     scheduled_fulfillment_at: fulfillmentDate.toISOString(),
-    fulfillment_email_scheduled_at: emailSendTime.toISOString(),
+    // Fulfillment emails disabled — handled manually (e.g., Aqiqah performed notifications)
+    // fulfillment_email_scheduled_at: emailSendTime.toISOString(),
     donor_timezone: donorTimezone,
     campaign_type: campaignType,
   };

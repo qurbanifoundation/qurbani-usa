@@ -281,13 +281,15 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
           <img
             src={campaign.featured_image}
             alt=""
-            class="absolute inset-0 w-full h-full object-cover"
+            class="absolute inset-0 w-full h-full object-cover hero-bg-img"
+            style={`object-position: ${(campaign as any).hero_image_position || campaign.template_config?.hero_image_position || 'center center'}`}
+            data-mobile-position={(campaign as any).hero_image_position_mobile || 'center center'}
           />
         ) : (
           <div class="absolute inset-0 bg-gradient-to-br from-[#1a4a55] via-[#255764] to-[#01534d]"></div>
         )}
         <!-- Dark overlay for text readability -->
-        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
       </div>
 
       <!-- Hero Content Grid -->
@@ -314,9 +316,14 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
 
             <!-- Left: Text Content (3 cols) - vertically centered -->
             <div class="lg:col-span-3 text-left">
-              <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+              <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight" style={`font-family: 'Signika', sans-serif; margin-bottom: ${campaign.hero_title_accent ? '0.5rem' : '1.5rem'};`}>
                 {campaign.hero_title || campaign.title}
               </h1>
+              {campaign.hero_title_accent && (
+                <p class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 leading-tight italic" style="font-family: 'Signika', sans-serif; color: #ef7c01;">
+                  {campaign.hero_title_accent}
+                </p>
+              )}
 
               {campaign.subtitle && (
                 <div class="text-xl md:text-2xl text-white/90 max-w-2xl leading-relaxed" style={`font-family: 'Lato', sans-serif; margin-bottom: ${campaign.subtitle2 ? '0.5rem' : '2rem'};`} set:html={formatLineBreaks(campaign.subtitle)}></div>
@@ -769,14 +776,61 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                     alt={pageContent.theCrisis.heading}
                     class="w-full h-48 md:h-56 object-cover rounded mb-5" />
                 )}
-                <div class="text-[15px] text-gray-600 leading-[1.8]" style="font-family: 'Lato', sans-serif;"
-                  set:html={formatTextToHtml(
-                    pageContent.theCrisis.content
-                      || (contentSections.length > 0 && contentSections[0]?.content ? contentSections[0].content : '')
-                      || campaign.description
-                      || 'Families are facing an urgent humanitarian crisis. Without food, clean water, or medical care, millions are at risk — and the situation is getting worse every day. Your support can provide immediate relief to those who need it most.'
-                  )}>
-                </div>
+                {(() => {
+                  const fullText = pageContent.theCrisis.content
+                    || (contentSections.length > 0 && contentSections[0]?.content ? contentSections[0].content : '')
+                    || campaign.description
+                    || 'Families are facing an urgent humanitarian crisis. Without food, clean water, or medical care, millions are at risk — and the situation is getting worse every day. Your support can provide immediate relief to those who need it most.';
+                  const paragraphs = fullText.split('\n\n');
+                  const isLong = paragraphs.length > 2;
+                  const firstPara = paragraphs.slice(0, 1).join('\n\n');
+                  const restParas = paragraphs.slice(1).join('\n\n');
+                  return isLong ? (
+                    <div>
+                      <div class="text-[15px] text-gray-600 leading-[1.8]" style="font-family: 'Lato', sans-serif;"
+                        set:html={formatTextToHtml(firstPara)}>
+                      </div>
+                      <div id="crisis-read-more" class="hidden mt-4">
+                        <div class="text-[15px] text-gray-600 leading-[1.8]" style="font-family: 'Lato', sans-serif;"
+                          set:html={formatTextToHtml(restParas)}>
+                        </div>
+                      </div>
+                      <div class="mt-4 flex items-center gap-4 flex-wrap">
+                        <button id="crisis-toggle-btn" class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#01534d] hover:text-[#013d38] transition cursor-pointer">
+                          <span id="crisis-toggle-text">Read More</span>
+                          <svg id="crisis-toggle-arrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <script is:inline>
+                          document.getElementById('crisis-toggle-btn')?.addEventListener('click', function() {
+                            var el = document.getElementById('crisis-read-more');
+                            var txt = document.getElementById('crisis-toggle-text');
+                            var arrow = document.getElementById('crisis-toggle-arrow');
+                            if (!el) return;
+                            if (el.classList.contains('hidden')) {
+                              el.classList.remove('hidden');
+                              if (txt) txt.textContent = 'Read Less';
+                              if (arrow) arrow.style.transform = 'rotate(180deg)';
+                            } else {
+                              el.classList.add('hidden');
+                              if (txt) txt.textContent = 'Read More';
+                              if (arrow) arrow.style.transform = 'rotate(0deg)';
+                            }
+                          });
+                        </script>
+                        {pageContent.faq?.items && pageContent.faq.items.length > 0 && (
+                          <a href="#campaign-faq" class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-[#01534d] transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            View FAQs
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div class="text-[15px] text-gray-600 leading-[1.8]" style="font-family: 'Lato', sans-serif;"
+                      set:html={formatTextToHtml(fullText)}>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -845,7 +899,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                   style="font-family: 'Signika', sans-serif;">
                   {pageContent.midCta.primaryButtonText}
                 </a>
-                <a href="#donate"
+                <a href="#campaign-faq"
                   class="mid-cta-monthly-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent border-2 border-white/30 text-white font-bold px-8 py-3 rounded text-[13px] uppercase tracking-wider hover:border-white/60 transition-all"
                   style="font-family: 'Signika', sans-serif;">
                   {pageContent.midCta.secondaryButtonText}
@@ -865,28 +919,41 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
                   <p class="text-[13px] text-gray-500 mt-1">{pageContent.chooseYourImpact.subtext}</p>
                 </div>
 
-                <!-- Single / Monthly toggle (Monthly default) -->
+                <!-- Single / Monthly toggle -->
+                {!pageContent.chooseYourImpact.hideMonthlyTab ? (
                 <div class="px-5 pt-4 sm:px-7">
                   <div class="inline-flex bg-[#f4f5f0] rounded border border-[#e0e1dc] p-0.5">
                     <button type="button"
                       class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       data-tier-type="single"
-                      style="color: #9ca3af;">
+                      style="background-color: #d97706; color: #ffffff;">
                       {pageContent.chooseYourImpact.singleTabText}
                     </button>
                     <button type="button"
                       class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all cursor-pointer"
                       data-tier-type="monthly"
-                      style="background-color: #d97706; color: #ffffff;">
+                      style="color: #9ca3af;">
                       {pageContent.chooseYourImpact.monthlyTabText}
                     </button>
                   </div>
                 </div>
+                ) : (
+                <div class="px-5 pt-4 sm:px-7">
+                  <div class="inline-flex bg-[#f4f5f0] rounded border border-[#e0e1dc] p-0.5">
+                    <button type="button"
+                      class="tier-type-btn px-5 py-2 rounded text-[13px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                      data-tier-type="single"
+                      style="background-color: #d97706; color: #ffffff;">
+                      {pageContent.chooseYourImpact.singleTabText}
+                    </button>
+                  </div>
+                </div>
+                )}
 
                 <!-- Tier rows -->
                 <div class="px-5 sm:px-7 py-4 space-y-2.5">
                   {activeOptions.map((opt: any) => {
-                    const monthlyAmount = Math.round(opt.amount * 0.4);
+                    const monthlyAmount = Math.round(opt.amount * 0.2);
                     return (
                     <button type="button"
                       class="tier-row w-full flex items-center gap-3 bg-[#f4f5f0] border border-[#e0e1dc] rounded px-4 py-3.5 hover:border-[#d97706] hover:bg-[#d97706]/5 transition-all group cursor-pointer text-left"
@@ -969,7 +1036,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
             <!-- ═══════════════════════════════════════════════════════ -->
             <!-- 6. TRANSPARENCY / FAQ (Expandable)                      -->
             <!-- ═══════════════════════════════════════════════════════ -->
-            <div class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden">
+            <div id="campaign-faq" class="bg-white rounded-md border border-gray-200 shadow-xl overflow-hidden scroll-mt-24">
               <div class="bg-[#F4F5F0] px-5 py-4 sm:px-7 sm:py-5 border-b border-[#e0e1dc]">
                 <h2 class="text-xl md:text-2xl font-bold text-gray-800 leading-tight" style="font-family: 'Signika', sans-serif;">
                   {pageContent.faq.heading}
@@ -1090,7 +1157,26 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
   <Footer />
 </Layout>
 
-<script define:vars={{ campaignData: { slug: campaign.slug, title: campaign.title, image: campaign.featured_image }, donationOpts: activeOptions, boxTemplate: donationBoxTemplate, colorConfig: colors }}>
+<script is:inline>
+  // Responsive hero image position
+  (function() {
+    var img = document.querySelector('.hero-bg-img');
+    if (!img) return;
+    var mobilePos = img.getAttribute('data-mobile-position');
+    var desktopPos = img.style.objectPosition || 'center center';
+    function applyPos() {
+      if (window.innerWidth < 768 && mobilePos) {
+        img.style.objectPosition = mobilePos;
+      } else {
+        img.style.objectPosition = desktopPos;
+      }
+    }
+    applyPos();
+    window.addEventListener('resize', applyPos);
+  })();
+</script>
+
+<script define:vars={{ campaignData: { slug: campaign.slug, title: campaign.title, image: campaign.featured_image }, donationOpts: activeOptions, boxTemplate: donationBoxTemplate, colorConfig: colors, hideMonthlyTab: !!pageContent.chooseYourImpact.hideMonthlyTab }}>
   let selectedAmount = 0; // No default selection
   let selectedLabel = '';
   let donationType = 'single';
@@ -1410,7 +1496,7 @@ const activeOptions = campaignDonationOptions.length > 0 ? campaignDonationOptio
     // ══════════════════════════════════════════════════════
     // DONATION TIER LIST LOGIC
     // ══════════════════════════════════════════════════════
-    var tierDonationType = 'monthly';
+    var tierDonationType = 'single';
 
     // Tier type toggle (Single / Monthly)
     var tierTypeButtons = document.querySelectorAll('.tier-type-btn');

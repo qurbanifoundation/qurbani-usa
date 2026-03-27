@@ -10,7 +10,14 @@ import TileStackSponsorshipTemplate from '../../templates/TileStackSponsorshipTe
 import AqiqahTemplate from '../../templates/AqiqahTemplate.astro';
 import ZakatCalculatorTemplate from '../../templates/ZakatCalculatorTemplate.astro';
 import ZakatHubTemplate from '../../templates/ZakatHubTemplate.astro';
+import ZakatAlFitrTemplate from '../../templates/ZakatAlFitrTemplate.astro';
+import ZakatAlFitrHeroTemplate from '../../templates/ZakatAlFitrHeroTemplate.astro';
 import FoodAidTemplate from '../../templates/FoodAidTemplate.astro';
+import EidGiftsTemplate from '../../templates/EidGiftsTemplate.astro';
+import SadaqahSacrificeTemplate from '../../templates/SadaqahSacrificeTemplate.astro';
+import SadaqahTemplate from '../../templates/SadaqahTemplate.astro';
+import SadaqahJariyahTemplate from '../../templates/SadaqahJariyahTemplate.astro';
+import QurbaniTemplate from '../../templates/QurbaniTemplate.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
@@ -76,6 +83,7 @@ const campaignProps = {
   id: campaign.id,
   title: campaign.name || campaign.title,
   hero_title: campaign.hero_title || '',
+  hero_title_accent: campaign.hero_title_accent || '',
   subtitle: campaign.subtitle || campaign.description,
   subtitle2: campaign.subtitle2 || '',
   slug: campaign.slug,
@@ -93,6 +101,8 @@ const campaignProps = {
   is_zakat_eligible: campaign.is_zakat_eligible,
   impact_stats: campaign.impact_stats || [],
   template_config: campaign.template_config || {},
+  hero_image_position: campaign.hero_image_position || 'center center',
+  hero_image_position_mobile: campaign.hero_image_position_mobile || 'center center',
 };
 
 // Determine which templates to use — page_template is set directly on each campaign in the database
@@ -100,7 +110,11 @@ const pageTemplate = campaign.page_template || siteSettings?.default_campaign_pa
 const donationBoxTemplate = campaign.donation_box_template || siteSettings?.default_donation_box_template || 'teal-yellow';
 ---
 
-{pageTemplate === 'food-aid' ? (
+{pageTemplate === 'zakat-al-fitr-hero' ? (
+  <ZakatAlFitrHeroTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'zakat-al-fitr' ? (
+  <ZakatAlFitrTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'food-aid' ? (
   <FoodAidTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : pageTemplate === 'zakat-hub' ? (
   <ZakatHubTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
@@ -114,6 +128,16 @@ const donationBoxTemplate = campaign.donation_box_template || siteSettings?.defa
   <OrphanSponsorshipTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : pageTemplate === 'emergency-appeal' ? (
   <EmergencyAppealTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'eid-gifts' ? (
+  <EidGiftsTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'sadaqah-sacrifice' ? (
+  <SadaqahSacrificeTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'sadaqah-template' ? (
+  <SadaqahTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'sadaqah-jariyah' ? (
+  <SadaqahJariyahTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
+) : pageTemplate === 'qurbani-template' ? (
+  <QurbaniTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 ) : (
   <GreenWithYellowTemplate campaign={campaignProps} donationBoxTemplate={donationBoxTemplate} />
 )}

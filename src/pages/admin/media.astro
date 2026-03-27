@@ -1,0 +1,1414 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+export const prerender = false;
+---
+
+<AdminLayout title="Media Library" activeNav="media">
+  <div class="p-6 max-w-[1600px] mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Media Library</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          <span id="statsLine">Loading images...</span>
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          id="toggleUploadBtn"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#01534d] text-white rounded-lg hover:bg-[#013d38] transition-colors text-sm font-medium"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Upload
+        </button>
+        <button
+          id="refreshBtn"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh
+        </button>
+        <button
+          id="pngAuditBtn"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+          title="Find PNG files used on pages that should be converted to WebP"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          PNG Audit
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Panel (collapsible) -->
+    <div id="uploadPanel" class="hidden mb-6">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Upload Image</h2>
+          <button id="closeUploadBtn" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
+          <button class="upload-tab active px-4 py-2 text-sm font-medium rounded-md transition-colors" data-tab="file">
+            File Upload
+          </button>
+          <button class="upload-tab px-4 py-2 text-sm font-medium rounded-md transition-colors" data-tab="url">
+            From URL
+          </button>
+        </div>
+
+        <!-- File Upload Tab -->
+        <div id="fileUploadTab">
+          <div
+            id="dropZone"
+            class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-[#01534d] hover:bg-[#01534d]/5 transition-all cursor-pointer"
+          >
+            <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p class="text-gray-600 font-medium">Drag and drop an image here</p>
+            <p class="text-sm text-gray-400 mt-1">or click to select a file</p>
+            <p class="text-xs text-gray-400 mt-2">PNG, JPG, WebP, GIF, SVG - Max 10MB</p>
+            <input type="file" id="fileInput" accept="image/*" class="hidden" />
+          </div>
+          <div id="filePreview" class="hidden mt-4 flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+            <img id="filePreviewImg" class="w-16 h-16 object-cover rounded-lg" src="" alt="" />
+            <div class="flex-1 min-w-0">
+              <p id="filePreviewName" class="text-sm font-medium text-gray-900 truncate"></p>
+              <p id="filePreviewSize" class="text-xs text-gray-500"></p>
+            </div>
+            <button id="clearFileBtn" class="text-gray-400 hover:text-red-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- URL Upload Tab -->
+        <div id="urlUploadTab" class="hidden">
+          <div class="flex gap-3">
+            <input
+              type="text"
+              id="urlInput"
+              placeholder="https://example.com/image.png"
+              class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none"
+            />
+            <input
+              type="text"
+              id="urlFilename"
+              placeholder="filename (optional)"
+              class="w-48 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Options & Submit -->
+        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="autoConvertWebp" checked class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+            <span class="text-sm text-gray-700">Auto-convert to WebP</span>
+          </label>
+          <button
+            id="uploadSubmitBtn"
+            disabled
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#01534d] text-white rounded-lg hover:bg-[#013d38] transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <span id="uploadBtnText">Upload</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div class="flex flex-col md:flex-row gap-3">
+        <!-- Search Mode -->
+        <select id="searchMode" class="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none min-w-[130px]">
+          <option value="all">Search All</option>
+          <option value="images">Images Only</option>
+          <option value="pages">Pages Only</option>
+        </select>
+
+        <!-- Search -->
+        <div class="relative flex-1">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by filename or page name (e.g. zakat, orphan, aqiqah)..."
+            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none"
+          />
+        </div>
+
+        <!-- Sort -->
+        <select id="sortSelect" class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none min-w-[160px]">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="size-desc">Size (Largest)</option>
+          <option value="size-asc">Size (Smallest)</option>
+        </select>
+
+        <!-- Filter -->
+        <select id="typeFilter" class="px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none min-w-[120px]">
+          <option value="all">All Types</option>
+          <!-- Populated dynamically from available types -->
+        </select>
+
+        <!-- View Toggle -->
+        <div class="flex bg-gray-100 rounded-lg p-1">
+          <button id="gridViewBtn" class="view-toggle active p-2 rounded-md transition-colors" title="Grid View">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+            </svg>
+          </button>
+          <button id="listViewBtn" class="view-toggle p-2 rounded-md transition-colors" title="List View">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Action Bar -->
+    <div id="bulkBar" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+            <span class="text-sm font-medium text-gray-700">Select All (<span id="selectAllCount">0</span>)</span>
+          </label>
+          <span id="selectedCount" class="text-sm text-gray-500">0 selected</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            id="bulkDeleteBtn"
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            Delete Selected
+          </button>
+          <button
+            id="bulkCancelBtn"
+            class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Skeleton -->
+    <div id="loadingSkeleton" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+      {Array.from({ length: 12 }).map(() => (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+          <div class="aspect-square bg-gray-200"></div>
+          <div class="p-3">
+            <div class="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Grid View -->
+    <div id="gridView" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+    </div>
+
+    <!-- List View -->
+    <div id="listView" class="hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 w-16"></th>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Name</th>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Size</th>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Type</th>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Modified</th>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">URL</th>
+              <th class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="listBody" class="divide-y divide-gray-100">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden text-center py-16">
+      <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      <p class="text-gray-500 text-lg font-medium">No images found</p>
+      <p class="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+    </div>
+
+    <!-- Image Detail Modal -->
+    <div id="detailModal" class="hidden fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/50" id="modalOverlay"></div>
+      <div class="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white shadow-2xl overflow-y-auto">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Image Details</h2>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="bg-gray-100 rounded-xl p-4 mb-6 flex items-center justify-center min-h-[200px]">
+            <img id="modalImage" class="max-w-full max-h-[400px] object-contain rounded-lg" src="" alt="" />
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</label>
+              <p id="modalFilename" class="text-sm font-medium text-gray-900 mt-1 break-all"></p>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Size</label>
+                <p id="modalSize" class="text-sm font-medium text-gray-900 mt-1"></p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Format</label>
+                <p id="modalFormat" class="text-sm font-medium text-gray-900 mt-1 uppercase"></p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">WebP</label>
+                <p id="modalWebpStatus" class="text-sm font-medium mt-1"></p>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">URL</label>
+              <div class="flex items-center gap-2 mt-1">
+                <code id="modalUrl" class="flex-1 text-sm bg-gray-100 px-3 py-2 rounded-lg text-gray-700 break-all"></code>
+                <button id="modalCopyBtn" class="flex-shrink-0 p-2 text-gray-400 hover:text-[#01534d] transition-colors" title="Copy URL">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Convert Section -->
+            <div id="modalConvertSection" class="border-t border-gray-100 pt-4">
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Convert to WebP</label>
+              <div class="flex items-center gap-4 mt-2">
+                <div class="flex-1">
+                  <label class="text-xs text-gray-500">Quality: <span id="qualityValue">80</span></label>
+                  <input type="range" id="qualitySlider" min="60" max="100" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#01534d]" />
+                </div>
+                <button
+                  id="modalConvertBtn"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  Convert
+                </button>
+              </div>
+            </div>
+
+            <!-- Replace Image (swap references) -->
+            <div id="modalReplaceSection" class="border-t border-gray-100 pt-4">
+              <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Replace Image on Pages</label>
+              <p class="text-xs text-gray-400 mt-1 mb-2">Pick a replacement — all page/campaign references will be updated.</p>
+              <div class="relative">
+                <input
+                  type="text"
+                  id="replaceSearchInput"
+                  placeholder="Search replacement image..."
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none"
+                />
+                <div id="replaceResults" class="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-48 overflow-y-auto z-10 hidden">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+              <div id="replacePreview" class="hidden mt-2 p-2 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <img id="replacePreviewImg" class="w-12 h-12 object-cover rounded" src="" alt="" />
+                  <div class="flex-1 min-w-0">
+                    <p id="replacePreviewName" class="text-xs font-medium text-gray-800 truncate"></p>
+                    <p id="replacePreviewSize" class="text-xs text-gray-500"></p>
+                  </div>
+                  <button
+                    id="replaceConfirmBtn"
+                    class="px-3 py-1.5 bg-[#01534d] text-white text-xs font-bold rounded-lg hover:bg-[#013d38] transition"
+                  >
+                    Replace
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delete -->
+            <div class="border-t border-gray-100 pt-4">
+              <button
+                id="modalDeleteBtn"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium w-full justify-center"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Image
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-2"></div>
+
+  </div>
+</AdminLayout>
+
+<style>
+  .upload-tab.active {
+    background: white;
+    color: #1a1a1a;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .upload-tab:not(.active) {
+    color: #6b7280;
+  }
+  .upload-tab:not(.active):hover {
+    color: #374151;
+  }
+  .view-toggle.active {
+    background: white;
+    color: #1a1a1a;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .view-toggle:not(.active) {
+    color: #6b7280;
+  }
+  .view-toggle:not(.active):hover {
+    color: #374151;
+  }
+  @keyframes flashGreen {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+  .flash-green {
+    animation: flashGreen 0.8s ease-out;
+  }
+  .drag-over {
+    border-color: #01534d !important;
+    background-color: rgba(1, 83, 77, 0.08) !important;
+  }
+</style>
+
+<script>
+  // ─── State ──────────────────────────────────────────────────────────────────
+  let allImages: any[] = [];
+  let currentView = 'grid';
+  let selectedFile: File | null = null;
+  let selectedImage: any = null;
+
+  // ─── Elements ───────────────────────────────────────────────────────────────
+  const $ = (s: string) => document.querySelector(s) as HTMLElement;
+  const $$ = (s: string) => document.querySelectorAll(s);
+
+  const statsLine = $('#statsLine');
+  const toggleUploadBtn = $('#toggleUploadBtn');
+  const uploadPanel = $('#uploadPanel');
+  const closeUploadBtn = $('#closeUploadBtn');
+  const refreshBtn = $('#refreshBtn');
+  const searchInput = $('#searchInput') as HTMLInputElement;
+  const sortSelect = $('#sortSelect') as HTMLSelectElement;
+  const typeFilter = $('#typeFilter') as HTMLSelectElement;
+  const gridViewBtn = $('#gridViewBtn');
+  const listViewBtn = $('#listViewBtn');
+  const gridView = $('#gridView');
+  const listView = $('#listView');
+  const listBody = $('#listBody');
+  const loadingSkeleton = $('#loadingSkeleton');
+  const emptyState = $('#emptyState');
+  const detailModal = $('#detailModal');
+  const modalOverlay = $('#modalOverlay');
+  const closeModalBtn = $('#closeModalBtn');
+  const dropZone = $('#dropZone');
+  const fileInput = $('#fileInput') as HTMLInputElement;
+  const filePreview = $('#filePreview');
+  const filePreviewImg = $('#filePreviewImg') as HTMLImageElement;
+  const filePreviewName = $('#filePreviewName');
+  const filePreviewSize = $('#filePreviewSize');
+  const clearFileBtn = $('#clearFileBtn');
+  const urlInput = $('#urlInput') as HTMLInputElement;
+  const urlFilename = $('#urlFilename') as HTMLInputElement;
+  const autoConvertWebp = $('#autoConvertWebp') as HTMLInputElement;
+  const uploadSubmitBtn = $('#uploadSubmitBtn') as HTMLButtonElement;
+  const uploadBtnText = $('#uploadBtnText');
+  const qualitySlider = $('#qualitySlider') as HTMLInputElement;
+  const qualityValue = $('#qualityValue');
+  const modalConvertBtn = $('#modalConvertBtn') as HTMLButtonElement;
+  const modalDeleteBtn = $('#modalDeleteBtn') as HTMLButtonElement;
+  const modalCopyBtn = $('#modalCopyBtn');
+  const modalConvertSection = $('#modalConvertSection');
+
+  // ─── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(message: string, type: 'success' | 'error' | 'info' = 'success') {
+    const container = $('#toastContainer');
+    const colors = {
+      success: 'bg-green-600',
+      error: 'bg-red-600',
+      info: 'bg-blue-600',
+    };
+    const icons = {
+      success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>',
+      error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>',
+      info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>',
+    };
+    const toast = document.createElement('div');
+    toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm font-medium transform translate-x-full transition-transform duration-300`;
+    toast.innerHTML = `
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type]}</svg>
+      <span>${message}</span>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.transform = 'translateX(0)'; });
+    setTimeout(() => {
+      toast.style.transform = 'translateX(120%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // ─── Format helpers ─────────────────────────────────────────────────────────
+  function formatSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'America/New_York',
+    });
+  }
+
+  function getSizeBadgeClass(bytes: number): string {
+    if (bytes > 1024 * 1024) return 'bg-red-100 text-red-700';
+    if (bytes > 500 * 1024) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-green-100 text-green-700';
+  }
+
+  function getExtBadgeClass(ext: string): string {
+    switch (ext) {
+      case 'png': return 'bg-blue-100 text-blue-700';
+      case 'jpg': case 'jpeg': return 'bg-orange-100 text-orange-700';
+      case 'webp': return 'bg-green-100 text-green-700';
+      case 'gif': return 'bg-purple-100 text-purple-700';
+      case 'svg': return 'bg-pink-100 text-pink-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  }
+
+  // ─── Load Images ────────────────────────────────────────────────────────────
+  async function loadImages() {
+    loadingSkeleton.classList.remove('hidden');
+    gridView.classList.add('hidden');
+    listView.classList.add('hidden');
+    emptyState.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/media', { credentials: 'include', credentials: 'include' });
+      const data = await res.json();
+
+      // Check if running on production (DB-only mode)
+      if (data.productionMode) {
+        // Hide upload, convert, delete buttons — only view/search/copy/replace work
+        const uploadBtn = document.getElementById('uploadToggleBtn');
+        const pngAuditBtn = document.querySelector('[class*="border-red"]');
+        if (uploadBtn) uploadBtn.style.display = 'none';
+        if (pngAuditBtn) (pngAuditBtn as HTMLElement).style.display = 'none';
+        statsLine.textContent = data.total + ' images in database (production mode — view, search, copy URL, replace)';
+      }
+
+      // Fatal error
+      if (data.localOnly) {
+        loadingSkeleton.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        emptyState.innerHTML = '<div class="text-center py-16"><p class="text-gray-500">Error loading images: ' + (data.error || 'Unknown error') + '</p></div>';
+        statsLine.textContent = 'Error';
+        return;
+      }
+
+      allImages = data.images || [];
+      statsLine.textContent = `${data.total} images - ${data.totalSizeFormatted} total`;
+
+      // Populate type filter dynamically from available types
+      const types: string[] = data.availableTypes || [];
+      const tf = typeFilter as HTMLSelectElement;
+      const currentVal = tf.value;
+      tf.innerHTML = '<option value="all">All Types</option>';
+      types.forEach((t: string) => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t.toUpperCase();
+        tf.appendChild(opt);
+      });
+      // Add usage filter
+      const usedOpt = document.createElement('option');
+      usedOpt.value = '_used';
+      usedOpt.textContent = 'Used on pages';
+      tf.appendChild(usedOpt);
+      const unusedOpt = document.createElement('option');
+      unusedOpt.value = '_unused';
+      unusedOpt.textContent = 'Unused';
+      tf.appendChild(unusedOpt);
+      if (currentVal) tf.value = currentVal;
+
+      renderImages();
+    } catch (e: any) {
+      showToast('Failed to load images: ' + e.message, 'error');
+      statsLine.textContent = 'Error loading images';
+    } finally {
+      loadingSkeleton.classList.add('hidden');
+    }
+  }
+
+  // ─── Filter & Sort ──────────────────────────────────────────────────────────
+  function getFilteredImages(): any[] {
+    let filtered = [...allImages];
+    const query = (searchInput as HTMLInputElement).value.toLowerCase().trim();
+    const typeVal = (typeFilter as HTMLSelectElement).value;
+    const sortVal = (sortSelect as HTMLSelectElement).value;
+
+    if (query) {
+      const searchMode = (document.getElementById('searchMode') as HTMLSelectElement)?.value || 'all';
+      filtered = filtered.filter(img => {
+        if (searchMode === 'images') {
+          // Only search by filename
+          return img.name.toLowerCase().includes(query);
+        }
+        if (searchMode === 'pages') {
+          // Only search by page/campaign usage
+          return img.usedOn && img.usedOn.some((u: string) => u.toLowerCase().includes(query));
+        }
+        // Search all (both filename and pages)
+        if (img.name.toLowerCase().includes(query)) return true;
+        if (img.usedOn && img.usedOn.some((u: string) => u.toLowerCase().includes(query))) return true;
+        return false;
+      });
+    }
+    if (typeVal === '_used') {
+      filtered = filtered.filter(img => img.usedOn && img.usedOn.length > 0);
+    } else if (typeVal === '_unused') {
+      filtered = filtered.filter(img => !img.usedOn || img.usedOn.length === 0);
+    } else if (typeVal !== 'all') {
+      filtered = filtered.filter(img => img.extension === typeVal);
+    }
+
+    switch (sortVal) {
+      case 'newest': filtered.sort((a, b) => b.modified.localeCompare(a.modified)); break;
+      case 'oldest': filtered.sort((a, b) => a.modified.localeCompare(b.modified)); break;
+      case 'name-asc': filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case 'name-desc': filtered.sort((a, b) => b.name.localeCompare(a.name)); break;
+      case 'size-desc': filtered.sort((a, b) => b.size - a.size); break;
+      case 'size-asc': filtered.sort((a, b) => a.size - b.size); break;
+    }
+
+    return filtered;
+  }
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
+  function renderImages() {
+    const images = getFilteredImages();
+
+    if (images.length === 0) {
+      gridView.classList.add('hidden');
+      listView.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+
+    if (currentView === 'grid') {
+      renderGridView(images);
+      gridView.classList.remove('hidden');
+      listView.classList.add('hidden');
+    } else {
+      renderListView(images);
+      listView.classList.remove('hidden');
+      gridView.classList.add('hidden');
+    }
+  }
+
+  function renderGridView(images: any[]) {
+    gridView.innerHTML = images.map(img => `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-md transition-all cursor-pointer media-card relative" data-name="${img.name}">
+        <input type="checkbox" class="bulk-select-cb absolute top-2 right-2 z-20 w-5 h-5 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d] cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity checked:opacity-100" data-name="${img.name}" onclick="event.stopPropagation()" />
+        <div class="aspect-square bg-gray-100 relative overflow-hidden">
+          <img
+            src="${img.url}"
+            alt="${img.name}"
+            class="w-full h-full object-cover"
+            loading="lazy"
+            onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-gray-400\\'><svg class=\\'w-10 h-10\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'1.5\\' d=\\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\\'></path></svg></div>'"
+          />
+          ${img.hasWebp === true ? '<div class="absolute top-9 right-2 bg-green-500 text-white rounded-full p-1 z-10" title="WebP version exists"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>' : ''}
+          ${img.usedOn && img.usedOn.length > 0
+            ? '<div class="absolute top-2 left-2 flex flex-col gap-0.5">'
+              + '<div class="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">IN USE</div>'
+              + img.usedOn.slice(0, 2).map(function(u) {
+                  var short = String(u).replace('src/pages/', '').replace('src/templates/', '').replace('.astro', '').replace('/index', '').replace(' (hero)', '').replace(' (gift/option)', '');
+                  return '<div class="bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded max-w-[150px] truncate shadow" title="' + String(u).replace(/"/g, '&quot;') + '">' + short + '</div>';
+                }).join('')
+              + (img.usedOn.length > 2 ? '<div class="bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded shadow">+' + (img.usedOn.length - 2) + ' more</div>' : '')
+              + '</div>'
+            : '<div class="absolute top-2 left-2 bg-gray-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded opacity-70">UNUSED</div>'}
+          <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <div class="flex gap-2">
+              <button
+                class="copy-url-btn p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+                data-url="${img.url}"
+                title="Copy URL"
+                onclick="event.stopPropagation()"
+              >
+                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                </svg>
+              </button>
+              ${img.hasWebp === false ? `
+              <button
+                class="convert-btn p-2 bg-orange-500 rounded-lg shadow-md hover:bg-orange-600 transition-colors"
+                data-name="${img.name}"
+                title="Convert to WebP"
+                onclick="event.stopPropagation()"
+              >
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </button>` : ''}
+              ${img.hasWebp === false && img.usedOn && img.usedOn.length > 0 ? `
+              <button
+                class="replace-webp-btn p-2 bg-red-500 rounded-lg shadow-md hover:bg-red-600 transition-colors"
+                data-name="${img.name}"
+                title="Convert to WebP & update all page references"
+                onclick="event.stopPropagation()"
+              >
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </button>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="p-3">
+          <p class="text-xs font-medium text-gray-900 truncate" title="${img.name}">${img.name}</p>
+          <div class="flex items-center gap-1.5 mt-1.5">
+            <span class="inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded ${getExtBadgeClass(img.extension)}">${img.extension.toUpperCase()}</span>
+            <span class="inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded ${getSizeBadgeClass(img.size)}">${img.sizeFormatted}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Bind click handlers
+    gridView.querySelectorAll('.media-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const name = card.getAttribute('data-name');
+        const img = allImages.find(i => i.name === name);
+        if (img) openDetailModal(img);
+      });
+    });
+
+    gridView.querySelectorAll('.copy-url-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = (btn as HTMLElement).getAttribute('data-url') || '';
+        copyToClipboard(url);
+      });
+    });
+
+    gridView.querySelectorAll('.convert-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const name = (btn as HTMLElement).getAttribute('data-name') || '';
+        convertImage(name);
+      });
+    });
+
+    gridView.querySelectorAll('.replace-webp-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const name = (btn as HTMLElement).getAttribute('data-name') || '';
+        replaceWithWebp(name);
+      });
+    });
+  }
+
+  function renderListView(images: any[]) {
+    listBody.innerHTML = images.map(img => `
+      <tr class="hover:bg-gray-50 cursor-pointer list-row" data-name="${img.name}">
+        <td class="px-4 py-3">
+          <img src="${img.url}" alt="${img.name}" class="w-10 h-10 object-cover rounded-lg bg-gray-100" loading="lazy" />
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-gray-900 truncate max-w-[300px]" title="${img.name}">${img.name}</span>
+            ${img.hasWebp === true ? '<span class="flex-shrink-0 bg-green-500 text-white rounded-full p-0.5" title="WebP exists"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></span>' : ''}
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-flex text-xs font-medium px-2 py-0.5 rounded ${getSizeBadgeClass(img.size)}">${img.sizeFormatted}</span>
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-flex text-xs font-medium px-2 py-0.5 rounded ${getExtBadgeClass(img.extension)}">${img.extension.toUpperCase()}</span>
+        </td>
+        <td class="px-4 py-3 text-xs text-gray-500">${formatDate(img.modified)}</td>
+        <td class="px-4 py-3">
+          <button class="copy-url-btn text-xs text-[#01534d] hover:underline" data-url="${img.url}" onclick="event.stopPropagation()">Copy URL</button>
+        </td>
+        <td class="px-4 py-3">
+          ${img.hasWebp === false ? `<button class="convert-btn text-xs text-orange-600 hover:underline" data-name="${img.name}" onclick="event.stopPropagation()">Convert</button>` : '<span class="text-xs text-gray-400">-</span>'}
+        </td>
+      </tr>
+    `).join('');
+
+    listBody.querySelectorAll('.list-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const name = row.getAttribute('data-name');
+        const img = allImages.find(i => i.name === name);
+        if (img) openDetailModal(img);
+      });
+    });
+
+    listBody.querySelectorAll('.copy-url-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = (btn as HTMLElement).getAttribute('data-url') || '';
+        copyToClipboard(url);
+      });
+    });
+
+    listBody.querySelectorAll('.convert-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const name = (btn as HTMLElement).getAttribute('data-name') || '';
+        convertImage(name);
+      });
+    });
+  }
+
+  // ─── Detail Modal ───────────────────────────────────────────────────────────
+  function openDetailModal(img: any) {
+    selectedImage = img;
+    ($('#modalImage') as HTMLImageElement).src = img.url;
+    $('#modalFilename').textContent = img.name;
+    $('#modalSize').textContent = img.sizeFormatted;
+    $('#modalFormat').textContent = img.extension;
+    $('#modalUrl').textContent = img.url;
+
+    // WebP status
+    const webpStatus = $('#modalWebpStatus');
+    if (img.hasWebp === true) {
+      webpStatus.textContent = 'Exists';
+      webpStatus.className = 'text-sm font-medium mt-1 text-green-600';
+    } else if (img.hasWebp === false) {
+      webpStatus.textContent = 'None';
+      webpStatus.className = 'text-sm font-medium mt-1 text-gray-400';
+    } else {
+      webpStatus.textContent = 'N/A';
+      webpStatus.className = 'text-sm font-medium mt-1 text-gray-400';
+    }
+
+    // Usage info with front-end URLs
+    let usageEl = document.getElementById('modalUsage');
+    if (!usageEl) {
+      usageEl = document.createElement('div');
+      usageEl.id = 'modalUsage';
+      webpStatus.parentElement?.after(usageEl);
+    }
+
+    function usageToUrl(usage: string): string {
+      // Extract slug if present [slug:xxx]
+      var slugMatch = usage.match(/\[slug:([^\]]+)\]/);
+      var slug = slugMatch ? slugMatch[1] : '';
+
+      // Source file paths
+      if (usage.includes('src/pages/')) {
+        var page = usage.replace('src/pages/', '/').replace('/index.astro', '').replace('.astro', '');
+        if (page.includes('[')) return ''; // dynamic routes
+        return page;
+      }
+      if (usage.includes('src/templates/')) {
+        return ''; // templates don't have direct URLs
+      }
+      // Campaign references — use slug for URL
+      if (slug) {
+        return '/appeals/' + slug;
+      }
+      return '';
+    }
+
+    function usageDisplayName(usage: string): string {
+      // Remove the [slug:xxx] part for display
+      return usage.replace(/\s*\[slug:[^\]]+\]/, '');
+    }
+
+    if (img.usedOn && img.usedOn.length > 0) {
+      usageEl.innerHTML = '<div class="mt-3"><div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Used on</div>' +
+        img.usedOn.map((u: string) => {
+          const url = usageToUrl(u);
+          const displayName = usageDisplayName(u);
+          if (url) {
+            return '<a href="' + url + '" target="_blank" class="flex items-center gap-2 py-1.5 px-2 -mx-2 rounded-lg hover:bg-gray-50 transition group">'
+              + '<svg class="w-4 h-4 text-[#01534d] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>'
+              + '<span class="text-sm text-[#01534d] group-hover:underline">' + displayName + '</span></a>';
+          }
+          return '<div class="flex items-center gap-2 py-1.5 px-2 -mx-2">'
+            + '<svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>'
+            + '<span class="text-sm text-gray-500">' + displayName + '</span></div>';
+        }).join('') + '</div>';
+    } else {
+      usageEl.innerHTML = '<div class="mt-3"><div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Used on</div><div class="text-sm text-gray-400 italic">Not used on any page or campaign</div></div>';
+    }
+
+    // Reset replace section
+    const replaceSearch = document.getElementById('replaceSearchInput') as HTMLInputElement;
+    const replaceResults = document.getElementById('replaceResults');
+    const replacePreview = document.getElementById('replacePreview');
+    if (replaceSearch) replaceSearch.value = '';
+    if (replaceResults) replaceResults.classList.add('hidden');
+    if (replacePreview) replacePreview.classList.add('hidden');
+    // Show replace section only if image is used somewhere
+    const replaceSection = document.getElementById('modalReplaceSection');
+    if (replaceSection) {
+      if (img.usedOn && img.usedOn.length > 0) {
+        replaceSection.classList.remove('hidden');
+      } else {
+        replaceSection.classList.add('hidden');
+      }
+    }
+
+    // Show/hide convert section
+    if (img.extension !== 'webp' && img.extension !== 'svg') {
+      modalConvertSection.classList.remove('hidden');
+    } else {
+      modalConvertSection.classList.add('hidden');
+    }
+
+    detailModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetailModal() {
+    detailModal.classList.add('hidden');
+    document.body.style.overflow = '';
+    selectedImage = null;
+  }
+
+  // ─── Convert ────────────────────────────────────────────────────────────────
+  async function convertImage(filename: string, quality = 80) {
+    try {
+      showToast('Converting ' + filename + ' to WebP...', 'info');
+      const res = await fetch('/api/media', { credentials: 'include',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'convert', filename, quality }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        // Flash the card
+        const card = gridView.querySelector(`[data-name="${filename}"]`);
+        if (card) card.classList.add('flash-green');
+        await loadImages();
+      } else {
+        showToast(data.error || 'Conversion failed', 'error');
+      }
+    } catch (e: any) {
+      showToast('Conversion failed: ' + e.message, 'error');
+    }
+  }
+
+  async function replaceWithWebp(filename: string, quality = 80) {
+    try {
+      showToast('Converting & updating all references for ' + filename + '...', 'info');
+      const res = await fetch('/api/media', { credentials: 'include',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'replace-with-webp', filename, quality }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        let msg = 'Converted to WebP (' + data.savings + ' smaller)';
+        if (data.updatedRefs && data.updatedRefs.length > 0) {
+          msg += '. Updated: ' + data.updatedRefs.join(', ');
+        }
+        showToast(msg, 'success');
+        await loadImages();
+      } else {
+        showToast(data.error || 'Replace failed', 'error');
+      }
+    } catch (e: any) {
+      showToast('Replace failed: ' + e.message, 'error');
+    }
+  }
+
+  // ─── Delete ─────────────────────────────────────────────────────────────────
+  async function deleteImage(filename: string) {
+    if (!confirm('Are you sure you want to delete "' + filename + '"? This cannot be undone.')) return;
+    try {
+      const res = await fetch('/api/media', { credentials: 'include',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', filename }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        closeDetailModal();
+        await loadImages();
+      } else {
+        showToast(data.error || 'Delete failed', 'error');
+      }
+    } catch (e: any) {
+      showToast('Delete failed: ' + e.message, 'error');
+    }
+  }
+
+  // ─── Copy URL ───────────────────────────────────────────────────────────────
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('URL copied to clipboard', 'success');
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('URL copied to clipboard', 'success');
+    }
+  }
+
+  // ─── Upload ─────────────────────────────────────────────────────────────────
+  function updateUploadBtn() {
+    const activeTab = document.querySelector('.upload-tab.active') as HTMLElement;
+    const tab = activeTab?.getAttribute('data-tab');
+    if (tab === 'file') {
+      uploadSubmitBtn.disabled = !selectedFile;
+    } else {
+      uploadSubmitBtn.disabled = !(urlInput as HTMLInputElement).value.trim();
+    }
+  }
+
+  async function handleFileUpload() {
+    if (!selectedFile) return;
+    uploadSubmitBtn.disabled = true;
+    uploadBtnText.textContent = 'Uploading...';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('convertToWebp', String(autoConvertWebp.checked));
+    formData.append('quality', '80');
+
+    try {
+      const res = await fetch('/api/media', { credentials: 'include', method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        clearSelectedFile();
+        await loadImages();
+      } else {
+        showToast(data.error || 'Upload failed', 'error');
+      }
+    } catch (e: any) {
+      showToast('Upload failed: ' + e.message, 'error');
+    } finally {
+      uploadBtnText.textContent = 'Upload';
+      updateUploadBtn();
+    }
+  }
+
+  async function handleUrlUpload() {
+    const url = (urlInput as HTMLInputElement).value.trim();
+    if (!url) return;
+    uploadSubmitBtn.disabled = true;
+    uploadBtnText.textContent = 'Downloading...';
+
+    try {
+      const res = await fetch('/api/media', { credentials: 'include',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'upload-url',
+          url,
+          filename: (urlFilename as HTMLInputElement).value.trim() || undefined,
+          convertToWebp: autoConvertWebp.checked,
+          quality: 80,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        (urlInput as HTMLInputElement).value = '';
+        (urlFilename as HTMLInputElement).value = '';
+        await loadImages();
+      } else {
+        showToast(data.error || 'Download failed', 'error');
+      }
+    } catch (e: any) {
+      showToast('Download failed: ' + e.message, 'error');
+    } finally {
+      uploadBtnText.textContent = 'Upload';
+      updateUploadBtn();
+    }
+  }
+
+  function selectFile(file: File) {
+    selectedFile = file;
+    filePreviewName.textContent = file.name;
+    filePreviewSize.textContent = formatSize(file.size);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      (filePreviewImg as HTMLImageElement).src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    filePreview.classList.remove('hidden');
+    dropZone.classList.add('hidden');
+    updateUploadBtn();
+  }
+
+  function clearSelectedFile() {
+    selectedFile = null;
+    (fileInput as HTMLInputElement).value = '';
+    filePreview.classList.add('hidden');
+    dropZone.classList.remove('hidden');
+    updateUploadBtn();
+  }
+
+  // ─── Event Listeners ───────────────────────────────────────────────────────
+
+  // Upload panel toggle
+  toggleUploadBtn.addEventListener('click', () => {
+    uploadPanel.classList.toggle('hidden');
+  });
+  closeUploadBtn.addEventListener('click', () => {
+    uploadPanel.classList.add('hidden');
+  });
+
+  // Refresh
+  refreshBtn.addEventListener('click', loadImages);
+
+  // PNG Audit — filter to show only PNG files that are used on pages
+  document.getElementById('pngAuditBtn')?.addEventListener('click', () => {
+    const tf = typeFilter as HTMLSelectElement;
+    tf.value = 'png';
+    (searchInput as HTMLInputElement).value = '';
+    renderImages();
+    // Count used PNGs
+    const usedPngs = allImages.filter((img: any) => img.extension === 'png' && img.usedOn && img.usedOn.length > 0);
+    const totalPngs = allImages.filter((img: any) => img.extension === 'png');
+    showToast(`Found ${usedPngs.length} PNG files in use (${totalPngs.length} total). Convert to WebP for better SEO & performance.`, 'info');
+  });
+
+  // Search, sort, filter
+  searchInput.addEventListener('input', renderImages);
+  document.getElementById('searchMode')?.addEventListener('change', () => {
+    const mode = (document.getElementById('searchMode') as HTMLSelectElement).value;
+    if (mode === 'images') searchInput.placeholder = 'Search by image filename...';
+    else if (mode === 'pages') searchInput.placeholder = 'Search by page or campaign name...';
+    else searchInput.placeholder = 'Search by filename or page name (e.g. zakat, orphan, aqiqah)...';
+    renderImages();
+  });
+  sortSelect.addEventListener('change', renderImages);
+  typeFilter.addEventListener('change', renderImages);
+
+  // View toggle
+  gridViewBtn.addEventListener('click', () => {
+    currentView = 'grid';
+    gridViewBtn.classList.add('active');
+    listViewBtn.classList.remove('active');
+    renderImages();
+  });
+  listViewBtn.addEventListener('click', () => {
+    currentView = 'list';
+    listViewBtn.classList.add('active');
+    gridViewBtn.classList.remove('active');
+    renderImages();
+  });
+
+  // Upload tabs
+  $$('.upload-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      $$('.upload-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tabName = tab.getAttribute('data-tab');
+      ($('#fileUploadTab') as HTMLElement).classList.toggle('hidden', tabName !== 'file');
+      ($('#urlUploadTab') as HTMLElement).classList.toggle('hidden', tabName !== 'url');
+      updateUploadBtn();
+    });
+  });
+
+  // Drag & drop
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const files = (e as DragEvent).dataTransfer?.files;
+    if (files && files.length > 0) selectFile(files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files.length > 0) selectFile(fileInput.files[0]);
+  });
+  clearFileBtn.addEventListener('click', clearSelectedFile);
+  urlInput.addEventListener('input', updateUploadBtn);
+
+  // Upload submit
+  uploadSubmitBtn.addEventListener('click', () => {
+    const activeTab = document.querySelector('.upload-tab.active') as HTMLElement;
+    const tab = activeTab?.getAttribute('data-tab');
+    if (tab === 'file') handleFileUpload();
+    else handleUrlUpload();
+  });
+
+  // Modal
+  modalOverlay.addEventListener('click', closeDetailModal);
+  closeModalBtn.addEventListener('click', closeDetailModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDetailModal();
+  });
+
+  // Modal copy
+  modalCopyBtn.addEventListener('click', () => {
+    const url = $('#modalUrl').textContent || '';
+    copyToClipboard(url);
+  });
+
+  // Modal convert
+  qualitySlider.addEventListener('input', () => {
+    qualityValue.textContent = qualitySlider.value;
+  });
+  modalConvertBtn.addEventListener('click', async () => {
+    if (!selectedImage) return;
+    modalConvertBtn.disabled = true;
+    modalConvertBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Converting...';
+    await convertImage(selectedImage.name, parseInt(qualitySlider.value));
+    closeDetailModal();
+    modalConvertBtn.disabled = false;
+    modalConvertBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Convert';
+  });
+
+  // Modal delete
+  modalDeleteBtn.addEventListener('click', () => {
+    if (selectedImage) deleteImage(selectedImage.name);
+  });
+
+  // ─── Replace Image Picker ─────────────────────────────────────────────────
+  let replaceTarget: any = null;
+  const replaceSearchInput = document.getElementById('replaceSearchInput') as HTMLInputElement;
+  const replaceResultsEl = document.getElementById('replaceResults');
+  const replacePreviewEl = document.getElementById('replacePreview');
+
+  if (replaceSearchInput) {
+    replaceSearchInput.addEventListener('input', () => {
+      const q = replaceSearchInput.value.toLowerCase().trim();
+      if (q.length < 2) {
+        replaceResultsEl?.classList.add('hidden');
+        return;
+      }
+      // Filter images (exclude current)
+      const matches = allImages
+        .filter((img: any) => img.name !== selectedImage?.name && img.name.toLowerCase().includes(q))
+        .slice(0, 8);
+
+      if (matches.length === 0) {
+        replaceResultsEl!.innerHTML = '<div class="p-3 text-sm text-gray-400">No images found</div>';
+      } else {
+        replaceResultsEl!.innerHTML = matches.map((img: any) =>
+          `<div class="replace-option flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0" data-name="${img.name}" data-url="${img.url}" data-size="${img.sizeFormatted}">
+            <img src="${img.url}" class="w-8 h-8 object-cover rounded flex-shrink-0" alt="" />
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-medium text-gray-800 truncate">${img.name}</div>
+              <div class="text-[10px] text-gray-400">${img.sizeFormatted} | ${img.extension.toUpperCase()}</div>
+            </div>
+          </div>`
+        ).join('');
+      }
+      replaceResultsEl?.classList.remove('hidden');
+
+      // Bind clicks on results
+      replaceResultsEl?.querySelectorAll('.replace-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          const name = (opt as HTMLElement).dataset.name || '';
+          const url = (opt as HTMLElement).dataset.url || '';
+          const size = (opt as HTMLElement).dataset.size || '';
+          replaceTarget = { name, url };
+          (document.getElementById('replacePreviewImg') as HTMLImageElement).src = url;
+          document.getElementById('replacePreviewName')!.textContent = name;
+          document.getElementById('replacePreviewSize')!.textContent = size;
+          replacePreviewEl?.classList.remove('hidden');
+          replaceResultsEl?.classList.add('hidden');
+          replaceSearchInput.value = name;
+        });
+      });
+    });
+  }
+
+  // Replace confirm button
+  document.getElementById('replaceConfirmBtn')?.addEventListener('click', async () => {
+    if (!selectedImage || !replaceTarget) return;
+    try {
+      showToast('Replacing ' + selectedImage.name + ' with ' + replaceTarget.name + '...', 'info');
+      const res = await fetch('/api/media', { credentials: 'include',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'replace-refs',
+          oldFilename: selectedImage.name,
+          newFilename: replaceTarget.name,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Replaced successfully', 'success');
+        closeDetailModal();
+        await loadImages();
+      } else {
+        showToast(data.error || 'Replace failed', 'error');
+      }
+    } catch (e: any) {
+      showToast('Replace failed: ' + e.message, 'error');
+    }
+  });
+
+  // ─── Bulk Selection ────────────────────────────────────────────────────────
+  const bulkBar = document.getElementById('bulkBar');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox') as HTMLInputElement;
+  const selectAllCountEl = document.getElementById('selectAllCount');
+  const selectedCountEl = document.getElementById('selectedCount');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const bulkCancelBtn = document.getElementById('bulkCancelBtn');
+  let selectedFiles = new Set<string>();
+
+  function updateBulkBar() {
+    const checkboxes = document.querySelectorAll('.bulk-select-cb') as NodeListOf<HTMLInputElement>;
+    selectedFiles.clear();
+    checkboxes.forEach(cb => {
+      if (cb.checked) selectedFiles.add(cb.dataset.name || '');
+    });
+
+    if (selectedFiles.size > 0) {
+      bulkBar?.classList.remove('hidden');
+      if (selectedCountEl) selectedCountEl.textContent = selectedFiles.size + ' selected';
+    } else {
+      bulkBar?.classList.add('hidden');
+    }
+
+    // Update select all count
+    const filtered = getFilteredImages();
+    if (selectAllCountEl) selectAllCountEl.textContent = String(filtered.length);
+    if (selectAllCheckbox) selectAllCheckbox.checked = selectedFiles.size === checkboxes.length && checkboxes.length > 0;
+  }
+
+  // Delegate checkbox change events
+  document.addEventListener('change', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('bulk-select-cb')) {
+      updateBulkBar();
+    }
+  });
+
+  // Select All
+  selectAllCheckbox?.addEventListener('change', () => {
+    const checkboxes = document.querySelectorAll('.bulk-select-cb') as NodeListOf<HTMLInputElement>;
+    checkboxes.forEach(cb => { cb.checked = selectAllCheckbox.checked; });
+    updateBulkBar();
+  });
+
+  // Cancel selection
+  bulkCancelBtn?.addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('.bulk-select-cb') as NodeListOf<HTMLInputElement>;
+    checkboxes.forEach(cb => { cb.checked = false; });
+    selectedFiles.clear();
+    bulkBar?.classList.add('hidden');
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+  });
+
+  // Bulk delete
+  bulkDeleteBtn?.addEventListener('click', async () => {
+    if (selectedFiles.size === 0) return;
+
+    const usedFiles = Array.from(selectedFiles).filter(name => {
+      const img = allImages.find((i: any) => i.name === name);
+      return img?.usedOn && img.usedOn.length > 0;
+    });
+
+    let msg = 'Delete ' + selectedFiles.size + ' image(s)?';
+    if (usedFiles.length > 0) {
+      msg += '\n\nWARNING: ' + usedFiles.length + ' of these are IN USE on pages:\n' + usedFiles.join('\n') + '\n\nDeleting them will cause broken images on your site.';
+    }
+    msg += '\n\nThis cannot be undone.';
+
+    if (!confirm(msg)) return;
+
+    let deleted = 0;
+    let failed = 0;
+    for (const name of selectedFiles) {
+      try {
+        const res = await fetch('/api/media', { credentials: 'include',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', filename: name }),
+        });
+        const data = await res.json();
+        if (data.success) deleted++;
+        else failed++;
+      } catch {
+        failed++;
+      }
+    }
+
+    selectedFiles.clear();
+    bulkBar?.classList.add('hidden');
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+
+    showToast(
+      deleted + ' image(s) deleted' + (failed > 0 ? ', ' + failed + ' failed' : ''),
+      failed > 0 ? 'error' : 'success'
+    );
+    await loadImages();
+  });
+
+  // ─── Init ───────────────────────────────────────────────────────────────────
+  loadImages();
+</script>

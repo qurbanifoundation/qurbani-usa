@@ -225,7 +225,7 @@ const stats = [
     <!-- Background Image with Overlay -->
     <div class="absolute inset-0 z-0">
       <img
-        src="/images/campaigns/aqiqah-hero.webp"
+        src={campaign.featured_image || '/images/qurbani-foundation-aqiqah-service.webp'}
         alt="Qurbani Foundation team selecting healthy animals for Aqiqah"
         class="w-full h-full object-cover"
       />
@@ -263,7 +263,7 @@ const stats = [
         </p>
 
         <!-- Key Points -->
-        <div class="flex flex-nowrap justify-center gap-2 sm:gap-4 mb-8">
+        <div class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 px-4">
           <div class="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-full">
             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -286,8 +286,8 @@ const stats = [
 
         <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row justify-center gap-4">
-          <a href="#packages" class="inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg">
-            <span>Order Aqiqah Now</span>
+          <a id="hero-cta-btn" href="#packages" class="inline-flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg">
+            <span>Order Your Aqiqah Now</span>
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
             </svg>
@@ -789,8 +789,7 @@ const stats = [
   <!-- Sticky Mobile CTA (hidden when packages section is in view) -->
   <div id="mobile-sticky-cta" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg transition-transform duration-300">
     <a href="#packages" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl">
-      <span>Order Aqiqah</span>
-      <span class="text-yellow-400">from $150</span>
+      <span>Order Aqiqah Now</span>
     </a>
   </div>
 
@@ -886,7 +885,7 @@ const stats = [
       <div class="p-6">
         <!-- Title -->
         <h3 class="text-xl font-bold text-gray-800 mb-3 text-center" style="font-family: 'Signika', sans-serif;">
-          Would you consider something?
+          Complete Your Aqiqah with Sadaqah
         </h3>
 
         <!-- Body text -->
@@ -1206,23 +1205,39 @@ const stats = [
       if (e.target.id === 'sadaqah-modal') closeSadaqahModal();
     });
 
-    // Hide sticky mobile CTA when packages section is visible
+    // Hide sticky mobile CTA when hero CTA or packages section is visible
     (function() {
+      const heroBtn = document.getElementById('hero-cta-btn');
       const packagesSection = document.getElementById('packages');
       const stickyBar = document.getElementById('mobile-sticky-cta');
-      if (!packagesSection || !stickyBar) return;
+      if (!stickyBar) return;
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            stickyBar.style.transform = 'translateY(100%)';
-          } else {
-            stickyBar.style.transform = 'translateY(0)';
-          }
-        });
-      }, { threshold: 0.1 });
+      var heroVisible = true;
+      var packagesVisible = false;
 
-      observer.observe(packagesSection);
+      function updateSticky() {
+        if (heroVisible || packagesVisible) {
+          stickyBar.style.transform = 'translateY(100%)';
+        } else {
+          stickyBar.style.transform = 'translateY(0)';
+        }
+      }
+
+      if (heroBtn) {
+        var heroObserver = new IntersectionObserver(function(entries) {
+          heroVisible = entries[0].isIntersecting;
+          updateSticky();
+        }, { threshold: 0.1 });
+        heroObserver.observe(heroBtn);
+      }
+
+      if (packagesSection) {
+        var pkgObserver = new IntersectionObserver(function(entries) {
+          packagesVisible = entries[0].isIntersecting;
+          updateSticky();
+        }, { threshold: 0.1 });
+        pkgObserver.observe(packagesSection);
+      }
     })();
 
     // Form submission - Step 1: Collect details, then show Sadaqah upsell

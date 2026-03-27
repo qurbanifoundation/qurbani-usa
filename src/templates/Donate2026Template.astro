@@ -1,0 +1,1960 @@
+---
+/**
+ * DONATE 2026 TEMPLATE
+ *
+ * A guided 2-column donation page with:
+ * - Left: 8 cause cards (most-needed, emergencies, zakat, water, orphans, aqiqah, food, sadaqah)
+ * - Right: Dynamic panel that changes based on selected cause
+ * - 6 panel types: preset-amounts, sub-campaigns, zakat, tiered-projects, orphan-sponsorship, aqiqah
+ * - Mobile responsive: stacks vertically, compact cause grid, sticky donate button
+ *
+ * Color Palette:
+ * - Teal: #01534d
+ * - Orange: #ef7c01
+ * - Amber: #d97706
+ */
+
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  campaigns: any[];
+  categories: any[];
+}
+
+const { campaigns = [], categories = [] } = Astro.props;
+
+// Find specific campaigns
+const aqiqahCampaign = campaigns?.find(c => c.slug === 'aqiqah');
+const orphanCampaign = campaigns?.find(c => c.slug === 'sponsor-an-orphan');
+const waterCampaign = campaigns?.find(c => c.slug === 'thirst-relief');
+const zakatCampaign = campaigns?.find(c => c.slug === 'zakat') || campaigns?.find(c => c.category === 'zakat');
+const foodCampaign = campaigns?.find(c => c.slug === 'food-aid');
+const emergencyCampaigns = campaigns?.filter(c => c.category === 'appeals') || [];
+
+const causeDataMap: Record<string, any> = {
+  'most-needed': {
+    type: 'preset-amounts',
+    monthlyAmounts: [10, 20, 40, 100],
+    singleAmounts: [50, 100, 150, 200],
+    campaignSlug: 'general',
+    campaignName: 'Where Most Needed',
+    supportsMonthly: true
+  },
+  'emergencies': {
+    type: 'sub-campaigns',
+    campaigns: emergencyCampaigns.slice(0, 6).map(c => ({
+      slug: c.slug,
+      name: c.name,
+      image: c.featured_image,
+      amounts: c.donation_options?.map((o: any) => o.amount) || [50, 100, 250]
+    })),
+    supportsMonthly: true
+  },
+  'zakat': {
+    type: 'zakat',
+    amounts: [100, 250, 500, 1000, 2500],
+    campaignSlug: zakatCampaign?.slug || 'zakat',
+    supportsMonthly: false
+  },
+  'water': {
+    type: 'tiered-projects',
+    tiers: (waterCampaign?.donation_options || []).slice(0, 4).map((o: any) => ({
+      name: o.label,
+      amount: o.amount,
+      description: o.description || ''
+    })),
+    campaignSlug: 'thirst-relief',
+    supportsMonthly: false
+  },
+  'orphans': {
+    type: 'orphan-sponsorship',
+    basePrice: 45,
+    palestinePrice: 100,
+    campaignSlug: 'sponsor-an-orphan',
+    supportsMonthly: true
+  },
+  'aqiqah': {
+    type: 'aqiqah',
+    packages: aqiqahCampaign?.donation_options || [
+      { label: 'Baby Girl', amount: 150 },
+      { label: 'Baby Boy', amount: 300 },
+      { label: 'Sadaqah', amount: 100 }
+    ],
+    campaignSlug: 'aqiqah',
+    supportsMonthly: false
+  },
+  'food': {
+    type: 'preset-amounts',
+    monthlyAmounts: [10, 20, 40, 100],
+    singleAmounts: (foodCampaign?.donation_options || []).map((o: any) => o.amount).length
+      ? foodCampaign.donation_options.map((o: any) => o.amount)
+      : [50, 100, 150, 200],
+    campaignSlug: 'food-aid',
+    campaignName: 'Feed the Hungry',
+    supportsMonthly: true,
+    labels: foodCampaign?.donation_options
+  },
+  'sadaqah': {
+    type: 'preset-amounts',
+    monthlyAmounts: [10, 20, 40, 100],
+    singleAmounts: [50, 100, 150, 200],
+    campaignSlug: 'sadaqah',
+    campaignName: 'Sadaqah',
+    supportsMonthly: true
+  }
+};
+
+const causeDataJSON = JSON.stringify(causeDataMap);
+---
+
+<Layout title="Donate - Qurbani Foundation USA" description="Choose a cause and make a difference. Support emergency relief, orphans, clean water, zakat, aqiqah, and more.">
+  <Navbar />
+
+  <!-- Hero -->
+  <section class="donate-hero">
+    <div class="donate-hero-bg"></div>
+    <div class="donate-hero-overlay"></div>
+    <div class="donate-hero-inner">
+      <span class="donate-hero-badge">100% Donation Policy on Zakat</span>
+      <h1 class="donate-hero-title">Your Generosity<br/><span class="donate-hero-highlight">Changes Lives</span></h1>
+      <p class="donate-hero-subtitle">Every dollar you give provides food, clean water, healthcare, and hope to families in need across 50+ countries.</p>
+      <div class="donate-hero-stats">
+        <div class="donate-hero-stat">
+          <span class="donate-hero-stat-num">50+</span>
+          <span class="donate-hero-stat-label">Countries Served</span>
+        </div>
+        <div class="donate-hero-stat">
+          <span class="donate-hero-stat-num">1M+</span>
+          <span class="donate-hero-stat-label">Lives Transformed</span>
+        </div>
+        <div class="donate-hero-stat">
+          <span class="donate-hero-stat-num">25+</span>
+          <span class="donate-hero-stat-label">Years of Service</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="donate-main">
+    <div class="donate-container">
+      <div class="donate-card">
+        <div class="donate-grid">
+
+          <!-- Left Column: Cause Cards -->
+          <div class="donate-left">
+            <h2 class="donate-left-heading">Choose a Cause</h2>
+            <div class="cause-grid" id="causeGrid">
+
+              <button class="cause-card active" data-cause="most-needed" type="button">
+                <span class="cause-icon" style="color: #ef7c01;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Where Most Needed</span>
+                  <span class="cause-desc">Help where it matters most</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="emergencies" type="button">
+                <span class="cause-icon" style="color: #c41e3a;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Emergency Relief</span>
+                  <span class="cause-desc">Urgent humanitarian aid</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="zakat" type="button">
+                <span class="cause-icon" style="color: #01534d;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Zakat</span>
+                  <span class="cause-desc">Fulfill your obligation</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="water" type="button">
+                <span class="cause-icon" style="color: #0891b2;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Water Projects</span>
+                  <span class="cause-desc">Provide clean water</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="orphans" type="button">
+                <span class="cause-icon" style="color: #be123c;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Orphan Care</span>
+                  <span class="cause-desc">Support vulnerable children</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="aqiqah" type="button">
+                <span class="cause-icon" style="color: #7c3aed;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Aqiqah</span>
+                  <span class="cause-desc">Celebrate your newborn</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="food" type="button">
+                <span class="cause-icon" style="color: #16a34a;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Feed the Hungry</span>
+                  <span class="cause-desc">Provide nutritious meals</span>
+                </span>
+              </button>
+
+              <button class="cause-card" data-cause="sadaqah" type="button">
+                <span class="cause-icon" style="color: #d97706;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/><path d="M12 5.67V12"/><path d="M8.5 9.5L12 12l3.5-2.5"/></svg>
+                </span>
+                <span class="cause-text">
+                  <span class="cause-label">Sadaqah</span>
+                  <span class="cause-desc">Ongoing charity</span>
+                </span>
+              </button>
+
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="trust-badges">
+              <span class="trust-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Secure
+              </span>
+              <span class="trust-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                501(c)(3)
+              </span>
+              <span class="trust-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Trusted
+              </span>
+            </div>
+          </div>
+
+          <!-- Right Column: Dynamic Panel -->
+          <div class="donate-right">
+            <div id="donatePanel" class="donate-panel">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Sticky Donate Button -->
+  <div class="mobile-sticky-btn" id="mobileStickyBtn" style="display:none;">
+    <button type="button" id="mobileDonateBtn" class="mobile-donate-cta">
+      Donate Now
+    </button>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* ========================================
+     HERO
+     ======================================== */
+  .donate-hero {
+    position: relative;
+    padding: 8rem 1rem 3.5rem;
+    text-align: center;
+    overflow: hidden;
+  }
+  .donate-hero-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/qurbani-foundation-orphan-sponsorship.webp');
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+  }
+  .donate-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(1, 83, 77, 0.82);
+    z-index: 1;
+  }
+  .donate-hero-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .donate-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 100px;
+    padding: 0.375rem 1rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 1.25rem;
+  }
+  .donate-hero-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    flex-shrink: 0;
+  }
+  .donate-hero-title {
+    font-family: 'Signika', sans-serif;
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 1rem;
+    line-height: 1.15;
+  }
+  .donate-hero-highlight {
+    color: #fbbf24;
+  }
+  @media (min-width: 768px) {
+    .donate-hero-title {
+      font-size: 4rem;
+    }
+  }
+  .donate-hero-subtitle {
+    font-family: 'Lato', sans-serif;
+    font-size: 1.125rem;
+    color: rgba(255,255,255,0.85);
+    margin: 0 0 2.5rem;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: 768px) {
+    .donate-hero-subtitle {
+      font-size: 1.25rem;
+    }
+  }
+  .donate-hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3.5rem;
+  }
+  .donate-hero-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .donate-hero-stat-num {
+    font-family: 'Signika', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fbbf24;
+  }
+  @media (min-width: 768px) {
+    .donate-hero-stat-num {
+      font-size: 3rem;
+    }
+  }
+  .donate-hero-stat-label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.75);
+    margin-top: 0.25rem;
+    font-weight: 500;
+  }
+  @media (max-width: 480px) {
+    .donate-hero {
+      padding: 7rem 1rem 2.5rem;
+    }
+    .donate-hero-stats {
+      gap: 1.5rem;
+    }
+    .donate-hero-stat-num {
+      font-size: 2rem;
+    }
+  }
+
+  /* ========================================
+     MAIN SECTION
+     ======================================== */
+  .donate-main {
+    background: #f5f5f5;
+    padding: 2rem 1rem 3rem;
+    min-height: 60vh;
+  }
+  .donate-container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .donate-card {
+    background: #fff;
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .donate-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 500px;
+  }
+  @media (min-width: 1024px) {
+    .donate-grid {
+      grid-template-columns: 2fr 3fr;
+    }
+  }
+
+  /* ========================================
+     LEFT COLUMN
+     ======================================== */
+  .donate-left {
+    padding: 1.5rem;
+    background: #F4F5F0;
+    border-right: 1px solid #e0e1dc;
+  }
+  .donate-left-heading {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #71716c;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+    text-align: center;
+  }
+
+  /* Cause Grid */
+  .cause-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  @media (min-width: 1024px) {
+    .cause-grid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+  }
+
+  /* Cause Card */
+  .cause-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #e0e1dc;
+    border-radius: 4px;
+    background: #f4f5f0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    width: 100%;
+    font-family: 'Lato', sans-serif;
+  }
+  .cause-card:hover {
+    border-color: #d97706;
+    background: #eef0eb;
+  }
+  .cause-card.active {
+    border-color: #d97706;
+    background: #fef3e2;
+  }
+  .cause-card.active .cause-label {
+    color: #92400e;
+  }
+  .cause-card.active .cause-desc {
+    color: #b45309;
+  }
+  .cause-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+  }
+  .cause-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .cause-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1f2937;
+    line-height: 1.3;
+  }
+  .cause-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+  /* Mobile: hide descriptions, compact layout */
+  @media (max-width: 1023px) {
+    .cause-card {
+      padding: 0.5rem;
+      gap: 0.5rem;
+    }
+    .cause-icon {
+      width: 32px;
+      height: 32px;
+    }
+    .cause-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+    .cause-desc {
+      display: none;
+    }
+    .cause-label {
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Trust Badges */
+  .trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+  }
+  .trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  /* ========================================
+     RIGHT COLUMN
+     ======================================== */
+  .donate-right {
+    padding: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .donate-right {
+      padding: 2rem;
+    }
+  }
+
+  /* ========================================
+     MOBILE STICKY BUTTON
+     ======================================== */
+  .mobile-sticky-btn {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    z-index: 50;
+  }
+  .mobile-donate-cta {
+    display: block;
+    width: 100%;
+    padding: 0.875rem;
+    background: linear-gradient(to right, #ef7c01, #d97706);
+    color: #fff;
+    font-family: 'Signika', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    text-align: center;
+  }
+  @media (min-width: 1024px) {
+    .mobile-sticky-btn {
+      display: none !important;
+    }
+  }
+</style>
+
+<script is:inline define:vars={{ causeDataJSON }}>
+(function() {
+  'use strict';
+
+  var causeData = JSON.parse(causeDataJSON);
+  console.log('Donate2026 causeData:', causeData);
+  console.log('Emergency campaigns:', causeData.emergencies?.campaigns?.length || 0);
+  var activeCause = 'most-needed';
+  var panelEl = document.getElementById('donatePanel');
+  var causeGrid = document.getElementById('causeGrid');
+  var mobileStickyBtn = document.getElementById('mobileStickyBtn');
+  var mobileDonateBtn = document.getElementById('mobileDonateBtn');
+
+  // State
+  var state = {
+    frequency: 'monthly',
+    selectedAmount: null,
+    customAmount: '',
+    selectedTier: null,
+    selectedSubCampaign: null,
+    orphanCountry: 'greatest-need',
+    orphanQty: 1,
+    orphanFreq: 'monthly',
+    aqiqahPackage: null,
+    aqiqahChildName: '',
+    aqiqahFor: 'my-child'
+  };
+
+  // Impact text for preset amounts
+  var impactTexts = {
+    25: 'Provides meals for a family for a week',
+    50: 'Supplies clean water for a community',
+    100: 'Supports an orphan for a month',
+    250: 'Funds emergency medical supplies',
+    500: 'Builds a sustainable food program',
+    1000: 'Transforms an entire community'
+  };
+
+  function getImpactText(amount) {
+    if (amount <= 25) return impactTexts[25];
+    if (amount <= 50) return impactTexts[50];
+    if (amount <= 100) return impactTexts[100];
+    if (amount <= 250) return impactTexts[250];
+    if (amount <= 500) return impactTexts[500];
+    return impactTexts[1000];
+  }
+
+  // ========================================
+  // CAUSE SWITCHING
+  // ========================================
+  function switchCause(causeId) {
+    activeCause = causeId;
+    // Reset state
+    state.frequency = 'monthly';
+    state.selectedAmount = null;
+    state.customAmount = '';
+    state.selectedTier = null;
+    state.selectedSubCampaign = null;
+
+    // Update active card
+    var cards = causeGrid.querySelectorAll('.cause-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      if (card.getAttribute('data-cause') === causeId) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    }
+
+    // Render panel
+    var config = causeData[causeId];
+    if (config) {
+      renderPanel(causeId, config);
+    }
+
+    // Show mobile sticky on mobile
+    if (window.innerWidth < 1024 && mobileStickyBtn) {
+      mobileStickyBtn.style.display = 'block';
+    }
+  }
+
+  // ========================================
+  // PANEL RENDERER DISPATCH
+  // ========================================
+  function renderPanel(causeId, config) {
+    var html = '';
+    switch (config.type) {
+      case 'preset-amounts':
+        html = renderPresetAmounts(causeId, config);
+        break;
+      case 'sub-campaigns':
+        html = renderSubCampaigns(causeId, config);
+        break;
+      case 'zakat':
+        html = renderZakat(causeId, config);
+        break;
+      case 'tiered-projects':
+        html = renderTieredProjects(causeId, config);
+        break;
+      case 'orphan-sponsorship':
+        html = renderOrphanSponsorship(causeId, config);
+        break;
+      case 'aqiqah':
+        html = renderAqiqah(causeId, config);
+        break;
+    }
+    panelEl.innerHTML = html;
+    bindPanelEvents(causeId, config);
+  }
+
+  // ========================================
+  // PANEL HEADER
+  // ========================================
+  function panelHeader(title, showChange) {
+    var changeLink = showChange ? ' <button type="button" class="dp-change-link" data-action="change-cause">Change</button>' : '';
+    return '<div class="dp-header"><span class="dp-header-label">Donating to</span><h3 class="dp-header-title">' + escapeHtml(title) + changeLink + '</h3></div>';
+  }
+
+  // ========================================
+  // PRESET AMOUNTS PANEL
+  // ========================================
+  function renderPresetAmounts(causeId, config) {
+    var amounts;
+    if (config.monthlyAmounts && config.singleAmounts) {
+      amounts = state.frequency === 'monthly' ? config.monthlyAmounts : config.singleAmounts;
+    } else {
+      amounts = config.amounts || [25, 50, 100, 250, 500, 1000];
+    }
+    var name = config.campaignName || causeId;
+    var html = panelHeader(name, true);
+
+    // Frequency toggle
+    if (config.supportsMonthly) {
+      var mActive = state.frequency === 'monthly' ? ' active' : '';
+      var sActive = state.frequency === 'one-time' ? ' active' : '';
+      html += '<div class="dp-freq-toggle">';
+      html += '<button type="button" class="dp-freq-btn' + mActive + '" data-freq="monthly">MONTHLY <svg class="dp-freq-icon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>';
+      html += '<button type="button" class="dp-freq-btn' + sActive + '" data-freq="one-time">GIVE ONCE</button>';
+      html += '</div>';
+    }
+
+    // Amount label
+    var amtLabel = state.frequency === 'monthly' ? 'SELECT AN AMOUNT TO GIVE PER MONTH' : 'SELECT AN AMOUNT TO GIVE';
+    html += '<p class="dp-amount-label-heading">' + amtLabel + '</p>';
+
+    // Amount grid
+    html += '<div class="dp-amount-grid">';
+    for (var i = 0; i < amounts.length; i++) {
+      var a = amounts[i];
+      var popularAmt = state.frequency === 'monthly' ? 40 : 100;
+      var popular = (a === popularAmt) ? '<span class="dp-popular-badge">Most Popular</span>' : '';
+      var label = '';
+      if (config.labels) {
+        var opt = config.labels.find(function(l) { return l.amount === a; });
+        if (opt && opt.label) label = '<span class="dp-amount-label">' + escapeHtml(opt.label) + '</span>';
+      }
+      var suffix = state.frequency === 'monthly' ? 'USD/mo' : 'USD';
+      html += '<button type="button" class="dp-amount-btn" data-amount="' + a + '">' + popular + '<span class="dp-amt-num">$' + formatNum(a) + '</span> <span class="dp-amt-suffix">' + suffix + '</span>' + label + '</button>';
+    }
+    // Other button
+    html += '<button type="button" class="dp-amount-btn dp-other-btn" data-amount="other">Other</button>';
+    html += '</div>';
+
+    // Custom amount (hidden by default, shown when Other clicked)
+    html += '<div class="dp-custom-wrap" id="dpCustomWrap" style="display:none;">';
+    html += '<span class="dp-custom-prefix">$</span>';
+    html += '<input type="number" class="dp-custom-input" placeholder="Other" min="1" step="1" id="dpCustomAmount" />';
+    html += '<span class="dp-custom-suffix">' + (state.frequency === 'monthly' ? 'USD/mo' : 'USD') + '</span>';
+    html += '</div>';
+
+    // Impact text
+    html += '<p class="dp-impact" id="dpImpact">' + getImpactText(100) + '</p>';
+
+    // CTA
+    var ctaText = state.frequency === 'monthly' ? 'JOIN TODAY' : 'GIVE NOW';
+    html += '<button type="button" class="dp-cta-btn" id="dpDonateBtn">' + ctaText + ' <span class="dp-arrow">&rarr;</span></button>';
+
+    // Trust line
+    html += trustLine();
+
+    return html;
+  }
+
+  // ========================================
+  // SUB-CAMPAIGNS PANEL
+  // ========================================
+  function renderSubCampaigns(causeId, config) {
+    if (state.selectedSubCampaign) {
+      // Show preset amounts for selected sub-campaign
+      var sc = config.campaigns.find(function(c) { return c.slug === state.selectedSubCampaign; });
+      if (sc) {
+        var subConfig = {
+          type: 'preset-amounts',
+          amounts: sc.amounts || [50, 100, 250],
+          campaignSlug: sc.slug,
+          campaignName: sc.name,
+          supportsMonthly: config.supportsMonthly
+        };
+        var html = renderPresetAmounts(causeId, subConfig);
+        // Override config for event binding
+        config._subConfig = subConfig;
+        return html;
+      }
+    }
+
+    var html = panelHeader('Emergency Relief', true);
+    html += '<p style="font-size:13px;color:#6b7280;margin:0 0 16px;font-family:Lato,sans-serif;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">SELECT A CAMPAIGN TO SUPPORT</p>';
+    html += '<div class="dp-subcampaign-grid">';
+
+    if (config.campaigns && config.campaigns.length > 0) {
+      var urgentSlugs = ['palestine-emergency', 'gaza-emergency-relief', 'sudan-crisis-response'];
+      for (var i = 0; i < config.campaigns.length; i++) {
+        var c = config.campaigns[i];
+        var isUrgent = urgentSlugs.indexOf(c.slug) >= 0;
+        var imgSrc = c.image || '';
+        var hasImg = imgSrc && imgSrc.length > 5;
+        html += '<div class="dp-subcampaign-card" data-slug="' + escapeHtml(c.slug) + '" style="cursor:pointer;border:2px solid #e5e7eb;border-radius:12px;overflow:hidden;transition:all 0.2s;position:relative;">';
+        if (isUrgent) {
+          html += '<div style="position:absolute;top:8px;right:8px;background:#c41e3a;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;z-index:2;">URGENT</div>';
+        }
+        if (hasImg) {
+          html += '<div style="height:100px;overflow:hidden;background:#f3f4f6;"><img src="' + escapeHtml(imgSrc) + '" alt="' + escapeHtml(c.name) + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display=\'none\'" /></div>';
+        }
+        html += '<div style="padding:12px 14px;">';
+        html += '<h4 style="margin:0 0 8px;font-size:14px;font-weight:700;color:#1a1a1a;font-family:Signika,sans-serif;">' + escapeHtml(c.name) + '</h4>';
+        html += '<button type="button" class="dp-subcampaign-select" data-slug="' + escapeHtml(c.slug) + '" style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#ef7c01,#d97706);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:Signika,sans-serif;transition:background 0.2s;">Donate <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></button>';
+        html += '</div></div>';
+      }
+    } else {
+      html += '<div class="dp-empty">No emergency campaigns currently active. <br>Please donate to Where Most Needed instead.</div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  // ========================================
+  // ZAKAT PANEL
+  // ========================================
+  function renderZakat(causeId, config) {
+    var amounts = config.amounts || [100, 250, 500, 1000, 2500];
+    var html = panelHeader('Zakat', true);
+
+    // 100% Zakat Policy badge
+    html += '<div class="dp-zakat-badge"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#01534d" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 100% Zakat Policy</div>';
+
+    // Amount grid
+    html += '<div class="dp-amount-grid dp-amount-grid--zakat">';
+    for (var i = 0; i < amounts.length; i++) {
+      var a = amounts[i];
+      html += '<button type="button" class="dp-amount-btn" data-amount="' + a + '">$' + formatNum(a) + '</button>';
+    }
+    html += '</div>';
+
+    // Custom amount
+    html += '<div class="dp-custom-wrap">';
+    html += '<span class="dp-custom-prefix">$</span>';
+    html += '<input type="number" class="dp-custom-input" placeholder="Custom Amount" min="1" step="1" id="dpCustomAmount" />';
+    html += '</div>';
+
+    // Calculator link
+    html += '<a href="/zakat-calculator" class="dp-zakat-link">Not sure? Use our Zakat Calculator <span>&rarr;</span></a>';
+
+    // CTA
+    html += '<button type="button" class="dp-cta-btn" id="dpDonateBtn">Pay Zakat Now <span class="dp-arrow">&rarr;</span></button>';
+
+    // Trust line
+    html += trustLine();
+
+    return html;
+  }
+
+  // ========================================
+  // TIERED PROJECTS PANEL
+  // ========================================
+  function renderTieredProjects(causeId, config) {
+    var tiers = config.tiers || [
+      { name: 'Hand Pump', amount: 300, description: '' },
+      { name: 'Electric Well', amount: 400, description: '' },
+      { name: 'Water Well', amount: 600, description: '' },
+      { name: 'Solar Well', amount: 3500, description: '' }
+    ];
+    var html = panelHeader('Water Projects', true);
+
+    html += '<div class="dp-tiers-list">';
+    for (var i = 0; i < tiers.length; i++) {
+      var t = tiers[i];
+      var sel = (state.selectedTier === i) ? ' dp-tier-selected' : '';
+      html += '<button type="button" class="dp-tier-card' + sel + '" data-tier="' + i + '">';
+      html += '<div class="dp-tier-info"><span class="dp-tier-name">' + escapeHtml(t.name) + '</span>';
+      if (t.description) html += '<span class="dp-tier-desc">' + escapeHtml(t.description) + '</span>';
+      html += '</div>';
+      html += '<span class="dp-tier-price">$' + formatNum(t.amount) + '</span>';
+      html += '</button>';
+    }
+    html += '</div>';
+
+    // CTA
+    html += '<button type="button" class="dp-cta-btn" id="dpDonateBtn" ' + (state.selectedTier === null ? 'disabled' : '') + '>Fund This Project <span class="dp-arrow">&rarr;</span></button>';
+
+    html += trustLine();
+    return html;
+  }
+
+  // ========================================
+  // ORPHAN SPONSORSHIP PANEL
+  // ========================================
+  function renderOrphanSponsorship(causeId, config) {
+    var html = panelHeader('Orphan Care', true);
+
+    // Country pills
+    var countries = [
+      { id: 'greatest-need', label: 'Greatest Need' },
+      { id: 'pakistan', label: 'Pakistan' },
+      { id: 'palestine', label: 'Palestine' },
+      { id: 'yemen', label: 'Yemen' },
+      { id: 'kenya', label: 'Kenya' }
+    ];
+    html += '<label class="dp-field-label">Country</label>';
+    html += '<div class="dp-pill-row">';
+    for (var i = 0; i < countries.length; i++) {
+      var c = countries[i];
+      var sel = (state.orphanCountry === c.id) ? ' dp-pill-active' : '';
+      html += '<button type="button" class="dp-pill' + sel + '" data-country="' + c.id + '">' + escapeHtml(c.label) + '</button>';
+    }
+    html += '</div>';
+
+    // Quantity
+    var qtys = [1, 2, 3, 5];
+    html += '<label class="dp-field-label">Number of Children</label>';
+    html += '<div class="dp-pill-row">';
+    for (var i = 0; i < qtys.length; i++) {
+      var q = qtys[i];
+      var sel = (state.orphanQty === q) ? ' dp-pill-active' : '';
+      html += '<button type="button" class="dp-pill' + sel + '" data-qty="' + q + '">' + q + '</button>';
+    }
+    html += '</div>';
+
+    // Monthly / Yearly toggle
+    html += '<label class="dp-field-label">Frequency</label>';
+    html += '<div class="dp-freq-toggle">';
+    html += '<button type="button" class="dp-freq-btn' + (state.orphanFreq === 'monthly' ? ' active' : '') + '" data-ofreq="monthly">Monthly</button>';
+    html += '<button type="button" class="dp-freq-btn' + (state.orphanFreq === 'yearly' ? ' active' : '') + '" data-ofreq="yearly">Yearly</button>';
+    html += '</div>';
+
+    // Price calculation
+    var basePrice = (state.orphanCountry === 'palestine') ? (config.palestinePrice || 100) : (config.basePrice || 45);
+    var total = basePrice * state.orphanQty;
+    if (state.orphanFreq === 'yearly') total = total * 12;
+    var perLabel = state.orphanFreq === 'monthly' ? '/mo' : '/yr';
+
+    html += '<div class="dp-orphan-price">';
+    html += '<span class="dp-orphan-total">$' + formatNum(total) + '<span class="dp-orphan-per">' + perLabel + '</span></span>';
+    html += '<span class="dp-orphan-breakdown">' + state.orphanQty + ' ' + (state.orphanQty === 1 ? 'child' : 'children') + ' x $' + formatNum(basePrice) + '/mo</span>';
+    html += '</div>';
+
+    // CTA
+    html += '<button type="button" class="dp-cta-btn" id="dpDonateBtn">Sponsor Now <span class="dp-arrow">&rarr;</span></button>';
+
+    html += trustLine();
+    return html;
+  }
+
+  // ========================================
+  // AQIQAH PANEL
+  // ========================================
+  function renderAqiqah(causeId, config) {
+    var packages = config.packages || [
+      { label: 'Baby Girl', amount: 150 },
+      { label: 'Baby Boy', amount: 300 },
+      { label: 'Sadaqah', amount: 100 }
+    ];
+
+    var html = panelHeader('Aqiqah', true);
+
+    html += '<div class="dp-aqiqah-grid">';
+    for (var i = 0; i < packages.length; i++) {
+      var p = packages[i];
+      var pkgId = (p.label || '').toLowerCase().replace(/\s+/g, '-');
+      var sel = (state.aqiqahPackage === pkgId) ? ' dp-aqiqah-selected' : '';
+      var desc = '';
+      if (pkgId === 'baby-boy') desc = '2 sheep sacrifice';
+      else if (pkgId === 'baby-girl') desc = '1 sheep sacrifice';
+      else desc = 'General sacrifice';
+
+      html += '<button type="button" class="dp-aqiqah-card' + sel + '" data-pkg="' + pkgId + '" data-amount="' + p.amount + '" data-label="' + escapeHtml(p.label) + '">';
+      html += '<span class="dp-aqiqah-label">' + escapeHtml(p.label) + '</span>';
+      html += '<span class="dp-aqiqah-price">$' + formatNum(p.amount) + '</span>';
+      html += '<span class="dp-aqiqah-desc">' + desc + '</span>';
+      html += '</button>';
+    }
+    html += '</div>';
+
+    // Child name + Aqiqah For (show when Boy or Girl selected)
+    if (state.aqiqahPackage && state.aqiqahPackage !== 'sadaqah') {
+      html += '<div class="dp-aqiqah-fields">';
+      html += '<label class="dp-field-label">Child\'s Name</label>';
+      html += '<input type="text" class="dp-text-input" id="dpChildName" placeholder="Enter child\'s name" value="' + escapeHtml(state.aqiqahChildName) + '" />';
+      html += '<label class="dp-field-label">Aqiqah For</label>';
+      html += '<select class="dp-select" id="dpAqiqahFor">';
+      html += '<option value="my-child"' + (state.aqiqahFor === 'my-child' ? ' selected' : '') + '>My Child</option>';
+      html += '<option value="myself"' + (state.aqiqahFor === 'myself' ? ' selected' : '') + '>Myself</option>';
+      html += '<option value="gift"' + (state.aqiqahFor === 'gift' ? ' selected' : '') + '>Gift</option>';
+      html += '</select>';
+      html += '</div>';
+    }
+
+    // CTA
+    html += '<button type="button" class="dp-cta-btn" id="dpDonateBtn" ' + (!state.aqiqahPackage ? 'disabled' : '') + '>Complete Aqiqah <span class="dp-arrow">&rarr;</span></button>';
+
+    html += trustLine();
+    return html;
+  }
+
+  // ========================================
+  // TRUST LINE
+  // ========================================
+  function trustLine() {
+    return '<p class="dp-trust-line"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Secure 256-bit SSL &middot; Powered by Stripe</p>';
+  }
+
+  // ========================================
+  // EVENT BINDING
+  // ========================================
+  function bindPanelEvents(causeId, config) {
+    var activeConfig = config._subConfig || config;
+
+    // Change cause link
+    var changeLinks = panelEl.querySelectorAll('[data-action="change-cause"]');
+    for (var i = 0; i < changeLinks.length; i++) {
+      changeLinks[i].addEventListener('click', function() {
+        // Scroll to cause grid on mobile
+        if (window.innerWidth < 1024) {
+          causeGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
+
+    // Frequency toggle
+    var freqBtns = panelEl.querySelectorAll('.dp-freq-btn[data-freq]');
+    for (var i = 0; i < freqBtns.length; i++) {
+      freqBtns[i].addEventListener('click', function() {
+        state.frequency = this.getAttribute('data-freq');
+        state.selectedAmount = null;
+        state.customAmount = '';
+        // Re-render entire panel to update badge, suffixes, labels
+        renderPanel(activeCause, causeData[activeCause]);
+      });
+    }
+
+    // Amount buttons
+    var amountBtns = panelEl.querySelectorAll('.dp-amount-btn');
+    for (var i = 0; i < amountBtns.length; i++) {
+      amountBtns[i].addEventListener('click', function() {
+        var amtVal = this.getAttribute('data-amount');
+        var customWrap = document.getElementById('dpCustomWrap');
+        if (amtVal === 'other') {
+          // Show custom input, hide Other button
+          if (customWrap) customWrap.style.display = '';
+          this.style.display = 'none';
+          state.selectedAmount = 0;
+          state.customAmount = '';
+          var ci = document.getElementById('dpCustomAmount');
+          if (ci) ci.focus();
+          for (var j = 0; j < amountBtns.length; j++) {
+            amountBtns[j].classList.remove('dp-amount-selected');
+          }
+          return;
+        }
+        var amt = parseInt(amtVal);
+        state.selectedAmount = amt;
+        state.customAmount = '';
+        var customInput = document.getElementById('dpCustomAmount');
+        if (customInput) customInput.value = '';
+        // Hide custom, show Other btn
+        if (customWrap) customWrap.style.display = 'none';
+        var otherBtn = panelEl.querySelector('.dp-other-btn');
+        if (otherBtn) otherBtn.style.display = '';
+        for (var j = 0; j < amountBtns.length; j++) {
+          amountBtns[j].classList.toggle('dp-amount-selected', amountBtns[j] === this);
+        }
+        var impactEl = document.getElementById('dpImpact');
+        if (impactEl) impactEl.textContent = getImpactText(amt);
+      });
+    }
+
+    // Custom amount input
+    var customInput = document.getElementById('dpCustomAmount');
+    if (customInput) {
+      customInput.addEventListener('input', function() {
+        var val = parseInt(this.value) || 0;
+        if (val > 0) {
+          state.selectedAmount = val;
+          state.customAmount = this.value;
+          // Deselect amount buttons
+          for (var j = 0; j < amountBtns.length; j++) {
+            amountBtns[j].classList.remove('dp-amount-selected');
+          }
+          var impactEl = document.getElementById('dpImpact');
+          if (impactEl) impactEl.textContent = getImpactText(val);
+        }
+      });
+    }
+
+    // Sub-campaign select buttons
+    var scBtns = panelEl.querySelectorAll('.dp-subcampaign-select');
+    for (var i = 0; i < scBtns.length; i++) {
+      scBtns[i].addEventListener('click', function() {
+        state.selectedSubCampaign = this.getAttribute('data-slug');
+        renderPanel(causeId, config);
+      });
+    }
+
+    // Tier cards
+    var tierBtns = panelEl.querySelectorAll('.dp-tier-card');
+    for (var i = 0; i < tierBtns.length; i++) {
+      tierBtns[i].addEventListener('click', function() {
+        state.selectedTier = parseInt(this.getAttribute('data-tier'));
+        for (var j = 0; j < tierBtns.length; j++) {
+          tierBtns[j].classList.toggle('dp-tier-selected', tierBtns[j] === this);
+        }
+        var donateBtn = document.getElementById('dpDonateBtn');
+        if (donateBtn) donateBtn.removeAttribute('disabled');
+      });
+    }
+
+    // Orphan country pills
+    var countryPills = panelEl.querySelectorAll('.dp-pill[data-country]');
+    for (var i = 0; i < countryPills.length; i++) {
+      countryPills[i].addEventListener('click', function() {
+        state.orphanCountry = this.getAttribute('data-country');
+        renderPanel(causeId, config);
+      });
+    }
+
+    // Orphan qty pills
+    var qtyPills = panelEl.querySelectorAll('.dp-pill[data-qty]');
+    for (var i = 0; i < qtyPills.length; i++) {
+      qtyPills[i].addEventListener('click', function() {
+        state.orphanQty = parseInt(this.getAttribute('data-qty'));
+        renderPanel(causeId, config);
+      });
+    }
+
+    // Orphan frequency toggle
+    var ofreqBtns = panelEl.querySelectorAll('.dp-freq-btn[data-ofreq]');
+    for (var i = 0; i < ofreqBtns.length; i++) {
+      ofreqBtns[i].addEventListener('click', function() {
+        state.orphanFreq = this.getAttribute('data-ofreq');
+        renderPanel(causeId, config);
+      });
+    }
+
+    // Aqiqah package cards
+    var aqPkgBtns = panelEl.querySelectorAll('.dp-aqiqah-card');
+    for (var i = 0; i < aqPkgBtns.length; i++) {
+      aqPkgBtns[i].addEventListener('click', function() {
+        state.aqiqahPackage = this.getAttribute('data-pkg');
+        renderPanel(causeId, config);
+      });
+    }
+
+    // Aqiqah child name
+    var childNameInput = document.getElementById('dpChildName');
+    if (childNameInput) {
+      childNameInput.addEventListener('input', function() {
+        state.aqiqahChildName = this.value;
+      });
+    }
+
+    // Aqiqah for select
+    var aqForSelect = document.getElementById('dpAqiqahFor');
+    if (aqForSelect) {
+      aqForSelect.addEventListener('change', function() {
+        state.aqiqahFor = this.value;
+      });
+    }
+
+    // Donate button
+    var donateBtn = document.getElementById('dpDonateBtn');
+    if (donateBtn) {
+      donateBtn.addEventListener('click', function() {
+        handleDonate(causeId, activeConfig, config);
+      });
+    }
+
+    // Mobile donate button
+    if (mobileDonateBtn) {
+      mobileDonateBtn.onclick = function() {
+        handleDonate(causeId, activeConfig, config);
+      };
+    }
+  }
+
+  // ========================================
+  // HANDLE DONATE
+  // ========================================
+  function handleDonate(causeId, activeConfig, parentConfig) {
+    if (typeof window.addToCart !== 'function') {
+      console.error('addToCart not available');
+      return;
+    }
+
+    var config = parentConfig._subConfig || activeConfig;
+
+    switch (config.type) {
+      case 'preset-amounts': {
+        var amount = state.selectedAmount || (state.customAmount ? parseInt(state.customAmount) : null);
+        if (!amount || amount <= 0) {
+          highlightMissing('.dp-amount-grid');
+          return;
+        }
+        var freq = state.frequency;
+        var slug = config.campaignSlug || 'general';
+        var name = config.campaignName || 'Donation';
+        window.addToCart({
+          id: 'donate-' + slug + '-' + amount + '-' + freq + '-' + Date.now(),
+          name: name,
+          amount: amount,
+          quantity: 1,
+          type: freq === 'monthly' ? 'monthly' : 'single',
+          campaign: slug
+        });
+        break;
+      }
+      case 'zakat': {
+        var amount = state.selectedAmount || (state.customAmount ? parseInt(state.customAmount) : null);
+        if (!amount || amount <= 0) {
+          highlightMissing('.dp-amount-grid');
+          return;
+        }
+        window.addToCart({
+          id: 'zakat-' + amount + '-' + Date.now(),
+          name: 'Zakat',
+          amount: amount,
+          quantity: 1,
+          type: 'single',
+          campaign: config.campaignSlug || 'zakat'
+        });
+        break;
+      }
+      case 'tiered-projects': {
+        if (state.selectedTier === null) return;
+        var tiers = config.tiers || [];
+        var tier = tiers[state.selectedTier];
+        if (!tier) return;
+        window.addToCart({
+          id: 'water-' + tier.name.toLowerCase().replace(/\s+/g, '-') + '-' + tier.amount + '-' + Date.now(),
+          name: tier.name,
+          amount: tier.amount,
+          quantity: 1,
+          type: 'single',
+          campaign: config.campaignSlug || 'thirst-relief'
+        });
+        break;
+      }
+      case 'orphan-sponsorship': {
+        var basePrice = (state.orphanCountry === 'palestine') ? (parentConfig.palestinePrice || 100) : (parentConfig.basePrice || 45);
+        var total = basePrice * state.orphanQty;
+        var isMonthly = (state.orphanFreq === 'monthly');
+        if (!isMonthly) total = total * 12;
+        var countryNames = { 'greatest-need': 'Greatest Need', 'pakistan': 'Pakistan', 'palestine': 'Palestine', 'yemen': 'Yemen', 'kenya': 'Kenya' };
+        var countryName = countryNames[state.orphanCountry] || state.orphanCountry;
+        window.addToCart({
+          id: 'orphan-' + state.orphanCountry + '-' + state.orphanQty + '-' + Date.now(),
+          name: 'Orphan Sponsorship - ' + countryName + ' (' + state.orphanQty + ' ' + (state.orphanQty === 1 ? 'Child' : 'Children') + ')',
+          amount: total,
+          quantity: 1,
+          type: isMonthly ? 'monthly' : 'single',
+          campaign: parentConfig.campaignSlug || 'sponsor-an-orphan'
+        });
+        break;
+      }
+      case 'aqiqah': {
+        if (!state.aqiqahPackage) return;
+        var pkg = null;
+        var packages = config.packages || [];
+        for (var i = 0; i < packages.length; i++) {
+          var pkgId = (packages[i].label || '').toLowerCase().replace(/\s+/g, '-');
+          if (pkgId === state.aqiqahPackage) { pkg = packages[i]; break; }
+        }
+        if (!pkg) return;
+        var childNameInput = document.getElementById('dpChildName');
+        var aqForSelect = document.getElementById('dpAqiqahFor');
+        var childName = childNameInput ? childNameInput.value : state.aqiqahChildName;
+        var aqFor = aqForSelect ? aqForSelect.value : state.aqiqahFor;
+        window.addToCart({
+          id: 'aqiqah-' + state.aqiqahPackage + '-' + Date.now(),
+          name: pkg.label + ' Aqiqah',
+          amount: pkg.amount,
+          quantity: 1,
+          type: 'single',
+          campaign: config.campaignSlug || 'aqiqah',
+          metadata: {
+            childName: childName,
+            aqiqahFor: aqFor,
+            packageType: state.aqiqahPackage
+          }
+        });
+        break;
+      }
+    }
+  }
+
+  // ========================================
+  // UTILITY
+  // ========================================
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function formatNum(n) {
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function highlightMissing(selector) {
+    var el = panelEl.querySelector(selector);
+    if (el) {
+      el.style.outline = '2px solid #ef4444';
+      el.style.borderRadius = '0.75rem';
+      setTimeout(function() { el.style.outline = 'none'; }, 2000);
+    }
+  }
+
+  // ========================================
+  // CAUSE CARD CLICK HANDLERS
+  // ========================================
+  var causeCards = causeGrid.querySelectorAll('.cause-card');
+  for (var i = 0; i < causeCards.length; i++) {
+    causeCards[i].addEventListener('click', function() {
+      var id = this.getAttribute('data-cause');
+      if (id) switchCause(id);
+    });
+  }
+
+  // ========================================
+  // URL PARAM CHECK
+  // ========================================
+  var params = new URLSearchParams(window.location.search);
+  var causeParam = params.get('cause');
+  if (causeParam && causeData[causeParam]) {
+    switchCause(causeParam);
+  } else {
+    switchCause('most-needed');
+  }
+
+  // Mobile sticky visibility
+  window.addEventListener('resize', function() {
+    if (mobileStickyBtn) {
+      mobileStickyBtn.style.display = (window.innerWidth < 1024) ? 'block' : 'none';
+    }
+  });
+  if (window.innerWidth < 1024 && mobileStickyBtn) {
+    mobileStickyBtn.style.display = 'block';
+  }
+
+})();
+</script>
+
+<style is:global>
+  /* ========================================
+     DYNAMIC PANEL STYLES
+     (Global so JS-rendered elements are styled)
+     ======================================== */
+
+  /* Panel Header */
+  .dp-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e1dc;
+  }
+  .dp-header-label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6875rem;
+    color: #71716c;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+  .dp-header-title {
+    font-family: 'Signika', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0.25rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .dp-change-link {
+    background: none;
+    border: none;
+    color: #01534d;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0;
+  }
+  .dp-change-link:hover {
+    color: #ef7c01;
+  }
+
+  /* Frequency Toggle */
+  .dp-freq-toggle {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    background: #F4F5F0;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+  }
+  .dp-freq-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #b0b0a8;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  .dp-freq-btn.active {
+    background: #d97706;
+    color: #fff;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .dp-freq-icon {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    vertical-align: -1px;
+    margin-left: 2px;
+  }
+  .dp-amount-label-heading {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+  }
+
+  /* Amount Grid */
+  .dp-amount-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.625rem;
+    margin-bottom: 0.625rem;
+  }
+  .dp-amount-grid--zakat {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 480px) {
+    .dp-amount-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .dp-amount-btn {
+    position: relative;
+    padding: 0.75rem 0.25rem;
+    border: 1px solid #e0e1dc;
+    border-radius: 4px;
+    background: #f4f5f0;
+    font-family: 'Signika', sans-serif;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #b0b0a8;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .dp-amount-btn:hover {
+    border-color: #d97706;
+    background: #eef0eb;
+  }
+  .dp-amount-btn.dp-amount-selected {
+    background: #d97706;
+    border-color: #d97706;
+    color: #fff;
+  }
+  .dp-amt-num {
+    font-size: 1.0625rem;
+    font-weight: 700;
+  }
+  .dp-amt-suffix {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    margin-left: 2px;
+    opacity: 0.7;
+  }
+  .dp-amount-btn.dp-amount-selected .dp-amt-suffix {
+    opacity: 0.8;
+  }
+  .dp-other-btn {
+    font-size: 1.0625rem !important;
+  }
+  .dp-custom-suffix {
+    position: absolute;
+    right: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: #9ca3af;
+  }
+  .dp-amount-label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #6b7280;
+    line-height: 1.2;
+  }
+  .dp-popular-badge {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    background: #d97706;
+    color: #fff;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  /* Custom Amount */
+  .dp-custom-wrap {
+    position: relative;
+    margin-bottom: 0.75rem;
+    border: 1px solid #e0e1dc;
+    border-radius: 4px;
+    background: #f4f5f0;
+    overflow: hidden;
+  }
+  .dp-custom-prefix {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Signika', sans-serif;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #9ca3af;
+    pointer-events: none;
+  }
+  .dp-custom-input {
+    width: 100%;
+    padding: 0.75rem 0.875rem 0.75rem 2rem;
+    border: none;
+    background: transparent;
+    font-family: 'Signika', sans-serif;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #1f2937;
+    outline: none;
+    box-sizing: border-box;
+    -moz-appearance: textfield;
+  }
+  .dp-custom-input::-webkit-outer-spin-button,
+  .dp-custom-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .dp-custom-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+  }
+
+  /* Impact Text */
+  .dp-impact {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    color: #01534d;
+    font-style: italic;
+    margin: 0 0 1rem;
+    min-height: 1.2em;
+  }
+
+  /* CTA Button */
+  .dp-cta-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: #d97706;
+    color: #fff;
+    font-family: 'Signika', sans-serif;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .dp-cta-btn:hover {
+    opacity: 0.92;
+  }
+  .dp-cta-btn:active {
+    transform: scale(0.99);
+  }
+  .dp-cta-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .dp-arrow {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  /* Trust Line */
+  .dp-trust-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin: 0;
+  }
+
+  /* ========================================
+     ZAKAT-SPECIFIC
+     ======================================== */
+  .dp-zakat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: rgba(1, 83, 77, 0.08);
+    color: #01534d;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.375rem 0.75rem;
+    border-radius: 2rem;
+    margin-bottom: 1rem;
+  }
+  .dp-zakat-link {
+    display: block;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    color: #01534d;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    transition: color 0.15s ease;
+  }
+  .dp-zakat-link:hover {
+    color: #ef7c01;
+  }
+  .dp-zakat-link span {
+    margin-left: 2px;
+  }
+
+  /* ========================================
+     SUB-CAMPAIGNS
+     ======================================== */
+  .dp-subcampaign-intro {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 0.75rem;
+  }
+  .dp-subcampaign-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 480px) {
+    .dp-subcampaign-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .dp-subcampaign-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .dp-subcampaign-card:hover {
+    border-color: #01534d;
+    box-shadow: 0 4px 12px rgba(1,83,77,0.15);
+    transform: translateY(-2px);
+  }
+  .dp-subcampaign-name {
+    font-family: 'Signika', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    line-height: 1.3;
+  }
+  .dp-subcampaign-select {
+    padding: 0.375rem 0.75rem;
+    background: #01534d;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background 0.15s ease;
+  }
+  .dp-subcampaign-select:hover {
+    background: #016d64;
+  }
+  .dp-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem 1rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    color: #9ca3af;
+  }
+
+  /* ========================================
+     TIERED PROJECTS
+     ======================================== */
+  .dp-tiers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .dp-tier-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+    text-align: left;
+  }
+  .dp-tier-card:hover {
+    border-color: #0891b2;
+    background: rgba(8, 145, 178, 0.03);
+  }
+  .dp-tier-card.dp-tier-selected {
+    border-color: #0891b2;
+    background: rgba(8, 145, 178, 0.06);
+  }
+  .dp-tier-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .dp-tier-name {
+    font-family: 'Signika', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  .dp-tier-desc {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  .dp-tier-price {
+    font-family: 'Signika', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #0891b2;
+    white-space: nowrap;
+  }
+
+  /* ========================================
+     ORPHAN SPONSORSHIP
+     ======================================== */
+  .dp-field-label {
+    display: block;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.375rem;
+  }
+  .dp-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-bottom: 0.875rem;
+  }
+  .dp-pill {
+    padding: 0.375rem 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 2rem;
+    background: #fff;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .dp-pill:hover {
+    border-color: #01534d;
+  }
+  .dp-pill.dp-pill-active {
+    border-color: #01534d;
+    background: rgba(1, 83, 77, 0.08);
+    color: #01534d;
+  }
+  .dp-orphan-price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0.75rem 0 1rem;
+    padding: 0.875rem;
+    background: #f9fafb;
+    border-radius: 0.75rem;
+  }
+  .dp-orphan-total {
+    font-family: 'Signika', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #01534d;
+    line-height: 1;
+  }
+  .dp-orphan-per {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6b7280;
+  }
+  .dp-orphan-breakdown {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+
+  /* ========================================
+     AQIQAH
+     ======================================== */
+  .dp-aqiqah-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 480px) {
+    .dp-aqiqah-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .dp-aqiqah-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 0.75rem;
+    border: 1px solid #e0e1dc;
+    border-radius: 4px;
+    background: #f4f5f0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+  }
+  .dp-aqiqah-card:hover {
+    border-color: #d97706;
+    background: #eef0eb;
+  }
+  .dp-aqiqah-card.dp-aqiqah-selected {
+    border-color: #d97706;
+    background: #d97706;
+  }
+  .dp-aqiqah-card.dp-aqiqah-selected .dp-aqiqah-label,
+  .dp-aqiqah-card.dp-aqiqah-selected .dp-aqiqah-price,
+  .dp-aqiqah-card.dp-aqiqah-selected .dp-aqiqah-desc {
+    color: #fff;
+  }
+  .dp-aqiqah-label {
+    font-family: 'Signika', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .dp-aqiqah-price {
+    font-family: 'Signika', sans-serif;
+    font-size: 1.375rem;
+    font-weight: 800;
+    color: #d97706;
+    margin: 0.375rem 0 0.25rem;
+  }
+  .dp-aqiqah-desc {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.7rem;
+    color: #71716c;
+  }
+  .dp-aqiqah-fields {
+    margin-bottom: 1rem;
+  }
+  .dp-text-input {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #e0e1dc;
+    border-radius: 4px;
+    background: #f4f5f0;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    color: #1f2937;
+    outline: none;
+    margin-bottom: 0.75rem;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+  .dp-text-input:focus {
+    border-color: #7c3aed;
+  }
+  .dp-select {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.625rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.875rem;
+    color: #1f2937;
+    background: #fff;
+    outline: none;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .dp-select:focus {
+    border-color: #7c3aed;
+  }
+</style>

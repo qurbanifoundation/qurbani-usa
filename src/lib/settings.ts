@@ -106,6 +106,7 @@ export interface CheckoutUpsell {
   show_stamp?: boolean;
   stamp_text?: string;
   visibility?: 'both' | 'mobile' | 'desktop';
+  cart_label?: string;
 }
 
 export interface CheckoutUpsellsConfig {

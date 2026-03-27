@@ -11,6 +11,11 @@ import TileStackSponsorshipTemplate from '../templates/TileStackSponsorshipTempl
 import AqiqahTemplate from '../templates/AqiqahTemplate.astro';
 import ZakatHubTemplate from '../templates/ZakatHubTemplate.astro';
 import FoodAidTemplate from '../templates/FoodAidTemplate.astro';
+import EidGiftsTemplate from '../templates/EidGiftsTemplate.astro';
+import SadaqahSacrificeTemplate from '../templates/SadaqahSacrificeTemplate.astro';
+import SadaqahTemplate from '../templates/SadaqahTemplate.astro';
+import SadaqahJariyahTemplate from '../templates/SadaqahJariyahTemplate.astro';
+import QurbaniTemplate from '../templates/QurbaniTemplate.astro';
 import { supabaseAdmin } from '../lib/supabase';
 
 export const prerender = false;
@@ -52,12 +57,14 @@ if (!campaign) {
       .eq('is_active', true)
       .single();
 
-    // If found by slug, redirect to canonical url_path if it differs
+    // If found by slug, only serve if url_path matches (no prefix)
     if (data) {
       if (data.url_path && data.url_path !== `/${slug}`) {
-        return Astro.redirect(data.url_path, 301);
+        // Campaign exists but url_path has a prefix — don't serve here, let [category]/[slug] handle it
+        campaign = null;
+      } else {
+        campaign = data;
       }
-      campaign = data;
     }
   } catch (e2) {
     console.error('Campaign not found:', urlPath);
@@ -97,6 +104,11 @@ const templateMap: Record<string, any> = {
   'aqiqah': AqiqahTemplate,
   'zakat-hub': ZakatHubTemplate,
   'food-aid': FoodAidTemplate,
+  'eid-gifts': EidGiftsTemplate,
+  'sadaqah-sacrifice': SadaqahSacrificeTemplate,
+  'sadaqah-template': SadaqahTemplate,
+  'sadaqah-jariyah': SadaqahJariyahTemplate,
+  'qurbani-template': QurbaniTemplate,
 };
 
 const TemplateComponent = templateMap[templateKey] || GreenWithYellowTemplate;
