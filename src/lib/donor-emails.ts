@@ -75,7 +75,7 @@ export async function sendEmailAndLogToGHL(params: {
         },
         body: JSON.stringify({
           from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-          reply_to: 'donorcare@us.qurbani.com',
+          reply_to: 'donorcare@qurbani.com',
           to: to,
           subject: subject,
           html: html,
@@ -200,16 +200,13 @@ export function getEmailWrapper(content: string, preheader: string = '', prefUrl
                       Qurbani Foundation USA
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
-                      4245 N Central Expy, Dallas, TX 75205
+                      5900 Balcones Dr, Suite 100, Austin, TX 78731
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
                       1-800-900-0027 · +1 989-QURBANI (787-2265)
                     </p>
-                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
-                      EIN: 38-4109716 · A 501(c)(3) Tax-Exempt Organization
-                    </p>
                     <p style="margin: 0; color: #9ca3af; font-size: 11px;">
-                      Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.
+                      Please do not reply to this email. Contact <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a> for any inquiries.
                     </p>
                     ${preferencesLine}
                   </td>
@@ -377,7 +374,7 @@ export async function sendDonationReceipt(data: DonationReceiptData): Promise<{ 
       </div>
       ` : `
       <p style="margin: 8px 0 0 0; color: #1e40af; font-size: 14px;">
-        To manage your subscription, contact us at <a href="mailto:donorcare@us.qurbani.com" style="color: #1e40af;">donorcare@us.qurbani.com</a>
+        To manage your subscription, contact us at <a href="mailto:donorcare@qurbani.com" style="color: #1e40af;">donorcare@qurbani.com</a>
       </p>
       `}
     </div>
@@ -415,10 +412,10 @@ Transaction ID: ${transactionId}
 ${donationType !== 'single' && data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : ''}
 "Those who (in sadaqah) spend of their goods by night and by day, in secret and in public, have their reward with their Lord: On them shall be no fear, nor shall they grieve." (Al-Quran, 2:274)
 
-Qurbani Foundation USA (EIN: 38-4109716)
-4245 N Central Expy, Dallas, TX 75205
+Qurbani Foundation USA
+5900 Balcones Dr, Suite 100, Austin, TX 78731
 1-800-900-0027 · +1 989-QURBANI (787-2265)
-Please do not reply to this email. Contact donorcare@us.qurbani.com for any inquiries.`;
+Please do not reply to this email. Contact donorcare@qurbani.com for any inquiries.`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -505,7 +502,7 @@ export async function sendSubscriptionConfirmation(data: SubscriptionConfirmatio
       <p style="margin: 0 0 16px 0; color: #6b7280; font-size: 14px;">
         Questions about your subscription? We're here to help!
       </p>
-      <a href="mailto:donorcare@us.qurbani.com" style="display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+      <a href="mailto:donorcare@qurbani.com" style="display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
         Contact Donor Care
       </a>
     </div>
@@ -532,9 +529,9 @@ ${data.managementUrl ? `\nManage your subscription: ${data.managementUrl}\n` : '
 Thank you for your ongoing support!
 
 Qurbani Foundation USA
-4245 N Central Expy, Dallas, TX 75205
+5900 Balcones Dr, Suite 100, Austin, TX 78731
 1-800-900-0027 · +1 989-QURBANI (787-2265)
-Please do not reply to this email. Contact donorcare@us.qurbani.com for any inquiries.`;
+Please do not reply to this email. Contact donorcare@qurbani.com for any inquiries.`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -588,7 +585,7 @@ export async function sendPaymentFailedEmail(data: PaymentFailedData): Promise<{
         Try Again
       </a>
       <p style="margin: 16px 0 0 0; color: #6b7280; font-size: 14px;">
-        Need help? Contact us at <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706;">donorcare@us.qurbani.com</a>
+        Need help? Contact us at <a href="mailto:donorcare@qurbani.com" style="color: #d97706;">donorcare@qurbani.com</a>
       </p>
     </div>
   `;
@@ -610,10 +607,10 @@ HOW TO FIX THIS
 3. Contact your bank if the issue persists
 4. Update your payment method or try again
 
-Need help? Contact us at donorcare@us.qurbani.com
+Need help? Contact us at donorcare@qurbani.com
 
 Qurbani Foundation USA
-4245 N Central Expy, Dallas, TX 75205
+5900 Balcones Dr, Suite 100, Austin, TX 78731
 1-800-900-0027 · +1 989-QURBANI (787-2265)`;
 
   return sendEmailAndLogToGHL({
@@ -678,9 +675,9 @@ We'd love to know why you decided to cancel. Your feedback helps us serve our do
 Changed your mind? You can always start a new donation anytime at www.qurbani.com
 
 Qurbani Foundation USA
-4245 N Central Expy, Dallas, TX 75205
+5900 Balcones Dr, Suite 100, Austin, TX 78731
 1-800-900-0027 · +1 989-QURBANI (787-2265)
-Please do not reply to this email. Contact donorcare@us.qurbani.com for any inquiries.`;
+Please do not reply to this email. Contact donorcare@qurbani.com for any inquiries.`;
 
   return sendEmailAndLogToGHL({
     to: donorEmail,
@@ -725,7 +722,7 @@ export async function sendRefundEmail(data: {
 
     <div style="text-align: center; padding: 24px 0; border-top: 1px solid #e5e7eb;">
       <p style="margin: 0; color: #6b7280; font-size: 14px;">
-        Questions? Contact us at <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706;">donorcare@us.qurbani.com</a>
+        Questions? Contact us at <a href="mailto:donorcare@qurbani.com" style="color: #d97706;">donorcare@qurbani.com</a>
       </p>
     </div>
   `;
@@ -743,10 +740,10 @@ Refund Amount: $${amount.toFixed(2)}
 
 Please allow 5-10 business days for the refund to appear on your statement, depending on your bank.
 
-Questions? Contact us at donorcare@us.qurbani.com
+Questions? Contact us at donorcare@qurbani.com
 
 Qurbani Foundation USA
-4245 N Central Expy, Dallas, TX 75205
+5900 Balcones Dr, Suite 100, Austin, TX 78731
 1-800-900-0027 · +1 989-QURBANI (787-2265)`;
 
   return sendEmailAndLogToGHL({
@@ -841,9 +838,9 @@ export async function sendFulfillmentEmail(data: {
     </div>
     <div style="background: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
       <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af; font-weight: 600;">Qurbani Foundation USA</p>
-      <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af;">4245 N Central Expy, Dallas, TX 75205</p>
+      <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af;">5900 Balcones Dr, Suite 100, Austin, TX 78731</p>
       <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af;">1-800-900-0027 · +1 989-QURBANI (787-2265)</p>
-      <p style="margin: 0 0 4px 0; font-size: 11px; color: #9ca3af;">Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.</p>
+      <p style="margin: 0 0 4px 0; font-size: 11px; color: #9ca3af;">Please do not reply to this email. Contact <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a> for any inquiries.</p>
       <p style="margin: 0; font-size: 11px; color: #9ca3af;">Want to change how you receive these emails? <a href="${fulfillmentPrefUrls.manage}" style="color: #d97706; text-decoration: underline;">Update your preferences</a> or <a href="${fulfillmentPrefUrls.unsubscribe}" style="color: #9ca3af; text-decoration: underline;">unsubscribe from this list</a>.</p>
     </div>
   </div>
@@ -867,7 +864,7 @@ May Allah accept your generosity and reward you abundantly.
 
 JazakAllahu Khairan,
 Qurbani Foundation USA
-4245 N Central Expy, Dallas, TX 75205
+5900 Balcones Dr, Suite 100, Austin, TX 78731
 1-800-900-0027 · +1 989-QURBANI (787-2265)`;
 
   return sendEmailAndLogToGHL({

@@ -389,6 +389,12 @@ const hasActiveFilters = search || statusFilter !== 'all' || typeFilter !== 'all
                   </button>
                 )}
 
+                {donationDetail.donor_email && donationDetail.status === 'completed' && (
+                  <button id="send-tax-receipt-btn" class="w-full px-3 py-2 text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition font-medium text-center">
+                    Send Tax Receipt
+                  </button>
+                )}
+
                 {donationDetail.donor_email && (
                   <button id="open-email-modal-btn" class="w-full px-3 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition font-medium text-center">
                     Send Custom Email
@@ -967,6 +973,27 @@ const hasActiveFilters = search || statusFilter !== 'all' || typeFilter !== 'all
         })
         .catch(function() { showToast('Network error', 'error'); })
         .finally(function() { receiptBtn.disabled = false; receiptBtn.textContent = 'Resend Receipt'; });
+      });
+    }
+
+    // Send tax receipt
+    var taxReceiptBtn = document.getElementById('send-tax-receipt-btn');
+    if (taxReceiptBtn) {
+      taxReceiptBtn.addEventListener('click', function() {
+        taxReceiptBtn.disabled = true;
+        taxReceiptBtn.textContent = 'Sending...';
+        fetch('/api/donations/send-tax-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ donationId: donationDetailId })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) showToast(data.message || 'Tax receipt sent!', 'success');
+          else showToast(data.error || 'Failed to send tax receipt', 'error');
+        })
+        .catch(function() { showToast('Network error', 'error'); })
+        .finally(function() { taxReceiptBtn.disabled = false; taxReceiptBtn.textContent = 'Send Tax Receipt'; });
       });
     }
 

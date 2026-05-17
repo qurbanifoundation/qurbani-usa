@@ -7,6 +7,7 @@
  */
 
 import { buildPreferencesUrls } from './email-preferences';
+import { siteConfig } from '../config/site';
 
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 
@@ -79,16 +80,13 @@ function getRecoveryEmailWrapper(content: string, preheader: string, unsubscribe
                       Qurbani Foundation USA
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
-                      4245 N Central Expy, Dallas, TX 75205
+                      5900 Balcones Dr, Suite 100, Austin, TX 78731
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
                       1-800-900-0027 · +1 989-QURBANI (787-2265)
                     </p>
-                    <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
-                      EIN: 38-4109716 · A 501(c)(3) Tax-Exempt Organization
-                    </p>
                     <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px;">
-                      Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.
+                      Please do not reply to this email. Contact <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a> for any inquiries.
                     </p>
                     ${prefUrls ? `<p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px;">
                       Want to change how you receive these emails?
@@ -151,7 +149,7 @@ function trustSignals(): string {
         <td style="text-align: center;">
           <p style="margin: 0 0 4px 0; color: #059669; font-size: 13px; font-weight: 600;">Your donation is safe and secure</p>
           <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-            501(c)(3) Tax-Deductible &bull; 256-bit SSL Encryption &bull; 100% of your donation goes to those in need
+            ${siteConfig.showUS501c3 ? '501(c)(3) Tax-Deductible &bull; ' : ''}256-bit SSL Encryption &bull; 100% of your donation goes to those in need
           </p>
         </td>
       </tr>
@@ -193,7 +191,7 @@ async function buildStep1Email(data: RecoveryEmailData): Promise<{ subject: stri
     ${trustSignals()}
   `;
 
-  const plainText = `Assalamu Alaikum ${name},\n\nIt looks like you started a ${campaign} checkout for ${amountText} but didn't complete it.\n\nComplete your donation: ${data.resumeUrl}\n\nIf you need help, contact us at donorcare@us.qurbani.com\n\nUnsubscribe: ${data.unsubscribeUrl}`;
+  const plainText = `Assalamu Alaikum ${name},\n\nIt looks like you started a ${campaign} checkout for ${amountText} but didn't complete it.\n\nComplete your donation: ${data.resumeUrl}\n\nIf you need help, contact us at donorcare@qurbani.com\n\nUnsubscribe: ${data.unsubscribeUrl}`;
 
   return {
     subject: `${name}, you left something behind`,
@@ -214,7 +212,7 @@ async function buildStep2Email(data: RecoveryEmailData): Promise<{ subject: stri
     </p>
     <div style="background-color: #f0fdf4; border-radius: 8px; padding: 16px; margin: 16px 0; border-left: 4px solid #16a34a;">
       <p style="margin: 0; color: #166534; font-size: 14px; line-height: 1.6;">
-        <strong>Did you know?</strong> Qurbani Foundation ensures 100% of your donation reaches those in need. We're a registered 501(c)(3) organization, and your contribution is fully tax-deductible.
+        <strong>Did you know?</strong> Qurbani Foundation ensures 100% of your donation reaches those in need.${siteConfig.showUS501c3 ? " We're a registered 501(c)(3) organization, and your contribution is fully tax-deductible." : ''}
       </p>
     </div>
     ${ctaButton('Complete Your Donation', data.resumeUrl)}
@@ -362,7 +360,7 @@ export async function sendRecoveryEmail(
       },
       body: JSON.stringify({
         from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-        reply_to: 'donorcare@us.qurbani.com',
+        reply_to: 'donorcare@qurbani.com',
         to: data.email,
         subject,
         html,

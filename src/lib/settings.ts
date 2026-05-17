@@ -28,7 +28,7 @@ const defaultSettings = {
 
   footer_about: "A Muslim charity dedicated to alleviating suffering of the world's poorest people. Operating in 53+ countries since 1999.",
   footer_zakat_policy: '100% Zakat Policy',
-  footer_ein: '38-4109716',
+  footer_ein: '38-4109146',
   footer_copyright: 'Qurbani Foundation USA. All rights reserved.',
 
   donate_button_text: 'DONATE NOW',

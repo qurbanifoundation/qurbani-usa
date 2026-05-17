@@ -1,0 +1,983 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+export const prerender = false;
+---
+<AdminLayout title="Qurbani Countries" activeNav="campaigns">
+  <!-- Unsaved changes banner -->
+  <div id="unsaved-banner" class="hidden mb-4 bg-yellow-50 border border-yellow-300 rounded-xl px-5 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2 text-yellow-800">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+      </svg>
+      <span class="text-sm font-medium">You have unsaved changes</span>
+    </div>
+    <button onclick="saveAll()" class="px-4 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition">Save Now</button>
+  </div>
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">Qurbani Countries Manager</h2>
+      <p class="text-sm text-gray-500 mt-1">Manage countries, pricing, and images for Qurbani campaign</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="add-country-btn" onclick="openAddCountryModal()" class="px-4 py-2 bg-[#01534d] text-white text-sm font-semibold rounded-lg hover:bg-[#01433e] transition flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add Country
+      </button>
+      <button id="save-btn" onclick="saveAll()" class="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        Save All Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Countries</p>
+      <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-total">--</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Most Needed</p>
+      <p class="text-2xl font-bold text-orange-600 mt-1" id="stat-most-needed">--</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Emergency</p>
+      <p class="text-2xl font-bold text-red-600 mt-1" id="stat-emergency">--</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Lowest Price</p>
+      <p class="text-2xl font-bold text-green-600 mt-1" id="stat-lowest-price">--</p>
+    </div>
+  </div>
+
+  <!-- Search / Filter bar -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+    <div class="flex flex-col md:flex-row gap-4">
+      <!-- Search -->
+      <div class="flex-1">
+        <input type="text" id="search-input" placeholder="Search countries..." class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" oninput="applyFilters()" />
+      </div>
+      <!-- Sort -->
+      <div>
+        <select id="sort-select" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="applyFilters()">
+          <option value="default">Default Order</option>
+          <option value="price-asc">Price Low to High</option>
+          <option value="price-desc">Price High to Low</option>
+          <option value="name-asc">Name A-Z</option>
+        </select>
+      </div>
+    </div>
+    <!-- Filter pills -->
+    <div class="flex flex-wrap gap-2 mt-3">
+      <button class="filter-pill active px-3 py-1.5 rounded-full text-xs font-semibold border transition" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition" data-filter="most-needed" onclick="setFilter('most-needed')">Most Needed</button>
+      <button class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition" data-filter="lowest-price" onclick="setFilter('lowest-price')">Lowest Price</button>
+      <button class="filter-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition" data-filter="emergency" onclick="setFilter('emergency')">Emergency</button>
+    </div>
+  </div>
+
+  <!-- Price Groups -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <h3 class="text-sm font-semibold text-gray-800">Price Groups</h3>
+        <p class="text-xs text-gray-400">Click a group to filter countries. Edit group prices to update all its countries at once.</p>
+      </div>
+      <button onclick="openGroupModal()" class="px-3 py-1.5 border border-[#01534d] text-[#01534d] text-xs font-semibold rounded-lg hover:bg-[#01534d] hover:text-white transition">+ New Group</button>
+    </div>
+    <div id="group-pills" class="flex flex-wrap gap-2"></div>
+
+    <!-- Active group editor (shown when a group is the active filter) -->
+    <div id="group-editor" class="hidden mt-4 pt-4 border-t border-gray-100">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[160px]">
+          <label class="block text-xs font-medium text-gray-500 mb-1">Editing <span id="group-editor-name" class="font-semibold text-gray-700"></span></label>
+          <p class="text-[11px] text-gray-400">Applies to <span id="group-editor-count">0</span> countries in this group. Leave blank to skip.</p>
+        </div>
+        <div>
+          <label class="block text-[11px] text-gray-500 mb-1">Sheep/Goat</label>
+          <div class="flex items-center gap-1"><span class="text-xs text-gray-400">$</span>
+            <input type="number" id="group-edit-sheep-goat" placeholder="—" class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none text-right" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] text-gray-500 mb-1">Cow Share</label>
+          <div class="flex items-center gap-1"><span class="text-xs text-gray-400">$</span>
+            <input type="number" id="group-edit-cow-share" placeholder="—" oninput="var v=parseInt(this.value); document.getElementById('group-edit-cow-full').value = isNaN(v) ? '' : v*7;" class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none text-right" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] text-gray-500 mb-1">Full Cow <span class="text-gray-400">(= 7× Cow Share)</span></label>
+          <div class="flex items-center gap-1"><span class="text-xs text-gray-400">$</span>
+            <input type="number" id="group-edit-cow-full" placeholder="—" readonly class="w-24 border border-gray-200 bg-gray-50 rounded-lg px-2 py-1.5 text-sm text-right text-gray-500" />
+          </div>
+        </div>
+        <button onclick="applyGroupPrices()" class="px-4 py-2 bg-[#01534d] text-white text-sm font-semibold rounded-lg hover:bg-[#01433e] transition">Apply to Group</button>
+        <button onclick="renameActiveGroup()" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700">Rename</button>
+        <button onclick="deleteActiveGroup()" class="px-3 py-2 text-xs text-red-500 hover:text-red-700">Delete Group</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group create/assign modal -->
+  <div id="group-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-gray-900">New Price Group</h3>
+        <button onclick="closeGroupModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-5 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Group Name</label>
+          <input type="text" id="new-group-name" placeholder="e.g. Group A" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-gray-500 mb-1">Sheep/Goat</label>
+            <input type="number" id="new-group-sheep-goat" placeholder="Price" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none text-right" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-gray-500 mb-1">Cow Share</label>
+            <input type="number" id="new-group-cow-share" placeholder="Price" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none text-right" />
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-400">Full Cow = 7 × Cow Share (auto-calculated)</p>
+      </div>
+      <div class="p-5 border-t border-gray-200 flex justify-end gap-3">
+        <button onclick="closeGroupModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition">Cancel</button>
+        <button onclick="createGroup()" class="px-5 py-2 bg-[#01534d] text-white text-sm font-semibold rounded-lg hover:bg-[#01433e] transition">Create Group</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading-state" class="text-center py-16">
+    <svg class="w-8 h-8 animate-spin text-[#01534d] mx-auto" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p class="text-sm text-gray-500 mt-3">Loading countries...</p>
+  </div>
+
+  <!-- Countries grid -->
+  <div id="countries-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 hidden"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="hidden text-center py-16 bg-white rounded-xl border border-gray-200">
+    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <p class="text-gray-500 font-medium">No countries found</p>
+    <p class="text-gray-400 text-sm mt-1">Click "Add Country" to get started</p>
+  </div>
+
+  <!-- Image picker modal -->
+  <div id="image-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-gray-900">Select Image</h3>
+        <button onclick="closeImageModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <!-- Upload from computer -->
+      <div class="px-5 pt-4">
+        <label class="block text-xs font-medium text-gray-500 mb-2">Upload from computer</label>
+        <div class="flex gap-2">
+          <label class="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 cursor-pointer hover:border-[#01534d] hover:bg-gray-50 transition">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            <span class="text-sm text-gray-500">Choose file or drag here</span>
+            <input type="file" id="image-file-input" accept="image/*" class="hidden" onchange="handleFileUpload(this)" />
+          </label>
+        </div>
+        <div id="upload-progress" class="hidden mt-2 text-xs text-gray-500"></div>
+      </div>
+      <!-- URL input -->
+      <div class="px-5 pt-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1">Or paste image URL</label>
+        <div class="flex gap-2">
+          <input type="text" id="image-url-input" placeholder="https://..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" />
+          <button onclick="applyDirectUrl()" class="px-4 py-2 bg-[#01534d] text-white text-sm font-medium rounded-lg hover:bg-[#01433e] transition">Use URL</button>
+        </div>
+      </div>
+      <!-- Search media library -->
+      <div class="px-5 pt-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1">Or select from media library</label>
+        <input type="text" id="image-search-input" placeholder="Search media library..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" oninput="filterMediaImages()" />
+      </div>
+      <!-- Thumbnails grid - bigger cards with proper spacing -->
+      <div id="media-grid" class="p-5 overflow-y-auto flex-1 grid grid-cols-3 gap-4" style="max-height: 350px;">
+        <p class="col-span-3 text-center text-sm text-gray-400 py-8">Loading media library...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add country modal -->
+  <div id="add-country-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-gray-900">Add New Country</h3>
+        <button onclick="closeAddCountryModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="flex gap-3">
+          <div class="w-20">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Flag</label>
+            <input type="text" id="new-flag" placeholder="Flag" class="w-full text-center text-xl border border-gray-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" />
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Country Name</label>
+            <input type="text" id="new-name" placeholder="e.g. Pakistan" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Description</label>
+          <input type="text" id="new-description" placeholder="Short description" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Categories</label>
+          <div class="flex flex-wrap gap-3">
+            <label class="flex items-center gap-1.5 text-sm">
+              <input type="checkbox" id="new-cat-most-needed" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" /> Most Needed
+            </label>
+            <label class="flex items-center gap-1.5 text-sm">
+              <input type="checkbox" id="new-cat-emergency" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" /> Emergency
+            </label>
+            <label class="flex items-center gap-1.5 text-sm">
+              <input type="checkbox" id="new-cat-lowest-price" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" /> Lowest Price
+            </label>
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-lg p-4">
+          <label class="block text-xs font-medium text-gray-500 mb-2">Initial Animal Type</label>
+          <div class="flex gap-3">
+            <select id="new-animal-type" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none">
+              <option value="goat">Goat</option>
+              <option value="sheep">Sheep</option>
+              <option value="cow_share">Cow Share</option>
+              <option value="cow_full">Full Cow</option>
+            </select>
+            <input type="text" id="new-animal-label" placeholder="Label e.g. Sheep/Goat" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" />
+            <div class="flex items-center gap-1">
+              <span class="text-sm text-gray-500">$</span>
+              <input type="number" id="new-animal-price" placeholder="Price" class="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none text-right" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-5 border-t border-gray-200 flex justify-end gap-3">
+        <button onclick="closeAddCountryModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition">Cancel</button>
+        <button onclick="addCountry()" class="px-5 py-2 bg-[#01534d] text-white text-sm font-semibold rounded-lg hover:bg-[#01433e] transition">Add Country</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 text-white text-sm font-medium"></div>
+
+  <script is:inline>
+    let countries = [];
+    let priceGroups = [];
+    let filteredCountries = [];
+    let hasChanges = false;
+    let activeFilter = 'all';
+    let activeGroupId = null;
+    let mediaImages = [];
+    let imageModalTargetIndex = -1;
+
+    // ---- Init ----
+    document.addEventListener('DOMContentLoaded', loadCountries);
+
+    async function loadCountries() {
+      try {
+        const res = await fetch('/api/campaigns/qurbani-countries', { credentials: 'include' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        countries = data.countries || [];
+        priceGroups = data.priceGroups || [];
+        renderGroupPills();
+        applyFilters();
+        updateStats();
+        document.getElementById('loading-state').classList.add('hidden');
+      } catch (e) {
+        console.error('Failed to load countries:', e);
+        document.getElementById('loading-state').innerHTML = '<p class="text-red-500 text-sm">Failed to load countries: ' + e.message + '</p>';
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent = countries.length;
+      document.getElementById('stat-most-needed').textContent = countries.filter(function(c) { return (c.category || []).includes('most-needed'); }).length;
+      document.getElementById('stat-emergency').textContent = countries.filter(function(c) { return (c.category || []).includes('emergency'); }).length;
+      document.getElementById('stat-lowest-price').textContent = countries.filter(function(c) { return (c.category || []).includes('lowest-price'); }).length;
+    }
+
+    function markChanged() {
+      hasChanges = true;
+      document.getElementById('save-btn').disabled = false;
+      document.getElementById('unsaved-banner').classList.remove('hidden');
+    }
+
+    // ---- Filtering / Sorting ----
+    function setFilter(f) {
+      activeFilter = f;
+      document.querySelectorAll('.filter-pill').forEach(function(pill) {
+        if (pill.dataset.filter === f) {
+          pill.classList.add('active');
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+      applyFilters();
+    }
+
+    function applyFilters() {
+      var search = (document.getElementById('search-input').value || '').toLowerCase();
+      var sort = document.getElementById('sort-select').value;
+
+      filteredCountries = countries.filter(function(c, i) {
+        c._originalIndex = i;
+        if (search && !(c.name || '').toLowerCase().includes(search)) return false;
+        if (activeFilter !== 'all') {
+          var cats = c.category || [];
+          if (!cats.includes(activeFilter)) return false;
+        }
+        if (activeGroupId && c.priceGroupId !== activeGroupId) return false;
+        return true;
+      });
+
+      if (sort === 'price-asc') {
+        filteredCountries.sort(function(a, b) { return getMinPrice(a) - getMinPrice(b); });
+      } else if (sort === 'price-desc') {
+        filteredCountries.sort(function(a, b) { return getMinPrice(b) - getMinPrice(a); });
+      } else if (sort === 'name-asc') {
+        filteredCountries.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
+      }
+
+      renderGrid();
+    }
+
+    function getMinPrice(c) {
+      var animals = c.animals || [];
+      if (!animals.length) return 999999;
+      var prices = animals.map(function(a) { return a.price || 0; });
+      return Math.min.apply(null, prices);
+    }
+
+    // ---- Rendering ----
+    function renderGrid() {
+      var grid = document.getElementById('countries-grid');
+      var emptyState = document.getElementById('empty-state');
+
+      if (!filteredCountries.length) {
+        grid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      grid.classList.remove('hidden');
+      grid.innerHTML = '';
+
+      filteredCountries.forEach(function(country) {
+        var idx = country._originalIndex;
+        var card = document.createElement('div');
+        card.className = 'bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden';
+        card.dataset.index = idx;
+
+        var cats = country.category || [];
+        var badgesHtml = '';
+        if (cats.includes('emergency')) badgesHtml += '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Urgent</span>';
+        if (cats.includes('most-needed')) badgesHtml += '<span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Needed</span>';
+
+        var imgSrc = country.image || '/images/placeholder-country.jpg';
+        var animalsHtml = buildAnimalsTable(country.animals || [], idx);
+
+        card.innerHTML =
+          '<div class="relative h-40 bg-gray-100 cursor-pointer group" onclick="openImageModal(' + idx + ')">' +
+            (imgSrc ? '<img src="' + escHtml(imgSrc) + '" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display=\'none\'; this.parentElement.style.background=\'linear-gradient(135deg, #01534d 0%, #0891b2 100%)\'; this.parentElement.innerHTML+=\'<div class=\\\'flex items-center justify-center h-full text-white/60 text-sm\\\'>' + escHtml(country.name || 'No image') + '</div>\'" />' : '<div class="flex items-center justify-center h-full text-gray-400 text-sm bg-gradient-to-br from-[#01534d] to-[#0891b2]"><span class="text-white/60">' + escHtml(country.name || 'No image') + '</span></div>') +
+            '<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">' +
+              '<span class="text-white text-sm font-bold">Change Image</span>' +
+            '</div>' +
+            '<div class="absolute top-2 left-2 flex gap-1">' + badgesHtml + '</div>' +
+            '<button class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition text-xs font-bold flex items-center justify-center" onclick="event.stopPropagation(); removeCountry(' + idx + ')">X</button>' +
+          '</div>' +
+          '<div class="p-4">' +
+            '<div class="flex items-center gap-2 mb-3">' +
+              '<input type="text" value="' + escAttr(country.flag || '') + '" class="w-12 text-center text-xl border border-gray-300 rounded-lg p-1 focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="updateField(' + idx + ', \'flag\', this.value)" />' +
+              '<input type="text" value="' + escAttr(country.name || '') + '" class="flex-1 font-bold text-gray-800 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="updateField(' + idx + ', \'name\', this.value)" />' +
+            '</div>' +
+            '<input type="text" value="' + escAttr(country.description || '') + '" class="w-full text-sm text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 mb-3 focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" placeholder="Short description" onchange="updateField(' + idx + ', \'description\', this.value)" />' +
+            '<div class="flex flex-wrap gap-2 mb-3">' +
+              buildCategoryCheckbox(idx, cats, 'most-needed', 'Most Needed') +
+              buildCategoryCheckbox(idx, cats, 'emergency', 'Emergency') +
+              buildCategoryCheckbox(idx, cats, 'lowest-price', 'Lowest Price') +
+              buildPopularCheckbox(idx, country.popular === true) +
+            '</div>' +
+            buildGroupSelector(idx, country.priceGroupId) +
+            animalsHtml +
+          '</div>';
+
+        grid.appendChild(card);
+      });
+    }
+
+    function buildCategoryCheckbox(idx, cats, catValue, label) {
+      var checked = cats.includes(catValue) ? ' checked' : '';
+      return '<label class="flex items-center gap-1 text-xs text-gray-600">' +
+        '<input type="checkbox"' + checked + ' class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" onchange="toggleCategory(' + idx + ', \'' + catValue + '\', this.checked)" />' +
+        ' ' + label +
+      '</label>';
+    }
+
+    // "Popular" appears in the search dropdown's "Most Popular" section.
+    function buildPopularCheckbox(idx, isPopular) {
+      var checked = isPopular ? ' checked' : '';
+      return '<label class="flex items-center gap-1 text-xs font-semibold text-[#D97718]" title="Show in the search dropdown\'s Most Popular section">' +
+        '<input type="checkbox"' + checked + ' class="rounded border-gray-300 text-[#D97718] focus:ring-[#D97718]" onchange="togglePopular(' + idx + ', this.checked)" />' +
+        ' ★ Popular' +
+      '</label>';
+    }
+
+    function togglePopular(idx, checked) {
+      countries[idx].popular = checked;
+      markChanged();
+    }
+
+    function buildGroupSelector(idx, currentGroupId) {
+      if (!priceGroups.length) return '';
+      var options = '<option value="">— No group —</option>' +
+        priceGroups.map(function(g) {
+          return '<option value="' + escAttr(g.id) + '"' + (g.id === currentGroupId ? ' selected' : '') + '>' + escHtml(g.name) + '</option>';
+        }).join('');
+      return '<div class="mb-3">' +
+        '<label class="block text-[11px] font-medium text-gray-500 mb-1">Price Group</label>' +
+        '<select class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="assignCountryToGroup(' + idx + ', this.value)">' +
+          options +
+        '</select>' +
+      '</div>';
+    }
+
+    function buildAnimalsTable(animals, countryIdx) {
+      var rows = '';
+      animals.forEach(function(animal, animalIdx) {
+        var isActive = animal.active !== false;
+        var rowOpacity = isActive ? '' : ' opacity-50';
+        rows +=
+          '<tr class="border-t border-gray-100' + rowOpacity + '">' +
+            '<td class="px-2 py-2 text-center">' +
+              '<input type="checkbox"' + (isActive ? ' checked' : '') + ' class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d] cursor-pointer" onchange="updateAnimal(' + countryIdx + ', ' + animalIdx + ', \'active\', this.checked)" title="Show on front-end" />' +
+            '</td>' +
+            '<td class="px-2 py-2">' +
+              '<select class="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="updateAnimal(' + countryIdx + ', ' + animalIdx + ', \'type\', this.value)">' +
+                '<option value="sheep_goat"' + (animal.type === 'sheep_goat' ? ' selected' : '') + '>Sheep/Goat</option>' +
+                '<option value="goat"' + (animal.type === 'goat' ? ' selected' : '') + '>Goat</option>' +
+                '<option value="sheep"' + (animal.type === 'sheep' ? ' selected' : '') + '>Sheep</option>' +
+                '<option value="cow_share"' + (animal.type === 'cow_share' ? ' selected' : '') + '>Cow Share</option>' +
+                '<option value="cow_full"' + (animal.type === 'cow_full' ? ' selected' : '') + '>Full Cow</option>' +
+              '</select>' +
+            '</td>' +
+            '<td class="px-2 py-2">' +
+              '<input type="text" value="' + escAttr(animal.label || '') + '" class="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="updateAnimal(' + countryIdx + ', ' + animalIdx + ', \'label\', this.value)" />' +
+            '</td>' +
+            '<td class="px-2 py-2 text-right">' +
+              '<div class="flex items-center justify-end gap-1">' +
+                '<span class="text-xs text-gray-400">$</span>' +
+                '<input type="number" value="' + (animal.price || 0) + '" class="w-20 text-xs border border-gray-300 rounded px-2 py-1 text-right focus:ring-2 focus:ring-[#01534d] focus:border-transparent outline-none" onchange="updateAnimal(' + countryIdx + ', ' + animalIdx + ', \'price\', parseInt(this.value) || 0)" />' +
+              '</div>' +
+            '</td>' +
+            '<td class="px-1">' +
+              '<button class="text-red-400 hover:text-red-600 text-xs p-1" onclick="removeAnimal(' + countryIdx + ', ' + animalIdx + ')">x</button>' +
+            '</td>' +
+          '</tr>';
+      });
+
+      return '<div class="border border-gray-200 rounded-lg overflow-hidden">' +
+        '<table class="w-full text-sm">' +
+          '<thead class="bg-gray-50">' +
+            '<tr>' +
+              '<th class="text-center px-2 py-2 text-xs text-gray-500 font-medium w-10" title="Show on front-end">On</th>' +
+              '<th class="text-left px-2 py-2 text-xs text-gray-500 font-medium">Animal</th>' +
+              '<th class="text-left px-2 py-2 text-xs text-gray-500 font-medium">Label</th>' +
+              '<th class="text-right px-2 py-2 text-xs text-gray-500 font-medium">Price</th>' +
+              '<th class="w-8"></th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '<button class="w-full text-xs text-[#01534d] hover:bg-gray-50 py-2 border-t border-gray-200 font-medium" onclick="addAnimal(' + countryIdx + ')">+ Add Animal Type</button>' +
+      '</div>';
+    }
+
+    // ---- Data mutations ----
+    function updateField(idx, field, value) {
+      countries[idx][field] = value;
+      markChanged();
+    }
+
+    function toggleCategory(idx, cat, checked) {
+      var cats = countries[idx].category || [];
+      if (checked && !cats.includes(cat)) {
+        cats.push(cat);
+      } else if (!checked) {
+        cats = cats.filter(function(c) { return c !== cat; });
+      }
+      countries[idx].category = cats;
+      markChanged();
+      updateStats();
+    }
+
+    function updateAnimal(countryIdx, animalIdx, field, value) {
+      var animal = countries[countryIdx].animals[animalIdx];
+      animal[field] = value;
+      // Full Cow is always 7× Cow Share. Sync when Cow Share price changes.
+      if (animal.type === 'cow_share' && field === 'price') {
+        syncCowFull(countries[countryIdx], value);
+        applyFilters();
+      }
+      markChanged();
+    }
+
+    function syncCowFull(country, cowSharePrice) {
+      if (!country.animals) country.animals = [];
+      var target = (parseInt(cowSharePrice) || 0) * 7;
+      var cowFull = country.animals.find(function(a) { return a.type === 'cow_full'; });
+      if (cowFull) {
+        cowFull.price = target;
+      } else {
+        country.animals.push({ type: 'cow_full', label: 'Full Cow', price: target, active: false });
+      }
+    }
+
+    function addAnimal(countryIdx) {
+      if (!countries[countryIdx].animals) countries[countryIdx].animals = [];
+      countries[countryIdx].animals.push({ type: 'goat', label: '', price: 0, active: true });
+      markChanged();
+      applyFilters();
+    }
+
+    function removeAnimal(countryIdx, animalIdx) {
+      countries[countryIdx].animals.splice(animalIdx, 1);
+      markChanged();
+      applyFilters();
+    }
+
+    function removeCountry(idx) {
+      if (!confirm('Remove "' + (countries[idx].name || 'this country') + '"? This change is not saved until you click Save All.')) return;
+      countries.splice(idx, 1);
+      markChanged();
+      applyFilters();
+      updateStats();
+    }
+
+    // ---- Add country ----
+    function openAddCountryModal() {
+      document.getElementById('new-flag').value = '';
+      document.getElementById('new-name').value = '';
+      document.getElementById('new-description').value = '';
+      document.getElementById('new-cat-most-needed').checked = false;
+      document.getElementById('new-cat-emergency').checked = false;
+      document.getElementById('new-cat-lowest-price').checked = false;
+      document.getElementById('new-animal-type').value = 'goat';
+      document.getElementById('new-animal-label').value = '';
+      document.getElementById('new-animal-price').value = '';
+      document.getElementById('add-country-modal').classList.remove('hidden');
+    }
+
+    function closeAddCountryModal() {
+      document.getElementById('add-country-modal').classList.add('hidden');
+    }
+
+    function addCountry() {
+      var name = document.getElementById('new-name').value.trim();
+      if (!name) { showToast('Country name is required', 'error'); return; }
+
+      var cats = [];
+      if (document.getElementById('new-cat-most-needed').checked) cats.push('most-needed');
+      if (document.getElementById('new-cat-emergency').checked) cats.push('emergency');
+      if (document.getElementById('new-cat-lowest-price').checked) cats.push('lowest-price');
+
+      var animals = [];
+      var animalLabel = document.getElementById('new-animal-label').value.trim();
+      var animalPrice = parseInt(document.getElementById('new-animal-price').value) || 0;
+      if (animalLabel || animalPrice) {
+        animals.push({
+          type: document.getElementById('new-animal-type').value,
+          label: animalLabel,
+          price: animalPrice,
+        });
+      }
+
+      countries.push({
+        flag: document.getElementById('new-flag').value.trim(),
+        name: name,
+        description: document.getElementById('new-description').value.trim(),
+        category: cats,
+        animals: animals,
+        image: '',
+      });
+
+      markChanged();
+      applyFilters();
+      updateStats();
+      closeAddCountryModal();
+      showToast('Country added (unsaved)', 'info');
+    }
+
+    // ---- Image modal ----
+    function openImageModal(idx) {
+      imageModalTargetIndex = idx;
+      document.getElementById('image-url-input').value = countries[idx].image || '';
+      document.getElementById('image-search-input').value = '';
+      document.getElementById('image-modal').classList.remove('hidden');
+      loadMediaLibrary();
+    }
+
+    function closeImageModal() {
+      document.getElementById('image-modal').classList.add('hidden');
+      imageModalTargetIndex = -1;
+    }
+
+    async function loadMediaLibrary() {
+      var grid = document.getElementById('media-grid');
+      grid.innerHTML = '<p class="col-span-3 text-center text-sm text-gray-400 py-8">Loading media library...</p>';
+
+      try {
+        var res = await fetch('/api/media', { credentials: 'include' });
+        var data = await res.json();
+        mediaImages = data.images || [];
+        renderMediaGrid(mediaImages);
+      } catch (e) {
+        grid.innerHTML = '<p class="col-span-3 text-center text-sm text-red-400 py-8">Failed to load media</p>';
+      }
+    }
+
+    function filterMediaImages() {
+      var q = (document.getElementById('image-search-input').value || '').toLowerCase();
+      var filtered = mediaImages.filter(function(img) {
+        return !q || (img.name || '').toLowerCase().includes(q);
+      });
+      renderMediaGrid(filtered);
+    }
+
+    function renderMediaGrid(images) {
+      var grid = document.getElementById('media-grid');
+      if (!images.length) {
+        grid.innerHTML = '<p class="col-span-3 text-center text-sm text-gray-400 py-8">No images found</p>';
+        return;
+      }
+      grid.innerHTML = '';
+      images.forEach(function(img) {
+        var div = document.createElement('div');
+        div.className = 'cursor-pointer rounded-xl overflow-hidden border-2 border-transparent hover:border-[#01534d] hover:shadow-md transition bg-white';
+        div.onclick = function() { selectMediaImage(img.url || img.path); };
+        var shortName = (img.name || '').replace(/\.(png|jpg|jpeg|webp|gif)$/i, '').substring(0, 25);
+        div.innerHTML = '<div class="aspect-[4/3] bg-gray-100"><img src="' + escAttr(img.url || img.path) + '" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display=\'none\'" /></div>'
+          + '<div class="px-2 py-1.5"><p class="text-[10px] text-gray-500 truncate">' + escHtml(shortName) + '</p></div>';
+        grid.appendChild(div);
+      });
+    }
+
+    function selectMediaImage(url) {
+      if (imageModalTargetIndex >= 0) {
+        countries[imageModalTargetIndex].image = url;
+        markChanged();
+        applyFilters();
+      }
+      closeImageModal();
+    }
+
+    function applyDirectUrl() {
+      var url = document.getElementById('image-url-input').value.trim();
+      if (!url) { showToast('Enter a URL', 'error'); return; }
+      selectMediaImage(url);
+    }
+
+    // File upload handler
+    window.handleFileUpload = async function(input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var progress = document.getElementById('upload-progress');
+      progress.classList.remove('hidden');
+      progress.textContent = 'Uploading ' + file.name + '...';
+
+      try {
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('convertToWebp', 'true');
+
+        var res = await fetch('/api/media', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+        var data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        var url = data.webpUrl || data.url || ('/images/' + (data.filename || file.name));
+        progress.textContent = 'Uploaded! Using ' + url;
+        setTimeout(function() { progress.classList.add('hidden'); }, 2000);
+
+        selectMediaImage(url);
+        // Refresh media grid
+        loadMediaLibrary();
+      } catch (e) {
+        progress.textContent = 'Upload failed: ' + e.message;
+        progress.style.color = '#ef4444';
+        setTimeout(function() { progress.classList.add('hidden'); progress.style.color = ''; }, 3000);
+      }
+      input.value = '';
+    };
+
+    // ---- Price Groups ----
+    function renderGroupPills() {
+      var container = document.getElementById('group-pills');
+      if (!priceGroups.length) {
+        container.innerHTML = '<p class="text-xs text-gray-400 italic">No groups yet. Create one to bulk-manage pricing.</p>';
+        renderGroupEditor();
+        return;
+      }
+      container.innerHTML = priceGroups.map(function(g) {
+        var headlinePrice = g.sheep_goat != null ? '$' + g.sheep_goat : '';
+        var isActive = activeGroupId === g.id;
+        var base = 'group-pill cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ';
+        var style = isActive
+          ? 'bg-[#01534d] text-white border-[#01534d]'
+          : 'bg-white text-gray-700 border-gray-200 hover:border-[#01534d] hover:text-[#01534d]';
+        var count = countries.filter(function(c) { return c.priceGroupId === g.id; }).length;
+        return '<button class="' + base + style + '" onclick="toggleGroupFilter(\'' + g.id + '\')">' +
+          '<span>' + escHtml(g.name) + (headlinePrice ? ': ' + headlinePrice : '') + '</span>' +
+          '<span class="opacity-70">(' + count + ')</span>' +
+        '</button>';
+      }).join('');
+      renderGroupEditor();
+    }
+
+    function renderGroupEditor() {
+      var editor = document.getElementById('group-editor');
+      var group = priceGroups.find(function(g) { return g.id === activeGroupId; });
+      if (!group) { editor.classList.add('hidden'); return; }
+      editor.classList.remove('hidden');
+      document.getElementById('group-editor-name').textContent = group.name;
+      document.getElementById('group-editor-count').textContent =
+        countries.filter(function(c) { return c.priceGroupId === group.id; }).length;
+      document.getElementById('group-edit-sheep-goat').value = group.sheep_goat != null ? group.sheep_goat : '';
+      document.getElementById('group-edit-cow-share').value = group.cow_share != null ? group.cow_share : '';
+      document.getElementById('group-edit-cow-full').value = group.cow_full != null ? group.cow_full : '';
+    }
+
+    function toggleGroupFilter(groupId) {
+      activeGroupId = activeGroupId === groupId ? null : groupId;
+      renderGroupPills();
+      applyFilters();
+    }
+
+    function openGroupModal() {
+      document.getElementById('new-group-name').value = '';
+      document.getElementById('new-group-sheep-goat').value = '';
+      document.getElementById('new-group-cow-share').value = '';
+      document.getElementById('group-modal').classList.remove('hidden');
+    }
+
+    function closeGroupModal() {
+      document.getElementById('group-modal').classList.add('hidden');
+    }
+
+    function createGroup() {
+      var name = document.getElementById('new-group-name').value.trim();
+      if (!name) { showToast('Group name is required', 'error'); return; }
+      var id = 'g' + Date.now();
+      var sheepGoat = parseInt(document.getElementById('new-group-sheep-goat').value);
+      var cowShare = parseInt(document.getElementById('new-group-cow-share').value);
+      // Full Cow is always 7× Cow Share
+      var cowFull = !isNaN(cowShare) ? cowShare * 7 : null;
+      priceGroups.push({
+        id: id,
+        name: name,
+        sheep_goat: isNaN(sheepGoat) ? null : sheepGoat,
+        cow_share: isNaN(cowShare) ? null : cowShare,
+        cow_full: cowFull,
+      });
+      markChanged();
+      closeGroupModal();
+      renderGroupPills();
+      showToast('Group created (unsaved)', 'info');
+    }
+
+    // Ensure a country has one entry per animal type (sheep_goat, cow_share, cow_full)
+    // and set the price for the specified type. Does not disturb existing active flags.
+    function setCountryAnimalPrice(country, type, price) {
+      if (!country.animals) country.animals = [];
+      var entry = country.animals.find(function(a) { return a.type === type; });
+      if (!entry) {
+        var labels = { sheep_goat: 'Sheep/Goat', cow_share: 'Cow Share', cow_full: 'Full Cow' };
+        country.animals.push({ type: type, label: labels[type], price: price, active: true });
+      } else {
+        entry.price = price;
+      }
+    }
+
+    function applyGroupPrices() {
+      var group = priceGroups.find(function(g) { return g.id === activeGroupId; });
+      if (!group) return;
+
+      var sg = document.getElementById('group-edit-sheep-goat').value;
+      var cs = document.getElementById('group-edit-cow-share').value;
+      var cf = document.getElementById('group-edit-cow-full').value;
+      var newSG = sg !== '' ? parseInt(sg) : null;
+      var newCS = cs !== '' ? parseInt(cs) : null;
+      var newCF = cf !== '' ? parseInt(cf) : null;
+
+      // Persist group defaults
+      if (newSG != null) group.sheep_goat = newSG;
+      if (newCS != null) group.cow_share = newCS;
+      if (newCF != null) group.cow_full = newCF;
+
+      // Full Cow is always 7× Cow Share — override any manual value
+      if (newCS != null) newCF = newCS * 7;
+
+      // Apply to every country in this group
+      var changed = 0;
+      countries.forEach(function(c) {
+        if (c.priceGroupId !== group.id) return;
+        if (newSG != null) setCountryAnimalPrice(c, 'sheep_goat', newSG);
+        if (newCS != null) setCountryAnimalPrice(c, 'cow_share', newCS);
+        if (newCF != null) setCountryAnimalPrice(c, 'cow_full', newCF);
+        changed++;
+      });
+
+      // Keep the group's stored Full Cow in sync
+      if (newCS != null) group.cow_full = newCF;
+
+      markChanged();
+      renderGroupPills();
+      applyFilters();
+      showToast('Updated ' + changed + ' countries in ' + group.name, 'success');
+    }
+
+    function renameActiveGroup() {
+      var group = priceGroups.find(function(g) { return g.id === activeGroupId; });
+      if (!group) return;
+      var newName = prompt('Rename group:', group.name);
+      if (!newName || !newName.trim()) return;
+      group.name = newName.trim();
+      markChanged();
+      renderGroupPills();
+    }
+
+    function deleteActiveGroup() {
+      var group = priceGroups.find(function(g) { return g.id === activeGroupId; });
+      if (!group) return;
+      if (!confirm('Delete "' + group.name + '"? Countries in this group will be unassigned. Prices are not reset.')) return;
+      priceGroups = priceGroups.filter(function(g) { return g.id !== activeGroupId; });
+      countries.forEach(function(c) { if (c.priceGroupId === activeGroupId) delete c.priceGroupId; });
+      activeGroupId = null;
+      markChanged();
+      renderGroupPills();
+      applyFilters();
+    }
+
+    function assignCountryToGroup(countryIdx, groupId) {
+      if (!groupId) { delete countries[countryIdx].priceGroupId; }
+      else { countries[countryIdx].priceGroupId = groupId; }
+      markChanged();
+      renderGroupPills();
+    }
+
+    // ---- Save ----
+    async function saveAll() {
+      var btn = document.getElementById('save-btn');
+      var origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
+
+      try {
+        var res = await fetch('/api/campaigns/qurbani-countries', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ countries: countries, priceGroups: priceGroups }),
+        });
+        var data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        hasChanges = false;
+        document.getElementById('unsaved-banner').classList.add('hidden');
+        btn.disabled = true;
+        showToast('Saved ' + data.count + ' countries', 'success');
+      } catch (e) {
+        showToast('Save failed: ' + e.message, 'error');
+      } finally {
+        btn.innerHTML = origHtml;
+        if (!hasChanges) btn.disabled = true;
+      }
+    }
+
+    // ---- Toast ----
+    function showToast(msg, type) {
+      var toast = document.getElementById('toast');
+      var bg = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+      var icon = type === 'success'
+        ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+        : type === 'error'
+        ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+        : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+
+      toast.className = 'fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 text-white text-sm font-medium ' + bg;
+      toast.innerHTML = icon + '<span>' + escHtml(msg) + '</span>';
+      setTimeout(function() { toast.className = 'hidden'; }, 3000);
+    }
+
+    // ---- Helpers ----
+    function escHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function escAttr(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Warn on leave with unsaved changes
+    window.addEventListener('beforeunload', function(e) {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  </script>
+
+  <style is:inline>
+    .filter-pill {
+      background: white;
+      color: #6b7280;
+      border-color: #e5e7eb;
+    }
+    .filter-pill:hover {
+      border-color: #01534d;
+      color: #01534d;
+    }
+    .filter-pill.active {
+      background: #01534d;
+      color: white;
+      border-color: #01534d;
+    }
+  </style>
+</AdminLayout>

@@ -472,6 +472,10 @@ export async function trackDonation(data: {
   utmMedium?: string;
   utmCampaign?: string;
   utmContent?: string;
+  // When true, trackDonation updates contact custom fields/notes/tags but
+  // does NOT create an opportunity. Used for mixed-cart checkouts where
+  // one combined opp is created by the caller after all pieces sync.
+  skipOpportunity?: boolean;
 }) {
   const { locationId } = getGHLCredentials();
   const existing = await findContactByEmail(data.email);
@@ -698,7 +702,10 @@ export async function trackDonation(data: {
     });
 
     // ---- PIPELINE OPPORTUNITY ----
-    await createDonationOpportunity(contactId, data, donationTypeLabel);
+    // Mixed-cart flows pass skipOpportunity=true and create one combined opp themselves.
+    if (!data.skipOpportunity) {
+      await createDonationOpportunity(contactId, data, donationTypeLabel);
+    }
 
     // ---- MAJOR DONOR TASK ----
     if (data.amount >= 5000 || newLifetime >= 10000) {
@@ -790,8 +797,8 @@ export async function trackRefund(data: {
       }),
     });
 
-    // Move opportunity to refunded stage if pipeline supports it
-    await moveOpportunityToRefunded(contactId);
+    // Flip the specific refunded donation's opportunity to "lost"
+    await moveOpportunityToRefunded(contactId, data.stripePaymentId);
 
     // Log
     await logGHLSync({
@@ -892,9 +899,9 @@ function getStageId(stageName: string): string | undefined {
   return firstStage;
 }
 
-async function createDonationOpportunity(
+export async function createDonationOpportunity(
   contactId: string,
-  data: { email: string; name: string; amount: number; campaignName: string; items?: Array<{ name: string; amount: number }> },
+  data: { email: string; name: string; amount: number; campaignName: string; items?: Array<{ name: string; amount: number }>; stripePaymentId?: string },
   donationTypeLabel: string,
 ) {
   try {
@@ -914,39 +921,32 @@ async function createDonationOpportunity(
 
     const itemNames = data.items?.map(i => i.name).join(', ') || data.campaignName;
 
-    // Check for existing open opportunities to avoid duplicate error
-    const existingOppRes = await ghlFetch(
-      `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${contactId}&status=open`
-    );
-    let hasExistingOpp = false;
-    if (existingOppRes.ok) {
-      const existingOppData = await existingOppRes.json();
-      hasExistingOpp = (existingOppData.opportunities?.length || 0) > 0;
-    }
+    // Always create a new opportunity per donation so every order is
+    // visible in the contact's activity. Payment has already cleared by
+    // the time this webhook fires, so mark the opp "won" immediately —
+    // Lead Value reports reflect actual funding totals. Stage moves
+    // (payment received → receipt sent) still track the fulfillment
+    // journey independently of status.
+    const paymentIdSuffix = data.stripePaymentId ? ` — ${data.stripePaymentId}` : '';
+    const oppRes = await ghlFetch('/opportunities/', {
+      method: 'POST',
+      body: JSON.stringify({
+        pipelineId: cachedPipelineId,
+        locationId,
+        name: `$${data.amount} - ${itemNames} (${donationTypeLabel})${paymentIdSuffix}`,
+        pipelineStageId: firstStageId,
+        status: 'won',
+        contactId,
+        monetaryValue: data.amount,
+        source: 'Website Donation',
+      }),
+    }, { action: 'create_opportunity', email: data.email });
 
-    if (hasExistingOpp) {
-      console.log('GHL opportunity already exists for', data.email, '- skipping creation');
+    if (!oppRes.ok) {
+      const errBody = await oppRes.text();
+      console.error('GHL opportunity creation failed:', oppRes.status, errBody);
     } else {
-      const oppRes = await ghlFetch('/opportunities/', {
-        method: 'POST',
-        body: JSON.stringify({
-          pipelineId: cachedPipelineId,
-          locationId,
-          name: `$${data.amount} - ${itemNames} (${donationTypeLabel})`,
-          pipelineStageId: firstStageId,
-          status: 'open',
-          contactId,
-          monetaryValue: data.amount,
-          source: 'Website Donation',
-        }),
-      }, { action: 'create_opportunity', email: data.email });
-
-      if (!oppRes.ok) {
-        const errBody = await oppRes.text();
-        console.error('GHL opportunity creation failed:', oppRes.status, errBody);
-      } else {
-        console.log('GHL opportunity created for', data.email);
-      }
+      console.log('GHL opportunity created for', data.email, data.stripePaymentId || '');
     }
   } catch (err) {
     console.error('GHL opportunity creation error:', err);
@@ -954,10 +954,17 @@ async function createDonationOpportunity(
 }
 
 /**
- * Move a donor's latest opportunity to a specific pipeline stage
- * Called by the fulfillment processor and webhook handlers
+ * Move a donor's opportunity to a specific pipeline stage.
+ * If stripePaymentId is provided, the opp whose name embeds that ID is
+ * targeted (so concurrent donations don't cross-contaminate). Otherwise
+ * falls back to the most recent open opp (for subscription lifecycle
+ * events that aren't tied to a specific payment intent).
  */
-export async function moveDonationThroughPipeline(email: string, targetStage: string) {
+export async function moveDonationThroughPipeline(
+  email: string,
+  targetStage: string,
+  stripePaymentId?: string,
+) {
   const existing = await findContactByEmail(email);
   if (!existing?.id) return;
 
@@ -971,28 +978,45 @@ export async function moveDonationThroughPipeline(email: string, targetStage: st
     return;
   }
 
-  // Find open opportunities for this contact
+  // Find opportunities for this contact in this pipeline (any status —
+  // donation opps are created as "won" immediately per GHL best practice,
+  // so we can't restrict to open).
   const searchRes = await ghlFetch(
-    `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${existing.id}&status=open`
+    `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${existing.id}`
   );
 
   if (!searchRes.ok) return;
   const searchData = await searchRes.json();
-  const opportunities = searchData.opportunities || [];
+  const opportunities: Array<{ id: string; name?: string; status?: string }> = searchData.opportunities || [];
 
-  // Move the most recent opportunity to the target stage
-  if (opportunities.length > 0) {
-    const latestOpp = opportunities[0];
-    await ghlFetch(`/opportunities/${latestOpp.id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        pipelineStageId: stageId,
-        pipelineId: cachedPipelineId,
-      }),
-    }, { action: `pipeline_move_${targetStage}`, email });
+  if (opportunities.length === 0) return;
 
-    console.log(`GHL opportunity moved to "${targetStage}" for ${email}`);
+  // Only move the opp whose name contains the stripePaymentId — each donation
+  // has its own opp, so we must never move a "latest" or unrelated opp. If no
+  // payment id is given (subscription lifecycle events not tied to a specific
+  // payment), do nothing — the invoice.payment_succeeded webhook will have
+  // already moved the correct opp with its payment id.
+  if (!stripePaymentId) {
+    console.log(`GHL: moveDonationThroughPipeline skipped for ${email} — no stripePaymentId (stage "${targetStage}")`);
+    return;
   }
+
+  const targetOpp = opportunities.find(o => o.name?.includes(stripePaymentId));
+
+  if (!targetOpp) {
+    console.log(`GHL: No matching opportunity for ${email} (payment ${stripePaymentId}) — skipping stage move to "${targetStage}"`);
+    return;
+  }
+
+  await ghlFetch(`/opportunities/${targetOpp.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      pipelineStageId: stageId,
+      pipelineId: cachedPipelineId,
+    }),
+  }, { action: `pipeline_move_${targetStage}`, email });
+
+  console.log(`GHL opportunity moved to "${targetStage}" for ${email}${stripePaymentId ? ` (${stripePaymentId})` : ''}`);
 }
 
 /**
@@ -1012,25 +1036,31 @@ export async function markFulfilled(email: string) {
   }, { action: 'mark_fulfilled', email });
 }
 
-async function moveOpportunityToRefunded(contactId: string) {
+async function moveOpportunityToRefunded(contactId: string, stripePaymentId?: string) {
   try {
     await loadPipelineConfig();
     if (!cachedPipelineId) return;
 
-    // Look for a "refunded" stage — if it doesn't exist, we just close the opportunity
     const { locationId } = getGHLCredentials();
 
-    // Find open opportunities for this contact
+    // Find opportunities for this contact (open or won — donation opps
+    // are created as "won" per GHL best practice, and refunds flip them to "lost").
     const searchRes = await ghlFetch(
-      `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${contactId}&status=open`
+      `/opportunities/search?location_id=${locationId}&pipeline_id=${cachedPipelineId}&contact_id=${contactId}`
     );
 
     if (!searchRes.ok) return;
     const searchData = await searchRes.json();
-    const opportunities = searchData.opportunities || [];
+    const allOpps: Array<{ id: string; name?: string; status?: string }> = searchData.opportunities || [];
+    const activeOpps = allOpps.filter(o => o.status === 'open' || o.status === 'won');
 
-    for (const opp of opportunities) {
-      // Close the opportunity as lost (refunded)
+    // If a payment id is known, only refund the matching opp. Otherwise
+    // fall back to the most recent active opp (legacy behavior).
+    const targets = stripePaymentId
+      ? activeOpps.filter(o => o.name?.includes(stripePaymentId))
+      : activeOpps.slice(0, 1);
+
+    for (const opp of targets) {
       await ghlFetch(`/opportunities/${opp.id}`, {
         method: 'PUT',
         body: JSON.stringify({

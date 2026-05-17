@@ -8,6 +8,7 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import { supabaseAdmin } from '../../lib/supabase';
+import { siteConfig } from '../../config/site';
 
 export const prerender = false;
 
@@ -342,9 +343,11 @@ const impactStats = [
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-800 mb-2" style="font-family: 'Signika', sans-serif;">Tax Deductible</h3>
+          {siteConfig.showUS501c3 && (
           <p class="text-gray-600 text-sm">
-            As a registered 501(c)(3) nonprofit, all donations are tax-deductible. EIN: 38-4109716
+            As a registered 501(c)(3) nonprofit, all donations are tax-deductible. EIN: 38-4109146
           </p>
+          )}
         </div>
       </div>
     </div>

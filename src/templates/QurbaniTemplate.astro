@@ -16,6 +16,7 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import { siteConfig } from '../config/site';
 
 interface Props {
   campaign: {
@@ -65,8 +66,8 @@ interface Country {
   featured?: boolean;
 }
 
-// Qurbani Countries with pricing and categories - Real pricing from qurbani.com
-const countries: Country[] = [
+// Qurbani Countries - read from DB (template_config.countries) with hardcoded fallback
+const countries: Country[] = ((campaign as any).template_config?.countries as Country[]) || [
   // MOST NEEDED - Emergency & Crisis Areas
   {
     id: 'palestine-gaza',
@@ -76,7 +77,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 425 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 400 },
+      { type: 'cow_share', label: 'Cow Share', price: 400 },
       { type: 'cow_full', label: 'Full Cow', price: 2800 },
     ],
     description: 'Support families in besieged Gaza',
@@ -91,7 +92,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 325 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 300 },
+      { type: 'cow_share', label: 'Cow Share', price: 300 },
       { type: 'cow_full', label: 'Full Cow', price: 2100 },
     ],
     description: 'Feed families in Al-Quds',
@@ -106,7 +107,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 155 },
       { type: 'sheep', label: 'Sheep', price: 155 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 130 },
+      { type: 'cow_share', label: 'Cow Share', price: 130 },
       { type: 'cow_full', label: 'Full Cow', price: 910 },
     ],
     description: 'Relief for famine-affected regions',
@@ -120,7 +121,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 225 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_share', label: 'Cow Share', price: 200 },
       { type: 'cow_full', label: 'Full Cow', price: 1400 },
     ],
     description: 'Aid for displaced Syrian families',
@@ -135,7 +136,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 200 },
       { type: 'sheep', label: 'Sheep', price: 200 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 175 },
+      { type: 'cow_share', label: 'Cow Share', price: 175 },
       { type: 'cow_full', label: 'Full Cow', price: 1225 },
     ],
     description: 'Help families facing economic hardship'
@@ -148,7 +149,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 275 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_share', label: 'Cow Share', price: 250 },
       { type: 'cow_full', label: 'Full Cow', price: 1750 },
     ],
     description: 'Rebuild communities in conflict zones',
@@ -162,7 +163,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 225 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_share', label: 'Cow Share', price: 200 },
       { type: 'cow_full', label: 'Full Cow', price: 1400 },
     ],
     description: 'Support displaced Iraqi families',
@@ -177,7 +178,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 145 },
       { type: 'sheep', label: 'Sheep', price: 145 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 120 },
+      { type: 'cow_share', label: 'Cow Share', price: 120 },
       { type: 'cow_full', label: 'Full Cow', price: 840 },
     ],
     description: 'Support conflict-affected communities',
@@ -192,7 +193,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
       { type: 'sheep', label: 'Sheep', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Reach families in Kashmir region',
@@ -207,7 +208,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 75 },
       { type: 'sheep', label: 'Sheep', price: 75 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 50 },
+      { type: 'cow_share', label: 'Cow Share', price: 50 },
       { type: 'cow_full', label: 'Full Cow', price: 350 },
     ],
     description: 'Support families in Indian Kashmir',
@@ -222,7 +223,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Rohingya refugee communities',
@@ -236,7 +237,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 275 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_share', label: 'Cow Share', price: 250 },
       { type: 'cow_full', label: 'Full Cow', price: 1750 },
     ],
     description: 'Syrian refugees in Jordan camps',
@@ -250,7 +251,7 @@ const countries: Country[] = [
     category: ['most-needed', 'emergency'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 225 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_share', label: 'Cow Share', price: 200 },
       { type: 'cow_full', label: 'Full Cow', price: 1400 },
     ],
     description: 'Refugee families in Lebanon',
@@ -264,7 +265,7 @@ const countries: Country[] = [
     category: ['most-needed'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 300 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_share', label: 'Cow Share', price: 250 },
       { type: 'cow_full', label: 'Full Cow', price: 1750 },
     ],
     description: 'Support Bosnian Muslim communities'
@@ -280,7 +281,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 75 },
       { type: 'sheep', label: 'Sheep', price: 75 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 50 },
+      { type: 'cow_share', label: 'Cow Share', price: 50 },
       { type: 'cow_full', label: 'Full Cow', price: 350 },
     ],
     description: 'Serve underprivileged communities',
@@ -294,7 +295,7 @@ const countries: Country[] = [
     category: ['lowest-price'],
     animals: [
       { type: 'goat', label: 'Goat', price: 100 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 75 },
+      { type: 'cow_share', label: 'Cow Share', price: 75 },
       { type: 'cow_full', label: 'Full Cow', price: 525 },
     ],
     description: 'Feed families in East Africa',
@@ -309,7 +310,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 85 },
       { type: 'sheep', label: 'Sheep', price: 85 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 80 },
+      { type: 'cow_share', label: 'Cow Share', price: 80 },
       { type: 'cow_full', label: 'Full Cow', price: 560 },
     ],
     description: 'East African communities',
@@ -324,7 +325,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
       { type: 'sheep', label: 'Sheep', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Feed families in rural areas',
@@ -338,7 +339,7 @@ const countries: Country[] = [
     category: ['lowest-price', 'emergency'],
     animals: [
       { type: 'goat', label: 'Goat', price: 110 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 85 },
+      { type: 'cow_share', label: 'Cow Share', price: 85 },
       { type: 'cow_full', label: 'Full Cow', price: 595 },
     ],
     description: 'Rohingya refugees in Malaysia',
@@ -356,7 +357,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 140 },
       { type: 'sheep', label: 'Sheep', price: 140 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 115 },
+      { type: 'cow_share', label: 'Cow Share', price: 115 },
       { type: 'cow_full', label: 'Full Cow', price: 805 },
     ],
     description: 'Reach communities across Pakistan'
@@ -370,7 +371,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 150 },
       { type: 'sheep', label: 'Sheep', price: 150 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 125 },
+      { type: 'cow_share', label: 'Cow Share', price: 125 },
       { type: 'cow_full', label: 'Full Cow', price: 875 },
     ],
     description: 'Aid for drought-affected areas',
@@ -384,7 +385,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 300 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 275 },
+      { type: 'cow_share', label: 'Cow Share', price: 275 },
       { type: 'cow_full', label: 'Full Cow', price: 1925 },
     ],
     description: 'Local Jordanian communities'
@@ -397,7 +398,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 250 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 225 },
+      { type: 'cow_share', label: 'Cow Share', price: 225 },
       { type: 'cow_full', label: 'Full Cow', price: 1575 },
     ],
     description: 'Lebanese families in need'
@@ -410,7 +411,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 275 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_share', label: 'Cow Share', price: 250 },
       { type: 'cow_full', label: 'Full Cow', price: 1750 },
     ],
     description: 'Syrian refugee support in Turkey'
@@ -423,7 +424,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'goat', label: 'Goat', price: 225 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_share', label: 'Cow Share', price: 200 },
       { type: 'cow_full', label: 'Full Cow', price: 1400 },
     ],
     description: 'Island communities across Indonesia'
@@ -437,7 +438,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
       { type: 'sheep', label: 'Sheep', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Sahel region support'
@@ -451,7 +452,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
       { type: 'sheep', label: 'Sheep', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Food security programs'
@@ -465,7 +466,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 115 },
       { type: 'sheep', label: 'Sheep', price: 115 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 90 },
+      { type: 'cow_share', label: 'Cow Share', price: 90 },
       { type: 'cow_full', label: 'Full Cow', price: 630 },
     ],
     description: 'Drought relief efforts'
@@ -479,7 +480,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 135 },
       { type: 'sheep', label: 'Sheep', price: 135 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 110 },
+      { type: 'cow_share', label: 'Cow Share', price: 110 },
       { type: 'cow_full', label: 'Full Cow', price: 770 },
     ],
     description: 'West African families'
@@ -493,7 +494,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 135 },
       { type: 'sheep', label: 'Sheep', price: 135 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 110 },
+      { type: 'cow_share', label: 'Cow Share', price: 110 },
       { type: 'cow_full', label: 'Full Cow', price: 770 },
     ],
     description: 'Coastal community support'
@@ -520,7 +521,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 120 },
       { type: 'sheep', label: 'Sheep', price: 120 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 95 },
+      { type: 'cow_share', label: 'Cow Share', price: 95 },
       { type: 'cow_full', label: 'Full Cow', price: 665 },
     ],
     description: 'Central African support'
@@ -534,7 +535,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
       { type: 'sheep', label: 'Sheep', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Cameroonian families'
@@ -548,7 +549,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
       { type: 'sheep', label: 'Sheep/Ram', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Nigerian Muslim communities'
@@ -562,7 +563,7 @@ const countries: Country[] = [
     animals: [
       { type: 'goat', label: 'Goat', price: 110 },
       { type: 'sheep', label: 'Sheep', price: 110 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 85 },
+      { type: 'cow_share', label: 'Cow Share', price: 85 },
       { type: 'cow_full', label: 'Full Cow', price: 595 },
     ],
     description: 'Tanzanian communities'
@@ -575,7 +576,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'goat', label: 'Goat', price: 110 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 85 },
+      { type: 'cow_share', label: 'Cow Share', price: 85 },
       { type: 'cow_full', label: 'Full Cow', price: 595 },
     ],
     description: 'Ugandan Muslim families'
@@ -588,7 +589,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 225 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_share', label: 'Cow Share', price: 200 },
       { type: 'cow_full', label: 'Full Cow', price: 1400 },
     ],
     description: 'Egyptian families in need'
@@ -601,7 +602,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 250 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 225 },
+      { type: 'cow_share', label: 'Cow Share', price: 225 },
       { type: 'cow_full', label: 'Full Cow', price: 1575 },
     ],
     description: 'Moroccan communities'
@@ -614,7 +615,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 225 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 200 },
+      { type: 'cow_share', label: 'Cow Share', price: 200 },
       { type: 'cow_full', label: 'Full Cow', price: 1400 },
     ],
     description: 'Tunisian families'
@@ -627,7 +628,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 275 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 250 },
+      { type: 'cow_share', label: 'Cow Share', price: 250 },
       { type: 'cow_full', label: 'Full Cow', price: 1750 },
     ],
     description: 'Albanian Muslim communities'
@@ -640,7 +641,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'sheep', label: 'Sheep', price: 300 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 275 },
+      { type: 'cow_share', label: 'Cow Share', price: 275 },
       { type: 'cow_full', label: 'Full Cow', price: 1925 },
     ],
     description: 'Kosovar families'
@@ -653,7 +654,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'goat', label: 'Goat', price: 175 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 150 },
+      { type: 'cow_share', label: 'Cow Share', price: 150 },
       { type: 'cow_full', label: 'Full Cow', price: 1050 },
     ],
     description: 'Mindanao Muslim communities'
@@ -666,7 +667,7 @@ const countries: Country[] = [
     category: ['all'],
     animals: [
       { type: 'goat', label: 'Goat', price: 125 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 100 },
+      { type: 'cow_share', label: 'Cow Share', price: 100 },
       { type: 'cow_full', label: 'Full Cow', price: 700 },
     ],
     description: 'Sri Lankan Muslim families'
@@ -679,7 +680,7 @@ const countries: Country[] = [
     category: ['all', 'lowest-price'],
     animals: [
       { type: 'goat', label: 'Goat', price: 100 },
-      { type: 'cow_share', label: 'Cow Share (1/7)', price: 75 },
+      { type: 'cow_share', label: 'Cow Share', price: 75 },
       { type: 'cow_full', label: 'Full Cow', price: 525 },
     ],
     description: 'Mountain community support',
@@ -700,10 +701,22 @@ countries.forEach(country => {
   }
 });
 
+// Filter animals by active status (from admin toggle)
+countries.forEach(country => {
+  if (country.animals) {
+    country.animals = country.animals.filter((a: any) => a.active !== false);
+  }
+});
+
+// (Image URL normalization removed — it was causing slow first-paint on iOS
+// Safari because the normalized webp URLs trigger fresh Unsplash CDN encodes.
+// Falls back to the URLs as stored in the DB / Unsplash defaults.)
+
 // Statistics
+const countryCount = countries.length;
 const stats = [
   { number: '2M+', label: 'People Fed Last Year' },
-  { number: '70+', label: 'Countries Served' },
+  { number: `${countryCount}+`, label: 'Countries Served' },
   { number: '100%', label: 'Shariah Compliant' },
   { number: '27+', label: 'Years of Service' },
 ];
@@ -711,37 +724,41 @@ const stats = [
 // FAQ items
 const faqs = [
   {
-    question: 'What is Qurbani?',
-    answer: 'Qurbani (also known as Udhiyah) is the sacrifice of an animal during Eid al-Adha to commemorate Prophet Ibrahim\'s (AS) willingness to sacrifice his son for Allah. It is obligatory (Wajib) for every Muslim who meets the Nisab threshold.',
+    question: 'What is Qurbani / Udhiya?',
+    answer: 'Qurbani (also known as Udhiya or Udhiyah) is the sacred sacrifice of an animal during Eid al-Adha to commemorate Prophet Ibrahim\'s (AS) willingness to sacrifice his son for Allah. The terms Qurbani and Udhiya refer to the same act of worship — Qurbani is more commonly used in South Asia while Udhiya is the Arabic term. It is obligatory (Wajib) for every Muslim who meets the Nisab threshold.',
   },
   {
-    question: 'When is Qurbani performed?',
-    answer: 'Qurbani must be performed during the days of Eid al-Adha: from after the Eid prayer on the 10th of Dhul Hijjah until before sunset on the 13th of Dhul Hijjah.',
+    question: 'Is Qurbani the same as Udhiya?',
+    answer: 'Yes — Qurbani and Udhiya (also spelled Udhiyah) are the same ritual sacrifice performed during Eid al-Adha. "Udhiya" comes from the Arabic word meaning "sacrifice at the time of forenoon," while "Qurbani" comes from the word "Qurban" meaning "nearness to Allah." Both refer to the obligatory sacrifice of a sheep, goat, cow, or camel on the days of Eid al-Adha.',
   },
   {
-    question: 'Who is Qurbani obligatory for?',
-    answer: 'Qurbani is obligatory for every sane Muslim who has reached puberty and possesses wealth above the Nisab threshold (equivalent to 87.48g of gold or 612.36g of silver).',
+    question: 'When is Qurbani / Udhiya performed?',
+    answer: 'Qurbani (Udhiya) must be performed during the days of Eid al-Adha: from after the Eid prayer on the 10th of Dhul Hijjah until before sunset on the 13th of Dhul Hijjah. These are known as the Days of Tashreeq.',
   },
   {
-    question: 'Can I give Qurbani on behalf of someone else?',
-    answer: 'Yes, you can give Qurbani on behalf of deceased relatives, the Prophet Muhammad (PBUH), or as a gift for living family members. Simply enter their name in the "On Behalf Of" field.',
+    question: 'Who is Qurbani / Udhiya obligatory for?',
+    answer: 'Qurbani (Udhiya) is obligatory for every sane Muslim adult who possesses wealth above the Nisab threshold (equivalent to 87.48g of gold or 612.36g of silver) on the days of Eid al-Adha.',
   },
   {
-    question: 'What is the difference between a goat/sheep and cow share?',
-    answer: 'A goat or sheep counts as one Qurbani and is sacrificed for one person. A cow can be divided into 7 shares, so each share counts as one Qurbani. A whole cow equals 7 Qurbanis.',
+    question: 'Can I give Qurbani / Udhiya on behalf of someone else?',
+    answer: 'Yes, you can give Qurbani or Udhiya on behalf of deceased relatives, the Prophet Muhammad (PBUH), or as a gift for living family members. Simply enter their name in the "On Behalf Of" field at checkout.',
   },
   {
-    question: 'How is the meat distributed?',
-    answer: 'We distribute fresh Qurbani meat to families in need within 24-48 hours of sacrifice. The meat is divided and given to those who rarely have access to protein, bringing joy to their Eid celebrations.',
+    question: 'What is the difference between a goat/sheep and cow share Qurbani (Udhiya)?',
+    answer: 'A goat or sheep counts as one Qurbani (Udhiya) and is sacrificed for one person. A cow can be divided into 7 shares, so each share counts as one Qurbani. A whole cow equals 7 Qurbanis / Udhiyas.',
   },
   {
-    question: 'Will I receive confirmation of my Qurbani?',
-    answer: 'Yes! You will receive an email confirmation with details of your Qurbani, including the country of sacrifice and a certificate of completion after Eid.',
+    question: 'How is the Qurbani / Udhiya meat distributed?',
+    answer: 'We distribute fresh Qurbani (Udhiya) meat to families in need within 24-48 hours of sacrifice. The meat is divided and given to those who rarely have access to protein, bringing joy to their Eid al-Adha celebrations.',
   },
   {
-    question: 'Is my Qurbani tax-deductible?',
-    answer: 'Yes, Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. All donations are tax-deductible to the extent allowed by law.',
+    question: 'Will I receive confirmation of my Qurbani / Udhiya?',
+    answer: 'Yes! You will receive an email confirmation with details of your Qurbani (Udhiya), including the country of sacrifice and a certificate of completion after Eid al-Adha.',
   },
+  ...(siteConfig.showUS501c3 ? [{
+    question: 'Is my Qurbani / Udhiya donation tax-deductible?',
+    answer: 'Yes, Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. All Qurbani and Udhiya donations are tax-deductible to the extent allowed by law.',
+  }] : []),
 ];
 
 // Testimonials
@@ -767,84 +784,614 @@ const testimonials = [
 ];
 ---
 
-<Layout title={heroOverrides?.metaTitle || `${campaign.title} - Global Qurbani Service | Qurbani Foundation`} description={heroOverrides?.metaDescription}>
+<Layout
+  title={heroOverrides?.metaTitle || `Qurbani 2026 — Give Qurbani / Udhiya Online in ${countryCount}+ Countries | Qurbani Foundation`}
+  description={heroOverrides?.metaDescription || `Give Qurbani (Udhiya) online for Eid al-Adha 2026. 100% Shariah-compliant Qurbani sacrifice delivered to families in need across ${countryCount}+ countries. Tax-deductible, certificate included, fresh meat distributed within 24 hours. Qurbani from $50.`}
+>
+
   <Navbar />
 
   <!-- Hero Section -->
   <section class="relative min-h-[85vh] flex items-center overflow-hidden">
     <!-- Background Image -->
     <div class="absolute inset-0">
-      <img src="/images/qurbani-hero.webp" alt="Qurbani Foundation" class="w-full h-full object-cover" />
+      <img src="/images/qurbani-foundation-qurbani-service.webp" alt="Qurbani Foundation — global Qurbani and Udhiyah service feeding families in need on Eid al-Adha" width="1536" height="1024" fetchpriority="high" decoding="async" class="w-full h-full object-cover" />
       <div class="absolute inset-0 bg-[#01534d]/80"></div>
     </div>
 
 
     <div class="container mx-auto px-4 pt-28 pb-16 relative z-10">
-      <div class="max-w-4xl mx-auto text-center">
-        <!-- Arabic Text -->
-        <p class="text-3xl md:text-4xl text-[#D97718] mb-4 font-arabic" style="font-family: 'Amiri', serif;">
+      <!-- MOBILE-ONLY Arabic Ayat (above donation box) -->
+      <div class="text-center max-w-3xl mx-auto mb-6 lg:hidden">
+        <p class="text-3xl text-[#D97718] mb-2 font-arabic" style="font-family: 'Amiri', serif;">
           وَالْبُدْنَ جَعَلْنَاهَا لَكُم مِّن شَعَائِرِ اللَّهِ
         </p>
-        <p class="text-white/70 text-sm mb-8 italic">"And the camels and cattle We have made for you as among the symbols of Allah" - Quran 22:36</p>
+        <p class="text-white/70 text-sm italic">"And the camels and cattle We have made for you as among the symbols of Allah" - Quran 22:36</p>
+      </div>
 
-        <!-- Main Headline -->
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
-          {heroOverrides?.headlineLine1 || 'Give Your Qurbani'}<br/>
-          <span class="text-[#D97718]">{heroOverrides?.headlineLine2 || "Where It's Needed Most"}</span>
-        </h1>
+      <div class="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center max-w-7xl mx-auto">
+        <!-- LEFT (desktop) / SECOND (mobile): Hero copy + CTA -->
+        <div class="lg:col-span-7 text-center order-2 lg:order-1">
+          <!-- Desktop-only Arabic Ayat (centered within the left column) -->
+          <div class="hidden lg:block mb-6">
+            <p class="text-3xl md:text-4xl text-[#D97718] mb-3 font-arabic" style="font-family: 'Amiri', serif;">
+              وَالْبُدْنَ جَعَلْنَاهَا لَكُم مِّن شَعَائِرِ اللَّهِ
+            </p>
+            <p class="text-white/70 text-sm italic">"And the camels and cattle We have made for you as among the symbols of Allah" - Quran 22:36</p>
+          </div>
 
-        <!-- Subheadline -->
-        <p class="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed max-w-2xl mx-auto">
-          {heroOverrides?.subheadline || (
-            <>Fulfill your obligation with 100% Shariah-compliant Qurbani.<br class="hidden md:block"/>Fresh meat delivered to families in 70+ countries within 24 hours.</>
-          )}
-        </p>
+          <!-- Main Headline -->
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight" style="font-family: 'Signika', sans-serif;">
+            {heroOverrides?.headlineLine1 || 'Give Your Qurbani'}<br/>
+            <span class="text-[#D97718]">{heroOverrides?.headlineLine2 || "Where It's Needed Most"}</span>
+          </h1>
 
-        <!-- Key Points -->
-        <div class="flex flex-wrap justify-center gap-4 mb-10">
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            <span class="text-white text-sm">Shariah Compliant</span>
+          <!-- Subheadline -->
+          <p class="text-xl md:text-2xl text-white/90 mb-10 leading-relaxed">
+            {heroOverrides?.subheadline || (
+              <>Fulfill your obligation with 100% Shariah-compliant Qurbani.<br class="hidden md:block"/>Fresh meat delivered to families in {countryCount}+ countries within 24 hours.</>
+            )}
+          </p>
+
+          <!-- Key Points -->
+          <div class="flex flex-wrap justify-center gap-3 mb-10">
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <span class="text-white text-sm">Shariah Compliant</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <span class="text-white text-sm">{countryCount}+ Countries</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <span class="text-white text-sm">From $50</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <span class="text-white text-sm">Tax Deductible</span>
+            </div>
           </div>
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+
+          <!-- CTA Button: orange, points down to country grid -->
+          <a href="#select-qurbani" class="inline-flex items-center gap-3 bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-xl">
+            <span>{heroOverrides?.ctaText || 'Browse Qurbani Countries'}</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
             </svg>
-            <span class="text-white text-sm">70+ Countries</span>
-          </div>
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            <span class="text-white text-sm">From $50</span>
-          </div>
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-            <svg class="w-5 h-5 text-white/80" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            <span class="text-white text-sm">Tax Deductible</span>
+          </a>
+
+          <!-- Trust Badge -->
+          <div class="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span class="text-white/90 text-sm font-medium">{heroOverrides?.trustBadgeText || '2 Million+ People Fed Globally'}</span>
           </div>
         </div>
 
-        <!-- CTA Button -->
-        <a href="#select-qurbani" class="inline-flex items-center gap-3 bg-[#D97718] hover:bg-[#c56a15] text-white font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-xl">
-          <span>{heroOverrides?.ctaText || 'Give Your Qurbani Now'}</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-          </svg>
-        </a>
+        <!-- RIGHT (desktop) / FIRST (mobile): Quick Donation Box -->
+        <div class="lg:col-span-5 order-1 lg:order-2">
+          <div id="hero-quick-donate" class="rounded-2xl overflow-hidden mx-auto max-w-md lg:max-w-none" style="box-shadow: 0 24px 80px rgba(0,0,0,0.35);" data-quick-donate data-fund-type="qurbani" data-campaign-slug="qurbani" data-item-name="Qurbani">
+            <!-- Header -->
+            <div class="px-6 pt-6 pb-5 text-center text-white relative overflow-hidden" style="background: linear-gradient(160deg, #17401c 0%, #0f2d12 100%);">
+              <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-white"></div>
+              <h2 class="text-2xl font-extrabold tracking-tight" style="font-family: 'Signika', sans-serif;">Fulfill Your Qurbani</h2>
+              <p class="text-[13px] text-white/80 mt-1">Fresh meat distributed to families in need</p>
+            </div>
+            <!-- Body -->
+            <div class="bg-white px-5 py-5">
+              <!-- Two preset buttons (Where Most Needed = default; Most Impact = Palestine Gaza price) -->
+              {(() => {
+                const palestine = countries.find((c: any) => c.id === 'palestine-gaza');
+                const palestineAnimals = (palestine?.animals || []).filter((a: any) => a.active !== false);
+                const palestineHeadline = palestineAnimals.find((a: any) => a.type === 'cow_share')
+                  || palestineAnimals.find((a: any) => a.type === 'sheep_goat' || a.type === 'sheep' || a.type === 'goat')
+                  || palestineAnimals[0];
+                const impactPrice = palestineHeadline?.price || 400;
+                return (
+                  <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button type="button" class="hqd-quick border-2 border-[#17401c] bg-[#17401c]/5 rounded-xl py-4 text-center cursor-pointer transition-all" data-quick-price="100" data-quick-name="Where Most Needed" data-quick-id="where-most-needed">
+                      <div class="text-[11px] sm:text-[12px] font-bold text-gray-600 uppercase whitespace-nowrap">Where Most Needed</div>
+                      <div class="text-2xl font-extrabold text-[#17401c] mt-1" style="font-family: 'Signika', sans-serif;">$100</div>
+                    </button>
+                    <button type="button" class="hqd-quick border-2 border-gray-200 rounded-xl pt-5 pb-4 text-center cursor-pointer transition-all hover:border-[#17401c] relative" data-quick-price={impactPrice} data-quick-name="Palestine Gaza" data-quick-id="palestine-gaza" data-quick-flag={palestine?.flag || '🇵🇸'} data-quick-image={palestine?.image || ''}>
+                      <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-[#D97718] text-white uppercase tracking-wider shadow whitespace-nowrap">Most Impact</span>
+                      <div class="text-[11px] sm:text-[12px] font-bold text-gray-600 uppercase whitespace-nowrap">🇵🇸 Palestine Gaza</div>
+                      <div class="text-2xl font-extrabold text-[#17401c] mt-1" style="font-family: 'Signika', sans-serif;">${impactPrice}</div>
+                    </button>
+                  </div>
+                );
+              })()}
+              <!-- Divider -->
+              <div class="flex items-center gap-3 mb-3">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="text-[11px] font-bold text-gray-400 uppercase">or choose a country</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
 
-        <!-- Trust Badge - positioned below CTA for conversion -->
-        <div class="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/20">
-          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-          <span class="text-white/90 text-sm font-medium">{heroOverrides?.trustBadgeText || '2 Million+ People Fed Globally'}</span>
+              <!-- Searchable country combobox -->
+              <div class="mb-4 relative" id="hqd-country-wrap">
+                <div class="relative">
+                  <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                  <input
+                    type="text"
+                    id="hqd-country-input"
+                    placeholder="Select a country"
+                    autocomplete="off"
+                    class="w-full pl-10 pr-10 py-3.5 border-2 border-gray-200 rounded-xl text-base bg-white font-semibold text-gray-800 placeholder-gray-500 hover:border-[#17401c] focus:border-[#17401c] focus:outline-none focus:ring-2 focus:ring-[#17401c]/20 cursor-pointer"
+                  />
+                  <button type="button" id="hqd-country-clear" aria-label="Clear" class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 transition">
+                    <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+                <div id="hqd-country-list" class="hidden absolute left-0 right-0 top-[calc(100%+6px)] z-30 bg-white rounded-xl shadow-2xl border border-gray-100 max-h-[320px] overflow-y-auto">
+                  {(() => {
+                    // Build a normalized country list with headline (Cow Share or fallback)
+                    const enriched = countries.map((c: any) => {
+                      const animals = (c.animals || []).filter((a: any) => a.active !== false);
+                      const headline = animals.find((a: any) => a.type === 'cow_share')
+                        || animals.find((a: any) => a.type === 'sheep_goat' || a.type === 'sheep' || a.type === 'goat')
+                        || animals[0];
+                      return headline ? { c, price: headline.price } : null;
+                    }).filter(Boolean) as { c: any; price: number }[];
+
+                    // Most Popular = admin-flagged (show all of them).
+                    // Sort: popularOrder field if set (lower = higher position), then by price desc.
+                    // Fallback to top 6 by price if admin hasn't flagged any.
+                    const flagged = enriched.filter(({ c }) => (c as any).popular === true);
+                    const sortByPriceDesc = (a: any, b: any) => (b.price || 0) - (a.price || 0);
+                    const sortByPopularOrder = (a: any, b: any) => {
+                      const ao = (a.c as any).popularOrder;
+                      const bo = (b.c as any).popularOrder;
+                      if (ao != null && bo != null) return ao - bo;
+                      if (ao != null) return -1;
+                      if (bo != null) return 1;
+                      return sortByPriceDesc(a, b);
+                    };
+                    const popular = flagged.length > 0
+                      ? flagged.slice().sort(sortByPopularOrder)
+                      : enriched.slice().sort(sortByPriceDesc).slice(0, 6);
+                    const sorted = enriched.slice().sort((a, b) => a.c.name.localeCompare(b.c.name));
+
+                    const renderRow = (c: any, price: number, isPopular: boolean) => (
+                      <button type="button" class="hqd-country-opt w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition cursor-pointer text-left border-b border-gray-50 last:border-b-0" data-id={c.id} data-name={c.name} data-flag={c.flag} data-image={c.image} data-price={price}>
+                        <span class="flex items-center gap-2 min-w-0">
+                          {c.flag && <span class="text-lg flex-shrink-0">{c.flag}</span>}
+                          <span class="font-semibold text-gray-800 truncate">{c.name}</span>
+                          {isPopular && <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#D97718]/10 text-[#D97718] flex-shrink-0">POPULAR</span>}
+                        </span>
+                        <span class="text-sm font-bold text-[#17401c] flex-shrink-0">From ${price}</span>
+                      </button>
+                    );
+
+                    return (
+                      <>
+                        {popular.length > 0 && (
+                          <>
+                            <div class="px-4 pt-3 pb-2 flex items-center gap-2">
+                              <span class="text-[11px] font-bold tracking-wider text-[#D97718] uppercase">★ Most Popular</span>
+                              <span class="text-[10px] text-gray-400">— Donor favorites</span>
+                            </div>
+                            <div class="bg-gradient-to-b from-[#D97718]/5 to-transparent">
+                              {popular.map(({ c, price }) => renderRow(c, price, true))}
+                            </div>
+                            <div class="border-t border-gray-100 my-1"></div>
+                          </>
+                        )}
+                        <div class="px-4 pt-2 pb-2 text-[11px] font-bold tracking-wider text-gray-400 uppercase">All Countries</div>
+                        {sorted.map(({ c, price }) => renderRow(c, price, false))}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <!-- Quantity:
+                   Mobile: label on its own line; presets left | divider center | +/- right.
+                   Desktop: everything on one line — Quantity label · presets · divider · +/-. -->
+              <div class="mb-4">
+                <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+                  <label for="hqd-qty" class="text-sm font-semibold text-gray-700 mb-2 md:mb-0 md:flex-shrink-0">Quantity</label>
+                  <div class="flex items-center gap-1.5 justify-between md:gap-3 flex-1">
+                    <!-- Preset chips -->
+                    <div class="flex items-center gap-1.5">
+                      <button type="button" class="hqd-qty-preset h-9 min-w-[36px] px-2 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:border-[#17401c] hover:text-[#17401c] active:scale-95 cursor-pointer transition" data-qty="1">1</button>
+                      <button type="button" class="hqd-qty-preset h-9 min-w-[36px] px-2 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:border-[#17401c] hover:text-[#17401c] active:scale-95 cursor-pointer transition" data-qty="3">3</button>
+                      <button type="button" class="hqd-qty-preset h-9 min-w-[36px] px-2 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:border-[#17401c] hover:text-[#17401c] active:scale-95 cursor-pointer transition" data-qty="5">5</button>
+                      <button type="button" class="hqd-qty-preset h-9 min-w-[36px] px-2 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:border-[#17401c] hover:text-[#17401c] active:scale-95 cursor-pointer transition" data-qty="10">10</button>
+                    </div>
+                    <!-- Divider -->
+                    <span class="w-px h-7 bg-gray-200 flex-shrink-0"></span>
+                    <!-- − / input / + -->
+                    <div class="flex items-center gap-1.5">
+                      <button type="button" id="hqd-minus" aria-label="Decrease quantity" class="w-9 h-9 border-2 border-gray-200 rounded-full flex items-center justify-center text-xl font-bold text-gray-700 hover:border-[#17401c] hover:bg-[#17401c]/5 active:scale-95 cursor-pointer transition">−</button>
+                      <input
+                        type="number"
+                        id="hqd-qty"
+                        min="1"
+                        max="999"
+                        value="1"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        aria-label="Quantity"
+                        class="w-12 h-9 text-center text-base font-bold text-gray-900 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#17401c] focus:ring-2 focus:ring-[#17401c]/20"
+                        style="font-family: 'Signika', sans-serif;"
+                      />
+                      <button type="button" id="hqd-plus" aria-label="Increase quantity" class="w-9 h-9 border-2 border-gray-200 rounded-full flex items-center justify-center text-xl font-bold text-gray-700 hover:border-[#17401c] hover:bg-[#17401c]/5 active:scale-95 cursor-pointer transition">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Total (bigger emphasis) -->
+              <div class="bg-gradient-to-r from-[#17401c]/5 to-[#17401c]/0 border-2 border-[#17401c]/10 rounded-xl px-4 py-3.5 mb-4 flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-600">Total:</span>
+                <span id="hqd-total" class="text-3xl font-extrabold text-[#17401c]" style="font-family: 'Signika', sans-serif;">$100</span>
+              </div>
+
+              <!-- Submit (large, accessible) -->
+              <button type="button" id="hqd-submit" class="hqd-submit-btn w-full text-white font-extrabold py-4 rounded-xl transition-all text-base tracking-wide cursor-pointer border-none shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2" style="font-family:Signika,sans-serif">
+                <span class="pointer-events-none">ADD TO DONATION</span>
+                <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+              </button>
+
+              <!-- Trust badges (real country count) -->
+              <div class="grid grid-cols-3 gap-1 mt-4 text-center">
+                <div class="text-[11px] text-gray-600 flex items-center justify-center gap-1"><span class="text-green-500">✓</span> {countries.length}+ Countries</div>
+                <div class="text-[11px] text-gray-600 flex items-center justify-center gap-1"><span class="text-green-500">✓</span> Tax Deductible</div>
+                <div class="text-[11px] text-gray-600 flex items-center justify-center gap-1"><span class="text-green-500">✓</span> Fresh Meat</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
   </section>
+
+  <!-- Reusable bullet-proof tap handler — detects real taps (not scrolls) on iOS/Android,
+       falls back to click for desktop / older browsers. Prevents double-fire. -->
+  <script is:inline>
+    window.bindTapHandler = window.bindTapHandler || function(el, handler) {
+      if (!el) return;
+      var startX = 0, startY = 0, startT = 0, moved = false;
+      var locked = false;
+      function fire(e) {
+        if (locked) return;
+        locked = true;
+        setTimeout(function() { locked = false; }, 500);
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+        handler(e);
+      }
+      el.addEventListener('touchstart', function(e) {
+        var t = e.touches && e.touches[0];
+        if (!t) return;
+        startX = t.clientX; startY = t.clientY; startT = Date.now(); moved = false;
+      }, { passive: true });
+      el.addEventListener('touchmove', function(e) {
+        var t = e.touches && e.touches[0];
+        if (!t) return;
+        // 10px deadzone — anything more is a scroll, cancel the tap
+        if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+      }, { passive: true });
+      el.addEventListener('touchend', function(e) {
+        if (moved) return;
+        if (Date.now() - startT > 500) return; // too slow → not a tap
+        fire(e);
+      }, { passive: false });
+      // Desktop / fallback for browsers that didn't fire touchend (e.g., synthetic clicks)
+      el.addEventListener('click', fire);
+    };
+  </script>
+
+  <!-- Hero Quick-Donate logic -->
+  <script is:inline>
+    (function() {
+      var card = document.getElementById('hero-quick-donate');
+      if (!card) return;
+
+      var quickBtns = card.querySelectorAll('.hqd-quick');
+      var qtyEl = document.getElementById('hqd-qty');
+      var totalEl = document.getElementById('hqd-total');
+      var submitBtn = document.getElementById('hqd-submit');
+
+      // Custom country combobox elements
+      var countryWrap = document.getElementById('hqd-country-wrap');
+      var countryInput = document.getElementById('hqd-country-input');
+      var countryClear = document.getElementById('hqd-country-clear');
+      var countryList = document.getElementById('hqd-country-list');
+
+      var qty = 1;
+      var selectedPrice = 100;
+      var selectedName = 'Where Most Needed';
+      var selectedId = 'where-most-needed';
+      var selectedFlag = '';
+      var selectedImage = '';
+      var hasCountrySelected = false;
+
+      function updateTotal() {
+        var t = selectedPrice * qty;
+        if (totalEl) totalEl.textContent = '$' + t.toLocaleString();
+      }
+
+      function deselectQuickBtns() {
+        quickBtns.forEach(function(b) {
+          b.classList.remove('border-[#17401c]', 'bg-[#17401c]/5');
+          b.classList.add('border-gray-200');
+        });
+      }
+
+      function resetCountryInput() {
+        if (countryInput) countryInput.value = '';
+        if (countryClear) countryClear.classList.add('hidden');
+        hasCountrySelected = false;
+        // Show all options (un-filter)
+        filterCountryList('');
+      }
+
+      // Quick presets
+      quickBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          selectedPrice = parseInt(btn.dataset.quickPrice || '75');
+          selectedName = btn.dataset.quickName || 'Where Most Needed';
+          selectedId = btn.dataset.quickId || 'where-most-needed';
+          selectedFlag = btn.dataset.quickFlag || '';
+          selectedImage = btn.dataset.quickImage || '';
+          resetCountryInput();
+          deselectQuickBtns();
+          btn.classList.add('border-[#17401c]', 'bg-[#17401c]/5');
+          btn.classList.remove('border-gray-200');
+          updateTotal();
+        });
+      });
+
+      // Open / close
+      function closeCountryList() {
+        if (countryList) countryList.classList.add('hidden');
+      }
+      function openCountryList() {
+        if (countryList) countryList.classList.remove('hidden');
+      }
+
+      // Filter rows by query; hides section headers when their section has no matches.
+      function filterCountryList(query) {
+        if (!countryList) return;
+        var q = (query || '').trim().toLowerCase();
+        var opts = countryList.querySelectorAll('.hqd-country-opt');
+        opts.forEach(function(opt) {
+          var name = (opt.dataset.name || '').toLowerCase();
+          var match = !q || name.indexOf(q) !== -1;
+          opt.style.display = match ? '' : 'none';
+        });
+        // Hide section headers when all rows below them are hidden, until next header or end.
+        var children = Array.from(countryList.children);
+        children.forEach(function(node, i) {
+          var isHeader = node.classList && (
+            node.classList.contains('hqd-section-header') ||
+            (node.querySelector && node.querySelector('.hqd-section-marker'))
+          );
+        });
+      }
+
+      // On mobile, route the hero country input to the existing fullscreen search overlay
+      // (keyboard-aware) so the keyboard doesn't crush the dropdown.
+      var isMobileMatch = window.matchMedia('(max-width: 767px)').matches;
+      function applyCountryToHero(country) {
+        if (!country) return;
+        var price = parseInt(country.price || '0');
+        if (price <= 0) return;
+        selectedPrice = price;
+        selectedName = country.name || '';
+        selectedId = country.id || '';
+        selectedFlag = country.flag || '';
+        selectedImage = country.image || '';
+        hasCountrySelected = true;
+        if (countryInput) {
+          countryInput.value = (selectedFlag ? selectedFlag + ' ' : '') + selectedName + ' — $' + price;
+        }
+        if (countryClear) countryClear.classList.remove('hidden');
+        deselectQuickBtns();
+        closeCountryList();
+        updateTotal();
+      }
+      // Expose for the mobile fullscreen overlay handler
+      window.__heroQuickDonateApply = applyCountryToHero;
+
+      if (countryInput) {
+        // Mobile: detect a real TAP (touchstart + touchend close in time/space, no scroll).
+        // We must not open on touchstart alone or on accidental thumb rest while scrolling.
+        var touchStartY = 0, touchStartX = 0, touchStartT = 0, touchMoved = false;
+        countryInput.addEventListener('touchstart', function(e) {
+          if (!window.matchMedia('(max-width: 767px)').matches) return;
+          var t = e.touches && e.touches[0];
+          if (!t) return;
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
+          touchStartT = Date.now();
+          touchMoved = false;
+        }, { passive: true });
+        countryInput.addEventListener('touchmove', function(e) {
+          if (!window.matchMedia('(max-width: 767px)').matches) return;
+          var t = e.touches && e.touches[0];
+          if (!t) return;
+          // If the finger moved more than 8px in any direction, treat as scroll, not tap
+          if (Math.abs(t.clientX - touchStartX) > 8 || Math.abs(t.clientY - touchStartY) > 8) {
+            touchMoved = true;
+          }
+        }, { passive: true });
+        countryInput.addEventListener('touchend', function(e) {
+          if (!window.matchMedia('(max-width: 767px)').matches) return;
+          var dt = Date.now() - touchStartT;
+          // Only open if it was a quick (<500ms) stationary tap
+          if (touchMoved || dt > 500) return;
+          e.preventDefault();
+          countryInput.blur();
+          window.__heroOriginatedSearch = true;
+          var trigger = document.getElementById('mobile-search-trigger');
+          if (trigger) trigger.click();
+        }, { passive: false });
+
+        // Block focus/keyboard if a tap somehow gets through to the input on mobile
+        countryInput.addEventListener('mousedown', function(e) {
+          if (window.matchMedia('(max-width: 767px)').matches) {
+            e.preventDefault();
+            countryInput.blur();
+          }
+        });
+
+        // Desktop only: open dropdown on focus / click
+        countryInput.addEventListener('focus', function() {
+          if (window.matchMedia('(max-width: 767px)').matches) return;
+          if (hasCountrySelected) {
+            countryInput.value = '';
+            hasCountrySelected = false;
+            if (countryClear) countryClear.classList.add('hidden');
+            filterCountryList('');
+          }
+          openCountryList();
+        });
+        countryInput.addEventListener('click', function() {
+          if (window.matchMedia('(max-width: 767px)').matches) return;
+          openCountryList();
+        });
+
+        // Filter as user types
+        countryInput.addEventListener('input', function() {
+          var v = countryInput.value;
+          if (countryClear) {
+            if (v.length > 0) countryClear.classList.remove('hidden');
+            else countryClear.classList.add('hidden');
+          }
+          openCountryList();
+          filterCountryList(v);
+        });
+
+        // Pressing Enter selects the first visible option
+        countryInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            var firstVisible = Array.from(countryList.querySelectorAll('.hqd-country-opt'))
+              .find(function(o) { return o.style.display !== 'none'; });
+            if (firstVisible) firstVisible.click();
+          } else if (e.key === 'Escape') {
+            countryInput.blur();
+            closeCountryList();
+          }
+        });
+      }
+
+      if (countryClear) {
+        countryClear.addEventListener('click', function(e) {
+          e.stopPropagation();
+          resetCountryInput();
+          if (countryInput) countryInput.focus();
+        });
+      }
+
+      // Click outside closes
+      document.addEventListener('click', function(e) {
+        if (countryWrap && !countryWrap.contains(e.target)) closeCountryList();
+      });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeCountryList(); });
+
+      // Country option selection
+      if (countryList) {
+        countryList.querySelectorAll('.hqd-country-opt').forEach(function(opt) {
+          opt.addEventListener('click', function() {
+            var price = parseInt(opt.dataset.price || '0');
+            if (price <= 0) return;
+            selectedPrice = price;
+            selectedName = opt.dataset.name || '';
+            selectedId = opt.dataset.id || '';
+            selectedFlag = opt.dataset.flag || '';
+            selectedImage = opt.dataset.image || '';
+            hasCountrySelected = true;
+            if (countryInput) {
+              countryInput.value = (selectedFlag ? selectedFlag + ' ' : '') + selectedName + ' — $' + price;
+              countryInput.blur();
+            }
+            if (countryClear) countryClear.classList.remove('hidden');
+            deselectQuickBtns();
+            closeCountryList();
+            updateTotal();
+          });
+        });
+      }
+
+      // Qty handling — input field, +/- buttons, and preset chips
+      var minus = document.getElementById('hqd-minus');
+      var plus = document.getElementById('hqd-plus');
+      var presets = card.querySelectorAll('.hqd-qty-preset');
+
+      function setQty(n, fromInput) {
+        n = parseInt(n);
+        if (isNaN(n) || n < 1) n = 1;
+        if (n > 999) n = 999;
+        qty = n;
+        if (qtyEl && !fromInput) qtyEl.value = n;
+        updatePresetHighlight();
+        updateTotal();
+      }
+
+      function updatePresetHighlight() {
+        presets.forEach(function(btn) {
+          if (parseInt(btn.dataset.qty) === qty) {
+            btn.classList.add('border-[#17401c]', 'bg-[#17401c]/5', 'text-[#17401c]');
+            btn.classList.remove('border-gray-200', 'text-gray-600');
+          } else {
+            btn.classList.remove('border-[#17401c]', 'bg-[#17401c]/5', 'text-[#17401c]');
+            btn.classList.add('border-gray-200', 'text-gray-600');
+          }
+        });
+      }
+
+      if (qtyEl) {
+        // Manual entry — accept any number on blur or Enter
+        qtyEl.addEventListener('input', function() { setQty(qtyEl.value, true); });
+        qtyEl.addEventListener('blur', function() {
+          if (!qtyEl.value || parseInt(qtyEl.value) < 1) qtyEl.value = '1';
+          setQty(qtyEl.value, true);
+        });
+        // Select all on focus so older users can easily replace the value
+        qtyEl.addEventListener('focus', function() { qtyEl.select(); });
+      }
+      if (minus) minus.addEventListener('click', function() { setQty(qty - 1); });
+      if (plus) plus.addEventListener('click', function() { setQty(qty + 1); });
+      presets.forEach(function(btn) {
+        btn.addEventListener('click', function() { setQty(btn.dataset.qty); });
+      });
+      updatePresetHighlight(); // initial state
+
+      // Submit -> add to cart, open checkout. Uses real tap detection
+      // (touchstart/move/end + click fallback) so scrolling never triggers it.
+      if (submitBtn) {
+        bindTapHandler(submitBtn, function() {
+          if (typeof window.addToCart !== 'function') return;
+          var qtyText = qty > 1 ? ' x' + qty : '';
+          var nameLabel = selectedFlag ? (selectedFlag + ' ' + selectedName) : selectedName;
+          window.addToCart({
+            id: 'qurbani-hero-' + selectedId + '-' + qty + '-' + Date.now(),
+            name: 'Qurbani ' + selectedName + qtyText,
+            amount: selectedPrice,
+            quantity: qty,
+            type: 'single',
+            campaign: 'qurbani',
+            label: nameLabel,
+            image: selectedImage,
+            metadata: {
+              country: selectedName,
+              countryCode: selectedId,
+              service: 'qurbani',
+              sourceLocation: 'hero-quick-donate'
+            }
+          });
+        });
+      }
+    })();
+  </script>
 
   <!-- Stats Bar -->
   <section class="relative z-20 -mt-6 px-4">
@@ -855,7 +1402,7 @@ const testimonials = [
           <p class="text-gray-500 text-sm font-medium">People Fed Last Year</p>
         </div>
         <div class="p-6 text-center border-b md:border-b-0 md:border-r border-gray-100">
-          <p class="text-4xl md:text-5xl font-bold text-[#01534d] mb-1">70+</p>
+          <p class="text-4xl md:text-5xl font-bold text-[#01534d] mb-1">{countryCount}+</p>
           <p class="text-gray-500 text-sm font-medium">Countries Served</p>
         </div>
         <div class="p-6 text-center border-r border-gray-100">
@@ -882,18 +1429,104 @@ const testimonials = [
         </p>
       </div>
 
-      <!-- Search Box -->
+      <!-- Search Box (Desktop: inline + dropdown, Mobile: triggers fullscreen overlay) -->
       <div class="max-w-md mx-auto mb-8">
-        <div class="relative">
+        <div class="relative" id="desktop-search-wrap">
+          <!-- Desktop search: prominent, centered, white pill with shadow -->
           <input
             type="text"
             id="country-search"
-            placeholder="Search country..."
-            class="w-full px-5 py-3 border border-gray-200 rounded-full focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-gray-700 placeholder-gray-400 pr-12"
+            placeholder="Search Qurbani Country"
+            autocomplete="off"
+            class="hidden md:block w-full pl-14 pr-14 py-3.5 bg-white border border-gray-200 rounded-full shadow-md text-center text-base font-semibold text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
           />
-          <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
+          <!-- Desktop search icon (left side, clickable to open dropdown) -->
+          <button
+            type="button"
+            id="country-search-icon"
+            aria-label="Search countries"
+            class="hidden md:flex absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 items-center justify-center text-gray-500 hover:text-[#01534d] cursor-pointer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </button>
+          <!-- Desktop clear button (only visible while typing) -->
+          <button
+            type="button"
+            id="country-search-clear"
+            class="hidden absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-500 transition"
+            aria-label="Clear search"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+
+          <!-- Desktop: Instant Search Dropdown -->
+          <div
+            id="desktop-search-dropdown"
+            class="hidden md:block absolute left-0 right-0 top-[calc(100%+8px)] z-40 bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-[420px] overflow-y-auto"
+            style="display: none;"
+          >
+            <div id="desktop-search-results"></div>
+            <div id="desktop-search-empty" class="hidden px-5 py-8 text-center text-gray-400 text-sm">
+              No countries match. Try a different name.
+            </div>
+          </div>
+
+          <!-- Mobile: Fake search button that opens fullscreen — matches the sticky search style exactly -->
+          <button
+            type="button"
+            id="mobile-search-trigger"
+            class="md:hidden w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-white border border-gray-200 rounded-full shadow-md text-gray-700 active:bg-gray-50"
+          >
+            <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <span class="text-base font-semibold">Search Qurbani Country</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- FULLSCREEN SEARCH OVERLAY (Mobile only) -->
+      <div id="mobile-search-overlay" class="fixed inset-0 z-[9999] bg-white hidden flex-col" style="display: none;">
+        <!-- Top bar: input + cancel -->
+        <div class="flex items-center gap-3 px-4 pt-3 pb-3 border-b border-gray-100 bg-white safe-area-top">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              id="mobile-country-search"
+              placeholder="Search Qurbani Country"
+              autocomplete="off"
+              class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#01534d] focus:border-transparent text-gray-800 placeholder-gray-400 text-base"
+            />
+            <!-- Clear X button -->
+            <button
+              type="button"
+              id="mobile-search-clear"
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 hidden"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <button
+            type="button"
+            id="mobile-search-cancel"
+            class="text-[#01534d] font-semibold text-sm px-2 py-2 flex-shrink-0"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <!-- Results list (scrollable, above keyboard) -->
+        <div id="mobile-search-results" class="flex-1 overflow-y-auto px-4 py-2 pb-20">
+          <!-- Populated by JS -->
         </div>
       </div>
 
@@ -920,28 +1553,35 @@ const testimonials = [
             class="country-card bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1"
             data-categories={country.category.join(',')}
             data-country={country.id}
+            data-country-name={country.name}
             data-min-price={Math.min(...country.animals.map((a: any) => a.price))}
+            data-popular={(country as any).popular === true ? 'true' : 'false'}
           >
             <!-- Country Header -->
             <div class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200">
               <img
                 src={country.image}
-                alt={country.name}
+                alt={`Qurbani in ${country.name}`}
+                width="400"
+                height="240"
+                loading="lazy"
+                decoding="async"
+                fetchpriority="low"
                 class="w-full h-full object-cover"
                 onerror={`this.onerror=null;this.src='https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80'`}
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 
-              {/* Badges */}
+              {/* Badges driven by category */}
               <div class="absolute top-3 left-3 flex flex-wrap gap-2">
-                {country.urgency && (
+                {country.category?.includes('emergency') && (
                   <div class="bg-white/95 backdrop-blur-sm text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
-                    Urgent need
+                    Urgent
                   </div>
                 )}
-                {country.lowestPrice && (
+                {country.category?.includes('most-needed') && (
                   <div class="bg-white/95 backdrop-blur-sm text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
-                    Best value
+                    Needed
                   </div>
                 )}
               </div>
@@ -949,7 +1589,7 @@ const testimonials = [
               {/* Country Name & Flag */}
               <div class="absolute bottom-3 left-4 flex items-center gap-2">
                 <span class="text-3xl">{country.flag}</span>
-                <h3 class="text-xl font-bold text-white">{country.name}</h3>
+                <h3 class="text-xl font-bold text-white">{country.name} Qurbani</h3>
               </div>
             </div>
 
@@ -957,36 +1597,42 @@ const testimonials = [
             <div class="p-5">
               <p class="text-gray-600 text-sm mb-4">{country.description}</p>
 
-              <!-- Animal Type Selection - 2 Options Only -->
+              <!-- Animal Type Selection - driven by active animals from admin -->
               {(() => {
-                const sheepGoat = country.animals.find(a => a.type === 'sheep' || a.type === 'goat');
-                const cowShare = country.animals.find(a => a.type === 'cow_share');
+                const typeDefaults = {
+                  sheep_goat: 'Sheep/Goat',
+                  sheep: 'Sheep',
+                  goat: 'Goat',
+                  cow_share: 'Cow Share',
+                  cow_full: 'Full Cow',
+                };
+                const pills = country.animals
+                  .filter((a) => a.active !== false)
+                  .map((a) => ({
+                    type: a.type,
+                    price: a.price,
+                    label: a.label || typeDefaults[a.type] || a.type,
+                  }));
+
                 return (
                   <div class="grid grid-cols-2 gap-2 mb-4">
-                    {sheepGoat && (
-                      <button
-                        type="button"
-                        class="animal-pill px-3 py-3 text-sm rounded-lg border-2 transition-all border-[#01534d] bg-[#01534d]/5 text-[#01534d]"
-                        data-type={sheepGoat.type}
-                        data-price={sheepGoat.price}
-                        data-label="Sheep/Goat"
-                      >
-                        <div class="font-semibold">Sheep/Goat</div>
-                        <div class="text-lg font-bold">${sheepGoat.price}</div>
-                      </button>
-                    )}
-                    {cowShare && (
-                      <button
-                        type="button"
-                        class="animal-pill px-3 py-3 text-sm rounded-lg border-2 transition-all border-gray-200 text-gray-600 hover:border-gray-300"
-                        data-type="cow_share"
-                        data-price={cowShare.price}
-                        data-label="Cow Share"
-                      >
-                        <div class="font-semibold">Cow Share</div>
-                        <div class="text-lg font-bold">${cowShare.price}</div>
-                      </button>
-                    )}
+                    {pills.map((pill, i) => {
+                      const isFirst = i === 0;
+                      const selectedClasses = 'border-[#01534d] bg-[#01534d]/5 text-[#01534d]';
+                      const unselectedClasses = 'border-gray-200 text-gray-600 hover:border-gray-300';
+                      return (
+                        <button
+                          type="button"
+                          class={'animal-pill cursor-pointer px-3 py-3 text-sm rounded-lg border-2 transition-all ' + (isFirst ? selectedClasses : unselectedClasses)}
+                          data-type={pill.type}
+                          data-price={pill.price}
+                          data-label={pill.label}
+                        >
+                          <div class="font-semibold">{pill.label}</div>
+                          <div class="text-lg font-bold">${pill.price}</div>
+                        </button>
+                      );
+                    })}
                   </div>
                 );
               })()}
@@ -996,20 +1642,20 @@ const testimonials = [
                 <div class="flex items-center gap-3">
                   <span class="text-sm text-gray-600">Qty:</span>
                   <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                    <button type="button" class="qty-minus px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 transition">
+                    <button type="button" class="qty-minus cursor-pointer px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 transition">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
                       </svg>
                     </button>
                     <input type="number" class="qty-input w-8 text-center py-1.5 border-0 focus:ring-0 text-gray-700 font-medium text-sm" value="1" min="1" max="100" />
-                    <button type="button" class="qty-plus px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 transition">
+                    <button type="button" class="qty-plus cursor-pointer px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 transition">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                       </svg>
                     </button>
                   </div>
                 </div>
-                <button type="button" class="behalf-toggle text-sm text-gray-500 hover:text-[#01534d] flex items-center gap-1">
+                <button type="button" class="behalf-toggle cursor-pointer text-sm text-gray-500 hover:text-[#01534d] flex items-center gap-1">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                   </svg>
@@ -1024,7 +1670,7 @@ const testimonials = [
                     class="behalf-input flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#01534d] text-[16px] sm:text-sm"
                     placeholder="e.g. Muhammad"
                   />
-                  <button type="button" class="behalf-clear p-1.5 text-gray-400 hover:text-gray-600 flex-shrink-0">
+                  <button type="button" class="behalf-clear cursor-pointer p-1.5 text-gray-400 hover:text-gray-600 flex-shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -1034,9 +1680,9 @@ const testimonials = [
 
               <!-- Price & Add Button -->
               <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                <p class="text-xl font-bold text-gray-900">$<span class="country-price">{country.animals.find(a => a.type === 'sheep' || a.type === 'goat')?.price || country.animals[0].price}</span></p>
+                <p class="text-xl font-bold text-gray-900">$<span class="country-price">{(country.animals.find((a: any) => a.active !== false) || country.animals[0]).price}</span></p>
                 <button
-                  class="add-qurbani-btn bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
+                  class="add-qurbani-btn cursor-pointer bg-[#d97706] hover:bg-[#b45309] text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 flex items-center gap-2"
                   data-country={country.id}
                   data-country-name={country.name}
                   data-flag={country.flag}
@@ -1045,7 +1691,7 @@ const testimonials = [
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                   </svg>
-                  Add
+                  Add to Donation
                 </button>
               </div>
             </div>
@@ -1072,8 +1718,20 @@ const testimonials = [
           <span>View All Countries</span>
         </button>
       </div>
+
+      <!-- Back to Search link below the grid (always visible after the cards) -->
+      <div class="text-center mt-10">
+        <button id="back-to-search-inline" type="button" class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-[#01534d] hover:text-[#013d39] hover:bg-[#01534d]/5 rounded-full transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
+          </svg>
+          <span>Back to Search</span>
+        </button>
+      </div>
+
     </div>
   </section>
+
 
   <!-- How It Works -->
   <section class="py-20 bg-white">
@@ -1091,7 +1749,7 @@ const testimonials = [
               <span class="text-xl font-bold text-gray-700">1</span>
             </div>
             <h3 class="font-bold text-gray-800 mb-2">Select Country</h3>
-            <p class="text-gray-500 text-sm">Choose from 70+ countries where your Qurbani is needed most</p>
+            <p class="text-gray-500 text-sm">Choose from {countryCount}+ countries where your Qurbani is needed most</p>
           </div>
           <div class="text-center">
             <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -1154,13 +1812,74 @@ const testimonials = [
     </div>
   </section>
 
+  <!-- FAQPage JSON-LD for Google rich results (Qurbani / Udhiya SEO) -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': faqs.map((f) => ({
+      '@type': 'Question',
+      'name': f.question,
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': f.answer,
+      },
+    })),
+  })} />
+
+  <!-- Service schema for Qurbani / Udhiya (boosts ranking + ads quality score) -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    'serviceType': 'Qurbani / Udhiya Sacrifice Service',
+    'name': 'Qurbani (Udhiya) Online — Eid al-Adha 2026',
+    'description': `100% Shariah-compliant Qurbani / Udhiya sacrifice delivered to families in need across ${countryCount}+ countries. Tax-deductible. Certificate of completion provided. Fresh meat distributed within 24 hours.`,
+    'provider': {
+      '@type': 'NGO',
+      '@id': 'https://www.qurbani.com/#organization',
+      'name': 'Qurbani Foundation USA',
+      'alternateName': ['Qurbani Foundation', 'Udhiya Foundation'],
+      'url': 'https://www.qurbani.com',
+      'logo': 'https://www.qurbani.com/images/logo.png',
+      'foundingDate': '1998',
+      ...(siteConfig.showUS501c3 ? { 'taxID': '501(c)(3)' } : {}),
+      'sameAs': [
+        'https://www.facebook.com/qurbanifoundation',
+        'https://www.instagram.com/qurbanifoundation',
+      ],
+      'address': {
+        '@type': 'PostalAddress',
+        'addressCountry': 'US',
+      },
+      'contactPoint': {
+        '@type': 'ContactPoint',
+        'telephone': '+1-800-900-0027',
+        'contactType': 'customer service',
+        'email': 'info@qurbani.com',
+        'availableLanguage': ['English', 'Arabic', 'Urdu'],
+      },
+    },
+    'areaServed': countries.map((c: any) => c.name),
+    'offers': {
+      '@type': 'AggregateOffer',
+      'lowPrice': '50',
+      'highPrice': '2800',
+      'priceCurrency': 'USD',
+      'offerCount': countryCount,
+      'availability': 'https://schema.org/InStock',
+    },
+    'audience': {
+      '@type': 'Audience',
+      'name': 'Muslim Donors Worldwide',
+    },
+  })} />
+
   <!-- FAQ Section -->
   <section class="py-20 bg-white">
     <div class="container mx-auto px-4">
       <div class="max-w-3xl mx-auto">
         <div class="text-center mb-12">
           <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style="font-family: 'Signika', sans-serif;">
-            Frequently Asked Questions
+            Qurbani / Udhiya — Frequently Asked Questions
           </h2>
         </div>
 
@@ -1215,9 +1934,28 @@ const testimonials = [
     </div>
   </section>
 
-  <!-- Sticky Mobile CTA -->
+
+  <!-- Sticky Mobile Search (top) — Airbnb-style, appears only inside the country grid -->
+  <div
+    id="qurbani-sticky-search-top"
+    class="fixed top-0 left-0 right-0 z-50 md:hidden px-4 pt-3 pb-3 bg-white shadow-md border-b border-gray-100 -translate-y-full transition-transform duration-300"
+    style="will-change: transform;"
+  >
+    <button
+      id="qurbani-sticky-search-btn"
+      type="button"
+      class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-full shadow-sm text-gray-700 active:bg-gray-50 cursor-pointer"
+    >
+      <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span class="text-base font-semibold">Search Qurbani Country</span>
+    </button>
+  </div>
+
+  <!-- Sticky Mobile CTA (bottom) — always shows "Qurbani from $50" -->
   <div id="qurbani-sticky-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 md:hidden shadow-lg transition-transform duration-300">
-    <button id="qurbani-sticky-btn" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl cursor-pointer">
+    <button id="qurbani-sticky-cta" type="button" class="flex items-center justify-center gap-2 w-full bg-[#01534d] text-white font-bold py-4 rounded-xl cursor-pointer">
       <span>Qurbani</span>
       <span class="text-[#D97718]">from $50</span>
     </button>
@@ -1273,8 +2011,8 @@ const testimonials = [
           } else {
             // Alphabetical by country name
             cards.sort(function(a, b) {
-              var nameA = (a.querySelector('h3')?.textContent || '').trim();
-              var nameB = (b.querySelector('h3')?.textContent || '').trim();
+              var nameA = (a.dataset.countryName || '').trim();
+              var nameB = (b.dataset.countryName || '').trim();
               return nameA.localeCompare(nameB);
             });
           }
@@ -1283,43 +2021,401 @@ const testimonials = [
       });
     });
 
-    // Country Search
-    const searchInput = document.getElementById('country-search');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
+    // Desktop Country Search — Airbnb-style instant dropdown
+    (function() {
+      const searchInput = document.getElementById('country-search');
+      const searchIconBtn = document.getElementById('country-search-icon');
+      const searchWrap = document.getElementById('desktop-search-wrap');
+      const dropdown = document.getElementById('desktop-search-dropdown');
+      const resultsEl = document.getElementById('desktop-search-results');
+      const emptyEl = document.getElementById('desktop-search-empty');
+      const clearBtn = document.getElementById('country-search-clear');
+      if (!searchInput || !dropdown || !resultsEl) return;
 
-        // If searching, show all matching countries regardless of category
-        if (searchTerm.length > 0) {
-          // Reset all tabs to inactive
-          document.querySelectorAll('.category-tab').forEach(t => {
-            t.classList.remove('active', 'bg-[#01534d]', 'text-white');
-            t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200', 'hover:bg-gray-100');
-          });
+      // Build a static country list from the rendered cards (so it auto-syncs with DB).
+      function getCountryList() {
+        return Array.from(document.querySelectorAll('.country-card')).map(card => {
+          const id = card.dataset.country || '';
+          const name = (card.dataset.countryName || '').trim();
+          const img = card.querySelector('img')?.getAttribute('src') || '';
+          const flag = (card.querySelector('span.text-3xl')?.textContent || '').trim();
+          const minPrice = parseFloat(card.dataset.minPrice || '0');
+          const cats = (card.dataset.categories || '').split(',');
+          const isPopular = card.dataset.popular === 'true';
+          const featured = cats.includes('most-needed') || cats.includes('emergency');
+          return { id, name, img, flag, minPrice, featured, isPopular };
+        });
+      }
 
-          // Filter by search term
-          document.querySelectorAll('.country-card').forEach(card => {
-            const countryName = card.querySelector('h3')?.textContent?.toLowerCase() || '';
-            const countryId = card.dataset.country?.toLowerCase() || '';
+      // "Most Popular" = admin-flagged countries, sorted by price (highest first).
+      // Falls back to top 6 by price if admin hasn't flagged any.
+      function getPopular(all) {
+        const flagged = all.filter(c => c.isPopular);
+        const sortByPrice = (a, b) => (b.minPrice || 0) - (a.minPrice || 0);
+        if (flagged.length > 0) return flagged.slice().sort(sortByPrice);
+        return all.slice().sort(sortByPrice).slice(0, 6);
+      }
 
-            if (countryName.includes(searchTerm) || countryId.includes(searchTerm)) {
-              card.classList.remove('hidden');
-            } else {
-              card.classList.add('hidden');
-            }
-          });
+      function renderDropdown(query) {
+        const all = getCountryList();
+        const q = (query || '').toLowerCase().trim();
 
-          // Hide show more button when searching
-          const showMoreContainer = document.getElementById('show-more-container');
-          if (showMoreContainer) showMoreContainer.classList.add('hidden');
+        let matches = all;
+        if (q) {
+          matches = all.filter(c =>
+            c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
+          );
+        }
+
+        if (matches.length === 0) {
+          resultsEl.innerHTML = '';
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+        emptyEl.classList.add('hidden');
+
+        let html = '';
+        if (!q) {
+          // Section: Most Popular (top 6 by price)
+          const popular = getPopular(all);
+          if (popular.length) {
+            html += '<div class="px-5 pt-4 pb-2 flex items-center gap-2"><span class="text-[11px] font-bold tracking-wider text-[#D97718] uppercase">★ Most Popular</span><span class="text-[10px] text-gray-400">— Donor favorites</span></div>';
+            html += '<div class="bg-gradient-to-b from-[#D97718]/5 to-transparent">';
+            html += popular.map(c => buildRow(c, true)).join('');
+            html += '</div>';
+            html += '<div class="border-t border-gray-100 my-1"></div>';
+          }
+          // Section: All Countries
+          html += '<div class="px-5 pt-3 pb-2 text-[11px] font-bold tracking-wider text-gray-400 uppercase">All Countries</div>';
+          const sorted = all.slice().sort((a, b) => a.name.localeCompare(b.name));
+          html += sorted.map(c => buildRow(c, false)).join('');
         } else {
-          // If search is cleared, click "Most Needed" tab to reset
-          const mostNeededTab = document.querySelector('[data-category="most-needed"]');
-          if (mostNeededTab) mostNeededTab.click();
+          html += '<div class="px-5 pt-4 pb-2 text-[11px] font-bold tracking-wider text-gray-400 uppercase">' + matches.length + ' result' + (matches.length === 1 ? '' : 's') + '</div>';
+          html += matches.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => buildRow(c, false)).join('');
+        }
+        resultsEl.innerHTML = html;
 
-          // Show the show more button again
-          const showMoreContainer = document.getElementById('show-more-container');
-          if (showMoreContainer) showMoreContainer.classList.remove('hidden');
+        // Wire row clicks
+        resultsEl.querySelectorAll('.dsk-search-row').forEach(row => {
+          row.addEventListener('click', () => {
+            const id = row.getAttribute('data-id') || '';
+            selectCountry(id);
+          });
+        });
+      }
+
+      function buildRow(c, isPopular) {
+        const safeName = (c.name || '').replace(/"/g, '&quot;');
+        const img = c.img
+          ? '<img src="' + c.img + '" alt="" width="40" height="40" loading="lazy" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />'
+          : '<div class="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0"></div>';
+        const badge = isPopular
+          ? '<span class="ml-2 text-[10px] font-bold text-[#D97718] bg-[#D97718]/10 px-1.5 py-0.5 rounded">POPULAR</span>'
+          : '';
+        return ''
+          + '<button type="button" class="dsk-search-row w-full flex items-center gap-3 px-5 py-2.5 hover:bg-gray-50 transition cursor-pointer text-left" data-id="' + c.id + '">'
+          + img
+          + '<div class="flex-1 min-w-0 flex items-center gap-2">'
+          + (c.flag ? '<span class="text-lg">' + c.flag + '</span>' : '')
+          + '<span class="font-semibold text-gray-800 truncate">' + safeName + '</span>'
+          + badge
+          + '</div>'
+          + '<span class="text-sm font-bold text-[#01534d] flex-shrink-0">From $' + (c.minPrice || 0) + '</span>'
+          + '</button>';
+      }
+
+      function selectCountry(id) {
+        const card = document.querySelector('.country-card[data-country="' + id + '"]');
+        closeDropdown();
+        if (!card) return;
+
+        // Make sure the card is visible — switch to "All" tab so all cards show.
+        const allTab = document.querySelector('[data-category="all"]');
+        if (allTab) allTab.click();
+        // Then scroll + pulse highlight
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.add('ring-4', 'ring-[#D97718]', 'ring-offset-2');
+          setTimeout(() => card.classList.remove('ring-4', 'ring-[#D97718]', 'ring-offset-2'), 2000);
+        }, 50);
+
+        // Reset search input
+        searchInput.value = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
+      }
+
+      function openDropdown() {
+        renderDropdown(searchInput.value);
+        dropdown.style.display = 'block';
+        searchInput.placeholder = 'Search Qurbani Country';
+      }
+      function closeDropdown() {
+        dropdown.style.display = 'none';
+        searchInput.placeholder = 'Search Qurbani Country';
+      }
+
+      // Open on focus / icon click
+      searchInput.addEventListener('focus', openDropdown);
+      searchInput.addEventListener('click', openDropdown);
+      if (searchIconBtn) {
+        searchIconBtn.addEventListener('click', () => {
+          searchInput.focus();
+          openDropdown();
+        });
+      }
+
+      // Filter as user types
+      searchInput.addEventListener('input', () => {
+        if (clearBtn) {
+          clearBtn.classList.toggle('hidden', searchInput.value.length === 0);
+        }
+        renderDropdown(searchInput.value);
+        if (dropdown.style.display !== 'block') openDropdown();
+      });
+
+      // Clear button
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          searchInput.value = '';
+          clearBtn.classList.add('hidden');
+          renderDropdown('');
+          searchInput.focus();
+        });
+      }
+
+      // Close on outside click / Esc
+      document.addEventListener('click', (e) => {
+        if (!searchWrap.contains(e.target)) closeDropdown();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDropdown();
+      });
+    })();
+
+    // ─── MOBILE FULLSCREEN SEARCH ───────────────────────────────────────
+    var mobileSearchTrigger = document.getElementById('mobile-search-trigger');
+    var mobileSearchOverlay = document.getElementById('mobile-search-overlay');
+    var mobileSearchInput = document.getElementById('mobile-country-search');
+    var mobileSearchClear = document.getElementById('mobile-search-clear');
+    var mobileSearchCancel = document.getElementById('mobile-search-cancel');
+    var mobileSearchResults = document.getElementById('mobile-search-results');
+
+    // Build country list from DOM
+    function getCountryList() {
+      var cards = document.querySelectorAll('.country-card[data-country]');
+      var list = [];
+      cards.forEach(function(card) {
+        var id = card.getAttribute('data-country') || '';
+        var name = card.getAttribute('data-country-name') || id;
+        var img = card.querySelector('img');
+        var imgSrc = img ? img.getAttribute('src') : '';
+        var minPrice = card.getAttribute('data-min-price') || '';
+        var isPopular = card.getAttribute('data-popular') === 'true';
+        var badges = [];
+        card.querySelectorAll('.badge-pill, [class*="rounded-full"][class*="text-xs"]').forEach(function(b) {
+          var t = b.textContent.trim();
+          if (t && t.length < 20) badges.push(t);
+        });
+        list.push({ id: id, name: name, image: imgSrc, minPrice: minPrice, isPopular: isPopular, badges: badges });
+      });
+      return list;
+    }
+
+    // Track the visual viewport to keep the overlay sized to the visible area
+    // (above the iOS keyboard) so the input bar stays at the top, never hidden.
+    function syncOverlayToViewport() {
+      if (!mobileSearchOverlay) return;
+      var vv = window.visualViewport;
+      if (vv) {
+        mobileSearchOverlay.style.height = vv.height + 'px';
+        mobileSearchOverlay.style.top = vv.offsetTop + 'px';
+      } else {
+        mobileSearchOverlay.style.height = '100vh';
+        mobileSearchOverlay.style.top = '0px';
+      }
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', syncOverlayToViewport);
+      window.visualViewport.addEventListener('scroll', syncOverlayToViewport);
+    }
+
+    function openMobileSearch() {
+      if (!mobileSearchOverlay) return;
+      mobileSearchOverlay.style.display = 'flex';
+      mobileSearchOverlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      syncOverlayToViewport();
+      // Populate all countries initially
+      renderMobileResults('');
+      // Focus input after animation, then sync once more once the keyboard is up
+      setTimeout(function() {
+        if (mobileSearchInput) mobileSearchInput.focus();
+        // Give iOS keyboard time to animate, then re-sync overlay
+        setTimeout(syncOverlayToViewport, 300);
+      }, 100);
+    }
+
+    function closeMobileSearch() {
+      if (!mobileSearchOverlay) return;
+      mobileSearchOverlay.style.display = 'none';
+      mobileSearchOverlay.classList.add('hidden');
+      document.body.style.overflow = '';
+      if (mobileSearchInput) mobileSearchInput.value = '';
+      if (mobileSearchClear) mobileSearchClear.classList.add('hidden');
+      // Clear hero-origin flag if user cancels without picking
+      window.__heroOriginatedSearch = false;
+    }
+
+    // Most Popular = admin-flagged countries, sorted by price (highest first).
+    function getMobilePopular(all) {
+      function sortByPrice(a, b) { return (parseFloat(b.minPrice) || 0) - (parseFloat(a.minPrice) || 0); }
+      var flagged = all.filter(function(c) { return c.isPopular; });
+      if (flagged.length > 0) return flagged.slice().sort(sortByPrice);
+      return all.slice().sort(sortByPrice).slice(0, 6);
+    }
+
+    function buildMobileRow(c, isPopular) {
+      var badgeHtml = '';
+      if (isPopular) {
+        badgeHtml = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D97718]/10 text-[#D97718] flex-shrink-0">POPULAR</span>';
+      } else if (c.badges && c.badges.length > 0) {
+        badgeHtml = c.badges.map(function(b) {
+          var color = b.toLowerCase().indexOf('urgent') >= 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+          return '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + color + ' flex-shrink-0">' + b + '</span>';
+        }).join(' ');
+      }
+      var priceHtml = c.minPrice ? '<span class="text-sm text-gray-500">From <strong class="text-[#01534d]">$' + c.minPrice + '</strong></span>' : '';
+      return '<button type="button" class="mobile-country-result w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 active:bg-gray-100 transition text-left border-b border-gray-50" data-country-id="' + c.id + '">'
+        + '<div class="w-14 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">'
+        + (c.image ? '<img src="' + c.image + '" alt="" width="48" height="48" loading="lazy" decoding="async" class="w-full h-full object-cover" />' : '')
+        + '</div>'
+        + '<div class="flex-1 min-w-0">'
+        + '<div class="flex items-center gap-2 min-w-0">'
+        + '<span class="font-semibold text-gray-800 text-base truncate">' + c.name + '</span>'
+        + (badgeHtml || '')
+        + '</div>'
+        + (priceHtml ? '<div class="mt-0.5">' + priceHtml + '</div>' : '')
+        + '</div>'
+        + '<svg class="w-5 h-5 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>'
+        + '</button>';
+    }
+
+    function renderMobileResults(query) {
+      if (!mobileSearchResults) return;
+      var allCountries = getCountryList();
+      var q = query.toLowerCase().trim();
+
+      // Empty query → show "Most Popular" + "All Countries" (alphabetical), like desktop
+      if (q.length === 0) {
+        var html = '';
+        var popular = getMobilePopular(allCountries);
+        if (popular.length) {
+          html += '<div class="px-2 pt-3 pb-2 flex items-center gap-2"><span class="text-[11px] font-bold tracking-wider text-[#D97718] uppercase">★ Most Popular</span><span class="text-[10px] text-gray-400">— Donor favorites</span></div>';
+          html += '<div class="bg-gradient-to-b from-[#D97718]/5 to-transparent rounded-xl p-1 mb-2">';
+          html += popular.map(function(c) { return buildMobileRow(c, true); }).join('');
+          html += '</div>';
+        }
+        html += '<div class="px-2 pt-2 pb-2 text-[11px] font-bold tracking-wider text-gray-400 uppercase">All Countries</div>';
+        var sorted = allCountries.slice().sort(function(a, b) { return a.name.localeCompare(b.name); });
+        html += sorted.map(function(c) { return buildMobileRow(c, false); }).join('');
+        mobileSearchResults.innerHTML = html;
+      } else {
+        var filtered = allCountries
+          .filter(function(c) { return c.name.toLowerCase().indexOf(q) >= 0 || c.id.toLowerCase().indexOf(q) >= 0; })
+          .sort(function(a, b) { return a.name.localeCompare(b.name); });
+        if (filtered.length === 0) {
+          mobileSearchResults.innerHTML = '<div class="flex flex-col items-center justify-center py-16 text-gray-400"><svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><p class="font-medium">No countries found</p><p class="text-sm mt-1">Try a different search term</p></div>';
+          return;
+        }
+        var html = '<div class="px-2 pt-3 pb-2 text-[11px] font-bold tracking-wider text-gray-400 uppercase">' + filtered.length + ' result' + (filtered.length === 1 ? '' : 's') + '</div>';
+        html += filtered.map(function(c) { return buildMobileRow(c, false); }).join('');
+        mobileSearchResults.innerHTML = html;
+      }
+
+      // Bind click on results to scroll to country card and close overlay
+      mobileSearchResults.querySelectorAll('.mobile-country-result').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var countryId = btn.getAttribute('data-country-id');
+          // If this overlay was opened from the hero quick-donate box, populate that
+          // box's selection instead of scrolling to the country card.
+          if (window.__heroOriginatedSearch && typeof window.__heroQuickDonateApply === 'function') {
+            var card = document.querySelector('[data-country="' + countryId + '"]');
+            var price = card ? parseFloat(card.getAttribute('data-min-price') || '0') : 0;
+            var name = card ? (card.getAttribute('data-country-name') || '').trim() : '';
+            var flagEl = card ? card.querySelector('span.text-3xl') : null;
+            var flag = flagEl ? flagEl.textContent.trim() : '';
+            var img = card && card.querySelector('img') ? card.querySelector('img').getAttribute('src') : '';
+            window.__heroQuickDonateApply({ id: countryId, name: name, price: price, flag: flag, image: img });
+            window.__heroOriginatedSearch = false;
+            closeMobileSearch();
+            return;
+          }
+          closeMobileSearch();
+          // Find and scroll to the country card
+          var card = document.querySelector('[data-country="' + countryId + '"]');
+          if (card) {
+            // Make sure it's visible (remove hidden if filtered)
+            card.classList.remove('hidden');
+            // Reset category filter to show all
+            document.querySelectorAll('.category-tab').forEach(function(t) {
+              t.classList.remove('active', 'bg-[#01534d]', 'text-white');
+              t.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+            });
+            var allTab = document.querySelector('[data-category="all"]');
+            if (allTab) {
+              allTab.classList.add('active', 'bg-[#01534d]', 'text-white');
+              allTab.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-200');
+            }
+            // Show all cards
+            document.querySelectorAll('[data-country]').forEach(function(c) { c.classList.remove('hidden'); });
+            // Scroll to the card
+            setTimeout(function() {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Highlight briefly
+              card.style.boxShadow = '0 0 0 3px #01534d';
+              setTimeout(function() { card.style.boxShadow = ''; }, 2000);
+            }, 200);
+          }
+        });
+      });
+    }
+
+    // Open fullscreen search
+    if (mobileSearchTrigger) {
+      mobileSearchTrigger.addEventListener('click', openMobileSearch);
+    }
+
+    // Cancel
+    if (mobileSearchCancel) {
+      mobileSearchCancel.addEventListener('click', closeMobileSearch);
+    }
+
+    // Clear X button
+    if (mobileSearchClear) {
+      mobileSearchClear.addEventListener('click', function() {
+        if (mobileSearchInput) mobileSearchInput.value = '';
+        mobileSearchClear.classList.add('hidden');
+        renderMobileResults('');
+        mobileSearchInput.focus();
+      });
+    }
+
+    // Search input
+    if (mobileSearchInput) {
+      mobileSearchInput.addEventListener('input', function() {
+        var val = mobileSearchInput.value;
+        if (mobileSearchClear) {
+          if (val.length > 0) mobileSearchClear.classList.remove('hidden');
+          else mobileSearchClear.classList.add('hidden');
+        }
+        renderMobileResults(val);
+      });
+
+      // Enter dismisses keyboard
+      mobileSearchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          mobileSearchInput.blur();
         }
       });
     }
@@ -1391,9 +2487,32 @@ const testimonials = [
       btn.addEventListener('click', () => {
         const card = btn.closest('.country-card');
         const container = card.querySelector('.behalf-container');
+        const input = card.querySelector('.behalf-input');
         container.classList.remove('hidden');
         btn.classList.add('hidden');
-        card.querySelector('.behalf-input').focus({ preventScroll: true });
+
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        if (isMobile) {
+          // Wait for the input to render + keyboard to start opening, then center it.
+          input.focus();
+          setTimeout(() => {
+            input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }, 250);
+        } else {
+          input.focus({ preventScroll: true });
+        }
+      });
+    });
+
+    // Also handle direct taps on the input (e.g. user taps after dismissing keyboard).
+    document.querySelectorAll('.behalf-input').forEach(input => {
+      input.addEventListener('focus', () => {
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        if (!isMobile) return;
+        // Delay so the on-screen keyboard has time to appear before we measure.
+        setTimeout(() => {
+          input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 250);
       });
     });
 
@@ -1408,6 +2527,32 @@ const testimonials = [
         toggle.classList.remove('hidden');
       });
     });
+
+    // Reset an Add button back to its default orange "+ Add" state
+    function resetQurbaniAddButton(btn) {
+      if (!btn) return;
+      if (btn._resetTimer) { clearTimeout(btn._resetTimer); btn._resetTimer = null; }
+      btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Add to Donation`;
+      btn.classList.remove('bg-green-500');
+    }
+
+    // When the cart modal closes, immediately reset any Add buttons that are
+    // still in the green "Added!" state — so when the user scrolls back to the
+    // country card they see the normal orange button (no green→orange flash).
+    (function() {
+      var ggCheckout = document.getElementById('gg-checkout');
+      if (!ggCheckout) return;
+      var wasOpen = !ggCheckout.classList.contains('hidden');
+      var obs = new MutationObserver(function() {
+        var open = !ggCheckout.classList.contains('hidden');
+        if (wasOpen && !open) {
+          // Just closed — reset any green Add buttons
+          document.querySelectorAll('.add-qurbani-btn.bg-green-500').forEach(resetQurbaniAddButton);
+        }
+        wasOpen = open;
+      });
+      obs.observe(ggCheckout, { attributes: true, attributeFilter: ['class'] });
+    })();
 
     // Add to Cart
     document.querySelectorAll('.add-qurbani-btn').forEach(btn => {
@@ -1451,14 +2596,15 @@ const testimonials = [
           });
         }
 
-        // Visual feedback
+        // Visual feedback (green "Added!" state)
         const addedText = quantity > 1 ? `${quantity} Added!` : 'Added!';
         btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> ${addedText}`;
         btn.classList.add('bg-green-500');
 
-        setTimeout(() => {
-          btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg> Add`;
-          btn.classList.remove('bg-green-500');
+        // Cancel any prior reset timer for this button
+        if (btn._resetTimer) clearTimeout(btn._resetTimer);
+        btn._resetTimer = setTimeout(() => {
+          resetQurbaniAddButton(btn);
         }, 1500);
 
         // Reset quantity and behalf input
@@ -1543,7 +2689,7 @@ const testimonials = [
       const matchedCards = [];
       document.querySelectorAll('.country-card').forEach(card => {
         const cardId = (card.dataset.country || '').toLowerCase();
-        const cardName = (card.querySelector('h3')?.textContent || '').toLowerCase().trim();
+        const cardName = (card.dataset.countryName || '').toLowerCase().trim();
         for (const target of targets) {
           if (cardId === target || cardName === target || cardId.includes(target) || cardName.includes(target)) {
             matchedCards.push(card);
@@ -1619,15 +2765,41 @@ const testimonials = [
     })();
   </script>
 
-  <!-- Sticky bar: hide when donation section visible, smooth scroll on click -->
+  <!-- Inline "Back to Search" button below the grid -->
+  <script is:inline>
+    (function() {
+      var inlineBtn = document.getElementById('back-to-search-inline');
+      var searchSection = document.querySelector('#desktop-search-wrap');
+      if (!inlineBtn || !searchSection) return;
+
+      inlineBtn.addEventListener('click', function() {
+        searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function() {
+          var isMobile = window.matchMedia('(max-width: 767px)').matches;
+          if (isMobile) {
+            var trigger = document.getElementById('mobile-search-trigger');
+            if (trigger) trigger.click();
+          } else {
+            var input = document.getElementById('country-search');
+            if (input) input.focus();
+          }
+        }, 450);
+      });
+    })();
+  </script>
+
+  <!-- Mobile sticky bars: top search appears inside the country grid; bottom CTA elsewhere -->
   <script is:inline>
     (function() {
       var stickyBar = document.getElementById('qurbani-sticky-bar');
-      var stickyBtn = document.getElementById('qurbani-sticky-btn');
+      var stickyBtn = document.getElementById('qurbani-sticky-cta') || document.getElementById('qurbani-sticky-btn');
+      var topSearch = document.getElementById('qurbani-sticky-search-top');
+      var topSearchBtn = document.getElementById('qurbani-sticky-search-btn');
       var donationSection = document.getElementById('select-qurbani');
+      var grid = document.getElementById('countries-grid');
       if (!stickyBar || !donationSection) return;
 
-      // Smooth scroll to donation section
+      // Bottom CTA → scroll to country selection section
       if (stickyBtn) {
         stickyBtn.addEventListener('click', function() {
           var rect = donationSection.getBoundingClientRect();
@@ -1636,21 +2808,84 @@ const testimonials = [
         });
       }
 
-      // IntersectionObserver: hide sticky when donation section is visible
-      var observer = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting) {
+      // Top sticky search → open the fullscreen search overlay
+      if (topSearchBtn) {
+        topSearchBtn.addEventListener('click', function() {
+          var trigger = document.getElementById('mobile-search-trigger');
+          if (trigger) trigger.click();
+        });
+      }
+
+      // Show top search when the user is inside the country grid.
+      // Hide bottom CTA whenever the "Choose Where to Give" section is in view
+      // (entire #select-qurbani section, not just the grid), OR when the hero
+      // donation box is visible — in both cases the bottom CTA is redundant.
+      var heroDonate = document.getElementById('hero-quick-donate');
+      var viewportH = function() { return window.innerHeight || document.documentElement.clientHeight || 0; };
+      function update() {
+        if (!grid) return;
+        var gRect = grid.getBoundingClientRect();
+        var insideGrid = gRect.top < 60 && gRect.bottom > 200;
+
+        var sectionVisible = false;
+        if (donationSection) {
+          var sRect = donationSection.getBoundingClientRect();
+          // Visible if any part of the Choose Where to Give section is on screen
+          sectionVisible = sRect.bottom > 80 && sRect.top < viewportH();
+        }
+
+        var heroVisible = false;
+        if (heroDonate) {
+          var hRect = heroDonate.getBoundingClientRect();
+          heroVisible = hRect.bottom > 0 && hRect.top < viewportH();
+        }
+
+        // Top sticky search appears only when actually inside the country grid
+        if (insideGrid) {
+          if (topSearch) topSearch.classList.remove('-translate-y-full');
+        } else {
+          if (topSearch) topSearch.classList.add('-translate-y-full');
+        }
+
+        // Bottom CTA hidden whenever we're in the donation section or hero box
+        if (sectionVisible || heroVisible) {
           stickyBar.classList.add('translate-y-full');
         } else {
           stickyBar.classList.remove('translate-y-full');
         }
-      }, { threshold: 0.05 });
-      observer.observe(donationSection);
+      }
+      window.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', update);
+      update();
+
+      // Hide both bars when the mobile fullscreen search overlay is open
+      var searchOverlay = document.getElementById('mobile-search-overlay');
+      if (searchOverlay) {
+        var sObs = new MutationObserver(function() {
+          var open = !searchOverlay.classList.contains('hidden') && searchOverlay.style.display !== 'none';
+          if (open) {
+            stickyBar.classList.add('translate-y-full');
+            if (topSearch) topSearch.classList.add('-translate-y-full');
+          } else {
+            update();
+          }
+        });
+        sObs.observe(searchOverlay, { attributes: true, attributeFilter: ['class', 'style'] });
+      }
     })();
   </script>
 
   <style>
     .font-arabic {
       font-family: 'Amiri', 'Traditional Arabic', serif;
+    }
+
+    /* Hero quick-donate "GIVE QURBANI NOW" button — dark green with proper hover */
+    .hqd-submit-btn {
+      background: #17401c;
+    }
+    .hqd-submit-btn:hover {
+      background: #0f2d12;
     }
   </style>
 </Layout>

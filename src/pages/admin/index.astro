@@ -1,34 +1,193 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
 
-// Mock data - replace with Supabase queries
+// ─── Real data from Supabase ────────────────────────────────────────────────
+
+// Date ranges
+const now = new Date();
+const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+
+// Total donations (all time)
+const { data: allDonations } = await supabaseAdmin
+  .from('donations')
+  .select('amount')
+  .eq('status', 'completed');
+const totalRevenue = allDonations?.reduce((sum: number, d: any) => sum + (d.amount || 0), 0) || 0;
+const totalDonationCount = allDonations?.length || 0;
+
+// This month donations
+const { data: monthDonations } = await supabaseAdmin
+  .from('donations')
+  .select('amount, donor_email')
+  .eq('status', 'completed')
+  .gte('created_at', startOfMonth);
+const monthRevenue = monthDonations?.reduce((sum: number, d: any) => sum + (d.amount || 0), 0) || 0;
+const monthDonorEmails = new Set(monthDonations?.map((d: any) => d.donor_email) || []);
+const monthDonorCount = monthDonorEmails.size;
+const monthAvg = monthDonations?.length ? Math.round(monthRevenue / monthDonations.length) : 0;
+
+// Last month donations (for comparison)
+const { data: lastMonthDonations } = await supabaseAdmin
+  .from('donations')
+  .select('amount, donor_email')
+  .eq('status', 'completed')
+  .gte('created_at', startOfLastMonth)
+  .lte('created_at', endOfLastMonth);
+const lastMonthRevenue = lastMonthDonations?.reduce((sum: number, d: any) => sum + (d.amount || 0), 0) || 0;
+const lastMonthDonorCount = new Set(lastMonthDonations?.map((d: any) => d.donor_email) || []).size;
+const lastMonthAvg = lastMonthDonations?.length ? Math.round(lastMonthRevenue / lastMonthDonations.length) : 0;
+
+// Calculate changes
+function calcChange(current: number, previous: number): { text: string; positive: boolean } {
+  if (previous === 0) return { text: current > 0 ? 'New' : '—', positive: current > 0 };
+  const pct = Math.round(((current - previous) / previous) * 100);
+  return { text: (pct >= 0 ? '+' : '') + pct + '%', positive: pct >= 0 };
+}
+
+const revenueChange = calcChange(monthRevenue, lastMonthRevenue);
+const donorChange = calcChange(monthDonorCount, lastMonthDonorCount);
+const avgChange = calcChange(monthAvg, lastMonthAvg);
+
+// Active campaigns
+const { count: activeCampaignCount } = await supabaseAdmin
+  .from('campaigns')
+  .select('*', { count: 'exact', head: true })
+  .eq('is_active', true);
+
+// Active subscriptions
+const { count: activeSubCount } = await supabaseAdmin
+  .from('donation_subscriptions')
+  .select('*', { count: 'exact', head: true })
+  .eq('status', 'active');
+
 const stats = [
-  { label: 'Total Donations', value: '$45,231', change: '+12.5%', positive: true },
-  { label: 'Active Campaigns', value: '24', change: '+3', positive: true },
-  { label: 'Donors This Month', value: '156', change: '+8.2%', positive: true },
-  { label: 'Avg. Donation', value: '$89', change: '-2.1%', positive: false },
+  { label: 'Revenue This Month', value: '$' + monthRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }), change: revenueChange.text, positive: revenueChange.positive },
+  { label: 'Active Campaigns', value: String(activeCampaignCount || 0), change: (activeSubCount || 0) + ' subs', positive: true },
+  { label: 'Donors This Month', value: String(monthDonorCount), change: donorChange.text, positive: donorChange.positive },
+  { label: 'Avg. Donation', value: '$' + monthAvg, change: avgChange.text, positive: avgChange.positive },
 ];
 
-const recentDonations = [
-  { id: 1, donor: 'Ahmed M.', amount: '$100', campaign: 'Gaza Emergency', date: '2 hours ago' },
-  { id: 2, donor: 'Sarah K.', amount: '$250', campaign: 'Orphan Sponsorship', date: '4 hours ago' },
-  { id: 3, donor: 'Mohammad A.', amount: '$50', campaign: 'Water for Life', date: '6 hours ago' },
-  { id: 4, donor: 'Fatima H.', amount: '$500', campaign: 'Most Needed', date: '8 hours ago' },
-  { id: 5, donor: 'Omar S.', amount: '$75', campaign: 'Food Aid', date: '12 hours ago' },
-];
+// Recent donations (real, last 5)
+const { data: recentDonationsRaw } = await supabaseAdmin
+  .from('donations')
+  .select('id, donor_name, donor_email, amount, campaign_name, created_at')
+  .eq('status', 'completed')
+  .order('created_at', { ascending: false })
+  .limit(5);
 
-const topCampaigns = [
-  { name: 'Gaza Emergency Appeal', raised: 12500, goal: 50000 },
-  { name: 'Yemen Emergency Appeal', raised: 8200, goal: 25000 },
-  { name: 'Orphan Sponsorship', raised: 15000, goal: 30000 },
-  { name: 'Water for Life', raised: 6800, goal: 20000 },
-];
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + ' hour' + (hrs > 1 ? 's' : '') + ' ago';
+  const days = Math.floor(hrs / 24);
+  return days + ' day' + (days > 1 ? 's' : '') + ' ago';
+}
+
+function anonymize(name: string): string {
+  if (!name) return 'Anonymous';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return parts[0] + ' ' + parts[1].charAt(0) + '.';
+  return parts[0];
+}
+
+const recentDonations = (recentDonationsRaw || []).map((d: any) => ({
+  id: d.id,
+  donor: anonymize(d.donor_name),
+  amount: '$' + Math.round(d.amount).toLocaleString(),
+  campaign: d.campaign_name || 'General',
+  date: timeAgo(d.created_at),
+}));
+
+// Top campaigns by revenue (real)
+const { data: campaignRevenue } = await supabaseAdmin
+  .from('donations')
+  .select('campaign_name, amount')
+  .eq('status', 'completed');
+
+const campaignTotals: Record<string, number> = {};
+(campaignRevenue || []).forEach((d: any) => {
+  const name = d.campaign_name || 'General';
+  campaignTotals[name] = (campaignTotals[name] || 0) + (d.amount || 0);
+});
+
+// Count donations per campaign too
+const campaignCounts: Record<string, number> = {};
+(campaignRevenue || []).forEach((d: any) => {
+  const name = d.campaign_name || 'General';
+  campaignCounts[name] = (campaignCounts[name] || 0) + 1;
+});
+
+// ALL campaigns sorted by revenue (for full view)
+const allCampaignStats = Object.entries(campaignTotals)
+  .sort((a, b) => b[1] - a[1])
+  .map(([name, raised]) => ({
+    name,
+    raised: Math.round(raised),
+    count: campaignCounts[name] || 0,
+    avg: campaignCounts[name] ? Math.round(raised / campaignCounts[name]) : 0,
+  }));
+
+const topCampaigns = allCampaignStats.slice(0, 5).map(c => ({
+  ...c,
+  goal: Math.round(c.raised * 2.5),
+}));
+
+// Recent donations (more for the full view — last 20)
+const { data: recentDonationsFullRaw } = await supabaseAdmin
+  .from('donations')
+  .select('id, donor_name, donor_email, amount, campaign_name, created_at, donation_type')
+  .eq('status', 'completed')
+  .order('created_at', { ascending: false })
+  .limit(20);
+
+const recentDonationsFull = (recentDonationsFullRaw || []).map((d: any) => ({
+  id: d.id,
+  donor: anonymize(d.donor_name),
+  email: d.donor_email,
+  amount: '$' + Math.round(d.amount).toLocaleString(),
+  rawAmount: d.amount,
+  campaign: d.campaign_name || 'General',
+  date: timeAgo(d.created_at),
+  fullDate: new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+  type: d.donation_type || 'single',
+}));
+
+// Summary stats row
+const totalAllTime = '$' + totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const totalDonationsFormatted = totalDonationCount.toLocaleString();
 ---
 
 <AdminLayout title="Dashboard" activeNav="dashboard">
-  <!-- Stats Grid -->
+  <!-- All-Time Banner -->
+  <div class="bg-gradient-to-r from-[#01534d] to-[#0891b2] rounded-xl p-6 mb-6 text-white">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-white/70 text-sm">All-Time Revenue</p>
+        <p class="text-3xl font-bold">{totalAllTime}</p>
+      </div>
+      <div>
+        <p class="text-white/70 text-sm">Total Donations</p>
+        <p class="text-3xl font-bold">{totalDonationsFormatted}</p>
+      </div>
+      <div>
+        <p class="text-white/70 text-sm">Active Subscriptions</p>
+        <p class="text-3xl font-bold">{activeSubCount || 0}</p>
+      </div>
+      <div>
+        <p class="text-white/70 text-sm">Active Campaigns</p>
+        <p class="text-3xl font-bold">{activeCampaignCount || 0}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Stats Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     {stats.map((stat) => (
       <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -43,65 +202,87 @@ const topCampaigns = [
     ))}
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Recent Donations -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Recent Donations (expandable) -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
       <div class="p-6 border-b border-gray-100">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-bold text-gray-800">Recent Donations</h2>
-          <a href="/admin/donations" class="text-sm text-[#01534d] hover:underline font-medium">View All</a>
+          <div class="flex items-center gap-3">
+            <button id="toggle-recent-btn" onclick="toggleRecentDonations()" class="text-sm text-[#01534d] hover:underline font-medium">Show More</button>
+            <a href="/admin/donations" class="text-sm text-gray-400 hover:text-gray-600 font-medium">View All</a>
+          </div>
         </div>
       </div>
       <div class="divide-y divide-gray-100">
-        {recentDonations.map((donation) => (
-          <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
+        {recentDonationsFull.map((donation: any, i: number) => (
+          <div class={`px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition ${i >= 5 ? 'hidden recent-extra' : ''}`}>
             <div class="flex items-center gap-4">
-              <div class="w-10 h-10 bg-[#01534d]/10 rounded-full flex items-center justify-center">
-                <span class="text-[#01534d] font-bold">{donation.donor.charAt(0)}</span>
+              <div class="w-10 h-10 bg-[#01534d]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-[#01534d] font-bold text-sm">{donation.donor.charAt(0)}</span>
               </div>
-              <div>
-                <p class="font-medium text-gray-800">{donation.donor}</p>
-                <p class="text-sm text-gray-500">{donation.campaign}</p>
+              <div class="min-w-0">
+                <p class="font-medium text-gray-800 truncate">{donation.donor}</p>
+                <p class="text-sm text-gray-500 truncate">{donation.campaign}</p>
               </div>
             </div>
-            <div class="text-right">
+            <div class="text-right flex-shrink-0 ml-4">
               <p class="font-bold text-gray-800">{donation.amount}</p>
-              <p class="text-xs text-gray-400">{donation.date}</p>
+              <p class="text-xs text-gray-400" title={donation.fullDate}>{donation.date}</p>
+              {donation.type !== 'single' && (
+                <span class="text-[9px] bg-[#01534d]/10 text-[#01534d] px-1.5 py-0.5 rounded-full font-bold">{donation.type}</span>
+              )}
             </div>
           </div>
         ))}
       </div>
     </div>
 
-    <!-- Top Campaigns -->
+    <!-- Campaign Revenue Breakdown (full table) -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
       <div class="p-6 border-b border-gray-100">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-bold text-gray-800">Top Campaigns</h2>
-          <a href="/admin/campaigns" class="text-sm text-[#01534d] hover:underline font-medium">Manage</a>
+          <h2 class="text-lg font-bold text-gray-800">Campaign Revenue</h2>
+          <div class="flex items-center gap-3">
+            <button id="toggle-campaigns-btn" onclick="toggleAllCampaigns()" class="text-sm text-[#01534d] hover:underline font-medium">Show All ({allCampaignStats.length})</button>
+            <a href="/admin/campaigns" class="text-sm text-gray-400 hover:text-gray-600 font-medium">Manage</a>
+          </div>
         </div>
       </div>
-      <div class="p-6 space-y-6">
-        {topCampaigns.map((campaign) => {
-          const percentage = Math.round((campaign.raised / campaign.goal) * 100);
-          return (
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <p class="font-medium text-gray-800">{campaign.name}</p>
-                <p class="text-sm text-gray-500">{percentage}%</p>
-              </div>
-              <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-[#01534d] rounded-full transition-all duration-500"
-                  style={`width: ${percentage}%`}
-                ></div>
-              </div>
-              <p class="text-xs text-gray-500 mt-1">
-                ${campaign.raised.toLocaleString()} raised of ${campaign.goal.toLocaleString()}
-              </p>
-            </div>
-          );
-        })}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">#</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Campaign</th>
+              <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Revenue</th>
+              <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Donations</th>
+              <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Avg</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {allCampaignStats.map((c: any, i: number) => (
+              <tr class={`hover:bg-gray-50 transition ${i >= 10 ? 'hidden campaign-extra' : ''}`}>
+                <td class="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
+                <td class="px-4 py-3">
+                  <p class="font-medium text-gray-800 truncate max-w-[200px]">{c.name}</p>
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-gray-800">${c.raised.toLocaleString()}</td>
+                <td class="px-4 py-3 text-right text-gray-600">{c.count}</td>
+                <td class="px-4 py-3 text-right text-gray-500">${c.avg}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot class="bg-gray-50 border-t-2 border-gray-200">
+            <tr>
+              <td class="px-4 py-3"></td>
+              <td class="px-4 py-3 font-bold text-gray-800">Total</td>
+              <td class="px-4 py-3 text-right font-bold text-gray-800">{totalAllTime}</td>
+              <td class="px-4 py-3 text-right font-bold text-gray-600">{totalDonationsFormatted}</td>
+              <td class="px-4 py-3 text-right font-bold text-gray-500">${totalDonationCount ? Math.round(totalRevenue / totalDonationCount) : 0}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   </div>
@@ -131,4 +312,26 @@ const topCampaigns = [
       </a>
     </div>
   </div>
+
+  <script is:inline>
+    function toggleRecentDonations() {
+      var extras = document.querySelectorAll('.recent-extra');
+      var btn = document.getElementById('toggle-recent-btn');
+      var showing = !extras[0]?.classList.contains('hidden');
+      extras.forEach(function(el) {
+        el.classList.toggle('hidden');
+      });
+      if (btn) btn.textContent = showing ? 'Show More' : 'Show Less';
+    }
+
+    function toggleAllCampaigns() {
+      var extras = document.querySelectorAll('.campaign-extra');
+      var btn = document.getElementById('toggle-campaigns-btn');
+      var showing = !extras[0]?.classList.contains('hidden');
+      extras.forEach(function(el) {
+        el.classList.toggle('hidden');
+      });
+      if (btn) btn.textContent = showing ? 'Show All' : 'Show Less';
+    }
+  </script>
 </AdminLayout>

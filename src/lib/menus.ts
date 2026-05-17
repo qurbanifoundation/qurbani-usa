@@ -42,6 +42,8 @@ export interface NavbarData {
   menuOrder: string[];
   menuNames: Record<string, string>;
   menuColors: Record<string, string>;
+  /** Map of menu id → external/direct URL. When set, the menu renders as a plain link. */
+  menuDirectUrls: Record<string, string>;
   mobileLinks: Record<string, MobileLink[]>;
   categories: Array<{
     id: string;
@@ -110,7 +112,7 @@ export async function getNavbarData(): Promise<NavbarData> {
     const [menusResult, categoriesResult, campaignsResult, campaignPagesResult, widgetsResult] = await Promise.all([
       supabaseAdmin
         .from('mega_menus')
-        .select('id, name, sort_order, color, mobile_links')
+        .select('id, name, sort_order, color, mobile_links, direct_url')
         .eq('is_active', true)
         .order('sort_order'),
 
@@ -147,6 +149,7 @@ export async function getNavbarData(): Promise<NavbarData> {
     const menuOrder: string[] = [];
     const menuNames: Record<string, string> = { ...defaultMenuNames };
     const menuColors: Record<string, string> = { ...defaultMenuColors };
+    const menuDirectUrls: Record<string, string> = {};
     const mobileLinks: Record<string, MobileLink[]> = {};
 
     if (menusResult.data && menusResult.data.length > 0) {
@@ -154,6 +157,9 @@ export async function getNavbarData(): Promise<NavbarData> {
         menuOrder.push(m.id);
         menuNames[m.id] = m.name;
         menuColors[m.id] = m.color;
+        if (m.direct_url) {
+          menuDirectUrls[m.id] = m.direct_url;
+        }
         if (m.mobile_links && Array.isArray(m.mobile_links) && m.mobile_links.length > 0) {
           mobileLinks[m.id] = m.mobile_links;
         }
@@ -229,6 +235,7 @@ export async function getNavbarData(): Promise<NavbarData> {
       menuOrder,
       menuNames,
       menuColors,
+      menuDirectUrls,
       mobileLinks,
       categories,
       campaignsByCategory,
@@ -246,6 +253,7 @@ export async function getNavbarData(): Promise<NavbarData> {
       menuOrder: defaultMenuOrder,
       menuNames: defaultMenuNames,
       menuColors: defaultMenuColors,
+      menuDirectUrls: {},
       mobileLinks: {},
       categories: [],
       campaignsByCategory: {},

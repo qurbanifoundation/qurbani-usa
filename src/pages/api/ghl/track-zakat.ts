@@ -15,6 +15,7 @@
 import type { APIRoute } from 'astro';
 import { trackZakatCalculation } from '../../../lib/ghl-advanced';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { siteConfig } from '../../../config/site';
 
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 
@@ -242,10 +243,10 @@ function buildZakatEmail(data: {
         <tr>
           <td style="padding: 20px 30px; border-top: 1px solid #f3f4f6; text-align: center;">
             <p style="font-size: 12px; color: #999; margin: 0 0 4px;">Qurbani Foundation USA</p>
-            <p style="font-size: 11px; color: #bbb; margin: 0 0 4px;">EIN: 38-4109716 | 1-800-900-0027</p>
+            <p style="font-size: 11px; color: #bbb; margin: 0 0 4px;">${siteConfig.showEIN ? 'EIN: 38-4109146 | ' : ''}1-800-900-0027</p>
             <p style="font-size: 11px; color: #bbb; margin: 0;">
               <a href="https://www.qurbani.com" style="color: #d97706; text-decoration: none;">www.qurbani.com</a> |
-              <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a>
+              <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a>
             </p>
           </td>
         </tr>
@@ -371,7 +372,7 @@ export const POST: APIRoute = async ({ request }) => {
           },
           body: JSON.stringify({
             from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-            reply_to: 'donorcare@us.qurbani.com',
+            reply_to: 'donorcare@qurbani.com',
             to: [email],
             subject: zakatAmount > 0
               ? `Your Zakat Calculation: ${fmtCurrency(zakatAmount)} Due`

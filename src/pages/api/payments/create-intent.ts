@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { getStripe } from '../../../lib/stripe-cache';
+import { verifyTurnstileToken, getClientIp } from '../../../lib/turnstile';
 
 export const prerender = false;
 
@@ -23,7 +24,21 @@ const STRIPE_INTERVALS: Record<string, string> = {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken, checkout_source, ga_client_id, ga_session_id, utm_source, utm_medium, utm_campaign, utm_content, journey } = body;
+    const { amount, currency = 'usd', items, customer, billingAddress, type = 'single', coverFees = false, feeAmount = 0, baseAmount, resumeToken, checkout_source, ga_client_id, ga_session_id, utm_source, utm_medium, utm_campaign, utm_content, journey, turnstileToken } = body;
+
+    // Bot-protection: verify Turnstile token. Soft-fail mode — if Turnstile
+    // verification fails or the token is missing, we DO NOT block the donor.
+    // The donation proceeds but is flagged in metadata for post-hoc review.
+    // Rationale: a charity's donor experience > a marginal increase in bot
+    // exposure. Stripe + Cloudflare WAF still rate-limit card testing.
+    const turnstileResult = await verifyTurnstileToken(turnstileToken, getClientIp(request));
+    const turnstileStatus: 'verified' | 'bypassed_no_token' | 'bypassed_failed' =
+      turnstileResult.success
+        ? 'verified'
+        : (turnstileToken ? 'bypassed_failed' : 'bypassed_no_token');
+    if (!turnstileResult.success) {
+      console.warn('[create-intent] Turnstile soft-fail — donation proceeding without verification:', turnstileResult.error, turnstileResult.codes, '| status:', turnstileStatus);
+    }
 
     // Validate amount
     if (!amount || amount < 1) {
@@ -316,6 +331,7 @@ export const POST: APIRoute = async ({ request }) => {
           return {
             stripe_customer_id: stripeCustomerId,
             billing_address: billingAddress || null,
+            turnstile_status: turnstileStatus,
             ...(checkout_source ? { checkout_source } : {}),
             ...(ga_client_id ? { ga_client_id } : {}),
             ...(ga_session_id ? { ga_session_id } : {}),

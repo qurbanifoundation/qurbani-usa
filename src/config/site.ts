@@ -12,6 +12,25 @@
 
 export const siteConfig = {
   // ============================================
+  // REGION & FEATURE FLAGS
+  // ============================================
+  // Sister sites override these in their own src/config/site.ts. Defaults
+  // here reflect the USA site. The sync workflow intentionally does NOT
+  // copy this file, so each region keeps its own values.
+  //
+  // Pattern: in templates, wrap region-specific blocks with
+  //   {siteConfig.showUS501c3 && (...)}
+  // so that if a sister site sets the flag to false (or omits it entirely),
+  // the block hides automatically.
+  region: 'US' as const,
+  showUS501c3: true,                // Hide on non-US (non-501(c)(3) jurisdictions)
+  showEIN: true,                    // Hide EIN: 38-4109146 displays on non-US
+  showEstablished1999: true,        // Hide founding-year badge if origin date differs
+  showRealStoriesSection: true,     // Hide "Lives Transformed" on /impact (US-only copy)
+  showFederalTaxIdInReceipts: true, // Hide federal tax ID line in receipts on non-US
+  showUSAddressInEmails: true,      // Hide US mailing address in email footers
+
+  // ============================================
   // BRANDING
   // ============================================
   name: 'Qurbani Foundation USA',
@@ -111,7 +130,7 @@ export const siteConfig = {
     about: {
       description: 'A Muslim charity dedicated to alleviating suffering of the world\'s poorest people. Operating in 53+ countries since 1999.',
       zakatPolicy: '100% Zakat Policy',
-      ein: '38-4109716',
+      ein: '38-4109146',
     },
 
     // Quick links

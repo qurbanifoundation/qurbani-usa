@@ -40,6 +40,21 @@ function isValidEmail(email: string): boolean {
   return dotIndex > atIndex + 1 && dotIndex < email.length - 1;
 }
 
+interface CartItem {
+  id?: string;
+  name?: string;
+  label?: string;
+  campaign?: string;
+  amount?: number | string;
+  quantity?: number;
+  type?: string;
+  metadata?: Record<string, unknown> | null;
+  childName?: string | null;
+  aqiqahFor?: string | null;
+  notes?: string | null;
+  [key: string]: unknown;
+}
+
 interface CaptureRequestBody {
   email: string;
   first_name?: string;
@@ -56,6 +71,22 @@ interface CaptureRequestBody {
   utm_content?: string;
   utm_term?: string;
   checkout_source?: string;
+  items?: CartItem[];
+  cart_metadata?: Record<string, unknown>;
+}
+
+// Match the donations.items shape: keep top-level fields plus the
+// commonly-flattened metadata (childName, aqiqahFor, notes) so the admin
+// detail view can render line items the same way for both tables.
+function normalizeItems(items: CartItem[] | undefined | null): CartItem[] | null {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return items.map((i) => ({
+    ...i,
+    childName: (i.metadata as any)?.childName ?? i.childName ?? null,
+    aqiqahFor: (i.metadata as any)?.aqiqahFor ?? i.aqiqahFor ?? null,
+    notes: (i.metadata as any)?.notes ?? i.notes ?? null,
+    metadata: i.metadata || null,
+  }));
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -98,6 +129,8 @@ export const POST: APIRoute = async ({ request }) => {
       .in('status', ['started', 'abandoned'])
       .maybeSingle();
 
+    const normalizedItems = normalizeItems(body.items);
+
     if (existing) {
       // Update existing record with fresh data + reset start time so it appears at top of admin list
       const now = new Date().toISOString();
@@ -119,6 +152,8 @@ export const POST: APIRoute = async ({ request }) => {
           utm_content: body.utm_content || undefined,
           utm_term: body.utm_term || undefined,
           checkout_source: body.checkout_source || undefined,
+          items: normalizedItems || undefined,
+          cart_metadata: body.cart_metadata || undefined,
           checkout_started_at: now,
           last_activity_at: now,
           resume_url: freshResumeUrl,
@@ -163,6 +198,8 @@ export const POST: APIRoute = async ({ request }) => {
         utm_content: body.utm_content || null,
         utm_term: body.utm_term || null,
         checkout_source: body.checkout_source || null,
+        items: normalizedItems,
+        cart_metadata: body.cart_metadata || null,
         resume_token,
         resume_url,
         status: 'started',

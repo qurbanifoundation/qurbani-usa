@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { siteConfig } from '../../../config/site';
 
 export const prerender = false;
 
@@ -220,7 +221,7 @@ function generateFaq(title: string, category: string, country: string): any {
 
   const items = [
     { question: 'Where does my donation go?', answer: '100% of your donation goes directly to those in need. We maintain a strict 100% donation policy, meaning administrative costs are covered separately and never taken from your charitable contributions.' },
-    { question: 'Is my donation tax-deductible?', answer: 'Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization (EIN: 38-4109716). All donations are tax-deductible to the extent allowed by law. You will receive a donation receipt via email.' },
+    ...(siteConfig.showUS501c3 ? [{ question: 'Is my donation tax-deductible?', answer: 'Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization (EIN: 38-4109146). All donations are tax-deductible to the extent allowed by law. You will receive a donation receipt via email.' }] : []),
     { question: 'Can I cancel my monthly donation?', answer: 'Absolutely. You can cancel or modify your recurring donation at any time through the link in your donation receipt email, or by contacting us at info@qurbani.com or calling 1-800-900-0027.' },
     { question: 'How is my payment processed?', answer: 'All payments are processed securely through Stripe, a PCI-compliant payment processor used by millions of organizations worldwide. We accept all major credit and debit cards, as well as Apple Pay and Google Pay.' },
   ];

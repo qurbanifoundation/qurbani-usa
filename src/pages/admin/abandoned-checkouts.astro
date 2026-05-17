@@ -4,91 +4,16 @@ import { supabaseAdmin } from '../../lib/supabase';
 
 export const prerender = false;
 
-// Get query params for filtering
+// Get query params for filtering / detail view
 const url = new URL(Astro.request.url);
+const detailId = url.searchParams.get('id') || '';
 const statusFilter = url.searchParams.get('status') || 'all';
 const dateRange = url.searchParams.get('range') || '30d';
 const page = parseInt(url.searchParams.get('page') || '1');
 const perPage = 25;
 
-// Date range filter
-let dateThreshold: Date | null = null;
-if (dateRange === '7d') dateThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-else if (dateRange === '30d') dateThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-else if (dateRange === '90d') dateThreshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-
-// Build query
-let query = supabaseAdmin
-  .from('abandoned_checkouts')
-  .select('*', { count: 'exact' })
-  .order('checkout_started_at', { ascending: false });
-
-if (statusFilter !== 'all') {
-  query = query.eq('status', statusFilter);
-}
-if (dateThreshold) {
-  query = query.gte('checkout_started_at', dateThreshold.toISOString());
-}
-
-// Pagination
-const { data: checkouts, count, error } = await query
-  .range((page - 1) * perPage, page * perPage - 1);
-
-const totalPages = Math.ceil((count || 0) / perPage);
-
-// Get stats (within the date range)
-let statsQuery = supabaseAdmin
-  .from('abandoned_checkouts')
-  .select('status, amount, recovered_at');
-
-if (dateThreshold) {
-  statsQuery = statsQuery.gte('checkout_started_at', dateThreshold.toISOString());
-}
-
-const { data: statsData } = await statsQuery;
-
-const stats = {
-  total: statsData?.length || 0,
-  started: statsData?.filter(d => d.status === 'started').length || 0,
-  abandoned: statsData?.filter(d => d.status === 'abandoned').length || 0,
-  recovered: statsData?.filter(d => d.status === 'recovered').length || 0,
-  completed: statsData?.filter(d => d.status === 'completed').length || 0,
-  expired: statsData?.filter(d => d.status === 'expired').length || 0,
-  recoveryRate: 0,
-  revenueRecovered: 0,
-  revenueAbandoned: 0,
-  revenueCompleted: 0,
-};
-
-// Recovery rate = truly recovered / (abandoned + recovered) — excludes normal completions
-const abandonedPlusRecovered = stats.abandoned + stats.recovered;
-stats.recoveryRate = abandonedPlusRecovered > 0
-  ? Math.round((stats.recovered / abandonedPlusRecovered) * 100)
-  : 0;
-
-stats.revenueRecovered = statsData
-  ?.filter(d => d.status === 'recovered' && d.amount)
-  .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0;
-
-stats.revenueAbandoned = statsData
-  ?.filter(d => d.status === 'abandoned' && d.amount)
-  .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0;
-
-stats.revenueCompleted = statsData
-  ?.filter(d => d.status === 'completed' && d.amount)
-  .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0) || 0;
-
-// Campaign breakdown for recovered revenue
-const campaignBreakdown: Record<string, { count: number; revenue: number }> = {};
-statsData?.filter(d => d.status === 'recovered').forEach(d => {
-  const key = (d as any).campaign_type || 'general';
-  if (!campaignBreakdown[key]) campaignBreakdown[key] = { count: 0, revenue: 0 };
-  campaignBreakdown[key].count++;
-  campaignBreakdown[key].revenue += parseFloat(d.amount) || 0;
-});
-
-// Format date helper (Eastern Time)
-function formatDate(dateStr: string | null) {
+// ─── Helpers ───
+function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -97,8 +22,8 @@ function formatDate(dateStr: string | null) {
   });
 }
 
-function formatAmount(amount: number | string | null) {
-  if (!amount) return '-';
+function formatAmount(amount: number | string | null | undefined) {
+  if (amount === null || amount === undefined || amount === '') return '-';
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
 }
@@ -119,333 +44,1100 @@ function getRecoveryStepLabel(step: number) {
   return `${step}/5`;
 }
 
-// Pre-compute pagination (Astro JSX can't handle < in expressions)
-const paginationPages: number[] = [];
-for (let i = 0; i < Math.min(totalPages, 5); i++) {
-  const p = page <= 3 ? i + 1 : page + i - 2;
-  if (p >= 1 && p <= totalPages) paginationPages.push(p);
+function parseItems(raw: any) {
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : (raw || []);
+  } catch { return []; }
 }
-const showPrevPage = page > 1;
-const showNextPage = page < totalPages;
-const showPagination = totalPages > 1;
+
+function buildBackParams() {
+  const p = new URLSearchParams();
+  if (statusFilter !== 'all') p.set('status', statusFilter);
+  if (dateRange !== '30d') p.set('range', dateRange);
+  if (page !== 1) p.set('page', String(page));
+  const s = p.toString();
+  return s ? `?${s}` : '';
+}
+
+// ═══════════════════════════════════════════════════════
+// DETAIL VIEW (when ?id=XXX is set)
+// ═══════════════════════════════════════════════════════
+let detail: Record<string, any> | null = null;
+let relatedDonations: Record<string, any>[] = [];
+let lifetimeTotal = 0;
+let derivedAddress: Record<string, string> | null = null;
+let derivedPhone: string | null = null;
+let lastAttemptedItems: any[] = [];
+let lastAttemptedDonation: Record<string, any> | null = null;
+let abandonedCartItems: any[] = [];
+
+if (detailId) {
+  const { data: row } = await supabaseAdmin
+    .from('abandoned_checkouts')
+    .select('*')
+    .eq('id', detailId)
+    .single();
+  detail = row || null;
+
+  // Items captured at the email-blur step. Mirrors donations.items shape.
+  if (detail?.items) {
+    abandonedCartItems = parseItems(detail.items);
+  }
+
+  if (detail?.email) {
+    const normalizedEmail = detail.email.toLowerCase();
+    const { data: donations } = await supabaseAdmin
+      .from('donations')
+      .select('id, amount, currency, status, donation_type, items, donor_name, donor_phone, campaign_name, campaign_slug, metadata, error_message, stripe_payment_intent_id, created_at, completed_at')
+      .eq('donor_email', normalizedEmail)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    relatedDonations = donations || [];
+
+    lifetimeTotal = relatedDonations
+      .filter((d) => d.status === 'completed')
+      .reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+
+    // Pull most-recent address + phone we have on file (any status)
+    const withAddress = relatedDonations.find((d) => (d.metadata as any)?.billing_address);
+    if (withAddress) {
+      derivedAddress = (withAddress.metadata as any).billing_address;
+    }
+    derivedPhone = relatedDonations.find((d) => d.donor_phone)?.donor_phone || null;
+
+    // Find the last donation attempt (pending/failed/completed) — that's what they tried to charge
+    lastAttemptedDonation = relatedDonations[0] || null;
+    if (lastAttemptedDonation) {
+      lastAttemptedItems = parseItems(lastAttemptedDonation.items);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LIST VIEW (only computed when not viewing detail)
+// ═══════════════════════════════════════════════════════
+let dateThreshold: Date | null = null;
+if (dateRange === '7d') dateThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+else if (dateRange === '30d') dateThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+else if (dateRange === '90d') dateThreshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+let checkouts: Record<string, any>[] = [];
+let count = 0;
+let totalPages = 0;
+let listError: any = null;
+const stats = {
+  total: 0, started: 0, abandoned: 0, recovered: 0, completed: 0, expired: 0,
+  recoveryRate: 0, revenueRecovered: 0, revenueAbandoned: 0, revenueCompleted: 0,
+};
+const campaignBreakdown: Record<string, { count: number; revenue: number }> = {};
+const paginationPages: number[] = [];
+let showNextPage = false;
+let showPagination = false;
+
+if (!detailId) {
+  let query = supabaseAdmin
+    .from('abandoned_checkouts')
+    .select('*', { count: 'exact' })
+    .order('checkout_started_at', { ascending: false });
+
+  if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+  if (dateThreshold) query = query.gte('checkout_started_at', dateThreshold.toISOString());
+
+  const result = await query.range((page - 1) * perPage, page * perPage - 1);
+  checkouts = result.data || [];
+  count = result.count || 0;
+  listError = result.error;
+  totalPages = Math.ceil(count / perPage);
+
+  // Stats
+  let statsQuery = supabaseAdmin
+    .from('abandoned_checkouts')
+    .select('status, amount, recovered_at, campaign_type');
+  if (dateThreshold) statsQuery = statsQuery.gte('checkout_started_at', dateThreshold.toISOString());
+  const { data: statsData } = await statsQuery;
+
+  stats.total = statsData?.length || 0;
+  stats.started = statsData?.filter((d) => d.status === 'started').length || 0;
+  stats.abandoned = statsData?.filter((d) => d.status === 'abandoned').length || 0;
+  stats.recovered = statsData?.filter((d) => d.status === 'recovered').length || 0;
+  stats.completed = statsData?.filter((d) => d.status === 'completed').length || 0;
+  stats.expired = statsData?.filter((d) => d.status === 'expired').length || 0;
+
+  const abandonedPlusRecovered = stats.abandoned + stats.recovered;
+  stats.recoveryRate = abandonedPlusRecovered > 0
+    ? Math.round((stats.recovered / abandonedPlusRecovered) * 100)
+    : 0;
+  stats.revenueRecovered = statsData?.filter((d) => d.status === 'recovered' && d.amount)
+    .reduce((sum, d) => sum + (parseFloat(d.amount as any) || 0), 0) || 0;
+  stats.revenueAbandoned = statsData?.filter((d) => d.status === 'abandoned' && d.amount)
+    .reduce((sum, d) => sum + (parseFloat(d.amount as any) || 0), 0) || 0;
+  stats.revenueCompleted = statsData?.filter((d) => d.status === 'completed' && d.amount)
+    .reduce((sum, d) => sum + (parseFloat(d.amount as any) || 0), 0) || 0;
+
+  statsData?.filter((d) => d.status === 'recovered').forEach((d) => {
+    const key = ((d as any).campaign_type as string) || 'general';
+    if (!campaignBreakdown[key]) campaignBreakdown[key] = { count: 0, revenue: 0 };
+    campaignBreakdown[key].count++;
+    campaignBreakdown[key].revenue += parseFloat(d.amount as any) || 0;
+  });
+
+  for (let i = 0; i < Math.min(totalPages, 5); i++) {
+    const p = page <= 3 ? i + 1 : page + i - 2;
+    if (p >= 1 && p <= totalPages) paginationPages.push(p);
+  }
+  showNextPage = page < totalPages;
+  showPagination = totalPages > 1;
+}
+
+// ─── Campaigns for charge form (only when in detail view) ───
+let campaigns: { slug: string; name: string; url_path: string | null }[] = [];
+if (detailId) {
+  const { data: c } = await supabaseAdmin
+    .from('campaigns')
+    .select('slug, name, url_path')
+    .eq('is_active', true)
+    .order('name');
+  campaigns = c || [];
+}
+
+// Map slug → url_path so the in-site charge button redirects to the correct
+// campaign page (campaigns use /<category>/<slug> or /<slug>, NOT /appeals/<slug>).
+const campaignUrlMap: Record<string, string> = {};
+for (const c of campaigns) {
+  if (c.url_path) campaignUrlMap[c.slug] = c.url_path;
+}
+
+const fullName = detail ? [detail.first_name, detail.last_name].filter(Boolean).join(' ') : '';
+const formattedAddress = derivedAddress
+  ? [derivedAddress.line1, derivedAddress.line2, derivedAddress.city, derivedAddress.state, derivedAddress.postal_code, derivedAddress.country]
+      .filter(Boolean).join(', ')
+  : null;
 ---
 
-<AdminLayout title="Cart Recovery" activeNav="cart-recovery">
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-    <div class="bg-white rounded-xl shadow-sm p-5 border border-teal-100">
-      <p class="text-sm text-teal-600 font-medium">Completed</p>
-      <p class="text-2xl font-bold text-teal-700 mt-1">{stats.completed}</p>
-      <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueCompleted)} normal</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5 border border-amber-100">
-      <p class="text-sm text-amber-600 font-medium">Abandoned</p>
-      <p class="text-2xl font-bold text-amber-700 mt-1">{stats.abandoned}</p>
-      <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueAbandoned)} at risk</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5 border border-green-100">
-      <p class="text-sm text-green-600 font-medium">Recovered</p>
-      <p class="text-2xl font-bold text-green-700 mt-1">{stats.recovered}</p>
-      <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueRecovered)} won back</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5 border border-emerald-100">
-      <p class="text-sm text-emerald-600 font-medium">Recovery Rate</p>
-      <p class="text-2xl font-bold text-emerald-700 mt-1">{stats.recoveryRate}%</p>
-      <p class="text-xs text-gray-400 mt-1">abandoned → recovered</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5 border border-blue-100">
-      <p class="text-sm text-blue-600 font-medium">In Progress</p>
-      <p class="text-2xl font-bold text-blue-700 mt-1">{stats.started}</p>
-      <p class="text-xs text-gray-400 mt-1">currently in checkout</p>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-      <p class="text-sm text-gray-500 font-medium">Expired</p>
-      <p class="text-2xl font-bold text-gray-600 mt-1">{stats.expired}</p>
-      <p class="text-xs text-gray-400 mt-1">closed/unsubscribed</p>
-    </div>
-  </div>
+<AdminLayout title={detail ? `Cart Recovery — ${fullName || detail.email}` : 'Cart Recovery'} activeNav="cart-recovery">
+  {detail ? (
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DETAIL VIEW                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div>
+      <a href={`/admin/abandoned-checkouts${buildBackParams()}`} class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Back to Cart Recovery
+      </a>
 
-  <!-- Filters -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-center gap-4">
-    <div class="flex items-center gap-2">
-      <label class="text-sm font-medium text-gray-600">Status:</label>
-      <div class="flex gap-1">
-        {['all', 'started', 'abandoned', 'recovered', 'completed', 'expired'].map((s) => (
-          <a
-            href={`?status=${s}&range=${dateRange}&page=1`}
-            class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-              statusFilter === s
-                ? 'bg-[#01534d] text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
-          </a>
-        ))}
-      </div>
-    </div>
+      <!-- Header Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="p-6">
+          <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <!-- Left: Donor Info -->
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-[#01534d] flex items-center justify-center text-white text-lg font-bold">
+                  {(fullName || detail.email || 'A').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h1 class="text-xl font-bold text-gray-900">{fullName || 'Unknown Donor'}</h1>
+                  <p class="text-sm text-gray-500">{detail.email}</p>
+                </div>
+                <span class={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${getStatusBadge(detail.status)}`}>
+                  {detail.status}
+                </span>
+              </div>
 
-    <div class="flex items-center gap-2 ml-auto">
-      <label class="text-sm font-medium text-gray-600">Range:</label>
-      <div class="flex gap-1">
-        {['7d', '30d', '90d', 'all'].map((r) => (
-          <a
-            href={`?status=${statusFilter}&range=${r}&page=1`}
-            class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-              dateRange === r
-                ? 'bg-[#01534d] text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {r === 'all' ? 'All Time' : r}
-          </a>
-        ))}
-      </div>
-    </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Email</span>
+                  <p class="text-gray-800 font-medium break-all"><a href={`mailto:${detail.email}`} class="hover:underline">{detail.email}</a></p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Phone</span>
+                  <p class="text-gray-800 font-medium">
+                    {detail.phone || derivedPhone ? (
+                      <a href={`tel:${detail.phone || derivedPhone}`} class="hover:underline">{detail.phone || derivedPhone}</a>
+                    ) : (
+                      <span class="text-gray-300">Not provided</span>
+                    )}
+                    {!detail.phone && derivedPhone && <span class="ml-1 text-[10px] text-gray-400">(from prior donation)</span>}
+                  </p>
+                </div>
+                <div class="sm:col-span-2">
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Address</span>
+                  <p class="text-gray-800">
+                    {formattedAddress || <span class="text-gray-300">No address on file</span>}
+                    {formattedAddress && <span class="ml-1 text-[10px] text-gray-400">(from prior donation)</span>}
+                  </p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Country</span>
+                  <p class="text-gray-800">{detail.country || derivedAddress?.country || '-'}</p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Lifetime Total</span>
+                  <p class="text-gray-800 font-medium">{formatAmount(lifetimeTotal)}</p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Checkout Started</span>
+                  <p class="text-gray-800">{formatDate(detail.checkout_started_at)}</p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs uppercase tracking-wider">Last Activity</span>
+                  <p class="text-gray-800">{formatDate(detail.last_activity_at)}</p>
+                </div>
+                {detail.abandoned_at && (
+                  <div>
+                    <span class="text-gray-400 text-xs uppercase tracking-wider">Abandoned</span>
+                    <p class="text-amber-700">{formatDate(detail.abandoned_at)}</p>
+                  </div>
+                )}
+                {detail.recovered_at && (
+                  <div>
+                    <span class="text-gray-400 text-xs uppercase tracking-wider">Recovered</span>
+                    <p class="text-green-700 font-medium">{formatDate(detail.recovered_at)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
 
-    <a
-      href={`/api/admin/abandoned-checkouts-csv?status=${statusFilter}&range=${dateRange}`}
-      class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center gap-1"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      Export CSV
-    </a>
+            <!-- Right: Amount + Actions -->
+            <div class="lg:min-w-[280px]">
+              <div class="text-right mb-4">
+                <p class="text-xs text-gray-400 uppercase tracking-wider">Attempted Amount</p>
+                <p class="text-3xl font-bold text-gray-900">{formatAmount(detail.amount)}</p>
+                <p class="text-sm text-gray-500 mt-1 capitalize">{detail.campaign_slug?.replace(/-/g, ' ') || 'General'}</p>
+              </div>
 
-    <!-- Bulk Delete Button (hidden until items selected) -->
-    <button
-      id="bulk-delete-btn"
-      class="hidden px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 flex items-center gap-1 transition"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-      Delete <span id="delete-count">0</span> selected
-    </button>
-  </div>
-
-  <!-- Campaign Breakdown (only if there are recovered checkouts) -->
-  {Object.keys(campaignBreakdown).length > 0 && (
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Recovery by Campaign Type</h3>
-      <div class="flex flex-wrap gap-3">
-        {Object.entries(campaignBreakdown).sort((a, b) => b[1].revenue - a[1].revenue).map(([type, data]) => (
-          <div class="bg-green-50 rounded-lg px-4 py-2 border border-green-100">
-            <span class="text-sm font-medium text-green-800 capitalize">{type}</span>
-            <span class="text-sm text-green-600 ml-2">{data.count} recovered</span>
-            <span class="text-sm font-semibold text-green-700 ml-1">({formatAmount(data.revenue)})</span>
+              <div class="flex flex-col gap-2 border-t border-gray-100 pt-4">
+                {detail.resume_url && (
+                  <button id="copy-resume-btn" data-url={detail.resume_url} class="w-full px-3 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition font-medium text-center flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Copy Resume Link
+                  </button>
+                )}
+                <a href="#charge-form" class="w-full px-3 py-2 text-sm bg-[#01534d] text-white rounded-lg hover:bg-[#01534d]/90 transition font-semibold text-center flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v8m0 0v.5m9-4.5a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Quick Charge / Pay-by-Phone
+                </a>
+              </div>
+            </div>
           </div>
-        ))}
+        </div>
       </div>
-    </div>
-  )}
 
-  <!-- Data Table -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-    {error ? (
-      <div class="p-8 text-center text-red-600">Error loading data: {error.message}</div>
-    ) : !checkouts || checkouts.length === 0 ? (
-      <div class="p-8 text-center text-gray-500">No abandoned checkouts found for this filter.</div>
-    ) : (
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th class="px-4 py-3 w-10">
-                <input type="checkbox" id="select-all-cb" class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d] cursor-pointer" title="Select all on this page" />
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Donor</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Campaign</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Source</th>
-              <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
-              <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-              <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Emails</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Abandoned</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Recovered</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {checkouts.map((c: any) => (
-              <tr class="hover:bg-gray-50 transition-colors" data-checkout-id={c.id}>
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="row-cb w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d] cursor-pointer" value={c.id} />
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{formatDate(c.checkout_started_at)}</td>
-                <td class="px-4 py-3">
-                  <div class="text-sm font-medium text-gray-800">{c.first_name} {c.last_name || ''}</div>
-                  <div class="text-xs text-gray-500">{c.email}</div>
-                  {c.phone && <div class="text-xs text-gray-400">{c.phone}</div>}
-                </td>
-                <td class="px-4 py-3">
-                  <div class="text-sm text-gray-700">{c.campaign_slug || '-'}</div>
-                  <div class="text-xs text-gray-400 capitalize">{c.campaign_type || ''}</div>
-                </td>
-                <td class="px-4 py-3">
-                  {c.checkout_source ? (
-                    <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700">{c.checkout_source}</span>
-                  ) : (
-                    <span class="text-gray-300 text-xs">-</span>
-                  )}
-                  {c.utm_source && (
-                    <div class="mt-1 flex flex-wrap gap-0.5">
-                      <span class="inline-block px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-medium rounded" title="utm_source">{c.utm_source}</span>
-                      {c.utm_medium && <span class="inline-block px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-medium rounded" title="utm_medium">{c.utm_medium}</span>}
-                      {c.utm_campaign && <span class="inline-block px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-medium rounded" title="utm_campaign">{c.utm_campaign}</span>}
-                    </div>
-                  )}
-                  {(c.utm_content || c.utm_term) && (
-                    <div class="mt-0.5 flex flex-wrap gap-0.5">
-                      {c.utm_content && <span class="inline-block px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-medium rounded" title="utm_content">{c.utm_content}</span>}
-                      {c.utm_term && <span class="inline-block px-1.5 py-0.5 bg-pink-50 text-pink-600 text-[9px] font-medium rounded" title="utm_term">{c.utm_term}</span>}
-                    </div>
-                  )}
-                </td>
-                <td class="px-4 py-3 text-sm font-medium text-gray-800 text-right whitespace-nowrap">{formatAmount(c.amount)}</td>
-                <td class="px-4 py-3 text-center">
-                  <span class={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(c.status)}`}>
-                    {c.status}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-sm text-center text-gray-600">{getRecoveryStepLabel(c.recovery_step_last_sent)}</td>
-                <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{formatDate(c.abandoned_at)}</td>
-                <td class="px-4 py-3 text-sm whitespace-nowrap">
-                  {c.recovered_at ? (
-                    <span class="text-green-600 font-medium">{formatDate(c.recovered_at)}</span>
-                  ) : (
-                    <span class="text-gray-400">-</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
+      <!-- Quick Charge Form -->
+      <div id="charge-form" class="bg-white rounded-xl shadow-sm border border-emerald-200 mb-6">
+        <div class="px-6 py-4 border-b border-emerald-100 bg-emerald-50/50 rounded-t-xl">
+          <h2 class="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Generate Pay-by-Phone Link</h2>
+          <p class="text-xs text-emerald-700/80 mt-1">Edit the amount, generate a Stripe checkout link, and send it to the donor over the phone or via SMS.</p>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Amount (USD)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                <input
+                  id="charge-amount"
+                  type="number"
+                  step="1"
+                  min="1"
+                  value={detail.amount || ''}
+                  class="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-base font-semibold focus:ring-2 focus:ring-[#01534d]/30 focus:border-[#01534d]"
+                  placeholder="100"
+                />
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Campaign</label>
+              <select id="charge-campaign" class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#01534d]/30 focus:border-[#01534d]">
+                <option value={detail.campaign_slug || 'general'} selected>
+                  {detail.campaign_slug
+                    ? detail.campaign_slug.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                    : 'General Donation'} (current)
+                </option>
+                {campaigns.filter((c) => c.slug !== detail.campaign_slug).map((c) => (
+                  <option value={c.slug}>{c.name}</option>
+                ))}
+                <option value="general">General Donation</option>
+              </select>
+            </div>
+          </div>
 
-    <!-- Pagination -->
-    {showPagination && (
-      <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-        <p class="text-sm text-gray-600">
-          Showing {(page - 1) * perPage + 1}-{Math.min(page * perPage, count || 0)} of {count} results
-        </p>
-        <div class="flex gap-1">
-          {page > 1 && (
-            <a href={`?status=${statusFilter}&range=${dateRange}&page=${page - 1}`} class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50">Prev</a>
-          )}
-          {paginationPages.map((p) => (
-              <a
-                href={`?status=${statusFilter}&range=${dateRange}&page=${p}`}
-                class={`px-3 py-1.5 rounded text-sm ${p === page ? 'bg-[#01534d] text-white' : 'bg-white border hover:bg-gray-50'}`}
-              >
-                {p}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button id="open-site-checkout-btn" class="px-5 py-3 bg-[#01534d] text-white rounded-lg hover:bg-[#01534d]/90 transition font-semibold flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 01-2 2h-4M9 22V12h6v10M9 22H5a2 2 0 01-2-2V9z"></path></svg>
+              Open on Our Checkout
+            </button>
+            <button id="generate-link-btn" class="px-5 py-3 bg-white border-2 border-[#01534d] text-[#01534d] rounded-lg hover:bg-[#01534d]/5 transition font-semibold flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+              Stripe-Hosted Link (for SMS)
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            <span class="font-semibold text-[#01534d]">Open on Our Checkout</span>: opens the site checkout in a new tab with all donor info + amount pre-filled — admin enters card and submits.
+            <br />
+            <span class="font-semibold">Stripe-Hosted Link</span>: generates a 24-hr link to send to the donor via SMS so they can pay themselves.
+          </p>
+
+          <div id="link-result" class="hidden mt-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Payment Link (valid for 24 hours)</p>
+            <div class="flex items-center gap-2">
+              <input id="generated-url" type="text" readonly class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-mono text-gray-700" />
+              <button id="copy-generated-link" class="px-4 py-2 bg-[#01534d] text-white rounded-lg hover:bg-[#01534d]/90 transition text-sm font-medium whitespace-nowrap">Copy</button>
+              <a id="open-generated-link" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium whitespace-nowrap">Open</a>
+            </div>
+            {detail.phone && (
+              <a id="sms-link" href="#" class="inline-flex items-center gap-2 mt-3 text-sm text-blue-600 hover:underline">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                Open SMS to {detail.phone}
               </a>
-          ))}
-          {showNextPage && (
-            <a href={`?status=${statusFilter}&range=${dateRange}&page=${page + 1}`} class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50">Next</a>
+            )}
+          </div>
+
+          <div id="link-error" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"></div>
+
+          {detail.admin_charge_link_url && (
+            <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
+              <p class="font-medium text-gray-600">Last link generated: <span class="text-gray-500">{formatDate(detail.admin_charge_link_created_at)}</span> for <span class="font-semibold">{formatAmount(detail.admin_charge_link_amount)}</span></p>
+            </div>
           )}
         </div>
       </div>
-    )}
-  </div>
-  <!-- Bulk Delete Script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const selectAllCb = document.getElementById('select-all-cb') as HTMLInputElement;
-      const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
-      const deleteCountSpan = document.getElementById('delete-count');
-      const rowCheckboxes = document.querySelectorAll('.row-cb') as NodeListOf<HTMLInputElement>;
 
-      if (!selectAllCb || !bulkDeleteBtn || !deleteCountSpan) return;
+      <!-- Abandoned Cart Items (captured at email blur, before payment) -->
+      {abandonedCartItems.length > 0 && (
+        <div class="bg-white rounded-xl shadow-sm border border-amber-200 mb-6">
+          <div class="px-6 py-4 border-b border-amber-100 bg-amber-50/40 rounded-t-xl flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-semibold text-amber-800 uppercase tracking-wider">Abandoned Cart</h2>
+              <p class="text-xs text-amber-700/80 mt-1">What the donor had in their cart when they left.</p>
+            </div>
+            <span class="text-xs text-amber-700 font-medium">{abandonedCartItems.length} item{abandonedCartItems.length === 1 ? '' : 's'}</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Item</th>
+                  <th class="text-left px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Campaign</th>
+                  <th class="text-center px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Type</th>
+                  <th class="text-center px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Qty</th>
+                  <th class="text-right px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Amount</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {abandonedCartItems.map((item: any) => (
+                  <tr>
+                    <td class="px-4 py-2">
+                      <p class="font-medium text-gray-800">{item.name || item.label || 'Donation'}</p>
+                      {item.childName && <p class="text-xs text-gray-400">Child: {item.childName}</p>}
+                      {item.aqiqahFor && <p class="text-xs text-gray-400">For: {item.aqiqahFor}</p>}
+                      {item.notes && <p class="text-xs text-gray-400">{item.notes}</p>}
+                    </td>
+                    <td class="px-4 py-2 text-gray-600 capitalize">{(item.campaign || '-').replace(/-/g, ' ')}</td>
+                    <td class="px-4 py-2 text-center text-gray-600 capitalize">{item.type || 'single'}</td>
+                    <td class="px-4 py-2 text-center text-gray-600">{item.quantity || 1}</td>
+                    <td class="px-4 py-2 text-right font-semibold text-gray-800">{formatAmount((parseFloat(item.amount) || 0) * (item.quantity || 1))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-      function updateUI() {
-        const checked = document.querySelectorAll('.row-cb:checked') as NodeListOf<HTMLInputElement>;
-        const count = checked.length;
-        deleteCountSpan!.textContent = count.toString();
+      <!-- Last Donation Attempt -->
+      {lastAttemptedDonation && (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Last Donation Attempt</h2>
+            <span class={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+              lastAttemptedDonation.status === 'completed' ? 'bg-green-100 text-green-800'
+              : lastAttemptedDonation.status === 'failed' ? 'bg-red-100 text-red-800'
+              : lastAttemptedDonation.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-gray-100 text-gray-700'}`}>
+              {lastAttemptedDonation.status || 'unknown'}
+            </span>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-4">
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Amount</span>
+                <p class="text-gray-800 font-semibold">{formatAmount(lastAttemptedDonation.amount)}</p>
+              </div>
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Campaign</span>
+                <p class="text-gray-800">{lastAttemptedDonation.campaign_name || lastAttemptedDonation.campaign_slug || '-'}</p>
+              </div>
+              <div>
+                <span class="text-gray-400 text-xs uppercase tracking-wider">Date</span>
+                <p class="text-gray-800">{formatDate(lastAttemptedDonation.created_at)}</p>
+              </div>
+            </div>
 
-        if (count > 0) {
-          bulkDeleteBtn!.classList.remove('hidden');
-          bulkDeleteBtn!.classList.add('flex');
-        } else {
-          bulkDeleteBtn!.classList.add('hidden');
-          bulkDeleteBtn!.classList.remove('flex');
-        }
+            {lastAttemptedDonation.error_message && (
+              <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-xs font-semibold text-red-800 uppercase tracking-wider">Decline Reason</p>
+                <p class="text-sm text-red-700 mt-1 font-mono">{lastAttemptedDonation.error_message}</p>
+              </div>
+            )}
 
-        // Update select-all state
-        if (rowCheckboxes.length > 0) {
-          selectAllCb!.checked = count === rowCheckboxes.length;
-          selectAllCb!.indeterminate = count > 0 && count < rowCheckboxes.length;
-        }
+            {lastAttemptedItems.length > 0 && (
+              <div class="mt-5">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Items in Cart</h3>
+                <table class="w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="text-left px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Item</th>
+                      <th class="text-left px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Campaign</th>
+                      <th class="text-center px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Qty</th>
+                      <th class="text-right px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    {lastAttemptedItems.map((item: any) => (
+                      <tr>
+                        <td class="px-4 py-2">
+                          <p class="font-medium text-gray-800">{item.name || item.label || 'Donation'}</p>
+                          {item.childName && <p class="text-xs text-gray-400">Child: {item.childName}</p>}
+                          {item.notes && <p class="text-xs text-gray-400">{item.notes}</p>}
+                        </td>
+                        <td class="px-4 py-2 text-gray-600 capitalize">{(item.campaign || '-').replace(/-/g, ' ')}</td>
+                        <td class="px-4 py-2 text-center text-gray-600">{item.quantity || 1}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-gray-800">{formatAmount((item.amount || 0) * (item.quantity || 1))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {lastAttemptedDonation.stripe_payment_intent_id && (
+              <a href={`https://dashboard.stripe.com/payments/${lastAttemptedDonation.stripe_payment_intent_id}`} target="_blank" rel="noopener noreferrer" class="inline-block mt-4 text-sm text-blue-600 hover:underline">
+                View in Stripe Dashboard &rarr;
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      <!-- Source / UTMs -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+          <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Source & Attribution</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">Checkout Source</span>
+            <p class="text-gray-800">{detail.checkout_source || '-'}</p>
+          </div>
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">UTM Source</span>
+            <p class="text-gray-800">{detail.utm_source || '-'}</p>
+          </div>
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">UTM Medium</span>
+            <p class="text-gray-800">{detail.utm_medium || '-'}</p>
+          </div>
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">UTM Campaign</span>
+            <p class="text-gray-800">{detail.utm_campaign || '-'}</p>
+          </div>
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">UTM Content</span>
+            <p class="text-gray-800">{detail.utm_content || '-'}</p>
+          </div>
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">UTM Term</span>
+            <p class="text-gray-800">{detail.utm_term || '-'}</p>
+          </div>
+          <div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">Recovery Emails Sent</span>
+            <p class="text-gray-800">{getRecoveryStepLabel(detail.recovery_step_last_sent)}</p>
+          </div>
+          {detail.recovery_last_sent_at && (
+            <div>
+              <span class="text-gray-400 text-xs uppercase tracking-wider">Last Email Sent</span>
+              <p class="text-gray-800">{formatDate(detail.recovery_last_sent_at)}</p>
+            </div>
+          )}
+          {detail.unsubscribed_at && (
+            <div>
+              <span class="text-gray-400 text-xs uppercase tracking-wider">Unsubscribed</span>
+              <p class="text-red-700">{formatDate(detail.unsubscribed_at)}</p>
+            </div>
+          )}
+          {detail.ghl_contact_id && (
+            <div class="sm:col-span-2 lg:col-span-3">
+              <span class="text-gray-400 text-xs uppercase tracking-wider">GHL Contact ID</span>
+              <p class="text-gray-800 font-mono text-xs">{detail.ghl_contact_id}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- Donation History -->
+      {relatedDonations.length > 0 && (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Donation History ({relatedDonations.length})</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Date</th>
+                  <th class="text-left px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Campaign</th>
+                  <th class="text-right px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Amount</th>
+                  <th class="text-center px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Type</th>
+                  <th class="text-center px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Status</th>
+                  <th class="text-right px-4 py-2 text-xs text-gray-500 font-semibold uppercase"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {relatedDonations.map((d: any) => (
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 text-gray-700 whitespace-nowrap">{formatDate(d.created_at)}</td>
+                    <td class="px-4 py-2 text-gray-700">{d.campaign_name || d.campaign_slug || '-'}</td>
+                    <td class="px-4 py-2 text-right font-semibold text-gray-800">{formatAmount(d.amount)}</td>
+                    <td class="px-4 py-2 text-center capitalize text-gray-600">{d.donation_type || '-'}</td>
+                    <td class="px-4 py-2 text-center">
+                      <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                        d.status === 'completed' ? 'bg-green-100 text-green-800'
+                        : d.status === 'failed' ? 'bg-red-100 text-red-800'
+                        : d.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-700'}`}>{d.status}</span>
+                    </td>
+                    <td class="px-4 py-2 text-right">
+                      <a href={`/admin/donations?donation=${d.id}`} class="text-xs text-blue-600 hover:underline">View &rarr;</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <script
+      is:inline
+      define:vars={{
+        checkoutId: detail.id,
+        donorEmail: detail.email,
+        donorPhone: detail.phone || derivedPhone || '',
+        donorName: fullName,
+        donorFirstName: detail.first_name || '',
+        donorLastName: detail.last_name || '',
+        currentCampaignSlug: detail.campaign_slug,
+        donorAddress: derivedAddress || null,
+        attemptedItems: (lastAttemptedItems && lastAttemptedItems.length > 0)
+          ? lastAttemptedItems
+          : (abandonedCartItems || []),
+        attemptedAmount: detail.amount || (lastAttemptedDonation?.amount || 0),
+        defaultCampaignName: detail.campaign_slug
+          ? detail.campaign_slug.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+          : 'General Donation',
+        campaignUrlMap,
+      }}
+    >
+      // Copy resume link
+      const copyResumeBtn = document.getElementById('copy-resume-btn');
+      if (copyResumeBtn) {
+        copyResumeBtn.addEventListener('click', async () => {
+          const url = copyResumeBtn.dataset.url;
+          if (!url) return;
+          try {
+            await navigator.clipboard.writeText(url);
+            copyResumeBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!';
+            setTimeout(() => {
+              copyResumeBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copy Resume Link';
+            }, 2000);
+          } catch {
+            prompt('Copy this URL:', url);
+          }
+        });
       }
 
-      // Select all toggle
-      selectAllCb.addEventListener('change', () => {
-        rowCheckboxes.forEach(cb => { cb.checked = selectAllCb.checked; });
-        updateUI();
-      });
+      // Generate charge link
+      const generateBtn = document.getElementById('generate-link-btn');
+      const amountInput = document.getElementById('charge-amount');
+      const campaignSelect = document.getElementById('charge-campaign');
+      const linkResult = document.getElementById('link-result');
+      const linkError = document.getElementById('link-error');
+      const generatedUrl = document.getElementById('generated-url');
+      const copyGeneratedBtn = document.getElementById('copy-generated-link');
+      const openGeneratedLink = document.getElementById('open-generated-link');
+      const smsLink = document.getElementById('sms-link');
 
-      // Individual checkbox toggle
-      rowCheckboxes.forEach(cb => {
-        cb.addEventListener('change', updateUI);
-      });
+      if (generateBtn) {
+        generateBtn.addEventListener('click', async () => {
+          linkError.classList.add('hidden');
+          linkResult.classList.add('hidden');
 
-      // Bulk delete
-      bulkDeleteBtn.addEventListener('click', async () => {
-        const checked = document.querySelectorAll('.row-cb:checked') as NodeListOf<HTMLInputElement>;
-        const ids = Array.from(checked).map(cb => cb.value);
+          const amount = parseFloat(amountInput.value);
+          if (!amount || amount < 1) {
+            linkError.textContent = 'Please enter a valid amount of $1 or more.';
+            linkError.classList.remove('hidden');
+            return;
+          }
 
-        if (ids.length === 0) return;
+          generateBtn.disabled = true;
+          const originalHtml = generateBtn.innerHTML;
+          generateBtn.innerHTML = 'Generating...';
 
-        const confirmed = confirm(`Are you sure you want to delete ${ids.length} checkout record(s)? This cannot be undone.`);
-        if (!confirmed) return;
+          try {
+            const campaignSlug = campaignSelect.value;
+            const selectedOption = campaignSelect.options[campaignSelect.selectedIndex];
+            const campaignName = selectedOption ? selectedOption.text.replace(/\s*\(current\)\s*$/, '') : '';
 
-        bulkDeleteBtn.textContent = 'Deleting...';
-        (bulkDeleteBtn as HTMLButtonElement).disabled = true;
+            const res = await fetch('/api/admin/abandoned-checkouts-charge-link', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                abandoned_checkout_id: checkoutId,
+                amount,
+                campaign_slug: campaignSlug,
+                campaign_name: campaignName,
+              }),
+            });
+            const data = await res.json();
 
-        try {
-          const res = await fetch('/api/admin/abandoned-checkouts-delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids }),
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || 'Failed to create link');
+            }
+
+            generatedUrl.value = data.url;
+            openGeneratedLink.href = data.url;
+            linkResult.classList.remove('hidden');
+
+            if (smsLink && donorPhone) {
+              const cleanedPhone = donorPhone.replace(/[^0-9+]/g, '');
+              const msg = `Hi${donorName ? ' ' + donorName.split(' ')[0] : ''}, here's your secure payment link to complete your donation: ${data.url} - Qurbani Foundation`;
+              smsLink.href = `sms:${cleanedPhone}?body=${encodeURIComponent(msg)}`;
+            }
+          } catch (err) {
+            linkError.textContent = err.message || 'Failed to generate link. Please try again.';
+            linkError.classList.remove('hidden');
+          } finally {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = originalHtml;
+          }
+        });
+      }
+
+      if (copyGeneratedBtn) {
+        copyGeneratedBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(generatedUrl.value);
+            const original = copyGeneratedBtn.textContent;
+            copyGeneratedBtn.textContent = 'Copied!';
+            setTimeout(() => { copyGeneratedBtn.textContent = original; }, 2000);
+          } catch {
+            generatedUrl.select();
+            document.execCommand('copy');
+          }
+        });
+      }
+
+      // Open Pre-filled Site Checkout
+      const openSiteBtn = document.getElementById('open-site-checkout-btn');
+      if (openSiteBtn) {
+        openSiteBtn.addEventListener('click', () => {
+          const amount = parseFloat(amountInput.value) || attemptedAmount || 0;
+          if (!amount || amount < 1) {
+            linkError.textContent = 'Please enter a valid amount of $1 or more.';
+            linkError.classList.remove('hidden');
+            return;
+          }
+
+          const campaignSlug = campaignSelect.value || currentCampaignSlug || 'general';
+          const selectedOption = campaignSelect.options[campaignSelect.selectedIndex];
+          const campaignName = selectedOption ? selectedOption.text.replace(/\s*\(current\)\s*$/, '') : defaultCampaignName;
+
+          // Build cart items — reuse the donor's last attempted items if the
+          // amount/campaign match; otherwise build a single-item cart at the
+          // (possibly edited) amount.
+          let cartItems;
+          const itemsTotal = (attemptedItems || []).reduce(
+            (sum, i) => sum + ((parseFloat(i.amount) || 0) * (i.quantity || 1)), 0
+          );
+          const sameCampaign = (attemptedItems || []).every(
+            (i) => !i.campaign || i.campaign === campaignSlug
+          );
+          if (attemptedItems && attemptedItems.length > 0 && Math.abs(itemsTotal - amount) < 0.01 && sameCampaign) {
+            cartItems = attemptedItems.map((i) => ({
+              id: i.id || (campaignSlug + '-' + Date.now()),
+              name: i.name || i.label || campaignName,
+              campaign: i.campaign || campaignSlug,
+              amount: parseFloat(i.amount) || 0,
+              quantity: i.quantity || 1,
+              type: i.type || 'single',
+              label: i.label || i.name || campaignName,
+              metadata: i.metadata || {},
+            }));
+          } else {
+            cartItems = [{
+              id: campaignSlug + '-admin-' + Date.now(),
+              name: campaignName,
+              campaign: campaignSlug,
+              amount,
+              quantity: 1,
+              type: 'single',
+              label: campaignName,
+              metadata: {},
+            }];
+          }
+
+          const prefillPayload = {
+            items: cartItems,
+            donor: {
+              firstName: donorFirstName,
+              lastName: donorLastName,
+              email: donorEmail,
+              phone: donorPhone,
+              address: donorAddress || null,
+            },
+            source: 'admin-charge',
+            abandoned_checkout_id: checkoutId,
+            generated_at: Date.now(),
+          };
+
+          try {
+            // Stash prefill payload + cart on this origin so the donate page
+            // can read it (same-origin localStorage works across tabs).
+            localStorage.setItem('qurbani_admin_prefill', JSON.stringify(prefillPayload));
+            localStorage.setItem('donationCart', JSON.stringify(cartItems));
+          } catch (e) {
+            linkError.textContent = 'Could not stash prefill data. Try again.';
+            linkError.classList.remove('hidden');
+            return;
+          }
+
+          // Open the campaign page in a new tab — use the actual url_path from
+          // the campaigns table (campaigns are at /<slug> or /<category>/<slug>,
+          // NOT /appeals/<slug>). Fall back to /donate if no mapping exists.
+          let targetPath = campaignUrlMap?.[campaignSlug] || null;
+          if (!targetPath || campaignSlug === 'general') targetPath = '/donate';
+          const targetUrl = `${targetPath}${targetPath.includes('?') ? '&' : '?'}admin_prefill=1`;
+          window.open(targetUrl, '_blank', 'noopener');
+        });
+      }
+    </script>
+  ) : (
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- LIST VIEW                                              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div>
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-teal-100">
+          <p class="text-sm text-teal-600 font-medium">Completed</p>
+          <p class="text-2xl font-bold text-teal-700 mt-1">{stats.completed}</p>
+          <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueCompleted)} normal</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-amber-100">
+          <p class="text-sm text-amber-600 font-medium">Abandoned</p>
+          <p class="text-2xl font-bold text-amber-700 mt-1">{stats.abandoned}</p>
+          <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueAbandoned)} at risk</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-green-100">
+          <p class="text-sm text-green-600 font-medium">Recovered</p>
+          <p class="text-2xl font-bold text-green-700 mt-1">{stats.recovered}</p>
+          <p class="text-xs text-gray-400 mt-1">{formatAmount(stats.revenueRecovered)} won back</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-emerald-100">
+          <p class="text-sm text-emerald-600 font-medium">Recovery Rate</p>
+          <p class="text-2xl font-bold text-emerald-700 mt-1">{stats.recoveryRate}%</p>
+          <p class="text-xs text-gray-400 mt-1">abandoned → recovered</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-blue-100">
+          <p class="text-sm text-blue-600 font-medium">In Progress</p>
+          <p class="text-2xl font-bold text-blue-700 mt-1">{stats.started}</p>
+          <p class="text-xs text-gray-400 mt-1">currently in checkout</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+          <p class="text-sm text-gray-500 font-medium">Expired</p>
+          <p class="text-2xl font-bold text-gray-600 mt-1">{stats.expired}</p>
+          <p class="text-xs text-gray-400 mt-1">closed/unsubscribed</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-600">Status:</label>
+          <div class="flex gap-1">
+            {['all', 'started', 'abandoned', 'recovered', 'completed', 'expired'].map((s) => (
+              <a
+                href={`?status=${s}&range=${dateRange}&page=1`}
+                class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  statusFilter === s
+                    ? 'bg-[#01534d] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 ml-auto">
+          <label class="text-sm font-medium text-gray-600">Range:</label>
+          <div class="flex gap-1">
+            {['7d', '30d', '90d', 'all'].map((r) => (
+              <a
+                href={`?status=${statusFilter}&range=${r}&page=1`}
+                class={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  dateRange === r
+                    ? 'bg-[#01534d] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {r === 'all' ? 'All Time' : r}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <a
+          href={`/api/admin/abandoned-checkouts-csv?status=${statusFilter}&range=${dateRange}`}
+          class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center gap-1"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export CSV
+        </a>
+
+        <button
+          id="bulk-delete-btn"
+          class="hidden px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 flex items-center gap-1 transition"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete <span id="delete-count">0</span> selected
+        </button>
+      </div>
+
+      <!-- Campaign Breakdown -->
+      {Object.keys(campaignBreakdown).length > 0 && (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Recovery by Campaign Type</h3>
+          <div class="flex flex-wrap gap-3">
+            {Object.entries(campaignBreakdown).sort((a, b) => b[1].revenue - a[1].revenue).map(([type, data]) => (
+              <div class="bg-green-50 rounded-lg px-4 py-2 border border-green-100">
+                <span class="text-sm font-medium text-green-800 capitalize">{type}</span>
+                <span class="text-sm text-green-600 ml-2">{data.count} recovered</span>
+                <span class="text-sm font-semibold text-green-700 ml-1">({formatAmount(data.revenue)})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Data Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {listError ? (
+          <div class="p-8 text-center text-red-600">Error loading data: {listError.message}</div>
+        ) : checkouts.length === 0 ? (
+          <div class="p-8 text-center text-gray-500">No abandoned checkouts found for this filter.</div>
+        ) : (
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3 w-10">
+                    <input type="checkbox" id="select-all-cb" class="w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d] cursor-pointer" title="Select all on this page" />
+                  </th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Donor</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Campaign</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Source</th>
+                  <th class="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                  <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                  <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Emails</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Abandoned</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Recovered</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {checkouts.map((c: any) => (
+                  <tr class="hover:bg-gray-50 transition-colors" data-checkout-id={c.id}>
+                    <td class="px-4 py-3">
+                      <input type="checkbox" class="row-cb w-4 h-4 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d] cursor-pointer" value={c.id} />
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{formatDate(c.checkout_started_at)}</td>
+                    <td class="px-4 py-3">
+                      <a href={`?id=${c.id}`} class="block group">
+                        <div class="text-sm font-medium text-[#01534d] group-hover:underline">{c.first_name} {c.last_name || ''}</div>
+                        <div class="text-xs text-gray-500 group-hover:text-gray-700">{c.email}</div>
+                        {c.phone && <div class="text-xs text-gray-400">{c.phone}</div>}
+                      </a>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="text-sm text-gray-700">{c.campaign_slug || '-'}</div>
+                      <div class="text-xs text-gray-400 capitalize">{c.campaign_type || ''}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                      {c.checkout_source ? (
+                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700">{c.checkout_source}</span>
+                      ) : (
+                        <span class="text-gray-300 text-xs">-</span>
+                      )}
+                      {c.utm_source && (
+                        <div class="mt-1 flex flex-wrap gap-0.5">
+                          <span class="inline-block px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-medium rounded" title="utm_source">{c.utm_source}</span>
+                          {c.utm_medium && <span class="inline-block px-1.5 py-0.5 bg-green-50 text-green-600 text-[9px] font-medium rounded" title="utm_medium">{c.utm_medium}</span>}
+                          {c.utm_campaign && <span class="inline-block px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-medium rounded" title="utm_campaign">{c.utm_campaign}</span>}
+                        </div>
+                      )}
+                      {(c.utm_content || c.utm_term) && (
+                        <div class="mt-0.5 flex flex-wrap gap-0.5">
+                          {c.utm_content && <span class="inline-block px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[9px] font-medium rounded" title="utm_content">{c.utm_content}</span>}
+                          {c.utm_term && <span class="inline-block px-1.5 py-0.5 bg-pink-50 text-pink-600 text-[9px] font-medium rounded" title="utm_term">{c.utm_term}</span>}
+                        </div>
+                      )}
+                    </td>
+                    <td class="px-4 py-3 text-sm font-medium text-gray-800 text-right whitespace-nowrap">{formatAmount(c.amount)}</td>
+                    <td class="px-4 py-3 text-center">
+                      <span class={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(c.status)}`}>
+                        {c.status}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-center text-gray-600">{getRecoveryStepLabel(c.recovery_step_last_sent)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{formatDate(c.abandoned_at)}</td>
+                    <td class="px-4 py-3 text-sm whitespace-nowrap">
+                      {c.recovered_at ? (
+                        <span class="text-green-600 font-medium">{formatDate(c.recovered_at)}</span>
+                      ) : (
+                        <span class="text-gray-400">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {showPagination && (
+          <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+              Showing {(page - 1) * perPage + 1}-{Math.min(page * perPage, count || 0)} of {count} results
+            </p>
+            <div class="flex gap-1">
+              {page > 1 && (
+                <a href={`?status=${statusFilter}&range=${dateRange}&page=${page - 1}`} class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50">Prev</a>
+              )}
+              {paginationPages.map((p) => (
+                  <a
+                    href={`?status=${statusFilter}&range=${dateRange}&page=${p}`}
+                    class={`px-3 py-1.5 rounded text-sm ${p === page ? 'bg-[#01534d] text-white' : 'bg-white border hover:bg-gray-50'}`}
+                  >
+                    {p}
+                  </a>
+              ))}
+              {showNextPage && (
+                <a href={`?status=${statusFilter}&range=${dateRange}&page=${page + 1}`} class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-50">Next</a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- Bulk Delete Script -->
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const selectAllCb = document.getElementById('select-all-cb') as HTMLInputElement;
+          const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+          const deleteCountSpan = document.getElementById('delete-count');
+          const rowCheckboxes = document.querySelectorAll('.row-cb') as NodeListOf<HTMLInputElement>;
+
+          if (!selectAllCb || !bulkDeleteBtn || !deleteCountSpan) return;
+
+          function updateUI() {
+            const checked = document.querySelectorAll('.row-cb:checked') as NodeListOf<HTMLInputElement>;
+            const count = checked.length;
+            deleteCountSpan!.textContent = count.toString();
+
+            if (count > 0) {
+              bulkDeleteBtn!.classList.remove('hidden');
+              bulkDeleteBtn!.classList.add('flex');
+            } else {
+              bulkDeleteBtn!.classList.add('hidden');
+              bulkDeleteBtn!.classList.remove('flex');
+            }
+
+            if (rowCheckboxes.length > 0) {
+              selectAllCb!.checked = count === rowCheckboxes.length;
+              selectAllCb!.indeterminate = count > 0 && count < rowCheckboxes.length;
+            }
+          }
+
+          selectAllCb.addEventListener('change', () => {
+            rowCheckboxes.forEach(cb => { cb.checked = selectAllCb.checked; });
+            updateUI();
           });
 
-          const data = await res.json();
+          rowCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateUI);
+          });
 
-          if (res.ok && data.success) {
-            // Remove deleted rows from DOM
-            ids.forEach(id => {
-              const row = document.querySelector(`tr[data-checkout-id="${id}"]`);
-              if (row) row.remove();
-            });
+          bulkDeleteBtn.addEventListener('click', async () => {
+            const checked = document.querySelectorAll('.row-cb:checked') as NodeListOf<HTMLInputElement>;
+            const ids = Array.from(checked).map(cb => cb.value);
 
-            // Reset UI
-            selectAllCb.checked = false;
-            selectAllCb.indeterminate = false;
-            bulkDeleteBtn.classList.add('hidden');
-            bulkDeleteBtn.classList.remove('flex');
+            if (ids.length === 0) return;
 
-            // Show quick toast
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in';
-            toast.textContent = `${data.deleted} record(s) deleted successfully`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            const confirmed = confirm(`Are you sure you want to delete ${ids.length} checkout record(s)? This cannot be undone.`);
+            if (!confirmed) return;
 
-            // Reload after short delay to refresh stats
-            setTimeout(() => window.location.reload(), 1500);
-          } else {
-            alert('Error deleting records: ' + (data.error || 'Unknown error'));
-          }
-        } catch (err) {
-          alert('Network error. Please try again.');
-          console.error('Delete error:', err);
-        } finally {
-          bulkDeleteBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Delete <span id="delete-count">0</span> selected`;
-          (bulkDeleteBtn as HTMLButtonElement).disabled = false;
-          updateUI();
-        }
-      });
-    });
-  </script>
+            bulkDeleteBtn.textContent = 'Deleting...';
+            (bulkDeleteBtn as HTMLButtonElement).disabled = true;
+
+            try {
+              const res = await fetch('/api/admin/abandoned-checkouts-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids }),
+              });
+
+              const data = await res.json();
+
+              if (res.ok && data.success) {
+                ids.forEach(id => {
+                  const row = document.querySelector(`tr[data-checkout-id="${id}"]`);
+                  if (row) row.remove();
+                });
+
+                selectAllCb.checked = false;
+                selectAllCb.indeterminate = false;
+                bulkDeleteBtn.classList.add('hidden');
+                bulkDeleteBtn.classList.remove('flex');
+
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-6 right-6 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in';
+                toast.textContent = `${data.deleted} record(s) deleted successfully`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+
+                setTimeout(() => window.location.reload(), 1500);
+              } else {
+                alert('Error deleting records: ' + (data.error || 'Unknown error'));
+              }
+            } catch (err) {
+              alert('Network error. Please try again.');
+              console.error('Delete error:', err);
+            } finally {
+              bulkDeleteBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Delete <span id="delete-count">0</span> selected`;
+              (bulkDeleteBtn as HTMLButtonElement).disabled = false;
+              updateUI();
+            }
+          });
+        });
+      </script>
+    </div>
+  )}
 </AdminLayout>

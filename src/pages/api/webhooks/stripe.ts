@@ -9,6 +9,7 @@ import {
   notifyRefund,
   notifyDispute,
   notifyDisputeClosed,
+  sendAdminFailedPaymentEmail,
 } from '../../../lib/notifications';
 import {
   sendDonationReceipt,
@@ -108,7 +109,7 @@ export const POST: APIRoute = async ({ request }) => {
 
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        await handlePaymentFailed(paymentIntent);
+        await handlePaymentFailed(paymentIntent, stripe);
         break;
       }
 
@@ -183,6 +184,37 @@ export const POST: APIRoute = async ({ request }) => {
 
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   console.log('Payment succeeded:', paymentIntent.id);
+
+  // Admin-generated charge links don't carry a PI at session-creation time,
+  // so the pending donation row is keyed by stripe_checkout_session_id with
+  // abandoned_checkout_id stashed in metadata. Backfill the PI ID here so
+  // the rest of this handler can find the row by stripe_payment_intent_id.
+  if (paymentIntent.metadata?.source === 'admin-charge-link') {
+    const abandonedId = paymentIntent.metadata?.abandoned_checkout_id;
+    if (abandonedId) {
+      const { data: existing } = await supabaseAdmin
+        .from('donations')
+        .select('id, stripe_payment_intent_id')
+        .eq('metadata->>abandoned_checkout_id', abandonedId)
+        .eq('status', 'pending')
+        .is('stripe_payment_intent_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error: backfillError } = await supabaseAdmin
+          .from('donations')
+          .update({ stripe_payment_intent_id: paymentIntent.id })
+          .eq('id', existing.id);
+        if (backfillError) {
+          console.error('Error backfilling PI on admin-charge-link donation:', backfillError);
+        } else {
+          console.log('Backfilled PI on admin-charge-link donation:', existing.id, paymentIntent.id);
+        }
+      }
+    }
+  }
 
   // Get the donation first to determine campaign type
   const { data: existingDonation } = await supabaseAdmin
@@ -321,54 +353,62 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       });
 
       // Move pipeline: New Donation → Payment Received
-      await moveDonationThroughPipeline(donation.donor_email, 'payment received')
+      await moveDonationThroughPipeline(donation.donor_email, 'payment received', paymentIntent.id)
         .catch(err => console.error('GHL pipeline move error:', err));
     } catch (ghlError) {
       console.error('GHL sync error:', ghlError);
     }
 
-    // Send admin notification with attribution + donor history
-    const donationMeta = donation.metadata || paymentIntent.metadata || {};
+    // Skip receipt + admin notification if create-subscription.ts already
+    // handled them (mixed cart: one-time + recurring charged in one checkout).
+    const receiptHandledElsewhere =
+      paymentIntent.metadata?.receipt_handled === 'create_endpoint' ||
+      donation.metadata?.receipt_handled === 'create_endpoint';
 
-    // Query donor lifetime stats for admin notification
-    let donorHistory = { donation_count: 0, lifetime_total: 0, first_donation: null as string | null, last_donation: null as string | null };
-    try {
-      const { data: historyData } = await supabaseAdmin
-        .from('donations')
-        .select('amount, created_at')
-        .eq('donor_email', donation.donor_email)
-        .eq('status', 'completed');
-      if (historyData && historyData.length > 0) {
-        donorHistory.donation_count = historyData.length;
-        donorHistory.lifetime_total = historyData.reduce((sum: number, d: any) => sum + (parseFloat(d.amount) || 0), 0);
-        const dates = historyData.map((d: any) => d.created_at).sort();
-        donorHistory.first_donation = dates[0];
-        donorHistory.last_donation = dates[dates.length - 1];
+    // Send admin notification with attribution + donor history (skip when
+    // create-subscription.ts already sent the combined admin email).
+    const donationMeta = donation.metadata || paymentIntent.metadata || {};
+    if (!receiptHandledElsewhere) {
+      let donorHistory = { donation_count: 0, lifetime_total: 0, first_donation: null as string | null, last_donation: null as string | null };
+      try {
+        const { data: historyData } = await supabaseAdmin
+          .from('donations')
+          .select('amount, created_at')
+          .eq('donor_email', donation.donor_email)
+          .eq('status', 'completed');
+        if (historyData && historyData.length > 0) {
+          donorHistory.donation_count = historyData.length;
+          donorHistory.lifetime_total = historyData.reduce((sum: number, d: any) => sum + (parseFloat(d.amount) || 0), 0);
+          const dates = historyData.map((d: any) => d.created_at).sort();
+          donorHistory.first_donation = dates[0];
+          donorHistory.last_donation = dates[dates.length - 1];
+        }
+      } catch (historyError) {
+        console.error('Error fetching donor history:', historyError);
       }
-    } catch (historyError) {
-      console.error('Error fetching donor history:', historyError);
+
+      await notifyDonationReceived({
+        amount: parseFloat(donation.amount),
+        donorName: donation.donor_name,
+        donorEmail: donation.donor_email,
+        items: items,
+        type: donation.donation_type,
+        attribution: {
+          utm_source: donationMeta.utm_source || '',
+          utm_medium: donationMeta.utm_medium || '',
+          utm_campaign: donationMeta.utm_campaign || '',
+          utm_content: donationMeta.utm_content || '',
+          checkout_source: donationMeta.checkout_source || '',
+          journey: donationMeta.journey || null,
+        },
+        donorHistory,
+      });
+    } else {
+      console.log('Admin notification skipped — combined notification sent by create-subscription.ts for donation:', donation.id);
     }
 
-    await notifyDonationReceived({
-      amount: parseFloat(donation.amount),
-      donorName: donation.donor_name,
-      donorEmail: donation.donor_email,
-      items: items,
-      type: donation.donation_type,
-      attribution: {
-        utm_source: donationMeta.utm_source || '',
-        utm_medium: donationMeta.utm_medium || '',
-        utm_campaign: donationMeta.utm_campaign || '',
-        utm_content: donationMeta.utm_content || '',
-        checkout_source: donationMeta.checkout_source || '',
-        journey: donationMeta.journey || null,
-      },
-      donorHistory,
-    });
-
-    // Skip receipt if already sent (e.g., mixed cart handled by create-subscription.ts)
-    if (donation.receipt_sent) {
-      console.log('Receipt already sent for donation:', donation.id, '— skipping duplicate email from webhook');
+    if (donation.receipt_sent || receiptHandledElsewhere) {
+      console.log('Receipt already sent (or handled by create-subscription.ts) for donation:', donation.id, '— skipping duplicate email from webhook');
     } else {
       // Fetch subscription management URL for recurring donations
       let managementUrl: string | undefined;
@@ -405,13 +445,12 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         .update({ receipt_sent: true })
         .eq('id', donation.id);
 
+      // Receipt state is recorded as a contact custom field + Conversations
+      // log (via sendDonationReceipt above). No pipeline-stage move here —
+      // "Payment Received" is the terminal Won stage for donations.
       await markReceiptSent(donation.donor_email).catch(err =>
         console.error('GHL markReceiptSent error:', err)
       );
-
-      // Move pipeline: Payment Received → Receipt Sent
-      await moveDonationThroughPipeline(donation.donor_email, 'receipt sent')
-        .catch(err => console.error('GHL pipeline move to Receipt Sent error:', err));
     }
   }
 
@@ -439,25 +478,36 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   await detectAndMarkRecovery(
     paymentIntent.metadata?.resume_token,
     donation?.donor_email || paymentIntent.receipt_email,
+    paymentIntent.metadata?.abandoned_checkout_id,
   ).catch(err => console.error('Recovery detection error:', err));
 }
 
-async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
+async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, stripe: Stripe) {
   console.log('Payment failed:', paymentIntent.id);
 
-  // Get donation details first
-  const { data: donation } = await supabaseAdmin
+  const errorMessage = paymentIntent.last_payment_error?.message || 'Payment failed';
+  const errorCode = paymentIntent.last_payment_error?.code || '';
+  const declineCode = paymentIntent.last_payment_error?.decline_code || '';
+  const cardBrand = (paymentIntent.last_payment_error?.payment_method as any)?.card?.brand || '';
+  const cardLast4 = (paymentIntent.last_payment_error?.payment_method as any)?.card?.last4 || '';
+
+  // Get donation details — use maybeSingle to avoid throwing on 0 results
+  const { data: donation, error: lookupError } = await supabaseAdmin
     .from('donations')
     .select('*')
     .eq('stripe_payment_intent_id', paymentIntent.id)
-    .single();
+    .maybeSingle();
+
+  if (lookupError) {
+    console.error('Error looking up failed donation:', lookupError.message);
+  }
 
   // Update donation record
   const { error } = await supabaseAdmin
     .from('donations')
     .update({
       status: 'failed',
-      error_message: paymentIntent.last_payment_error?.message,
+      error_message: errorMessage,
     })
     .eq('stripe_payment_intent_id', paymentIntent.id);
 
@@ -465,23 +515,101 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     console.error('Error updating donation:', error);
   }
 
-  // Send admin notification (GHL)
-  if (donation) {
+  // Detect if this is a Stripe-initiated subscription retry (delinquent customer auto-retry).
+  // These PIs are created by Stripe's smart-retries scheduler for past_due subscriptions,
+  // not by our checkout flow — so they have empty metadata and no DB donation row.
+  const isSubscriptionRetry =
+    !donation &&
+    (paymentIntent.description?.includes('Subscription update') ||
+      paymentIntent.description?.includes('Invoice') ||
+      !!(paymentIntent as any).invoice);
+
+  // Extract donor info — fallback chain: DB row → PI metadata → expanded customer (Stripe API).
+  // For subscription retries (no DB row, no metadata), we expand the Stripe customer
+  // object to recover the donor's name/email. Otherwise admin sees "Unknown" donor.
+  let donorName = donation?.donor_name || paymentIntent.metadata?.donor_name || '';
+  let donorEmail = donation?.donor_email || paymentIntent.metadata?.donor_email || paymentIntent.receipt_email || '';
+  let donorPhone = donation?.donor_phone || '';
+  let billingAddress: any = donation?.metadata?.billing_address || null;
+
+  if ((!donorName || !donorEmail) && paymentIntent.customer) {
+    try {
+      const customerId = typeof paymentIntent.customer === 'string'
+        ? paymentIntent.customer
+        : paymentIntent.customer.id;
+      const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+      if (!('deleted' in customer && customer.deleted)) {
+        if (!donorName && customer.name) donorName = customer.name;
+        if (!donorEmail && customer.email) donorEmail = customer.email;
+        if (!donorPhone && customer.phone) donorPhone = customer.phone;
+        if (!billingAddress && customer.address) billingAddress = customer.address;
+      }
+    } catch (e) {
+      console.error('[handlePaymentFailed] customer lookup failed:', e);
+    }
+  }
+
+  if (!donorName) donorName = 'Unknown';
+
+  const amount = donation ? parseFloat(donation.amount) : (paymentIntent.amount / 100);
+  const campaignName = donation?.campaign_name || paymentIntent.metadata?.campaign_name || (isSubscriptionRetry ? 'Recurring Subscription' : 'General');
+  const items = donation?.items || [];
+
+  // Always send admin notification
+  try {
     await notifyPaymentFailed({
-      amount: parseFloat(donation.amount),
-      donorName: donation.donor_name || 'Unknown',
-      donorEmail: donation.donor_email || 'Unknown',
-      reason: paymentIntent.last_payment_error?.message,
+      amount,
+      donorName,
+      donorEmail,
+      reason: errorMessage,
+      isSubscriptionRetry,
     });
 
-    // Send donor notification email (Resend + log to GHL Conversations)
-    if (donation.donor_email) {
-      await sendPaymentFailedEmail({
-        donorEmail: donation.donor_email,
-        donorName: donation.donor_name || 'Donor',
-        amount: parseFloat(donation.amount),
-        reason: paymentIntent.last_payment_error?.message,
+    // Also send admin email via Resend with full error details
+    try {
+      await sendAdminFailedPaymentEmail({
+        donorName,
+        donorEmail,
+        donorPhone,
+        amount,
+        campaignName,
+        items,
+        errorMessage,
+        errorCode,
+        declineCode,
+        cardBrand,
+        cardLast4,
+        paymentIntentId: paymentIntent.id,
+        createdAt: donation?.created_at || new Date().toISOString(),
       });
+    } catch (adminEmailErr: any) {
+      console.error('Error sending admin failed payment email:', adminEmailErr.message);
+    }
+  } catch (notifErr: any) {
+    console.error('Error sending failed payment notifications:', notifErr.message);
+  }
+
+  // Schedule donor recovery email — wait 30 min then check if they paid with another card
+  // Only send if we have their email
+  if (donorEmail) {
+    try {
+      // Store recovery task in DB — a scheduled check
+      await supabaseAdmin.from('admin_notifications').insert({
+        type: 'recovery_pending',
+        message: `Recovery check for ${donorName} ($${amount.toFixed(2)} ${campaignName}) — will check at ${new Date(Date.now() + 30 * 60 * 1000).toISOString()}`,
+        metadata: {
+          donor_email: donorEmail,
+          donor_name: donorName,
+          amount,
+          campaign_name: campaignName,
+          error_message: errorMessage,
+          payment_intent_id: paymentIntent.id,
+          check_after: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+          recovery_email_sent: false,
+        },
+      });
+    } catch (e: any) {
+      console.error('Error scheduling recovery:', e.message);
     }
   }
 }
@@ -593,9 +721,13 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   // (campaign, attribution, journey). Skipping duplicate here to avoid
   // sending a second "New Recurring Donor!" email with missing context.
   if (subRecord) {
-    // Check if receipt was already sent by create-subscription.ts (prevents duplicate email)
-    let receiptAlreadySent = false;
-    if (subRecord.donor_email) {
+    // Check if receipt was already sent by create-subscription.ts (prevents duplicate email).
+    // Two signals: (1) receipt_sent flag on a linked donation, (2) Stripe metadata flag
+    // set by create-subscription.ts — the metadata check is race-free (set atomically
+    // at subscription creation, before any webhooks fire).
+    const receiptHandledByEndpoint = subscription.metadata?.receipt_handled === 'create_endpoint';
+    let receiptAlreadySent = receiptHandledByEndpoint;
+    if (!receiptAlreadySent && subRecord.donor_email) {
       const { data: existingDonation } = await supabaseAdmin
         .from('donations')
         .select('receipt_sent')
@@ -857,8 +989,16 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
     })
     .eq('stripe_subscription_id', subscriptionId);
 
+  // Skip GHL sync on the FIRST recurring invoice when create-subscription.ts
+  // already handled it (its combined opp + combined receipt cover the first charge).
+  // Subsequent recurring invoices (subscription_cycle) always go through here to
+  // log each periodic donation.
+  const firstInvoiceAlreadyHandled =
+    invoice.billing_reason === 'subscription_create' &&
+    subscriptionRecord.metadata?.receipt_handled === 'create_endpoint';
+
   // Track to GoHighLevel
-  if (donation && subscriptionRecord.donor_email && subscriptionRecord.donor_name) {
+  if (donation && subscriptionRecord.donor_email && subscriptionRecord.donor_name && !firstInvoiceAlreadyHandled) {
     try {
       let items: Array<{ name: string; amount: number }> = [];
       if (subscriptionRecord.items) {
@@ -900,9 +1040,9 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice, stripe: St
       });
 
       // Move pipeline: Payment Received → Active Subscriber (recurring lifecycle)
-      await moveDonationThroughPipeline(subscriptionRecord.donor_email, 'payment received')
+      await moveDonationThroughPipeline(subscriptionRecord.donor_email, 'payment received', paymentIntentId || undefined)
         .catch(err => console.error('GHL pipeline move to Payment Received error:', err));
-      await moveDonationThroughPipeline(subscriptionRecord.donor_email, 'active subscriber')
+      await moveDonationThroughPipeline(subscriptionRecord.donor_email, 'active subscriber', paymentIntentId || undefined)
         .catch(err => console.error('GHL pipeline move to Active Subscriber error:', err));
     } catch (ghlError) {
       console.error('GHL sync error for recurring donation:', ghlError);
@@ -1127,20 +1267,38 @@ async function handleDisputeClosed(dispute: Stripe.Dispute) {
  * and marks it as recovered. Non-blocking — errors are caught by caller.
  *
  * Match priority:
- *   1. By resume_token (from Stripe metadata) — exact match
- *   2. By email within 7 days of checkout_started_at — fallback
+ *   1. By abandoned_checkout_id (admin-charge-link flow) — exact match, any age
+ *   2. By resume_token (from Stripe metadata) — exact match
+ *   3. By email within 7 days of checkout_started_at — fallback
  */
 async function detectAndMarkRecovery(
   resumeToken: string | undefined,
   email: string | undefined | null,
+  abandonedCheckoutId?: string,
 ): Promise<void> {
-  if (!resumeToken && !email) return;
+  if (!resumeToken && !email && !abandonedCheckoutId) return;
 
   let checkoutId: string | null = null;
   let checkoutData: Record<string, unknown> | null = null;
 
+  // Strategy 0: Match by abandoned_checkout_id (admin-charge-link)
+  if (abandonedCheckoutId) {
+    const { data } = await supabaseAdmin
+      .from('abandoned_checkouts')
+      .select('*')
+      .eq('id', abandonedCheckoutId)
+      .in('status', ['started', 'abandoned'])
+      .maybeSingle();
+
+    if (data) {
+      checkoutId = data.id;
+      checkoutData = data;
+      console.log(`[Recovery] Matched by abandoned_checkout_id: ${checkoutId}`);
+    }
+  }
+
   // Strategy 1: Match by resume_token (preferred)
-  if (resumeToken) {
+  if (!checkoutId && resumeToken) {
     const { data } = await supabaseAdmin
       .from('abandoned_checkouts')
       .select('*')

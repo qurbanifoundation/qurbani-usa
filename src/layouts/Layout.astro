@@ -37,6 +37,49 @@ const faviconType = adminFavicon
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Microsoft Clarity (session replay & heatmaps) — DEFERRED until after the
+         page is interactive + first user input. Loading it earlier was causing iOS
+         Safari to lose paint on fast scroll because Clarity hooks scroll/MutationObserver. -->
+    <script is:inline>
+      (function(){
+        var p = window.location.pathname;
+        if (p.indexOf('/admin') === 0) return;
+
+        function loadClarity() {
+          if (window.__clarityLoaded) return;
+          window.__clarityLoaded = true;
+          (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "wn5o3m279x");
+        }
+
+        // Wait for the page to be fully loaded + idle, then for the first user gesture.
+        // This way Clarity never competes with the browser's initial render pipeline.
+        function arm() {
+          var done = false;
+          function fire() {
+            if (done) return;
+            done = true;
+            ['scroll','click','touchstart','keydown'].forEach(function(ev){
+              window.removeEventListener(ev, fire, true);
+            });
+            // One more idle gap so the first interaction frame is buttery
+            (window.requestIdleCallback || function(cb){ return setTimeout(cb, 200); })(loadClarity);
+          }
+          ['scroll','click','touchstart','keydown'].forEach(function(ev){
+            window.addEventListener(ev, fire, { capture: true, passive: true });
+          });
+          // Hard fallback: load after 8s of no interaction so analytics still fire on bounces
+          setTimeout(fire, 8000);
+        }
+
+        if (document.readyState === 'complete') arm();
+        else window.addEventListener('load', arm, { once: true });
+      })();
+    </script>
+
     <!-- Google Analytics 4 + Google Ads Conversion Tracking -->
     <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-0WC0W1PBKC"></script>
     <script is:inline>
@@ -51,8 +94,10 @@ const faviconType = adminFavicon
         transport_type: 'beacon'
       });
 
-      // Google Ads Config
-      gtag('config', 'AW-793369119');
+      // Google Ads Config with Enhanced Conversions enabled
+      gtag('config', 'AW-793369119', {
+        'allow_enhanced_conversions': true
+      });
 
       // E-commerce tracking helper functions
       window.trackAddToCart = function(item) {
@@ -346,7 +391,7 @@ const faviconType = adminFavicon
           var raw = localStorage.getItem('qurbani_tracking');
           if (!raw) return null;
           var data = JSON.parse(raw);
-          if (Date.now() - data.session_started > 86400000) return null;
+          if (Date.now() - data.session_started > 2592000000) return null;
           var utm = data.last_touch && data.last_touch.utm ? data.last_touch.utm : {};
           utm.ts = data.session_started;
           return utm;
@@ -359,7 +404,8 @@ const faviconType = adminFavicon
           var raw = localStorage.getItem('qurbani_tracking');
           if (!raw) return null;
           var data = JSON.parse(raw);
-          if (Date.now() - data.session_started > 86400000) {
+          // Match the 30-day session window used for tracking creation
+          if (Date.now() - data.session_started > 2592000000) {
             localStorage.removeItem('qurbani_tracking');
             return null;
           }

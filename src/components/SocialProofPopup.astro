@@ -6,6 +6,7 @@
  * Fetches from /api/social-proof (real + fabricated mix).
  * Follows RamadanPopup.astro pattern: is:inline script, IIFE, localStorage cooldown.
  */
+import { siteConfig } from '../config/site';
 ---
 
 <!-- Social Proof Notification Container -->
@@ -305,16 +306,17 @@
                     Yes. All donations are processed through Stripe, a PCI-compliant payment processor. Your financial information is encrypted and never stored on our servers.
                   </div>
                 </div>
-                <!-- FAQ 2 -->
-                <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
-                  <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Is this donation tax deductible?
-                    <svg class="sp-faq-arrow w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                  </button>
-                  <div class="sp-faq-body hidden px-4 pb-3 text-sm text-gray-500 leading-relaxed">
-                    Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. Your donation is tax-deductible to the extent allowed by law. You will receive a receipt via email.
+                {siteConfig.showUS501c3 && (
+                  <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
+                    <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                      Is this donation tax deductible?
+                      <svg class="sp-faq-arrow w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="sp-faq-body hidden px-4 pb-3 text-sm text-gray-500 leading-relaxed">
+                      Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization. Your donation is tax-deductible to the extent allowed by law. You will receive a receipt via email.
+                    </div>
                   </div>
-                </div>
+                )}
                 <!-- FAQ 3 -->
                 <div class="sp-faq-item rounded-lg border border-gray-200 bg-white overflow-hidden">
                   <button type="button" class="sp-faq-trigger w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
@@ -436,10 +438,11 @@
 
     </div>
 
-    <!-- Trust line below the card -->
-    <div id="sp-modal-trust" class="hidden md:flex items-center justify-center mt-4 text-[13px] text-gray-400" style="opacity:0; transition:opacity .3s ease .15s;">
-      <span>501(c)(3) Tax-Deductible</span>
-    </div>
+    {siteConfig.showUS501c3 && (
+      <div id="sp-modal-trust" class="hidden md:flex items-center justify-center mt-4 text-[13px] text-gray-400" style="opacity:0; transition:opacity .3s ease .15s;">
+        <span>501(c)(3) Tax-Deductible</span>
+      </div>
+    )}
   </div>
 </div>
 
@@ -530,8 +533,10 @@
   function scheduleNextHybrid() {
     if (isDismissed || modalOpen || donationInteracting || notifShownCount >= MAX_PER_SESSION) return;
 
-    var triggerIdx = Math.min(notifShownCount - 1, HYBRID_TRIGGERS.length - 1);
+    // Clamp to valid range — when notifShownCount === 0, use first hybrid trigger (popup 2 timing)
+    var triggerIdx = Math.max(0, Math.min(notifShownCount - 1, HYBRID_TRIGGERS.length - 1));
     var trigger = HYBRID_TRIGGERS[triggerIdx];
+    if (!trigger) return; // defensive — should never happen after clamp, but prevents JS crash
 
     // Timer trigger — absolute time from page load (minimum 2s gap)
     var elapsed = Date.now() - pageLoadTime;
@@ -2127,6 +2132,24 @@
     var params = new URLSearchParams(window.location.search);
     var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
 
+    // Single-item cart for social-proof flow (one campaign, one amount).
+    var spCampaignName = (typeof currentModalCampaign !== 'undefined' && currentModalCampaign && (currentModalCampaign.name || currentModalCampaign.title))
+      || (typeof currentModalNotif !== 'undefined' && currentModalNotif ? currentModalNotif.campaign : null)
+      || campaignSlug;
+    var capturedItems = amount > 0 ? [{
+      id: campaignSlug + '-' + amount + '-' + spCheckoutType,
+      name: spCampaignName,
+      label: spCampaignName,
+      campaign: campaignSlug,
+      amount: amount,
+      quantity: 1,
+      type: spCheckoutType === 'monthly' ? 'monthly' : 'single',
+      metadata: null,
+      childName: null,
+      aqiqahFor: null,
+      notes: null,
+    }] : [];
+
     var payload = {
       email: email,
       first_name: firstName || undefined,
@@ -2142,6 +2165,7 @@
       utm_campaign: params.get('utm_campaign') || (storedUtm && storedUtm.utm_campaign) || undefined,
       utm_content: params.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
       utm_term: params.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
+      items: capturedItems,
     };
 
     fetch('/api/abandoned-checkout/capture', {

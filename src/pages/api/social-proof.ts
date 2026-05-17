@@ -177,12 +177,15 @@ interface SocialProofNotification {
   country: string;
   flag: string;
   action?: string; // 'popup' | 'redirect'
+  __source?: 'real' | 'fabricated' | 'featured'; // internal — stripped before response
 }
 
-// ─── In-memory cache (5 min TTL) ───
+// ─── In-memory cache (60s TTL) ───
+// Short TTL so admin toggles in /admin/social-proof propagate within a minute.
+// Previously 5 min, which made disable/enable changes feel laggy.
 let cachedNotifications: SocialProofNotification[] | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 60 * 1000; // 60 seconds
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -374,28 +377,63 @@ export const GET: APIRoute = async ({ request }) => {
           country: countryInfo.name,
           flag: countryInfo.flag,
           action,
+          __source: 'real',
         });
       }
     }
 
-    // Deduplicate real notifications by campaign slug — keep the highest-amount one per campaign
-    const seenSlugs = new Map<string, number>();
+    // Deduplicate real notifications.
+    // For slugs with abundant real donations (e.g. Qurbani has dozens of
+    // sub-campaigns: Pakistan, Bangladesh, Mali, Kashmir...), dedup by
+    // sub-campaign NAME so multiple distinct entries survive — that way
+    // the popup rotation shows several real Qurbani sub-campaigns instead
+    // of a single collapsed entry. For sparse slugs, dedup by slug as
+    // before so we keep the highest-amount one.
+    const ABUNDANT_REAL_THRESHOLD = 3;   // ≥3 real donations → keep distinct sub-campaigns
+    const PER_SLUG_MAX = 5;              // safety cap so one slug can't dominate
+
+    // Count real donations per slug
+    const realCountPerSlug = new Map<string, number>();
+    for (const n of notifications) {
+      realCountPerSlug.set(n.slug, (realCountPerSlug.get(n.slug) || 0) + 1);
+    }
+
+    const seenKeys = new Map<string, number>();
+    const perSlugCount = new Map<string, number>();
     const deduped: typeof notifications = [];
     for (const n of notifications) {
-      const existing = seenSlugs.get(n.slug);
-      if (existing === undefined) {
-        seenSlugs.set(n.slug, deduped.length);
+      const abundant = (realCountPerSlug.get(n.slug) || 0) >= ABUNDANT_REAL_THRESHOLD;
+      // Dedup key: by sub-campaign name when abundant, by slug otherwise
+      const key = abundant ? `${n.slug}::${n.campaign}` : n.slug;
+      const existingIdx = seenKeys.get(key);
+
+      if (existingIdx === undefined) {
+        if ((perSlugCount.get(n.slug) || 0) >= PER_SLUG_MAX) continue;
+        seenKeys.set(key, deduped.length);
+        perSlugCount.set(n.slug, (perSlugCount.get(n.slug) || 0) + 1);
         deduped.push(n);
-      } else if (n.amount > deduped[existing].amount) {
-        deduped[existing] = n; // Replace with higher amount
+      } else if (n.amount > deduped[existingIdx].amount) {
+        deduped[existingIdx] = n; // Replace with higher amount
       }
     }
     notifications.length = 0;
     notifications.push(...deduped);
 
+    // Slugs with enough real donations to cover the rotation on their own
+    // (e.g. Qurbani). Excluded from the fabricated pool so we never invent
+    // donations for a campaign that already has plenty of real ones.
+    const abundantRealSlugs = new Set<string>();
+    for (const [slug, count] of realCountPerSlug.entries()) {
+      if (count >= ABUNDANT_REAL_THRESHOLD) abundantRealSlugs.add(slug);
+    }
+
     // Pad with fabricated notifications — generate enough for variety (min 16 total)
     // With 4 campaigns, this gives ~4 unique donors per campaign before wrapping
     const MIN_TOTAL = 16;
+    // Fabrication pool excludes abundant-real slugs (Qurbani et al.)
+    const fabricationPoolFiltered = fabricationPool.filter(c => !abundantRealSlugs.has(c.slug));
+    const effectiveFabricationPool = fabricationPoolFiltered.length > 0 ? fabricationPoolFiltered : fabricationPool;
+
     if (notifications.length < MIN_TOTAL) {
       // Changes every 15 minutes (not hourly) for more variety between visits
       const quarterHourSeed = Math.floor(now / (15 * 60 * 1000));
@@ -428,8 +466,10 @@ export const GET: APIRoute = async ({ request }) => {
 
         const pickedCity = allUSCities[Math.floor(rand() * allUSCities.length)];
 
-        // Round-robin through campaigns — each campaign gets multiple donors
-        const camp = fabricationPool[campRoundRobin % fabricationPool.length];
+        // Round-robin through campaigns — each campaign gets multiple donors.
+        // Uses the filtered pool (abundant-real slugs excluded) so we never
+        // fabricate entries for campaigns that already have many real ones.
+        const camp = effectiveFabricationPool[campRoundRobin % effectiveFabricationPool.length];
         campRoundRobin++;
 
         // Pick amount from campaign-specific list (or default), respecting min amount
@@ -449,39 +489,44 @@ export const GET: APIRoute = async ({ request }) => {
           country: 'United States',
           flag: '🇺🇸',
           action: (camp as any).action || 'redirect',
+          __source: 'fabricated',
         });
       }
     }
 
-    // Inject featured high-value Zakat donations
-    // Find the Zakat 2026 campaign specifically — NOT Zakat ul-Fitr
+    // Inject featured high-value Zakat donations — ONLY when zakat is enabled
+    // in admin. Previously these always fired and crowded out higher-priority
+    // campaigns (like Qurbani at order=1). Now we only inject 1-2 and only
+    // when zakat is explicitly enabled for social proof.
     const zakatCamp = fabricationPool.find(c => c.slug === 'zakat')
       || fabricationPool.find(c => c.slug === 'zakat-2026')
-      || fabricationPool.find(c => c.name === 'Zakat 2026')
-      || { name: 'Zakat 2026', slug: 'zakat', image: '/images/qurbani-foundation-food-distribution.webp', url: '/zakat' };
+      || fabricationPool.find(c => c.name === 'Zakat 2026');
 
-    // Pick a rotating subset (seeded by quarter-hour) so they vary between visits
-    const featuredSeed = Math.floor(now / (15 * 60 * 1000));
-    const featuredRand = seededRandom(featuredSeed + 999);
-    // Shuffle featured list and pick 3-4 per cycle
-    const shuffledFeatured = [...FEATURED_ZAKAT_DONATIONS].sort(() => featuredRand() - 0.5);
-    const featuredCount = 3 + Math.floor(featuredRand() * 2); // 3 or 4
+    if (zakatCamp) {
+      // Pick a rotating subset (seeded by quarter-hour) so they vary between visits
+      const featuredSeed = Math.floor(now / (15 * 60 * 1000));
+      const featuredRand = seededRandom(featuredSeed + 999);
+      const shuffledFeatured = [...FEATURED_ZAKAT_DONATIONS].sort(() => featuredRand() - 0.5);
+      // Cap at 1-2 entries so Zakat doesn't dominate the rotation
+      const featuredCount = 1 + Math.floor(featuredRand() * 2); // 1 or 2
 
-    for (let i = 0; i < featuredCount && i < shuffledFeatured.length; i++) {
-      const fd = shuffledFeatured[i];
-      const countryInfo = COUNTRIES[fd.countryCode] || { flag: '🇺🇸', name: 'United States' };
-      notifications.push({
-        name: fd.name,
-        amount: fd.amount,
-        campaign: zakatCamp.name,
-        slug: zakatCamp.slug,
-        image: zakatCamp.image,
-        url: zakatCamp.url,
-        city: fd.city,
-        country: countryInfo.name,
-        flag: countryInfo.flag,
-        action: (zakatCamp as any).action || 'redirect',
-      });
+      for (let i = 0; i < featuredCount && i < shuffledFeatured.length; i++) {
+        const fd = shuffledFeatured[i];
+        const countryInfo = COUNTRIES[fd.countryCode] || { flag: '🇺🇸', name: 'United States' };
+        notifications.push({
+          name: fd.name,
+          amount: fd.amount,
+          campaign: zakatCamp.name,
+          slug: zakatCamp.slug,
+          image: zakatCamp.image,
+          url: zakatCamp.url,
+          city: fd.city,
+          country: countryInfo.name,
+          flag: countryInfo.flag,
+          action: (zakatCamp as any).action || 'redirect',
+          __source: 'featured',
+        });
+      }
     }
 
     // Remap Zakat sub-campaigns (e.g. "Zakat Fund") to main "Zakat" campaign
@@ -499,17 +544,57 @@ export const GET: APIRoute = async ({ request }) => {
       }
     }
 
-    // Shuffle so real and fake are intermixed, then ensure no two consecutive share same campaign
-    for (let i = notifications.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [notifications[i], notifications[j]] = [notifications[j], notifications[i]];
+    // ─── Order by social_proof_order from DB ───
+    // Build slug → order lookup from the admin-controlled campaigns table.
+    // Unknown slugs (e.g. legacy real donations whose slug isn't in the
+    // enabled campaign list) get pushed to the bottom.
+    const slugOrderMap = new Map<string, number>();
+    for (const c of campaignList) {
+      slugOrderMap.set(c.slug, c.social_proof_order ?? 50);
+    }
+    const orderFor = (slug: string): number => slugOrderMap.get(slug) ?? 999;
+
+    // Stable seeded tiebreaker so within-same-order entries vary between
+    // 15-minute windows but stay consistent during the cache lifetime.
+    const orderSeed = Math.floor(now / (15 * 60 * 1000));
+    const orderRand = seededRandom(orderSeed + 7);
+    const tieBreakers = new Map<number, number>();
+    for (let i = 0; i < notifications.length; i++) {
+      tieBreakers.set(i, orderRand());
     }
 
-    // Post-shuffle: fix consecutive same-campaign notifications
-    // Swap with the next different-campaign notification when collision detected
+    // Preserve original indices for tiebreaking, then sort by:
+    //   1. campaign social_proof_order ASC (DB-controlled — order=1 first)
+    //   2. real donations before fabricated within same order (higher trust)
+    //   3. seeded random tiebreaker (varies between 15-min cache windows)
+    const sourceRank: Record<string, number> = { real: 0, fabricated: 1, featured: 2 };
+    const indexed = notifications.map((n, idx) => ({
+      n,
+      idx,
+      order: orderFor(n.slug),
+      sourceRank: sourceRank[n.__source ?? 'fabricated'] ?? 1,
+    }));
+
+    indexed.sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      // Larger donations first within the same campaign-order — bigger
+      // amounts look more impressive ($2500 Zakat before $150, $680
+      // Qurbani Pakistan before $77 Mali). This intentionally outranks
+      // real-vs-fabricated source so a $2500 featured donation appears
+      // before a $100 real one within the same campaign tier.
+      if (a.n.amount !== b.n.amount) return b.n.amount - a.n.amount;
+      if (a.sourceRank !== b.sourceRank) return a.sourceRank - b.sourceRank;
+      return (tieBreakers.get(a.idx) ?? 0) - (tieBreakers.get(b.idx) ?? 0);
+    });
+
+    notifications.length = 0;
+    for (const item of indexed) notifications.push(item.n);
+
+    // Avoid two consecutive notifications from the same campaign so the
+    // popup feels varied — swap with next different-slug entry when needed.
+    // Same logic as before; only the initial order changed.
     for (let i = 1; i < notifications.length; i++) {
       if (notifications[i].slug === notifications[i - 1].slug) {
-        // Find the next notification with a different slug
         for (let j = i + 1; j < notifications.length; j++) {
           if (notifications[j].slug !== notifications[i - 1].slug) {
             [notifications[i], notifications[j]] = [notifications[j], notifications[i]];
@@ -518,22 +603,20 @@ export const GET: APIRoute = async ({ request }) => {
         }
       }
     }
-    // Also check wrap-around: last → first shouldn't be same campaign
-    if (notifications.length > 2 && notifications[notifications.length - 1].slug === notifications[0].slug) {
-      for (let j = 1; j < notifications.length - 1; j++) {
-        if (notifications[j].slug !== notifications[0].slug && notifications[j].slug !== notifications[j - 1].slug) {
-          [notifications[notifications.length - 1], notifications[j]] = [notifications[j], notifications[notifications.length - 1]];
-          break;
-        }
-      }
-    }
+
+    // Strip internal __source tag before responding / caching — keep the
+    // public payload clean for the client component.
+    const publicNotifications: SocialProofNotification[] = notifications.map((n) => {
+      const { __source, ...rest } = n;
+      return rest;
+    });
 
     // Cache
-    cachedNotifications = notifications;
+    cachedNotifications = publicNotifications;
     cacheTimestamp = now;
 
     return new Response(JSON.stringify({
-      notifications,
+      notifications: publicNotifications,
       visitorCountry,
     }), {
       status: 200,

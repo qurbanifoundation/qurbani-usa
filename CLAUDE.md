@@ -64,13 +64,31 @@ src/
 | `POST /api/contact` | Contact form → Supabase + GHL |
 | `POST /api/newsletter` | Newsletter signup → Supabase + GHL |
 | `POST /api/webhooks/ghl` | Receives GHL status changes |
-| `POST /api/payments/create-intent` | Create PaymentIntent or Subscription |
+| `POST /api/payments/create-intent` | Create PaymentIntent (single donations) |
+| `POST /api/payments/create-setup-intent` | Create SetupIntent for recurring (no charge) |
+| `POST /api/payments/create-subscription` | Create real Subscription after PM saved |
 | `POST /api/webhooks/stripe` | Handle Stripe payment & subscription events |
 | `GET/POST/DELETE /api/subscriptions/manage` | Donor subscription management |
 | `POST /api/payments/sync-ghl` | Manual donation sync to GHL |
+| `POST /api/admin/checkout-failure` | Client-reported persistent checkout failures (admin alert + DB log) |
+| `GET /api/healthcheck` | Public uptime probe — Supabase + Stripe ping, JSON status |
 | `GET/PUT/DELETE /api/mega-menus` | Menu CRUD (supports ID changes) |
 | `GET/POST/PUT/DELETE /api/menu-widgets` | Widget CRUD |
 | `POST /api/seed-menu-widgets` | Template seeding |
+
+## Checkout Resilience Layer (May 2026)
+
+The donation checkout is designed to NEVER block real donors silently. Key patterns:
+
+- **Soft-fail Turnstile**: `verifyTurnstileToken()` failures don't block donations. Server flags donation as `turnstile_status: 'verified' | 'bypassed_no_token' | 'bypassed_failed'` in metadata. Client `getTurnstileToken()` returns `null` on any error instead of throwing.
+- **donationFetch helper** (`src/components/DonationCart.astro`): wraps all `/api/payments/*` POSTs. Retries once on 5xx network errors. On persistent failure, fires `/api/admin/checkout-failure` to alert admin in real-time with donor's email/phone/amount.
+- **Form state persistence**: every keystroke in checkout fields auto-saves to `localStorage` (key: `qurbani_form_state`, 7-day TTL). Restored on modal open. Cleared on successful donation. Survives crashes/refreshes.
+- **Admin dashboard**: `/admin/checkout-health` — real-time view of today's donations, Turnstile bypass rate, server-error alerts, recent failed donations. Auto-refreshes every 30s.
+- **Healthcheck**: `GET /api/healthcheck` pings Supabase + Stripe. Returns 200/503. Hooked to external uptime monitor (UptimeRobot) for outage alerts. Self-sends rate-limited admin email on failure (max 1/hour).
+
+**Test cards**: `4242 4242 4242 4242` succeeds. `4000 0000 0000 0002` declines. Refund in Stripe Dashboard.
+
+**Subscription management metadata column**: `donation_subscriptions.metadata jsonb` is required — without it, weekly/monthly subscription rows fail to insert and donors can't get a `management_token`. This is now permanent in the schema.
 
 ## Coding Standards
 - Strict TypeScript, no `any` except Supabase error handling

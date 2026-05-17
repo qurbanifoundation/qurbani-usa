@@ -3435,7 +3435,7 @@ const {
         'transaction_not_allowed': '🏦 Your bank does not allow this type of transaction. Please contact your bank or try a different card.',
         'currency_not_supported': '💱 This card does not support USD transactions. Please try a different card.',
         'card_not_supported': '💳 This card type is not supported. Please try a Visa, Mastercard, or American Express.',
-        'try_again_later': '⏳ A temporary issue occurred. Please wait a few minutes and try again.',
+        'try_again_later': '🔍 Your bank declined this. Most often this means the CVV or expiration date is wrong — please double-check and try again. If correct, wait 5 minutes or try a different card.',
       };
       return messages[code] || (error.message || 'Your card was declined. Please try a different card or contact your bank.');
     }
@@ -3868,6 +3868,22 @@ const {
       var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
       var nightsLabel = state.nightsCount <= 10 ? 'last-10-nights' : '30-days';
 
+      var ramadanCampaignSlug = 'ramadan-' + nightsLabel;
+      var ramadanCampaignName = state.nightsCount <= 10 ? 'Last 10 Nights of Ramadan' : 'Ramadan 30 Days';
+      var capturedItems = total > 0 ? [{
+        id: ramadanCampaignSlug + '-' + total,
+        name: ramadanCampaignName,
+        label: ramadanCampaignName,
+        campaign: ramadanCampaignSlug,
+        amount: total,
+        quantity: 1,
+        type: 'single',
+        metadata: { nightsCount: state.nightsCount },
+        childName: null,
+        aqiqahFor: null,
+        notes: null,
+      }] : [];
+
       var payload = {
         email: email,
         first_name: firstName || undefined,
@@ -3876,7 +3892,7 @@ const {
         amount: total || undefined,
         currency: 'USD',
         campaign_type: 'single',
-        campaign_slug: 'ramadan-' + nightsLabel,
+        campaign_slug: ramadanCampaignSlug,
         country: 'US',
         checkout_source: 'ramadan-' + nightsLabel + '-amanah',
         utm_source: params.get('utm_source') || (storedUtm && storedUtm.utm_source) || undefined,
@@ -3884,6 +3900,7 @@ const {
         utm_campaign: params.get('utm_campaign') || (storedUtm && storedUtm.utm_campaign) || undefined,
         utm_content: params.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
         utm_term: params.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
+        items: capturedItems,
       };
 
       fetch('/api/abandoned-checkout/capture', {

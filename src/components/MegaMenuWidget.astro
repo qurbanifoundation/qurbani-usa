@@ -5,6 +5,7 @@
  */
 
 import { getIconSvg } from '../lib/categories';
+import { supabaseAdmin } from '../lib/supabase';
 
 interface Props {
   widget: {
@@ -18,7 +19,73 @@ interface Props {
 }
 
 const { widget, menuColor = '#01534d', menuId = '' } = Astro.props;
-const { widget_type, title, config } = widget;
+const { widget_type, title } = widget;
+let { config } = widget;
+
+// In-memory cache (per worker instance) — keeps the menu fast.
+const QURBANI_TTL_MS = 5 * 60 * 1000;
+let qurbaniCache: { at: number; data: any[] } | null =
+  (globalThis as any).__qurbaniMenuCache || null;
+
+async function loadQurbaniCountriesLive() {
+  if (qurbaniCache && Date.now() - qurbaniCache.at < QURBANI_TTL_MS) {
+    return qurbaniCache.data;
+  }
+  const { data } = await supabaseAdmin
+    .from('campaigns')
+    .select('template_config')
+    .eq('slug', 'qurbani')
+    .single();
+  const dbCountries = (data?.template_config as any)?.countries || [];
+  // Keep the "Where Most Needed" pseudo-entry as a default cheapest option.
+  const out: any[] = [{ id: 'where-most-needed', flag: '', name: 'Where Most Needed', price: 50, cow_share: null }];
+  for (const country of dbCountries) {
+    const animals = (country.animals || []).filter((a: any) => a.active !== false);
+    const sheepGoat = animals.find(
+      (a: any) => a.type === 'sheep_goat' || a.type === 'sheep' || a.type === 'goat'
+    );
+    const cowShare = animals.find((a: any) => a.type === 'cow_share');
+    if (!sheepGoat && !cowShare) continue;
+    out.push({
+      id: country.id,
+      flag: country.flag || '',
+      name: country.name,
+      price: sheepGoat?.price ?? cowShare?.price ?? 0,
+      cow_share: cowShare?.price ?? null,
+    });
+  }
+  // Sort alphabetically by name (keep "Where Most Needed" first)
+  const head = out.shift();
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  out.unshift(head);
+  qurbaniCache = { at: Date.now(), data: out };
+  (globalThis as any).__qurbaniMenuCache = qurbaniCache;
+  return out;
+}
+
+// For the quick-form widget, sync the /qurbani country list live from
+// the qurbani campaign so prices stay in sync with /admin/qurbani-countries.
+if (widget_type === 'quick-form' && config?.forms?.['/qurbani']) {
+  try {
+    const qurbaniCountries = await loadQurbaniCountriesLive();
+    if (qurbaniCountries.length) {
+      config = {
+        ...config,
+        forms: {
+          ...config.forms,
+          '/qurbani': {
+            ...config.forms['/qurbani'],
+            countries: qurbaniCountries,
+          },
+        },
+      };
+    }
+  } catch (e) {
+    // Fall back to static config on any failure — never break the menu.
+    console.error('[MegaMenuWidget] qurbani live sync failed:', e);
+  }
+}
+
 const isInteractive = config.interactive === true;
 ---
 
@@ -967,10 +1034,23 @@ const isInteractive = config.interactive === true;
           + '</div>'
           // Divider
           + '<div class="flex items-center gap-3 mb-3"><div class="flex-1 h-px bg-gray-200"></div><span class="text-[10px] font-bold text-gray-400 uppercase">or choose a country</span><div class="flex-1 h-px bg-gray-200"></div></div>'
-          // Country dropdown
-          + '<div class="mb-3"><select id="mm-qb-country" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[' + color + '] font-semibold"><option value="" data-price="0">Select a country...</option>'
-          + countries.filter(function(c) { return c.id !== 'where-most-needed'; }).map(function(c) { return '<option value="' + c.id + '" data-price="' + c.price + '">' + c.name + ' - $' + c.price + '</option>'; }).join('')
-          + '</select></div>'
+          // Country dropdown (custom, styled + scrollable)
+          + '<div class="mb-3 relative" id="mm-qb-country-wrap">'
+          +   '<button type="button" id="mm-qb-country-btn" class="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm bg-white text-left flex items-center justify-between font-semibold text-gray-500 hover:border-gray-300 transition cursor-pointer">'
+          +     '<span id="mm-qb-country-label">Select a country...</span>'
+          +     '<svg class="w-4 h-4 text-gray-400 transition-transform" id="mm-qb-country-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>'
+          +   '</button>'
+          +   '<div id="mm-qb-country-list" class="hidden absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 max-h-[260px] overflow-y-auto">'
+          +     countries.filter(function(c) { return c.id !== 'where-most-needed'; }).map(function(c) {
+                return '<button type="button" class="mm-qb-country-opt w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-[' + color + ']/5 transition cursor-pointer border-b border-gray-50 last:border-b-0" data-id="' + c.id + '" data-name="' + c.name + '" data-price="' + (c.price || 0) + '">'
+                  + '<span class="font-semibold text-gray-700">' + c.name + '</span>'
+                  + '<span class="text-[' + color + '] font-bold text-[13px]">$' + (c.price || 0) + '</span>'
+                  + '</button>';
+              }).join('')
+          +   '</div>'
+          + '</div>'
+          // Hidden inputs to keep submit/track logic working
+          + '<input type="hidden" id="mm-qb-country" value="" />'
           // Quantity
           + '<div class="mb-3"><div class="flex items-center justify-between"><label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Quantity</label><div class="flex items-center gap-2"><button class="mm-qb-minus w-8 h-8 border border-gray-200 rounded-md flex items-center justify-center text-lg font-bold text-gray-500 hover:border-gray-400 cursor-pointer">-</button><span id="mm-qb-qty" class="text-lg font-bold text-gray-800 w-6 text-center">1</span><button class="mm-qb-plus w-8 h-8 border border-gray-200 rounded-md flex items-center justify-center text-lg font-bold text-gray-500 hover:border-gray-400 cursor-pointer">+</button></div></div></div>'
           // Total
@@ -982,7 +1062,11 @@ const isInteractive = config.interactive === true;
       }
 
       function bindQurbaniEvents() {
-        var countrySelect = document.getElementById('mm-qb-country');
+        var countryHidden = document.getElementById('mm-qb-country');
+        var countryBtn = document.getElementById('mm-qb-country-btn');
+        var countryList = document.getElementById('mm-qb-country-list');
+        var countryLabel = document.getElementById('mm-qb-country-label');
+        var countryCaret = document.getElementById('mm-qb-country-caret');
         var qtyEl = document.getElementById('mm-qb-qty');
         var totalEl = document.getElementById('mm-qb-total');
         var quickBtns = formWidget.querySelectorAll('.mm-qb-quick');
@@ -997,6 +1081,20 @@ const isInteractive = config.interactive === true;
           if (totalEl) totalEl.textContent = '$' + total.toLocaleString();
         }
 
+        function closeCountryList() {
+          if (countryList) countryList.classList.add('hidden');
+          if (countryCaret) countryCaret.classList.remove('rotate-180');
+        }
+
+        function resetCountryUI() {
+          if (countryLabel) {
+            countryLabel.textContent = 'Select a country...';
+            countryLabel.classList.add('text-gray-500');
+            countryLabel.classList.remove('text-gray-800');
+          }
+          if (countryHidden) countryHidden.value = '';
+        }
+
         // Quick select buttons (Where Most Needed / Lowest Price)
         quickBtns.forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -1004,29 +1102,92 @@ const isInteractive = config.interactive === true;
             selectedPrice = parseInt(btn.dataset.quickPrice || '75');
             selectedName = btn.dataset.quickName || 'Where Most Needed';
             selectedId = selectedName === 'Lowest Price' ? 'lowest-price' : 'where-most-needed';
-            // Reset country dropdown
-            if (countrySelect) countrySelect.selectedIndex = 0;
-            // Update button styles
+            resetCountryUI();
             quickBtns.forEach(function(b) { b.classList.remove('border-[#17401c]', 'bg-[#17401c]/5'); b.classList.add('border-gray-200'); });
             btn.classList.add('border-[#17401c]', 'bg-[#17401c]/5'); btn.classList.remove('border-gray-200');
             updateTotal();
           });
         });
 
-        // Country dropdown
-        if (countrySelect) {
-          countrySelect.addEventListener('change', function() {
-            var opt = countrySelect.options[countrySelect.selectedIndex];
-            var price = parseInt(opt?.dataset?.price || '0');
-            if (price > 0) {
-              useQuick = false;
-              selectedPrice = price;
-              selectedName = opt.textContent?.split(' - ')[0] || '';
-              selectedId = opt.value || '';
-              // Deselect quick buttons
-              quickBtns.forEach(function(b) { b.classList.remove('border-[#17401c]', 'bg-[#17401c]/5'); b.classList.add('border-gray-200'); });
-              updateTotal();
+        // Country dropdown — toggle open/close
+        if (countryBtn) {
+          countryBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isOpen = !countryList.classList.contains('hidden');
+            if (isOpen) {
+              closeCountryList();
+            } else {
+              countryList.classList.remove('hidden');
+              if (countryCaret) countryCaret.classList.add('rotate-180');
+              // Move focus to the wrap so keyboard events work
+              countryBtn.focus();
             }
+          });
+        }
+
+        // Click outside closes the list
+        document.addEventListener('click', function(e) {
+          var wrap = document.getElementById('mm-qb-country-wrap');
+          if (wrap && !wrap.contains(e.target)) closeCountryList();
+        });
+
+        // Type-ahead search: pressing letters jumps to first matching country
+        var typeBuffer = '';
+        var typeTimer = null;
+        document.addEventListener('keydown', function(e) {
+          // Only when our dropdown is open
+          if (!countryList || countryList.classList.contains('hidden')) return;
+          // Ignore modifier keys
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+          if (e.key === 'Escape') { closeCountryList(); return; }
+
+          // Only handle single printable characters
+          if (e.key.length !== 1) return;
+          var ch = e.key.toLowerCase();
+          if (!/[a-z0-9]/.test(ch)) return;
+
+          e.preventDefault();
+          typeBuffer += ch;
+          clearTimeout(typeTimer);
+          typeTimer = setTimeout(function() { typeBuffer = ''; }, 800);
+
+          var opts = countryList.querySelectorAll('.mm-qb-country-opt');
+          for (var i = 0; i < opts.length; i++) {
+            var name = (opts[i].dataset.name || '').toLowerCase();
+            if (name.startsWith(typeBuffer)) {
+              // Highlight it briefly + scroll into view
+              opts.forEach(function(o) { o.classList.remove('bg-[#01534d]/10'); });
+              opts[i].classList.add('bg-[#01534d]/10');
+              opts[i].scrollIntoView({ block: 'nearest' });
+              break;
+            }
+          }
+        });
+
+        // Option click
+        if (countryList) {
+          countryList.querySelectorAll('.mm-qb-country-opt').forEach(function(opt) {
+            opt.addEventListener('click', function() {
+              var id = opt.dataset.id || '';
+              var name = opt.dataset.name || '';
+              var price = parseInt(opt.dataset.price || '0');
+              if (price > 0) {
+                useQuick = false;
+                selectedPrice = price;
+                selectedName = name;
+                selectedId = id;
+                if (countryHidden) countryHidden.value = id;
+                if (countryLabel) {
+                  countryLabel.textContent = name + ' — $' + price;
+                  countryLabel.classList.remove('text-gray-500');
+                  countryLabel.classList.add('text-gray-800');
+                }
+                quickBtns.forEach(function(b) { b.classList.remove('border-[#17401c]', 'bg-[#17401c]/5'); b.classList.add('border-gray-200'); });
+                updateTotal();
+              }
+              closeCountryList();
+            });
           });
         }
 

@@ -19,6 +19,8 @@
 /sacrifice*          /qurbani 301
 /eid-sacrifice*      /qurbani 301
 /eid-ul-adha*        /qurbani 301
+/islamic-giving/qurbani  /qurbani 301
+/islamic-giving/qurbani/*  /qurbani 301
 
 # Zakat related
 /zakat-donation*     /zakat 301
@@ -26,8 +28,9 @@
 /calculate-zakat*    /zakat/calculator 301
 /zakat-calculator    /zakat/calculator 301
 /zakat-calculator/*  /zakat/calculator 301
-/zakat-al-fitr*      /zakat-ul-fitr 301
-/fitrana*            /zakat-ul-fitr 301
+/zakat-ul-fitr       /zakat-al-fitr 301
+/zakat-ul-fitr/      /zakat-al-fitr 301
+/fitrana*            /zakat-al-fitr 301
 
 # Ramadan related
 /ramadan-donation*   /ramadan 301

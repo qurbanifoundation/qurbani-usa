@@ -16,6 +16,7 @@ import SadaqahSacrificeTemplate from '../templates/SadaqahSacrificeTemplate.astr
 import SadaqahTemplate from '../templates/SadaqahTemplate.astro';
 import SadaqahJariyahTemplate from '../templates/SadaqahJariyahTemplate.astro';
 import QurbaniTemplate from '../templates/QurbaniTemplate.astro';
+import SadaqahJariyahCWTemplate from '../templates/SadaqahJariyahCWTemplate.astro';
 import { supabaseAdmin } from '../lib/supabase';
 
 export const prerender = false;
@@ -26,6 +27,16 @@ const { slug } = Astro.params;
 if (!slug) {
   return Astro.redirect('/404', 404);
 }
+
+// Edge-cache campaign pages on Cloudflare for 5 minutes; serve stale up to 1 hour
+// while we revalidate in the background. These pages are expensive to render
+// (large country lists, inline JS) but don't personalize per visitor.
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, max-age=0, s-maxage=300, stale-while-revalidate=3600'
+);
+Astro.response.headers.set('CDN-Cache-Control', 'max-age=300');
+Astro.response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=300');
 
 // Build the expected url_path (root level, no category)
 const urlPath = `/${slug}`;
@@ -109,6 +120,7 @@ const templateMap: Record<string, any> = {
   'sadaqah-template': SadaqahTemplate,
   'sadaqah-jariyah': SadaqahJariyahTemplate,
   'qurbani-template': QurbaniTemplate,
+  'sadaqah-jariyah-cw': SadaqahJariyahCWTemplate,
 };
 
 const TemplateComponent = templateMap[templateKey] || GreenWithYellowTemplate;

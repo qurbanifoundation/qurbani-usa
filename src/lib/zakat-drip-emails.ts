@@ -7,6 +7,7 @@
  */
 
 import { buildPreferencesUrls } from './email-preferences';
+import { siteConfig } from '../config/site';
 
 const RESEND_API_KEY = import.meta.env.RESEND_API_KEY;
 
@@ -77,13 +78,13 @@ function getZakatEmailWrapper(content: string, preheader: string, unsubscribeUrl
                       Qurbani Foundation USA
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
-                      4245 N Central Expy, Dallas, TX 75205
+                      5900 Balcones Dr, Suite 100, Austin, TX 78731
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
                       1-800-900-0027 · +1 989-QURBANI (787-2265)
                     </p>
                     <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px;">
-                      Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.
+                      Please do not reply to this email. Contact <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a> for any inquiries.
                     </p>
                     ${prefUrls ? `<p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 11px;">
                       Want to change how you receive these emails?
@@ -164,7 +165,7 @@ function trustSignals(): string {
         <td style="text-align: center;">
           <p style="margin: 0 0 4px 0; color: #059669; font-size: 13px; font-weight: 600;">100% of your Zakat reaches eligible recipients</p>
           <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-            501(c)(3) Tax-Deductible &bull; 256-bit SSL Encryption &bull; Shariah-Compliant Distribution
+            ${siteConfig.showUS501c3 ? '501(c)(3) Tax-Deductible &bull; ' : ''}256-bit SSL Encryption &bull; Shariah-Compliant Distribution
           </p>
         </td>
       </tr>
@@ -405,7 +406,7 @@ export async function sendZakatDripEmail(
       },
       body: JSON.stringify({
         from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-        reply_to: 'donorcare@us.qurbani.com',
+        reply_to: 'donorcare@qurbani.com',
         to: data.email,
         subject,
         html,

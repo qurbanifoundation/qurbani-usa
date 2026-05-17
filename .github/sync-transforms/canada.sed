@@ -132,10 +132,17 @@ s|145 Sherwood Ave|30 Eglinton Ave W, Suite #400|g
 s|Teaneck, NJ 07666|Mississauga, ON L4Z 3X3|g
 s|Teaneck, NJ|Mississauga, ON|g
 
-# ── NOT handled here (need refactor, see PR review checklist): ──────────────
-# - 501(c)(3) / EIN 38-4109146 / "Established 1999" badge / "Real Stories" section.
-#   These are content REMOVED on Canada, not transformed. A sed delete is
-#   too fragile. They should be wrapped in src/config flags in the USA repo
-#   (e.g., {siteConfig.features.show501c3 && ...}) so Canada hides them via
-#   config. Until that refactor lands, you'll see these blocks re-appear in
-#   every sync PR — delete them manually before merging.
+# ── NOT handled here (handled by src/config flags instead): ────────────────
+# US-only content blocks are now wrapped with feature flags from src/config/site.ts:
+#   - `showUS501c3`         → all 501(c)(3) badges, trust icons, FAQ entries
+#   - `showEIN`             → EIN: 38-4109146 displays
+#   - `showFederalTaxIdInReceipts` → tax receipt federal-tax-ID paragraph
+#   - `showUSAddressInEmails`     → US mailing address in email footers
+# Canada's src/config/site.ts overrides these to false, so the blocks hide
+# automatically at render time. Sed doesn't need to delete anything.
+#
+# If Canada's src/config/site.ts is missing the new flag keys, the wrapped
+# expressions evaluate `undefined && (...)` which is still falsy, so the
+# blocks hide correctly. Canada should add the flag keys (set to false) for
+# self-documentation and TypeScript type-checking; see the sync PR body for
+# instructions.

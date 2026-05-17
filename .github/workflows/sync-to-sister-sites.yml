@@ -191,10 +191,34 @@ jobs:
 
             The branding transforms above should have rewritten most US-specific strings to CA equivalents. **Scan the diff anyway** for anything the sed pass missed — particularly:
 
-            - **US-only content blocks** that should be removed entirely on Canada: `501(c)(3)` mentions, `EIN: 38-4109146`, the "Established 1999" badge, and the "Real Stories" section on `/impact`. The sed pass intentionally does NOT delete these (too fragile). Either delete them manually in this PR, or push a refactor on the USA repo that wraps them in `{siteConfig.features.show501c3 && ...}` etc.
             - **Multi-line addresses** that the single-line address patterns missed.
             - **Comments** that mention "USA" or "United States" but were left alone (intentional — comments rarely need rewriting).
             - **Any new hard-coded US value** that the USA repo introduced since the last sync — add a corresponding rule to `.github/sync-transforms/canada.sed` in the USA repo for next time.
+
+            ### About US-only content blocks (501(c)(3), EIN, etc.)
+
+            These are NOT removed by sed. They're wrapped in feature flags from `src/config/site.ts` and hide automatically when the flag is false:
+
+            - `showUS501c3` — 501(c)(3) badges, trust icons, FAQ entries
+            - `showEIN` — EIN: 38-4109146 displays
+            - `showFederalTaxIdInReceipts` — federal tax ID paragraph in receipts
+            - `showUSAddressInEmails` — US mailing address in email footers
+
+            **One-time setup on this repo:** make sure `src/config/site.ts` has these flag keys set to `false` (or your CA equivalents). If a key is missing, `undefined && (...)` is still falsy so the block hides correctly — but adding the keys explicitly is recommended for TypeScript and self-documentation:
+
+            ```typescript
+            // In Canada's src/config/site.ts
+            export const siteConfig = {
+              region: 'CA' as const,
+              showUS501c3: false,
+              showEIN: false,
+              showEstablished1999: false,
+              showRealStoriesSection: false,
+              showFederalTaxIdInReceipts: false,
+              showUSAddressInEmails: false,
+              // ...rest of your existing config
+            };
+            ```
 
             > **Note:** `--delete` is intentionally off. Canada-only files inside synced dirs (e.g., `src/lib/ca-*.ts`) are preserved. If USA removes a file, delete it on this repo manually.
           labels: |

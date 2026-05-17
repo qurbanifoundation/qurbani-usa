@@ -15,43 +15,62 @@ let serverDonation: { amount: string; campaign_name: string; donor_email: string
 let serverSubscription: { id: string; amount: string; interval: string; next_billing_date: string; management_token: string; } | null = null;
 
 if (donationId || paymentIntentId) {
+  // Parallelize the donation lookup and the subscription-by-donation_id lookup
+  // (we already know the donation_id from the URL — no need to wait for the
+  // donations row to come back before firing the subscription query).
+  // Then race against a 1.5s timeout: if Supabase is slow during peak load,
+  // the page renders quickly and the client falls back to sessionStorage data.
+  const donationP = donationId
+    ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items, status').eq('id', donationId).single()
+    : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items, status').eq('stripe_payment_intent_id', paymentIntentId).single();
+
+  const subByDonationP = donationId
+    ? supabaseAdmin
+        .from('donation_subscriptions')
+        .select('id, amount, interval, next_billing_date, management_token')
+        .eq('donation_id', donationId)
+        .eq('status', 'active')
+        .single()
+    : Promise.resolve({ data: null });
+
+  const TIMEOUT_MS = 1500;
+  const timeoutP = new Promise<{ timeout: true }>((resolve) =>
+    setTimeout(() => resolve({ timeout: true }), TIMEOUT_MS)
+  );
+
   try {
-    // Fetch donation by ID or payment intent (include status for tracking validation)
-    const query = donationId
-      ? supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items, status').eq('id', donationId).single()
-      : supabaseAdmin.from('donations').select('amount, campaign_name, donor_email, stripe_payment_intent_id, is_recurring, items, status').eq('stripe_payment_intent_id', paymentIntentId).single();
+    const raced: any = await Promise.race([
+      Promise.all([donationP, subByDonationP]).then((r) => ({ done: true as const, donations: r[0], subs: r[1] })),
+      timeoutP,
+    ]);
 
-    const { data } = await query;
-    if (data) {
-      serverDonation = data;
+    if (raced.done) {
+      serverDonation = raced.donations?.data || null;
+      const subData = raced.subs?.data || null;
 
-      // If recurring, fetch subscription details
-      if (data.is_recurring) {
-        // Try by donation_id first, then by donor_email
-        let sub = null;
-        if (donationId) {
-          const { data: subData } = await supabaseAdmin
+      if (serverDonation?.is_recurring) {
+        if (subData) {
+          serverSubscription = subData;
+        } else if (serverDonation.donor_email) {
+          // Fallback: look up subscription by donor email (also bounded by timeout)
+          const fallbackTimeoutP = new Promise<{ timeout: true }>((resolve) =>
+            setTimeout(() => resolve({ timeout: true }), TIMEOUT_MS)
+          );
+          const fallbackP = supabaseAdmin
             .from('donation_subscriptions')
             .select('id, amount, interval, next_billing_date, management_token')
-            .eq('donation_id', donationId)
-            .eq('status', 'active')
-            .single();
-          sub = subData;
-        }
-        if (!sub && data.donor_email) {
-          const { data: subData } = await supabaseAdmin
-            .from('donation_subscriptions')
-            .select('id, amount, interval, next_billing_date, management_token')
-            .eq('donor_email', data.donor_email)
+            .eq('donor_email', serverDonation.donor_email)
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
-          sub = subData;
+            .single()
+            .then((r) => ({ done: true as const, data: r.data }));
+          const fb: any = await Promise.race([fallbackP, fallbackTimeoutP]);
+          if (fb.done && fb.data) serverSubscription = fb.data;
         }
-        if (sub) serverSubscription = sub;
       }
     }
+    // If raced.timeout: leave serverDonation null; client renders from sessionStorage.
   } catch (e) {
     console.error('Error fetching donation for success page:', e);
   }
@@ -392,6 +411,38 @@ function getFreqLabel(type: string): string {
         }
       }
 
+      // Enhanced Conversions: send hashed user data for better attribution
+      var userData = {};
+      if (purchaseData.donor_email) {
+        userData.email = purchaseData.donor_email.toLowerCase().trim();
+      }
+      if (purchaseData.donor_phone) {
+        userData.phone_number = purchaseData.donor_phone.replace(/[^+\d]/g, '');
+        if (userData.phone_number && !userData.phone_number.startsWith('+')) {
+          userData.phone_number = '+1' + userData.phone_number;
+        }
+      }
+      if (purchaseData.donor_first_name || purchaseData.donor_last_name) {
+        userData.address = userData.address || {};
+        if (purchaseData.donor_first_name) userData.address.first_name = purchaseData.donor_first_name.trim();
+        if (purchaseData.donor_last_name) userData.address.last_name = purchaseData.donor_last_name.trim();
+      }
+      if (purchaseData.donor_address) {
+        userData.address = userData.address || {};
+        var addr = purchaseData.donor_address;
+        if (addr.line1) userData.address.street = addr.line1;
+        if (addr.city) userData.address.city = addr.city;
+        if (addr.state) userData.address.region = addr.state;
+        if (addr.postal_code) userData.address.postal_code = addr.postal_code;
+        if (addr.country) userData.address.country = addr.country;
+      }
+
+      // Set user data for Enhanced Conversions (gtag hashes automatically)
+      if (Object.keys(userData).length > 0) {
+        window.gtag('set', 'user_data', userData);
+        console.log('[Tracking] Enhanced Conversions user_data set:', Object.keys(userData));
+      }
+
       // Google Ads Conversion (client-side only)
       window.gtag('event', 'conversion', {
         'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',
@@ -401,6 +452,33 @@ function getFreqLabel(type: string): string {
       });
 
       console.log('[Tracking] Google Ads conversion fired — transaction:', transactionId, 'value: $' + value);
+
+      // --- MICROSOFT CLARITY CONVERSION TRACKING ---
+      // Fires donation_completed event + tags so recordings can be filtered by converters
+      try {
+        if (typeof window.clarity === 'function') {
+          // Conversion event (mark as goal in Clarity Settings → Events)
+          window.clarity('event', 'donation_completed');
+
+          // Filterable tags for slicing recordings
+          window.clarity('set', 'donation_amount', String(Math.round(value)));
+          window.clarity('set', 'donation_currency', 'USD');
+          window.clarity('set', 'transaction_id', String(transactionId));
+          if (purchaseData && purchaseData.donation_type) {
+            window.clarity('set', 'donation_type', String(purchaseData.donation_type));
+          }
+          if (purchaseData && purchaseData.campaign_name) {
+            window.clarity('set', 'campaign', String(purchaseData.campaign_name));
+          }
+          // Bucket donation amount for easier filtering
+          var bucket = value < 50 ? 'micro' : value < 250 ? 'small' : value < 1000 ? 'medium' : 'major';
+          window.clarity('set', 'donation_bucket', bucket);
+
+          console.log('[Tracking] Clarity conversion event fired — bucket:', bucket, 'value: $' + value);
+        }
+      } catch (e) {
+        console.warn('[Tracking] Clarity event error:', e);
+      }
 
       // Clear sessionStorage to prevent duplicate tracking on refresh
       sessionStorage.removeItem('qurbani_purchase');

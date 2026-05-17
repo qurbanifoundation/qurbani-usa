@@ -4,6 +4,8 @@
  * Shared between the frontend template and the admin editor.
  */
 
+import { siteConfig } from '../config/site';
+
 export interface PageContent {
   theCrisis: {
     heading: string;
@@ -81,10 +83,10 @@ export const DEFAULT_PAGE_CONTENT: PageContent = {
         question: 'Where does my donation go?',
         answer: '100% of your donation goes directly to those in need. We maintain a strict 100% donation policy, meaning administrative costs are covered separately and never taken from your charitable contributions.',
       },
-      {
+      ...(siteConfig.showUS501c3 ? [{
         question: 'Is my donation tax-deductible?',
-        answer: 'Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization (EIN: 38-4109716). All donations are tax-deductible to the extent allowed by law. You will receive a donation receipt via email.',
-      },
+        answer: 'Yes. Qurbani Foundation USA is a registered 501(c)(3) nonprofit organization (EIN: 38-4109146). All donations are tax-deductible to the extent allowed by law. You will receive a donation receipt via email.',
+      }] : []),
       {
         question: 'Can I cancel my monthly donation?',
         answer: 'Absolutely. You can cancel or modify your recurring donation at any time through the link in your donation receipt email, or by contacting us at info@qurbani.com or calling 1-800-900-0027.',

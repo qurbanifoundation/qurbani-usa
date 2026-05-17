@@ -182,6 +182,30 @@ const managementUrl = token ? `/manage-donation/${token}` : null;
           return;
         }
 
+        // Enhanced Conversions: send hashed user data
+        var userData = {};
+        if (purchase.donor_email) userData.email = purchase.donor_email.toLowerCase().trim();
+        if (purchase.donor_phone) {
+          userData.phone_number = purchase.donor_phone.replace(/[^+\d]/g, '');
+          if (userData.phone_number && !userData.phone_number.startsWith('+')) userData.phone_number = '+1' + userData.phone_number;
+        }
+        if (purchase.donor_first_name || purchase.donor_last_name) {
+          userData.address = {};
+          if (purchase.donor_first_name) userData.address.first_name = purchase.donor_first_name.trim();
+          if (purchase.donor_last_name) userData.address.last_name = purchase.donor_last_name.trim();
+        }
+        if (purchase.donor_address) {
+          userData.address = userData.address || {};
+          if (purchase.donor_address.line1) userData.address.street = purchase.donor_address.line1;
+          if (purchase.donor_address.city) userData.address.city = purchase.donor_address.city;
+          if (purchase.donor_address.state) userData.address.region = purchase.donor_address.state;
+          if (purchase.donor_address.postal_code) userData.address.postal_code = purchase.donor_address.postal_code;
+          if (purchase.donor_address.country) userData.address.country = purchase.donor_address.country;
+        }
+        if (Object.keys(userData).length > 0) {
+          window.gtag('set', 'user_data', userData);
+        }
+
         // Google Ads Conversion only (GA4 handled server-side)
         window.gtag('event', 'conversion', {
           'send_to': 'AW-793369119/2lawCM74xKcBEJ-0p_oC',

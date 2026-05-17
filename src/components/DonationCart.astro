@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { getCheckoutUpsells } from '../lib/settings';
 import type { CheckoutUpsell, CheckoutUpsellsConfig } from '../lib/settings';
+import { siteConfig } from '../config/site';
 
 interface Props {
   checkoutTemplate?: string;
@@ -53,11 +54,383 @@ try {
 const enabledUpsells = upsellsConfig.items.filter(u => u.enabled);
 const upsellHeadingDesktop = upsellsConfig.heading_desktop;
 const upsellHeadingMobile = upsellsConfig.heading_mobile;
+
+// Cloudflare Turnstile site key (bot protection)
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
 ---
 
-<!-- Stripe.js - loaded async, initialized when cart opens -->
-<script is:inline>
-(function(){var s=document.createElement('script');s.src='https://js.stripe.com/v3/';s.async=true;document.head.appendChild(s);})();
+<!-- Stripe.js — loaded async on every page so it's ready instantly when cart opens.
+     Also pre-warm Google Places API + DNS for cart-related origins so first
+     cart open doesn't have to wait for these large scripts. -->
+<link rel="dns-prefetch" href="https://maps.googleapis.com" />
+<link rel="dns-prefetch" href="https://maps.gstatic.com" />
+<link rel="dns-prefetch" href="https://js.stripe.com" />
+<link rel="preconnect" href="https://js.stripe.com" />
+<link rel="preconnect" href="https://maps.googleapis.com" />
+<script is:inline define:vars={{ googlePlacesApiKey: import.meta.env.PUBLIC_GOOGLE_PLACES_API_KEY }}>
+(function(){
+  // 1) Stripe.js — loaded immediately so payment element mounts fast on first cart open.
+  var s = document.createElement('script');
+  s.src = 'https://js.stripe.com/v3/';
+  s.async = true;
+  document.head.appendChild(s);
+
+  // 2) Pre-load Google Places API on idle so when the user opens checkout for the
+  //    first time, the address autocomplete is ready immediately (and the main
+  //    thread isn't fighting downloads while they try to type their name).
+  var loadPlaces = function() {
+    if (window.__placesPreloaded) return;
+    window.__placesPreloaded = true;
+    if (!googlePlacesApiKey) return;
+    var ps = document.createElement('script');
+    ps.src = 'https://maps.googleapis.com/maps/api/js?key=' + googlePlacesApiKey + '&libraries=places';
+    ps.async = true;
+    ps.defer = true;
+    document.head.appendChild(ps);
+  };
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadPlaces, { timeout: 4000 });
+  } else {
+    setTimeout(loadPlaces, 2500);
+  }
+})();
+</script>
+
+<!-- Cloudflare Turnstile (invisible bot protection on checkout) -->
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script is:inline define:vars={{ turnstileSiteKey }}>
+(function(){
+  window.__turnstileSiteKey = turnstileSiteKey;
+  window.__turnstileWidgetId = null;
+  window.__turnstileToken = null;
+
+  // Ensure a hidden container exists for the invisible widget
+  function ensureContainer() {
+    var el = document.getElementById('ts-turnstile-container');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ts-turnstile-container';
+      el.style.position = 'fixed';
+      el.style.bottom = '-100px';
+      el.style.left = '-100px';
+      el.style.width = '0';
+      el.style.height = '0';
+      el.style.overflow = 'hidden';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function waitForTurnstile() {
+    return new Promise(function(resolve, reject){
+      if (window.turnstile && window.turnstile.render) return resolve(window.turnstile);
+      var tries = 0;
+      var t = setInterval(function(){
+        tries++;
+        if (window.turnstile && window.turnstile.render) {
+          clearInterval(t);
+          resolve(window.turnstile);
+        } else if (tries > 50) {
+          clearInterval(t);
+          reject(new Error('Turnstile failed to load'));
+        }
+      }, 100);
+    });
+  }
+
+  // Pending callbacks for the SAME widget — re-resolved on each ts.execute() reset
+  window.__turnstilePendingResolve = null;
+  window.__turnstilePendingReject = null;
+  window.__turnstilePendingTimeout = null;
+
+  // Cache + in-flight tracking for pre-warming. Tokens are single-use and
+  // expire after ~5min on Cloudflare's side, so we cap reuse at 4min.
+  window.__turnstileCache = null; // { token, ts } when a fresh token is ready
+  window.__turnstileInflight = null; // shared Promise when a render is in progress
+  var TURNSTILE_TTL_MS = 4 * 60 * 1000;
+
+  // Internal: fire the actual render/execute and return a Promise<token>.
+  // Used by both prewarmTurnstileToken (fire-and-forget) and getTurnstileToken (awaited).
+  function executeTurnstile() {
+    return (async function(){
+      if (!window.__turnstileSiteKey) throw new Error('Bot protection not configured');
+      var ts = await waitForTurnstile();
+      var container = ensureContainer();
+
+      return new Promise(function(resolve, reject){
+        if (window.__turnstilePendingTimeout) {
+          clearTimeout(window.__turnstilePendingTimeout);
+          window.__turnstilePendingTimeout = null;
+        }
+        window.__turnstilePendingTimeout = setTimeout(function(){
+          if (window.__turnstilePendingReject) {
+            var rej = window.__turnstilePendingReject;
+            window.__turnstilePendingResolve = null;
+            window.__turnstilePendingReject = null;
+            rej(new Error('Bot-protection check timed out. Please try again.'));
+          }
+        }, 15000);
+        window.__turnstilePendingResolve = resolve;
+        window.__turnstilePendingReject = reject;
+
+        try {
+          if (window.__turnstileWidgetId === null) {
+            window.__turnstileWidgetId = ts.render(container, {
+              sitekey: window.__turnstileSiteKey,
+              size: 'invisible',
+              callback: function(token){
+                if (window.__turnstilePendingTimeout) clearTimeout(window.__turnstilePendingTimeout);
+                window.__turnstilePendingTimeout = null;
+                var res = window.__turnstilePendingResolve;
+                window.__turnstilePendingResolve = null;
+                window.__turnstilePendingReject = null;
+                window.__turnstileToken = token;
+                if (res) res(token);
+              },
+              'error-callback': function(){
+                if (window.__turnstilePendingTimeout) clearTimeout(window.__turnstilePendingTimeout);
+                window.__turnstilePendingTimeout = null;
+                var rej = window.__turnstilePendingReject;
+                window.__turnstilePendingResolve = null;
+                window.__turnstilePendingReject = null;
+                if (rej) rej(new Error('Bot-protection check failed. Please refresh the page.'));
+              },
+              'timeout-callback': function(){
+                if (window.__turnstilePendingTimeout) clearTimeout(window.__turnstilePendingTimeout);
+                window.__turnstilePendingTimeout = null;
+                var rej = window.__turnstilePendingReject;
+                window.__turnstilePendingResolve = null;
+                window.__turnstilePendingReject = null;
+                if (rej) rej(new Error('Bot-protection check timed out. Please try again.'));
+              }
+            });
+            ts.execute(window.__turnstileWidgetId);
+          } else {
+            try { ts.reset(window.__turnstileWidgetId); } catch (_) {}
+            ts.execute(window.__turnstileWidgetId);
+          }
+        } catch (e) {
+          if (window.__turnstilePendingTimeout) clearTimeout(window.__turnstilePendingTimeout);
+          window.__turnstilePendingTimeout = null;
+          window.__turnstilePendingResolve = null;
+          window.__turnstilePendingReject = null;
+          reject(e);
+        }
+      });
+    })();
+  }
+
+  // Fire-and-forget: kick off a token fetch and stash in cache. Safe to call
+  // multiple times (no-ops if cache is fresh or a request is in flight).
+  // Called when the GG checkout opens so the token is ready by Pay-click time.
+  // Pre-warm errors are non-fatal — we DO NOT swallow rejections on the
+  // inflight Promise, so getTurnstileToken can detect failure and retry.
+  window.prewarmTurnstileToken = function prewarmTurnstileToken() {
+    if (!window.__turnstileSiteKey) return;
+    var c = window.__turnstileCache;
+    if (c && c.token && (Date.now() - c.ts) < TURNSTILE_TTL_MS) return;
+    if (window.__turnstileInflight) return;
+    var p = executeTurnstile();
+    window.__turnstileInflight = p;
+    p.then(function(token){
+      window.__turnstileCache = { token: token, ts: Date.now() };
+    }).catch(function(){
+      // Pre-warm errors logged but otherwise non-fatal
+    }).finally(function(){
+      if (window.__turnstileInflight === p) window.__turnstileInflight = null;
+    });
+  };
+
+  // Returns a single-use Turnstile token, or null if Turnstile is unavailable
+  // (ad-blocker, network failure, widget timeout, etc). NEVER throws. The
+  // donor's payment proceeds regardless — the server endpoints soft-fail
+  // when token is missing and flag the donation in metadata for review.
+  // This prevents transient bot-protection failures from blocking real donors.
+  window.getTurnstileToken = async function getTurnstileToken() {
+    if (!window.__turnstileSiteKey) return null;
+    try {
+      var c = window.__turnstileCache;
+      if (c && c.token && (Date.now() - c.ts) < TURNSTILE_TTL_MS) {
+        window.__turnstileCache = null; // consume so a second click can't reuse
+        return c.token;
+      }
+
+      if (window.__turnstileInflight) {
+        try {
+          var token = await window.__turnstileInflight;
+          window.__turnstileCache = null;
+          if (token) return token;
+        } catch (_) {
+          // fall through to fresh fetch on prewarm error
+        }
+      }
+
+      var fresh = executeTurnstile();
+      window.__turnstileInflight = fresh;
+      try {
+        var freshToken = await fresh;
+        return freshToken || null;
+      } finally {
+        if (window.__turnstileInflight === fresh) window.__turnstileInflight = null;
+      }
+    } catch (e) {
+      console.warn('[turnstile] soft-fail — donation will proceed without token:', e && e.message ? e.message : e);
+      return null;
+    }
+  };
+
+  // Clear any cached token. Call after a Pay attempt completes (success or
+  // server-side reject) so the next attempt always gets a brand-new token.
+  window.invalidateTurnstileCache = function invalidateTurnstileCache() {
+    window.__turnstileCache = null;
+  };
+
+  // Pre-warm on page load was removed previously because it competed with the
+  // main thread on heavy browsing pages. Pre-warm now runs only when a
+  // checkout modal opens (see openGGCheckout / openCheckoutModal).
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Form state persistence — saves all checkout form fields to localStorage
+  // on every keystroke so a refresh / crash / accidental tab close never
+  // makes the donor re-enter their info. Cleared after successful donation.
+  // ─────────────────────────────────────────────────────────────────────
+  var FORM_STATE_KEY = 'qurbani_form_state';
+  var FORM_STATE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+  // Field IDs across all three checkout templates (GG one-step, 3-step modal, 2-step).
+  // We store under their actual element IDs so restore just slots values back in.
+  var FORM_FIELD_IDS = [
+    'gg-firstName', 'gg-lastName', 'gg-email', 'gg-phone',
+    'gg-address', 'gg-city', 'gg-state', 'gg-zip', 'gg-country',
+    'modal-firstName', 'modal-lastName', 'modal-email', 'modal-phone',
+    'modal-address', 'modal-city', 'modal-state', 'modal-zip', 'modal-country',
+    'ts-firstName', 'ts-lastName', 'ts-email', 'ts-phone',
+    'ts-address', 'ts-city', 'ts-state', 'ts-zip', 'ts-country',
+  ];
+
+  window.saveDonationFormState = function saveDonationFormState() {
+    try {
+      var state = { savedAt: Date.now() };
+      FORM_FIELD_IDS.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.value) {
+          // Map to a canonical name (strip template prefix) — same field across templates shares a key
+          var key = id.replace(/^(gg|modal|ts)-/, '');
+          if (!state[key]) state[key] = el.value;
+        }
+      });
+      var fees = document.getElementById('gg-cover-fees') || document.getElementById('cover-fees-checkbox');
+      if (fees) state.coverFees = !!fees.checked;
+      localStorage.setItem(FORM_STATE_KEY, JSON.stringify(state));
+    } catch (_) {}
+  };
+
+  window.restoreDonationFormState = function restoreDonationFormState() {
+    try {
+      var raw = localStorage.getItem(FORM_STATE_KEY);
+      if (!raw) return;
+      var state = JSON.parse(raw);
+      // Expire stale state (donor moved on long ago)
+      if (!state.savedAt || (Date.now() - state.savedAt) > FORM_STATE_TTL_MS) {
+        localStorage.removeItem(FORM_STATE_KEY);
+        return;
+      }
+      FORM_FIELD_IDS.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el || el.value) return; // don't overwrite if user already typed something
+        var key = id.replace(/^(gg|modal|ts)-/, '');
+        if (state[key]) el.value = state[key];
+      });
+      if (state.coverFees) {
+        var fees = document.getElementById('gg-cover-fees') || document.getElementById('cover-fees-checkbox');
+        if (fees && !fees.checked) {
+          fees.checked = true;
+          fees.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    } catch (_) {}
+  };
+
+  window.clearDonationFormState = function clearDonationFormState() {
+    try { localStorage.removeItem(FORM_STATE_KEY); } catch (_) {}
+  };
+
+  // Save on input/change for all checkout fields (debounced).
+  // Event delegation: works for inputs added to DOM later (modal not mounted yet at script time).
+  var _saveStateTimer = null;
+  function _scheduleFormStateSave() {
+    if (_saveStateTimer) clearTimeout(_saveStateTimer);
+    _saveStateTimer = setTimeout(window.saveDonationFormState, 300);
+  }
+  document.addEventListener('input', function(e) {
+    var t = e.target;
+    if (t && t.id && FORM_FIELD_IDS.indexOf(t.id) !== -1) _scheduleFormStateSave();
+  });
+  document.addEventListener('change', function(e) {
+    var t = e.target;
+    if (t && t.id && (FORM_FIELD_IDS.indexOf(t.id) !== -1 || t.id === 'gg-cover-fees' || t.id === 'cover-fees-checkbox')) {
+      _scheduleFormStateSave();
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────
+  // donationFetch — resilient POST helper for the donation path.
+  //
+  // - Retries ONCE on transient errors (network failure, 5xx) after 1s delay.
+  // - Does NOT retry on 4xx (those are validation errors that won't fix on retry).
+  // - Reports persistent failures to /api/admin/checkout-failure so admin gets
+  //   notified the moment a donor's submit-button click ends in error.
+  // - Returns the final Response (success or failed) — caller still inspects
+  //   response.ok exactly like a normal fetch.
+  // ─────────────────────────────────────────────────────────────────────
+  window.donationFetch = async function donationFetch(url, options) {
+    var attempt = 0;
+    var lastResp = null;
+    var lastErr = null;
+    while (attempt < 2) {
+      attempt++;
+      try {
+        var resp = await fetch(url, options);
+        // 5xx → retry once; 4xx or 2xx → return as-is
+        if (resp.status >= 500 && resp.status < 600 && attempt < 2) {
+          lastResp = resp;
+          await new Promise(function(r){ setTimeout(r, 1000); });
+          continue;
+        }
+        return resp;
+      } catch (e) {
+        // Network failure / fetch threw
+        lastErr = e;
+        if (attempt < 2) {
+          await new Promise(function(r){ setTimeout(r, 1000); });
+          continue;
+        }
+      }
+    }
+    // Both attempts failed — fire admin alert (fire-and-forget), then rethrow/return
+    try {
+      var body = options && options.body ? options.body : '';
+      var parsed = {};
+      try { parsed = JSON.parse(body); } catch(_) {}
+      fetch('/api/admin/checkout-failure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: url,
+          status: lastResp ? lastResp.status : null,
+          error: lastErr ? (lastErr.message || String(lastErr)) : 'http_5xx',
+          customer: parsed.customer || null,
+          amount: parsed.amount || null,
+          items: parsed.items || null,
+          checkout_source: parsed.checkout_source || null,
+          when: new Date().toISOString(),
+        }),
+        keepalive: true,
+      }).catch(function(){});
+    } catch(_){}
+    if (lastResp) return lastResp;
+    throw lastErr || new Error('Network error. Please try again.');
+  };
+})();
 </script>
 
 <!-- Google Places Autocomplete Dropdown Fix -->
@@ -68,6 +441,12 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     margin-top: 4px;
+  }
+  /* Keep address inputs clear of the sticky orange checkout header when
+     scrollIntoView fires on focus (mobile keyboard). Without this the input
+     scrolls under the header and looks like it "slides up and disappears". */
+  #gg-address, #modal-address, #ts-address {
+    scroll-margin-top: 80px;
   }
   .pac-item {
     padding: 10px 12px;
@@ -399,22 +778,22 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                    <input type="text" name="firstName" id="modal-firstName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                    <input type="text" name="firstName" id="modal-firstName" autocomplete="given-name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                    <input type="text" name="lastName" id="modal-lastName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                    <input type="text" name="lastName" id="modal-lastName" autocomplete="family-name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
                   </div>
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                  <input type="email" name="email" id="modal-email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                  <input type="email" name="email" id="modal-email" autocomplete="email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
                 </div>
 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input type="tel" name="phone" id="modal-phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
+                  <input type="tel" name="phone" id="modal-phone" autocomplete="tel" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent" />
                 </div>
 
                 <!-- Privacy & Communication Preferences -->
@@ -626,21 +1005,21 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                    <input type="text" name="city" id="modal-city" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                    <input type="text" name="city" id="modal-city" autocomplete="address-level2" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                    <input type="text" name="state" id="modal-state" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                    <input type="text" name="state" id="modal-state" autocomplete="address-level1" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
                   </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
-                    <input type="text" name="zipCode" id="modal-zip" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
+                    <input type="text" name="zipCode" id="modal-zip" autocomplete="postal-code" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706]" />
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                    <select name="country" id="modal-country" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] bg-white">
+                    <select name="country" id="modal-country" autocomplete="country" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d97706] bg-white">
                       <option value="US" selected>United States</option>
                       <option value="CA">Canada</option>
                       <option value="GB">United Kingdom</option>
@@ -870,20 +1249,20 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                  <input type="text" id="ts-firstName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+                  <input type="text" id="ts-firstName" name="firstName" autocomplete="given-name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                  <input type="text" id="ts-lastName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+                  <input type="text" id="ts-lastName" name="lastName" autocomplete="family-name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
                 </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                <input type="email" id="ts-email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+                <input type="email" id="ts-email" name="email" autocomplete="email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input type="tel" id="ts-phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
+                <input type="tel" id="ts-phone" name="phone" autocomplete="tel" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent transition" />
               </div>
 
               <!-- Communication Preferences -->
@@ -938,21 +1317,21 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                  <input type="text" id="ts-city" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+                  <input type="text" id="ts-city" name="city" autocomplete="address-level2" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                  <input type="text" id="ts-state" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+                  <input type="text" id="ts-state" name="state" autocomplete="address-level1" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
-                  <input type="text" id="ts-zip" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
+                  <input type="text" id="ts-zip" name="zip" autocomplete="postal-code" inputmode="numeric" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] transition" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                  <select id="ts-country" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white transition">
+                  <select id="ts-country" name="country" autocomplete="country" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#01534d] bg-white transition">
                     <option value="US" selected>United States</option>
                     <option value="CA">Canada</option>
                     <option value="GB">United Kingdom</option>
@@ -1101,7 +1480,7 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
               <!-- Quick Trust -->
               <div class="mt-4 p-3 bg-green-50 rounded-lg text-center">
                 <p class="text-xs text-green-700 font-medium">100% of your donation goes to those in need</p>
-                <p class="text-xs text-green-600 mt-0.5">Qurbani Foundation USA • 501(c)(3) • Tax-Deductible</p>
+                <p class="text-xs text-green-600 mt-0.5">Qurbani Foundation USA{siteConfig.showUS501c3 ? ' • 501(c)(3) • Tax-Deductible' : ''}</p>
               </div>
             </div>
           </div>
@@ -1114,7 +1493,9 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
 <!-- ==================== GG ONE-STEP CHECKOUT MODAL ==================== -->
 <div id="gg-checkout" class="fixed inset-0 z-[10001] hidden">
-  <div class="absolute inset-0 bg-white overflow-y-auto">
+  <!-- The scrollable inner container needs an explicit GPU layer so iOS Safari
+       doesn't lose paint when the user scrolls fast (translate3d + will-change). -->
+  <div class="absolute inset-0 bg-white overflow-y-auto" style="-webkit-overflow-scrolling: touch; transform: translate3d(0,0,0); will-change: scroll-position;">
 
     <!-- Header Bar — Orange with Logo (full-width) -->
     <div class="sticky top-0 z-20 bg-gradient-to-r from-[#e1861d] to-[#d97706] shadow-sm">
@@ -1127,8 +1508,8 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
             </svg>
             <span>Secure Checkout</span>
           </div>
-          <button id="gg-close" class="p-2 hover:bg-white/10 rounded-full transition" aria-label="Close">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button type="button" id="gg-close" class="p-2 hover:bg-white/10 rounded-full transition cursor-pointer" aria-label="Close checkout">
+            <svg class="w-5 h-5 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
@@ -1157,9 +1538,9 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
 
             <!-- Add Another Project -->
             <div class="border-t border-gray-100">
-              <button type="button" id="gg-add-another" class="w-full flex items-center justify-center gap-1.5 py-2 md:py-2.5 text-xs md:text-sm font-semibold text-gray-400 hover:text-[#d97706] transition">
-                <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                <span id="gg-add-another-text">Add Another Project</span>
+              <button type="button" id="gg-add-another" class="w-full flex items-center justify-center gap-1.5 py-3 md:py-3 text-sm font-semibold text-gray-500 hover:text-[#d97706] active:text-[#d97706] transition cursor-pointer">
+                <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                <span id="gg-add-another-text" class="pointer-events-none">Add Another Project</span>
               </button>
             </div>
 
@@ -1273,11 +1654,11 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
           <h3 class="text-base font-bold text-gray-800 mb-3" style="font-family: 'Signika', sans-serif;">Your Details</h3>
           <div class="space-y-4 mb-6">
             <div class="grid grid-cols-2 gap-3">
-              <input type="text" id="gg-firstName" placeholder="First Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
-              <input type="text" id="gg-lastName" placeholder="Last Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
+              <input type="text" id="gg-firstName" name="firstName" autocomplete="given-name" placeholder="First Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
+              <input type="text" id="gg-lastName" name="lastName" autocomplete="family-name" placeholder="Last Name" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
             </div>
-            <input type="email" id="gg-email" placeholder="Email" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
-            <input type="tel" id="gg-phone" placeholder="Phone Number" class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
+            <input type="email" id="gg-email" name="email" autocomplete="email" placeholder="Email" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
+            <input type="tel" id="gg-phone" name="phone" autocomplete="tel" enterkeyhint="done" placeholder="Phone Number" class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
           </div>
 
           <!-- Card Element -->
@@ -1288,16 +1669,19 @@ const upsellHeadingMobile = upsellsConfig.heading_mobile;
             <div id="gg-card-errors" class="text-red-500 text-sm mt-2" role="alert"></div>
           </div>
 
-          <!-- Billing Address -->
+          <!-- Billing Address. Address fields use autocomplete="off" so iOS's
+               AutoFill Contact bar doesn't try to chain through them after
+               Phone (which would skip the card iframe). Address autofill is
+               handled by Google Places on the gg-address input itself. -->
           <div class="space-y-4 mb-6">
             <div>
               <input type="text" id="gg-address" autocomplete="off" placeholder="Billing Address" required class="w-full px-4 py-3.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d97706] focus:border-transparent text-base bg-white" />
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <input type="text" id="gg-city" placeholder="City" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
-              <input type="text" id="gg-state" placeholder="State" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
-              <input type="text" id="gg-zip" placeholder="ZIP" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
-              <select id="gg-country" required class="w-full px-2 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-base">
+              <input type="text" id="gg-city" name="city" autocomplete="off" placeholder="City" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
+              <input type="text" id="gg-state" name="state" autocomplete="off" placeholder="State" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
+              <input type="text" id="gg-zip" name="zip" autocomplete="off" inputmode="numeric" placeholder="ZIP" required class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] text-base" />
+              <select id="gg-country" name="country" autocomplete="off" required class="w-full px-2 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#d97706] bg-white text-base">
                 <option value="US" selected>United States</option>
                 <option value="CA">Canada</option>
                 <option value="GB">United Kingdom</option>
@@ -1399,30 +1783,23 @@ window.donationCart = {
   ],
 };
 
-// Load Google Places API
+// Load Google Places API. We pre-load it on idle (see top of file), so this
+// usually short-circuits — if it has already been loaded by the pre-warmer,
+// we just skip and let initGGPlaces() poll for window.google to appear.
 function loadGooglePlaces() {
-  console.log('loadGooglePlaces called, API key present:', !!googlePlacesApiKey, 'key length:', googlePlacesApiKey?.length || 0);
-
-  if (window.donationCart.placesLoaded) {
-    console.log('Google Places already loaded');
+  if (window.donationCart.placesLoaded || window.__placesPreloaded) {
+    window.donationCart.placesLoaded = true;
     return;
   }
+  if (!googlePlacesApiKey) return;
 
-  if (!googlePlacesApiKey) {
-    console.error('Google Places API key is missing! Address autocomplete will not work.');
-    return;
-  }
-
-  console.log('Loading Google Places API script...');
   const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesApiKey}&libraries=places&callback=initPlacesAutocomplete`;
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesApiKey}&libraries=places`;
   script.async = true;
   script.defer = true;
-  script.onerror = function() {
-    console.error('Failed to load Google Places API script');
-  };
   document.head.appendChild(script);
   window.donationCart.placesLoaded = true;
+  window.__placesPreloaded = true;
 }
 
 // Get GA4 client_id from _ga cookie for server-side Measurement Protocol tracking
@@ -1475,33 +1852,26 @@ function buildDonationJourney(checkoutTotal, checkoutItems, checkoutType) {
   return JSON.stringify(journey);
 }
 
-// Initialize Places Autocomplete
+// Initialize Places Autocomplete (with retry until Google Places API is ready)
+window.__placesRetries = 0;
 window.initPlacesAutocomplete = function() {
-  console.log('=== initPlacesAutocomplete called ===');
-
   // Skip if already initialized
-  if (window.donationCart.autocomplete) {
-    console.log('Places autocomplete already initialized, skipping');
-    return;
-  }
+  if (window.donationCart.autocomplete) return;
 
   const addressInput = document.getElementById('modal-address');
-  console.log('Address input element:', addressInput);
-  console.log('Address input visible:', addressInput ? getComputedStyle(addressInput).display : 'N/A');
+  if (!addressInput) return;  // modal not open yet — will be retried by openCheckoutModal
 
-  if (!addressInput) {
-    console.error('ERROR: Address input not found in DOM');
-    return;
-  }
-
-  console.log('Google object:', typeof window.google);
-  console.log('Google maps:', typeof window.google?.maps);
-  console.log('Google places:', typeof window.google?.maps?.places);
-
+  // Retry if Google Places API hasn't loaded yet (max ~5s of polling)
   if (!window.google?.maps?.places) {
-    console.error('ERROR: Google Places API not loaded');
+    if (window.__placesRetries < 10) {
+      window.__placesRetries++;
+      setTimeout(window.initPlacesAutocomplete, 500);
+    } else {
+      console.warn('Google Places API failed to load after 10 retries — address autocomplete disabled');
+    }
     return;
   }
+  window.__placesRetries = 0;
 
   try {
     console.log('Creating Autocomplete instance...');
@@ -1571,13 +1941,85 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {}
   }
 
-  // Initialize Stripe (with retry for async script loading race condition)
+  // Admin prefill (over-the-phone charge from /admin/abandoned-checkouts).
+  // Only activates when ?admin_prefill=1 is in the URL AND a payload exists in
+  // localStorage — keeps public donation flow untouched.
+  try {
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin_prefill') === '1') {
+      var rawPrefill = localStorage.getItem('qurbani_admin_prefill');
+      if (rawPrefill) {
+        var prefill = JSON.parse(rawPrefill);
+        console.log('[admin-prefill] payload found', prefill);
+        if (Array.isArray(prefill.items) && prefill.items.length > 0) {
+          window.donationCart.items = prefill.items;
+          localStorage.setItem('donationCart', JSON.stringify(prefill.items));
+          updateCartUI();
+        }
+        window.donationCart._adminPrefillDonor = prefill.donor || null;
+        // Start filling fields IMMEDIATELY — retries handle modal-not-yet-open.
+        applyAdminPrefillFields(prefill.donor || {});
+        // Auto-open checkout modal so admin lands directly on the form
+        setTimeout(function() {
+          try {
+            var mode = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) || 'three-step';
+            if (mode === 'gg-one-step') { openGGCheckout(); }
+            else { openCheckoutModal(); }
+          } catch (e) { console.error('Admin prefill open error:', e); }
+        }, 300);
+        // Clear flag AFTER prefill loop has captured donor (uses closure)
+        localStorage.removeItem('qurbani_admin_prefill');
+      }
+    }
+  } catch (e) { console.error('Admin prefill error:', e); }
+
+  // Initialize Stripe (with retry for async script loading race condition).
+  // If Stripe.js never loads (ad-blocker, firewall, browser extension blocking
+  // js.stripe.com), surface a visible error AND alert admin — otherwise the
+  // payment element placeholder stays "Loading…" forever and the donor leaves
+  // confused (no way to enter card). Critical for donor capture.
   function tryInitStripe(attempts) {
     if (typeof Stripe !== 'undefined') {
       window.donationCart.stripe = Stripe(stripePublishableKey);
       initializeStripeElements();
     } else if (attempts < 50) {
       setTimeout(function() { tryInitStripe(attempts + 1); }, 100);
+    } else {
+      // 5 seconds elapsed, Stripe.js never loaded — surface a clear error
+      window.__stripeLoadFailed = true;
+      console.error('[Stripe] js.stripe.com failed to load after 5s — donor cannot enter card');
+      var msg = 'Payment form blocked — please disable any ad-blockers or browser extensions and refresh the page, or try a different browser.';
+      ['gg-card-element', 'card-element', 'ts-card-element'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) {
+          el.innerHTML = '<div style="padding:16px;color:#991b1b;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;font-size:14px;line-height:1.5;">⚠️ ' + msg + '</div>';
+        }
+      });
+      ['gg-card-errors', 'card-errors', 'ts-card-errors'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.textContent = msg;
+      });
+      // Alert admin so we can follow up with the donor before they leave
+      try {
+        var firstName = (document.getElementById('gg-firstName')?.value || document.getElementById('modal-firstName')?.value || document.getElementById('ts-firstName')?.value || '').trim();
+        var lastName = (document.getElementById('gg-lastName')?.value || document.getElementById('modal-lastName')?.value || document.getElementById('ts-lastName')?.value || '').trim();
+        var email = (document.getElementById('gg-email')?.value || document.getElementById('modal-email')?.value || document.getElementById('ts-email')?.value || '').trim();
+        var phone = (document.getElementById('gg-phone')?.value || document.getElementById('modal-phone')?.value || document.getElementById('ts-phone')?.value || '').trim();
+        var total = (window.donationCart?.items || []).reduce(function(s,i){ return s + (i.amount * (i.quantity||1)); }, 0);
+        fetch('/api/admin/checkout-failure', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            donorName: (firstName + ' ' + lastName).trim() || null,
+            donorEmail: email || null,
+            donorPhone: phone || null,
+            amount: total,
+            error: 'Stripe.js failed to load (likely ad-blocker, browser extension, or network firewall blocking js.stripe.com)',
+            status: 'stripe_load_failed',
+            stage: 'init',
+          }),
+        }).catch(function(){});
+      } catch (_) {}
     }
   }
   if (stripeEnabled && stripePublishableKey) {
@@ -1586,6 +2028,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load Google Places API
   loadGooglePlaces();
+
+  // Mobile fix: iOS Safari already scrolls a focused input into view above the
+  // keyboard automatically. We use block:'nearest' (no-op if already visible)
+  // instead of fighting iOS with block:'start' — the latter combined with iOS's
+  // own scroll caused the Google Places dropdown to detach and float over
+  // unrelated form fields. The CSS scroll-margin-top still keeps the input
+  // clear of the sticky header when iOS does scroll.
+  document.addEventListener('focusin', function(e) {
+    var t = e.target;
+    if (!t || !t.id) return;
+    if (t.id === 'modal-address' || t.id === 'ts-address' || t.id === 'gg-address') {
+      setTimeout(function() {
+        try { t.scrollIntoView({ behavior: 'auto', block: 'nearest' }); } catch (_) {}
+      }, 350);
+    }
+  });
 
   // Event Listeners
   document.getElementById('close-cart').addEventListener('click', closeCart);
@@ -2166,6 +2624,63 @@ function closeCart() {
 window.openCart = openCart;
 window.closeCart = closeCart;
 
+// Admin prefill — pushes donor info into all known checkout field IDs.
+// Some checkout templates (modal, two-step, gg-one-step) build their inputs
+// asynchronously after openCheckout, so we retry steadily for ~10s and refill
+// every pass even after the first success (in case a template re-renders).
+function applyAdminPrefillFields(donor) {
+  if (!donor || typeof donor !== 'object') return;
+  console.log('[admin-prefill] applying donor info', donor);
+  var fieldMap = {
+    'firstName': donor.firstName || donor.first_name || '',
+    'lastName': donor.lastName || donor.last_name || '',
+    'email': donor.email || '',
+    'phone': donor.phone || '',
+    'address': donor.address?.line1 || donor.address_line1 || '',
+    'city': donor.address?.city || donor.city || '',
+    'state': donor.address?.state || donor.state || '',
+    'zip': donor.address?.postal_code || donor.zip || donor.postal_code || '',
+    'country': (donor.address?.country || donor.country || 'US').toUpperCase(),
+  };
+  var prefixes = ['modal-', 'ts-info-', 'gg-'];
+  var attempts = 0;
+  var maxAttempts = 50; // ~10s at 200ms
+
+  function fillOnce() {
+    var hits = 0;
+    Object.keys(fieldMap).forEach(function(key) {
+      var val = fieldMap[key];
+      if (!val) return;
+      prefixes.forEach(function(prefix) {
+        var el = document.getElementById(prefix + key);
+        if (el && 'value' in el) {
+          // Skip overwriting non-empty user input on later passes
+          if (attempts > 0 && el.value && el.value !== val) return;
+          if (el.value !== val) {
+            el.value = val;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          hits++;
+        }
+      });
+    });
+    return hits;
+  }
+
+  function tick() {
+    attempts++;
+    fillOnce();
+    if (attempts < maxAttempts) {
+      setTimeout(tick, 200);
+    } else {
+      console.log('[admin-prefill] done after ' + attempts + ' passes');
+    }
+  }
+  tick();
+}
+window.applyAdminPrefillFields = applyAdminPrefillFields;
+
 // Checkout Modal Functions
 function openCheckoutModal() {
   closeCart();
@@ -2173,6 +2688,8 @@ function openCheckoutModal() {
   if (!checkoutModal) return;
   checkoutModal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+
+  // (Turnstile renders on submit click — no pre-warm to keep page browsing smooth.)
 
   // Check if we're in two-step mode
   var isTwoStep = (document.getElementById('checkout-template-setting')?.dataset?.checkoutTemplate) === 'two-step';
@@ -2480,8 +2997,9 @@ function openCheckoutModal() {
   try { updateUpsellCardStyles(); } catch(e) {}
 
   // Initialize Google Places autocomplete after modal is visible
+  // (initPlacesAutocomplete has built-in retry if Google API isn't loaded yet)
   setTimeout(function() {
-    if (!window.donationCart.autocomplete && window.google?.maps?.places) {
+    if (!window.donationCart.autocomplete) {
       window.initPlacesAutocomplete();
     }
   }, 100);
@@ -2691,7 +3209,8 @@ function goToPaymentStep() {
   updateModalTotal();
 
   // Initialize Google Places autocomplete if not already done
-  if (!window.donationCart.autocomplete && window.google?.maps?.places) {
+  // (initPlacesAutocomplete polls until Google API is ready)
+  if (!window.donationCart.autocomplete) {
     window.initPlacesAutocomplete();
   }
 }
@@ -2768,6 +3287,24 @@ function captureAbandonedCheckout(force) {
   var params = new URLSearchParams(window.location.search);
   var storedUtm = window.getStoredUTM ? window.getStoredUTM() : null;
 
+  // Mirror the donations.items shape so the admin recovery view can render
+  // line items the same way for both pending donations and abandoned carts.
+  var capturedItems = items.map(function(it) {
+    return {
+      id: it.id,
+      name: it.name,
+      label: it.label || it.name,
+      campaign: it.campaign || it.slug,
+      amount: typeof it.amount === 'string' ? parseFloat(it.amount) : it.amount,
+      quantity: it.quantity || 1,
+      type: it.type || 'single',
+      metadata: it.metadata || null,
+      childName: (it.metadata && it.metadata.childName) || null,
+      aqiqahFor: (it.metadata && it.metadata.aqiqahFor) || null,
+      notes: (it.metadata && it.metadata.notes) || null,
+    };
+  });
+
   var payload = {
     email: email,
     first_name: firstName || undefined,
@@ -2784,6 +3321,7 @@ function captureAbandonedCheckout(force) {
     utm_content: params.get('utm_content') || (storedUtm && storedUtm.utm_content) || undefined,
     utm_term: params.get('utm_term') || (storedUtm && storedUtm.utm_term) || undefined,
     checkout_source: 'donation-cart',
+    items: capturedItems,
   };
 
   fetch('/api/abandoned-checkout/capture', {
@@ -2813,31 +3351,47 @@ function captureAbandonedCheckout(force) {
 //   2. POST /api/payments/create-subscription — create Subscription with saved PM
 //   3. Subscription charges immediately with the saved payment method
 //
-// Map Stripe decline codes to user-friendly messages with solutions
+// Map Stripe decline codes to user-friendly messages with solutions.
+// All "card declined" / "do not honor" type messages now nudge the donor
+// to contact their bank and ask them to allow this specific charge.
 function getDeclineMessage(error) {
   if (!error) return 'Payment failed. Please try again.';
 
+  var BANK_TIP = 'Please get in touch with your bank (number on the back of your card) and ask them to allow this charge to Qurbani Foundation, then try again.';
+
   var code = error.decline_code || error.code || '';
   var messages = {
-    'insufficient_funds': '💳 Insufficient funds on this card. Please try a different card or add funds to your account.',
-    'do_not_honor': '🏦 Your bank declined this transaction. Please call the number on the back of your card to authorize it, or try a different card.',
-    'card_velocity_exceeded': '⏳ Too many attempts on this card. Please wait 15-30 minutes before trying again, or use a different card.',
+    'insufficient_funds': '💳 Insufficient funds on this card. Please try a different card.',
+    'do_not_honor': '🏦 Your bank declined this transaction. ' + BANK_TIP,
+    'card_velocity_exceeded': '⏳ Too many attempts on this card. Please wait 15–30 minutes before trying again, or use a different card.',
     'lost_card': '🚫 This card cannot be used for transactions. Please try a different card.',
     'stolen_card': '🚫 This card cannot be used for transactions. Please try a different card.',
     'expired_card': '📅 This card has expired. Please use a card with a valid expiration date.',
     'incorrect_cvc': '🔒 The security code (CVV) is incorrect. Please check the 3-digit number on the back of your card and try again.',
     'incorrect_zip': '📍 The ZIP code doesn\'t match your card on file. Please verify your billing address and try again.',
     'processing_error': '⚙️ A temporary processing error occurred. Please wait a moment and try again.',
-    'card_declined': '💳 Your card was declined. Please try a different card or contact your bank at the number on the back of your card.',
-    'generic_decline': '💳 Your card was declined. Please try a different card or contact your bank for more information.',
-    'fraudulent': '🏦 Your bank flagged this as suspicious. Please call your bank to authorize the charge, then try again.',
-    'transaction_not_allowed': '🏦 Your bank does not allow this type of transaction. Please contact your bank or try a different card.',
+    'card_declined': '💳 Your card was declined. ' + BANK_TIP + ' Or try a different card.',
+    'generic_decline': '💳 Your card was declined. ' + BANK_TIP + ' Or try a different card.',
+    'fraudulent': '🏦 Your bank flagged this as suspicious. ' + BANK_TIP,
+    'transaction_not_allowed': '🏦 Your bank does not allow this type of transaction. ' + BANK_TIP + ' Or try a different card.',
     'currency_not_supported': '💱 This card does not support USD transactions. Please try a different card.',
     'card_not_supported': '💳 This card type is not supported. Please try a Visa, Mastercard, or American Express.',
-    'try_again_later': '⏳ A temporary issue occurred. Please wait a few minutes and try again.',
+    'try_again_later': '🔍 Your bank declined this. Most often this means the CVV or expiration date is wrong — please double-check and try again. If correct, ' + BANK_TIP.toLowerCase(),
   };
 
-  return messages[code] || (error.message || 'Your card was declined. Please try a different card or contact your bank.');
+  if (messages[code]) return messages[code];
+
+  // Wrap raw Stripe technical messages so donors don't see jargon like "PaymentIntent".
+  var raw = (error.message || '').toLowerCase();
+  if (raw.indexOf('paymentintent') !== -1 || raw.indexOf('payment intent') !== -1) {
+    return '⚠️ Your previous attempt didn\'t go through. Please re-enter your card details below or try a different card. If your card keeps declining, ' + BANK_TIP.toLowerCase();
+  }
+  if (raw.indexOf('declined') !== -1) {
+    return '💳 Your card was declined. ' + BANK_TIP + ' Or try a different card.';
+  }
+
+  // Last-resort fallback — friendly + actionable
+  return '💳 ' + (error.message || 'Your card was declined.') + ' ' + BANK_TIP + ' Or try a different card.';
 }
 
 async function handlePayment() {
@@ -2930,10 +3484,11 @@ async function handlePayment() {
       // STEP 2: Create SetupIntent + Customer on server
       payText.textContent = 'Securing payment...';
 
-      var setupRes = await fetch('/api/payments/create-setup-intent', {
+      var tsToken1 = await window.getTurnstileToken();
+      var setupRes = await window.donationFetch('/api/payments/create-setup-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer: customer, billingAddress: billingAddress, resumeToken: localStorage.getItem('qurbani_resume_token') || undefined }),
+        body: JSON.stringify({ customer: customer, billingAddress: billingAddress, resumeToken: localStorage.getItem('qurbani_resume_token') || undefined, turnstileToken: tsToken1 }),
       });
 
       var setupData = await setupRes.json();
@@ -2971,7 +3526,7 @@ async function handlePayment() {
       // STEP 4: Create the REAL subscription with the saved payment method
       payText.textContent = 'Creating subscription...';
 
-      var subResponse = await fetch('/api/payments/create-subscription', {
+      var subResponse = await window.donationFetch('/api/payments/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3025,9 +3580,14 @@ async function handlePayment() {
         interval: subData.interval || donationType,
         next_billing_date: subData.nextBillingDate || '',
         donor_email: customer.email,
+        donor_first_name: customer.firstName || '',
+        donor_last_name: customer.lastName || '',
+        donor_phone: customer.phone || '',
+        donor_address: typeof billingAddress !== 'undefined' ? billingAddress : {},
         timestamp: Date.now()
       };
       sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+        try { window.clearDonationFormState && window.clearDonationFormState(); } catch(_) {}
 
       // Clear cart and redirect
       window.donationCart.items = [];
@@ -3048,7 +3608,8 @@ async function handlePayment() {
       }
 
       // STEP 2: Create the PaymentIntent NOW (not earlier)
-      var response = await fetch('/api/payments/create-intent', {
+      var tsToken2 = await window.getTurnstileToken();
+      var response = await window.donationFetch('/api/payments/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3069,6 +3630,7 @@ async function handlePayment() {
           utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
           utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
           journey: buildDonationJourney(total, items, donationType),
+          turnstileToken: tsToken2,
         }),
       });
 
@@ -3128,6 +3690,7 @@ async function handlePayment() {
           timestamp: Date.now()
         };
         sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+        try { window.clearDonationFormState && window.clearDonationFormState(); } catch(_) {}
 
         // Clear cart and redirect
         window.donationCart.items = [];
@@ -3474,7 +4037,8 @@ async function mountTwoStepPaymentElement() {
   };
 
   try {
-    var response = await fetch('/api/payments/create-intent', {
+    var tsToken3 = await window.getTurnstileToken();
+    var response = await window.donationFetch('/api/payments/create-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3493,6 +4057,7 @@ async function mountTwoStepPaymentElement() {
         utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
         utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
         journey: buildDonationJourney(total, items, donationType),
+        turnstileToken: tsToken3,
       }),
     });
 
@@ -3645,9 +4210,14 @@ document.getElementById('ts-pay-btn')?.addEventListener('click', async function(
         interval: data.interval || '',
         next_billing_date: data.nextBillingDate || '',
         donor_email: customer.email,
+        donor_first_name: customer.firstName || '',
+        donor_last_name: customer.lastName || '',
+        donor_phone: customer.phone || '',
+        donor_address: typeof billingAddress !== 'undefined' ? billingAddress : {},
         timestamp: Date.now()
       };
       sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+        try { window.clearDonationFormState && window.clearDonationFormState(); } catch(_) {}
 
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
@@ -3666,11 +4236,22 @@ document.getElementById('ts-pay-btn')?.addEventListener('click', async function(
 });
 
 // Google Places for two-step checkout
+var _tsPlacesRetries = 0;
 function initTwoStepPlaces() {
   var addressInput = document.getElementById('ts-address');
-  if (!addressInput || !window.google?.maps?.places) return;
+  if (!addressInput) return;
   if (addressInput._placesInit) return;
+
+  // Retry until Google Places API is ready (max ~5s)
+  if (!window.google?.maps?.places) {
+    if (_tsPlacesRetries < 10) {
+      _tsPlacesRetries++;
+      setTimeout(initTwoStepPlaces, 500);
+    }
+    return;
+  }
   addressInput._placesInit = true;
+  _tsPlacesRetries = 0;
 
   var autocomplete = new window.google.maps.places.Autocomplete(addressInput, {
     types: ['address'],
@@ -3741,32 +4322,100 @@ function openGGCheckout() {
   // updateGGCart handles heading, item cards, and totals
   updateGGCart();
 
-  // Mount Stripe Payment Element immediately (deferred mode — no API call)
-  setTimeout(function() { mountGGPaymentElement(); }, 100);
+  // Defer ALL heavy init (Stripe iframe, Google Places, Turnstile pre-warm)
+  // to idle time so the simple form inputs (name, email, phone) are
+  // immediately responsive when the donor opens checkout. Without this,
+  // first-cart-open after a heavy page like /qurbani blocks the main thread
+  // for several seconds while iframes mount and scripts download.
+  var idle = window.requestIdleCallback || function(cb) { return setTimeout(cb, 1); };
+  idle(function() { mountGGPaymentElement(); }, { timeout: 800 });
+  _ggPlacesRetries = 0;
+  idle(function() { initGGPlaces(); }, { timeout: 1000 });
+  idle(function() { try { window.prewarmTurnstileToken && window.prewarmTurnstileToken(); } catch(_) {} }, { timeout: 1500 });
 
-  // Init Google Places for GG address field
-  _ggPlacesRetries = 0; // reset retries for fresh attempt
-  setTimeout(function() { initGGPlaces(); }, 300);
-
+  // Restore any previously-entered form data (donor refresh / crash recovery)
+  idle(function() { try { window.restoreDonationFormState && window.restoreDonationFormState(); } catch(_) {} }, { timeout: 500 });
 }
 
 function closeGGCheckout() {
   var modal = document.getElementById('gg-checkout');
   if (modal) modal.classList.add('hidden');
+
+  var targetY = window._ggScrollY || 0;
+
   // Restore body scroll (iOS Safari fix)
   document.body.style.overflow = '';
   document.body.style.position = '';
   document.body.style.top = '';
   document.body.style.width = '';
-  window.scrollTo(0, window._ggScrollY || 0);
+
   // Restore page-level sticky bars
   var stickyBar = document.getElementById('zw-sticky-bar');
   if (stickyBar && window.innerWidth <= 768) stickyBar.style.display = 'flex';
+
+  // ─── iOS Safari paint fix ──────────────────────────────────────────────
+  // After unlocking body position:fixed, iOS only paints the viewport at
+  // the new scroll position — content immediately below stays unpainted
+  // until you scroll. This is especially severe on the first cart close
+  // because Stripe just mounted an iframe (creating new compositing layers).
+  //
+  // Fix: scroll briefly 80px past the target then back. iOS paints every
+  // region it scrolls through, so this forces all content immediately below
+  // the viewport to paint. The 80px overshoot is fast enough to look like
+  // a single jump to the user.
+  if (targetY > 0) {
+    var overshoot = Math.max(0, targetY - 80);
+    window.scrollTo(0, targetY + 80);
+    void document.documentElement.offsetHeight; // flush layout
+    requestAnimationFrame(function() {
+      window.scrollTo(0, targetY);
+    });
+  } else {
+    window.scrollTo(0, 0);
+  }
 }
 
 // Close handlers
-document.getElementById('gg-close')?.addEventListener('click', closeGGCheckout);
-document.getElementById('gg-add-another')?.addEventListener('click', closeGGCheckout);
+// Use the shared bullet-proof tap handler from window if available, otherwise
+// fall back to a local implementation. Detects real taps (not scrolls), works
+// on iOS/Android/desktop, prevents double-firing.
+(function() {
+  function bindTap(el, handler) {
+    if (!el) return;
+    if (typeof window.bindTapHandler === 'function') {
+      window.bindTapHandler(el, handler);
+      return;
+    }
+    // Local fallback — same logic
+    var startX = 0, startY = 0, startT = 0, moved = false, locked = false;
+    function fire(e) {
+      if (locked) return;
+      locked = true;
+      setTimeout(function() { locked = false; }, 500);
+      if (e && e.preventDefault) e.preventDefault();
+      if (e && e.stopPropagation) e.stopPropagation();
+      handler(e);
+    }
+    el.addEventListener('touchstart', function(e) {
+      var t = e.touches && e.touches[0];
+      if (!t) return;
+      startX = t.clientX; startY = t.clientY; startT = Date.now(); moved = false;
+    }, { passive: true });
+    el.addEventListener('touchmove', function(e) {
+      var t = e.touches && e.touches[0];
+      if (!t) return;
+      if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) moved = true;
+    }, { passive: true });
+    el.addEventListener('touchend', function(e) {
+      if (moved) return;
+      if (Date.now() - startT > 500) return;
+      fire(e);
+    }, { passive: false });
+    el.addEventListener('click', fire);
+  }
+  bindTap(document.getElementById('gg-close'), closeGGCheckout);
+  bindTap(document.getElementById('gg-add-another'), closeGGCheckout);
+})();
 
 // Mobile cart accordion toggle
 document.getElementById('gg-cart-toggle')?.addEventListener('click', function() {
@@ -4285,7 +4934,15 @@ function updateGGCart() {
 // GG Stripe mount
 function mountGGPaymentElement() {
   var container = document.getElementById('gg-card-element');
-  if (!container || !window.donationCart.stripe) return;
+  if (!container) return;
+  if (!window.donationCart.stripe) {
+    // Stripe.js didn't load. If we know it failed permanently, show the
+    // standard error message in the card area so donor sees it.
+    if (window.__stripeLoadFailed) {
+      container.innerHTML = '<div style="padding:16px;color:#991b1b;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;font-size:14px;line-height:1.5;">⚠️ Payment form blocked — please disable any ad-blockers or browser extensions and refresh the page, or try a different browser.</div>';
+    }
+    return;
+  }
 
   var items = window.donationCart.items.slice();
   var total = items.reduce(function(sum, item) { return sum + (item.amount * (item.quantity || 1)); }, 0);
@@ -4441,10 +5098,11 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
       payText.textContent = 'Securing payment...';
 
       // STEP 1: Create SetupIntent + Customer on server
-      var setupRes = await fetch('/api/payments/create-setup-intent', {
+      var tsToken4 = await window.getTurnstileToken();
+      var setupRes = await window.donationFetch('/api/payments/create-setup-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer: customer, billingAddress: billingAddress }),
+        body: JSON.stringify({ customer: customer, billingAddress: billingAddress, turnstileToken: tsToken4 }),
       });
       var setupData = await setupRes.json();
       if (!setupRes.ok) throw new Error(setupData.error || 'Failed to initialize payment.');
@@ -4473,7 +5131,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
 
       // STEP 3: Create the REAL subscription with the saved payment method
       payText.textContent = 'Creating subscription...';
-      var subResponse = await fetch('/api/payments/create-subscription', {
+      var subResponse = await window.donationFetch('/api/payments/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4516,9 +5174,14 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
         interval: subData.interval || donationType,
         next_billing_date: subData.nextBillingDate || '',
         donor_email: customer.email,
+        donor_first_name: customer.firstName || '',
+        donor_last_name: customer.lastName || '',
+        donor_phone: customer.phone || '',
+        donor_address: typeof billingAddress !== 'undefined' ? billingAddress : {},
         timestamp: Date.now()
       };
       sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+        try { window.clearDonationFormState && window.clearDonationFormState(); } catch(_) {}
       window.donationCart.items = [];
       localStorage.removeItem('donationCart');
       localStorage.removeItem('qurbani_resume_token');
@@ -4530,7 +5193,8 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
       // ONE-TIME FLOW (PaymentIntent → confirmPayment)
       // ═══════════════════════════════════════════════════════════
       payText.textContent = 'Securing payment...';
-      var response = await fetch('/api/payments/create-intent', {
+      var tsToken5 = await window.getTurnstileToken();
+      var response = await window.donationFetch('/api/payments/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4551,6 +5215,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           utm_campaign: (window.getStoredUTM && window.getStoredUTM() || {}).utm_campaign || undefined,
           utm_content: (window.getStoredUTM && window.getStoredUTM() || {}).utm_content || undefined,
           journey: buildDonationJourney(total, items, donationType),
+          turnstileToken: tsToken5,
         }),
       });
       var data = await response.json();
@@ -4597,6 +5262,7 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
           timestamp: Date.now()
         };
         sessionStorage.setItem('qurbani_purchase', JSON.stringify(successData));
+        try { window.clearDonationFormState && window.clearDonationFormState(); } catch(_) {}
         window.donationCart.items = [];
         localStorage.removeItem('donationCart');
         localStorage.removeItem('qurbani_resume_token');
@@ -4608,6 +5274,10 @@ document.getElementById('gg-pay-btn')?.addEventListener('click', async function(
     errorDiv.classList.remove('hidden');
     var errMsg = err._stripeError ? getDeclineMessage(err._stripeError) : (err.message || 'Payment failed. Please try again.');
     errorDiv.textContent = errMsg;
+    // Always discard any cached token after an attempt — next click gets a fresh one
+    try { window.invalidateTurnstileCache && window.invalidateTurnstileCache(); } catch(_) {}
+    // And speculatively pre-warm again so the retry is fast
+    try { window.prewarmTurnstileToken && window.prewarmTurnstileToken(); } catch(_) {}
   } finally {
     payBtn.disabled = false;
     payText.textContent = 'Complete Secure Donation';

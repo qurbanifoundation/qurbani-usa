@@ -15,6 +15,7 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import { siteConfig } from '../config/site';
 
 interface Props {
   campaign: {
@@ -792,7 +793,7 @@ const benefits = [
               <span class="font-semibold text-gray-800" style="font-family: 'Signika', sans-serif;">Why should I sponsor with Qurbani Foundation?</span>
             </summary>
             <div class="pl-10 pb-5 text-gray-600 leading-relaxed">
-              Qurbani Foundation maintains a 100% donation policy — every dollar of your sponsorship goes directly to your orphan's care. We provide true 1-to-1 sponsorship, annual progress reports, and transparent reporting. As a registered 501(c)(3) nonprofit, all donations are tax-deductible.
+              Qurbani Foundation maintains a 100% donation policy — every dollar of your sponsorship goes directly to your orphan's care. We provide true 1-to-1 sponsorship, annual progress reports, and transparent reporting.{siteConfig.showUS501c3 ? ' As a registered 501(c)(3) nonprofit, all donations are tax-deductible.' : ''}
             </div>
           </details>
           <details class="border-b border-gray-200 group">

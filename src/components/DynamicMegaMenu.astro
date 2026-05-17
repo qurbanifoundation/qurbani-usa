@@ -171,7 +171,7 @@ const campaignLimit = campaignGridWidget?.config?.limit || 8;
   <!-- Top border with menu color -->
   <div class="h-1" style={`background-color: ${menuColor}`}></div>
 
-  <div class="flex">
+  <div class="flex min-h-[640px]">
     {/* Left Column */}
     {hasLeft && (
       <div class="w-[280px] bg-[#f8f6f2] py-3 flex-shrink-0">
@@ -192,7 +192,7 @@ const campaignLimit = campaignGridWidget?.config?.limit || 8;
 
     {/* Right Column */}
     {hasRight && (
-      <div class="w-[400px] p-5 flex-shrink-0 bg-[#f8f6f2]">
+      <div class="w-[440px] px-8 py-8 flex-shrink-0 bg-[#f8f6f2]">
         {enrichedWidgets.right.map((widget) => (
           <MegaMenuWidget widget={widget} menuColor={menuColor} menuId={menuId} />
         ))}

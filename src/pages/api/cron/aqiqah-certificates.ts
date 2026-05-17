@@ -16,6 +16,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { generateAqiqahCertificate } from '../../../lib/aqiqah-certificate';
+import { siteConfig } from '../../../config/site';
 
 export const prerender = false;
 
@@ -192,11 +193,11 @@ The Aqiqah meat has been distributed to families in need in ${LOCATION}, followi
     <tr>
       <td style="text-align:center;">
         <p style="margin:0 0 4px 0;color:#6b7280;font-size:14px;font-weight:600;">Qurbani Foundation USA</p>
-        <p style="margin:0 0 4px 0;color:#9ca3af;font-size:12px;">4245 N Central Expy, Dallas, TX 75205</p>
+        <p style="margin:0 0 4px 0;color:#9ca3af;font-size:12px;">5900 Balcones Dr, Suite 100, Austin, TX 78731</p>
         <p style="margin:0 0 4px 0;color:#9ca3af;font-size:12px;">1-800-900-0027 · +1 989-QURBANI (787-2265)</p>
-        <p style="margin:0 0 4px 0;color:#9ca3af;font-size:12px;">EIN: 38-4109716 · A 501(c)(3) Tax-Exempt Organization</p>
+        ${siteConfig.showEIN ? `<p style="margin:0 0 4px 0;color:#9ca3af;font-size:12px;">EIN: 38-4109146 · A 501(c)(3) Tax-Exempt Organization</p>` : ''}
         <p style="margin:0;color:#9ca3af;font-size:11px;">
-          Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color:#d97706;text-decoration:none;">donorcare@us.qurbani.com</a> for any inquiries.
+          Please do not reply to this email. Contact <a href="mailto:donorcare@qurbani.com" style="color:#d97706;text-decoration:none;">donorcare@qurbani.com</a> for any inquiries.
         </p>
       </td>
     </tr>
@@ -249,7 +250,7 @@ async function sendCertificateEmail(
     },
     body: JSON.stringify({
       from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-      reply_to: 'donorcare@us.qurbani.com',
+      reply_to: 'donorcare@qurbani.com',
       to: donorEmail,
       subject: `Aqiqah Certificate for ${childName} — Qurbani Foundation USA`,
       html,

@@ -118,6 +118,28 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
 
     // Build items list for display
     const itemsList = data.metadata?.items || [];
+
+    // Itemized HTML for the admin email (one row per item, with quantity & per-item price)
+    // Each row: "Aqiqah for Zayd  ×2  $200.00"
+    const formatMoney = (n: number) => '$' + (Number(n) || 0).toFixed(2);
+    const itemsHtml = itemsList.length > 0
+      ? itemsList.map((i: { name: string; amount?: number; quantity?: number; type?: string }) => {
+          const qty = Number(i.quantity) || 1;
+          const unit = Number(i.amount) || 0;
+          const lineTotal = unit * qty;
+          const qtyLabel = qty > 1 ? ` <span style="color:#6b7280;font-size:12px;">×${qty}</span>` : '';
+          const typeLabel = i.type && i.type !== 'single' && i.type !== 'one-time'
+            ? ` <span style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">(${i.type})</span>`
+            : '';
+          const unitNote = qty > 1 ? ` <span style="color:#9ca3af;font-size:11px;">@ ${formatMoney(unit)} ea.</span>` : '';
+          return `<tr>
+            <td style="padding:6px 0;color:#374151;vertical-align:top;">${i.name || 'Item'}${qtyLabel}${typeLabel}${unitNote}</td>
+            <td style="padding:6px 0;color:#111827;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;"><strong>${formatMoney(lineTotal)}</strong></td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="2" style="padding:6px 0;color:#374151;">${data.metadata?.campaign || 'General Donation'}</td></tr>`;
+
+    // Fallback flat label (used by anywhere that still needs a single string)
     const campaignName = itemsList.length > 0
       ? itemsList.map((i: { name: string }) => i.name).join(', ')
       : (data.metadata?.campaign || 'General Donation');
@@ -250,10 +272,22 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
                         ${row('Donor Name', data.donorName ? '<strong>' + data.donorName + '</strong>' : na)}
                         ${row('Email', data.donorEmail || na)}
                         ${row('Amount', amountDisplay ? '<strong style="font-size: 15px;">' + amountDisplay + '</strong>' : na)}
-                        ${row('Campaign', campaignName)}
                         ${row('Type', data.metadata?.typeLabel || 'One-time')}
                         ${row('Checkout', checkoutLabel)}
                       </table>
+
+                      <!-- Itemized line items (per-product breakdown with prices) -->
+                      <div style="margin: 14px 0 4px; padding: 12px 14px; background: #fafaf7; border: 1px solid #ececea; border-radius: 8px;">
+                        <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.6px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Items</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                          ${itemsHtml}
+                          <tr><td colspan="2" style="border-top:1px solid #ececea;padding-top:8px;"></td></tr>
+                          <tr>
+                            <td style="padding:4px 0;color:#6b7280;font-size:13px;">Total</td>
+                            <td style="padding:4px 0;color:#ef7c01;text-align:right;font-variant-numeric:tabular-nums;"><strong style="font-size:15px;">${amountDisplay || ''}</strong></td>
+                          </tr>
+                        </table>
+                      </div>
 
                       <!-- ════════════════════════════════════════ -->
                       <!-- SECTION 2: ATTRIBUTION                  -->
@@ -560,16 +594,138 @@ export async function notifyPaymentFailed(data: {
   donorName: string;
   donorEmail: string;
   reason?: string;
+  isSubscriptionRetry?: boolean;
 }): Promise<void> {
+  const titlePrefix = data.isSubscriptionRetry ? 'Subscription Retry Failed' : 'Payment Failed';
   await sendNotification({
     type: 'payment_failed',
-    title: 'Payment Failed',
-    message: `Payment of $${data.amount.toFixed(2)} from ${data.donorName} failed.${data.reason ? ` Reason: ${data.reason}` : ''}`,
+    title: titlePrefix,
+    message: `${data.isSubscriptionRetry ? 'Recurring subscription retry' : 'Payment'} of $${data.amount.toFixed(2)} from ${data.donorName} failed.${data.reason ? ` Reason: ${data.reason}` : ''}`,
     amount: data.amount,
     donorName: data.donorName,
     donorEmail: data.donorEmail,
-    metadata: { reason: data.reason },
+    metadata: { reason: data.reason, isSubscriptionRetry: data.isSubscriptionRetry },
   });
+}
+
+// Send admin email via Resend for failed payments — includes full error details
+export async function sendAdminFailedPaymentEmail(data: {
+  donorName: string;
+  donorEmail: string;
+  donorPhone: string;
+  amount: number;
+  campaignName: string;
+  items: any[];
+  errorMessage: string;
+  errorCode: string;
+  declineCode: string;
+  cardBrand: string;
+  cardLast4: string;
+  paymentIntentId: string;
+  createdAt: string;
+}): Promise<void> {
+  try {
+    if (!RESEND_API_KEY) {
+      console.log('Resend API key not configured, skipping failed payment admin email');
+      return;
+    }
+    const adminEmail = ADMIN_EMAIL;
+
+    const itemsList = Array.isArray(data.items)
+      ? data.items.map((i: any) => `${i.name || 'Item'} — $${i.amount || 0}`).join('<br/>')
+      : data.campaignName;
+
+    const localTime = new Date(data.createdAt).toLocaleString('en-US', {
+      timeZone: 'America/New_York',
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 24px 32px; border-radius: 12px 12px 0 0;">
+          <h1 style="color: #fff; font-size: 20px; margin: 0;">Payment Failed</h1>
+          <p style="color: #fecaca; font-size: 14px; margin: 8px 0 0;">A donation attempt was unsuccessful</p>
+        </div>
+        <div style="padding: 24px 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280; width: 140px;">Donor Name</td>
+              <td style="padding: 10px 0; font-weight: 600; color: #111827;">${data.donorName}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280;">Email</td>
+              <td style="padding: 10px 0;"><a href="mailto:${data.donorEmail}" style="color: #2563eb;">${data.donorEmail}</a></td>
+            </tr>
+            ${data.donorPhone ? `<tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280;">Phone</td>
+              <td style="padding: 10px 0;">${data.donorPhone}</td>
+            </tr>` : ''}
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280;">Amount</td>
+              <td style="padding: 10px 0; font-weight: 700; color: #dc2626; font-size: 18px;">$${data.amount.toFixed(2)}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280;">Campaign</td>
+              <td style="padding: 10px 0;">${data.campaignName}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280;">Items</td>
+              <td style="padding: 10px 0;">${itemsList}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px 0; color: #6b7280;">Time</td>
+              <td style="padding: 10px 0;">${localTime} EST</td>
+            </tr>
+          </table>
+
+          <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <h3 style="color: #991b1b; font-size: 14px; margin: 0 0 8px;">Error Details</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: #6b7280; width: 120px;">Message</td>
+                <td style="padding: 4px 0; color: #991b1b; font-weight: 600;">${data.errorMessage}</td>
+              </tr>
+              ${data.errorCode ? `<tr>
+                <td style="padding: 4px 0; color: #6b7280;">Error Code</td>
+                <td style="padding: 4px 0; color: #6b7280;">${data.errorCode}</td>
+              </tr>` : ''}
+              ${data.declineCode ? `<tr>
+                <td style="padding: 4px 0; color: #6b7280;">Decline Code</td>
+                <td style="padding: 4px 0; color: #6b7280;">${data.declineCode}</td>
+              </tr>` : ''}
+              ${data.cardBrand || data.cardLast4 ? `<tr>
+                <td style="padding: 4px 0; color: #6b7280;">Card</td>
+                <td style="padding: 4px 0; color: #6b7280;">${data.cardBrand ? data.cardBrand.toUpperCase() : ''} ${data.cardLast4 ? '****' + data.cardLast4 : ''}</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding: 4px 0; color: #6b7280;">Payment ID</td>
+                <td style="padding: 4px 0; color: #6b7280; font-size: 11px;">${data.paymentIntentId}</td>
+              </tr>
+            </table>
+          </div>
+
+          <p style="color: #6b7280; font-size: 12px; margin: 16px 0 0;">A recovery email will be sent to the donor in 30 minutes if they haven't completed a successful payment by then.</p>
+        </div>
+      </div>
+    `;
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Qurbani Foundation <noreply@notifications.qurbani.com>',
+        to: adminEmail,
+        subject: `Payment Failed: $${data.amount.toFixed(2)} from ${data.donorName} — ${data.errorMessage}`,
+        html,
+      }),
+    });
+  } catch (e: any) {
+    console.error('Error sending admin failed payment email:', e.message);
+  }
 }
 
 export async function notifyRefund(data: {

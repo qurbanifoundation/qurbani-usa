@@ -6,6 +6,7 @@
  * Uses localStorage with 3-day cooldown so returning visitors aren't pestered.
  * Directs users to /ramadan/my30days to schedule their 30-night Ramadan donations.
  */
+import { siteConfig } from '../config/site';
 ---
 
 <!-- Popup Overlay -->
@@ -83,7 +84,7 @@
             </div>
             <div>
               <p class="text-gray-800 text-[13px] font-semibold" style="font-family: 'Signika', sans-serif;">100% Tax-Deductible</p>
-              <p class="text-gray-500 text-[12px]" style="font-family: 'Lato', sans-serif;">Verified 501(c)(3) — instant receipts emailed</p>
+              <p class="text-gray-500 text-[12px]" style="font-family: 'Lato', sans-serif;">{siteConfig.showUS501c3 ? 'Verified 501(c)(3) — instant receipts emailed' : 'Instant receipts emailed'}</p>
             </div>
           </div>
         </div>
@@ -103,7 +104,7 @@
       <!-- Trust Footer -->
       <div class="bg-gray-50 border-t border-gray-100 px-6 py-2.5 text-center">
         <p class="text-[11px] text-gray-400" style="font-family: 'Lato', sans-serif;">
-          Qurbani Foundation USA&nbsp;&nbsp;•&nbsp;&nbsp;501(c)(3)&nbsp;&nbsp;•&nbsp;&nbsp;Tax-Deductible
+          Qurbani Foundation USA{siteConfig.showUS501c3 ? '  •  501(c)(3)  •  Tax-Deductible' : ''}
         </p>
       </div>
 

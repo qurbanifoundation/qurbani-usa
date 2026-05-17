@@ -41,7 +41,7 @@ CREATE TABLE site_settings (
   social_twitter TEXT DEFAULT 'https://twitter.com/qurbani',
   footer_about TEXT DEFAULT 'A Muslim charity dedicated to alleviating suffering.',
   footer_zakat_policy TEXT DEFAULT '100% Zakat Policy',
-  footer_ein TEXT DEFAULT '38-4109716',
+  footer_ein TEXT DEFAULT '38-4109146',
   footer_copyright TEXT DEFAULT 'Qurbani Foundation USA. All rights reserved.',
   donate_button_text TEXT DEFAULT 'DONATE NOW',
   donate_button_href TEXT DEFAULT '/donate',

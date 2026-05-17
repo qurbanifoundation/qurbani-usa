@@ -135,6 +135,17 @@ try {
                 </svg>
               </button>
               <button
+                class="link-settings-btn p-2 text-gray-500 hover:text-[#01534d] hover:bg-[#01534d]/10 rounded-lg transition"
+                data-id={menu.id}
+                data-name={menu.name}
+                data-direct-url={menu.direct_url || ''}
+                title="Link Settings (Mega Menu vs Direct Link)"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                </svg>
+              </button>
+              <button
                 class="mobile-links-btn p-2 text-gray-500 hover:text-[#0096D6] hover:bg-[#0096D6]/10 rounded-lg transition"
                 data-id={menu.id}
                 data-name={menu.name}
@@ -255,6 +266,31 @@ try {
             </div>
           </div>
 
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Menu Type</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-[#01534d] has-[:checked]:bg-[#01534d]/5">
+                <input type="radio" name="menu-type" value="mega" checked class="text-[#01534d] focus:ring-[#01534d]" />
+                <span class="text-sm">Mega Menu (dropdown)</span>
+              </label>
+              <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-[#01534d] has-[:checked]:bg-[#01534d]/5">
+                <input type="radio" name="menu-type" value="direct" class="text-[#01534d] focus:ring-[#01534d]" />
+                <span class="text-sm">Direct Link</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="menu-direct-url-row" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Direct URL</label>
+            <input
+              type="text"
+              id="menu-direct-url-field"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent font-mono text-sm"
+              placeholder="e.g. /qurbani"
+            />
+            <p class="text-xs text-gray-500 mt-1">Where the menu item links to. Skips the dropdown entirely.</p>
+          </div>
+
           <div class="flex justify-end gap-3 pt-4 border-t">
             <button type="button" id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
               Cancel
@@ -347,6 +383,50 @@ try {
           <button type="button" id="ml-cancel-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
           <button type="button" id="ml-save-btn" class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">Save Links</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link Settings Modal -->
+  <div id="link-settings-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-black/50" id="link-settings-backdrop"></div>
+      <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-1">Link Settings</h3>
+        <p class="text-sm text-gray-500 mb-5">For "<span id="ls-menu-name" class="font-medium text-gray-700"></span>"</p>
+        <input type="hidden" id="ls-menu-id" />
+
+        <form id="link-settings-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Menu Type</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-[#01534d] has-[:checked]:bg-[#01534d]/5">
+                <input type="radio" name="ls-type" value="mega" class="text-[#01534d] focus:ring-[#01534d]" />
+                <span class="text-sm">Mega Menu (dropdown)</span>
+              </label>
+              <label class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-[#01534d] has-[:checked]:bg-[#01534d]/5">
+                <input type="radio" name="ls-type" value="direct" class="text-[#01534d] focus:ring-[#01534d]" />
+                <span class="text-sm">Direct Link</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="ls-direct-url-row" class="hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Direct URL</label>
+            <input
+              type="text"
+              id="ls-direct-url"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01534d] focus:border-transparent font-mono text-sm"
+              placeholder="e.g. /qurbani"
+            />
+            <p class="text-xs text-gray-500 mt-1">Where the menu item links to. Mega menu widgets are ignored when this is set.</p>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t">
+            <button type="button" id="ls-cancel" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-[#01534d] text-white rounded-lg font-medium hover:bg-[#013d39] transition">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -461,9 +541,24 @@ try {
   document.getElementById('cancel-btn').addEventListener('click', () => modal.classList.add('hidden'));
   document.getElementById('modal-backdrop').addEventListener('click', () => modal.classList.add('hidden'));
 
+  // Toggle direct URL row when type changes
+  document.querySelectorAll('input[name="menu-type"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isDirect = document.querySelector('input[name="menu-type"]:checked').value === 'direct';
+      document.getElementById('menu-direct-url-row').classList.toggle('hidden', !isDirect);
+    });
+  });
+
   // Save new menu
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const isDirect = document.querySelector('input[name="menu-type"]:checked')?.value === 'direct';
+    const directUrl = document.getElementById('menu-direct-url-field').value.trim();
+    if (isDirect && !directUrl) {
+      showToast('Direct URL is required when Menu Type is Direct Link', 'error');
+      return;
+    }
 
     const data = {
       id: document.getElementById('menu-id-field').value,
@@ -471,6 +566,7 @@ try {
       color: document.getElementById('menu-color-field').value,
       sort_order: parseInt(document.getElementById('menu-sort-field').value),
       is_active: true,
+      direct_url: isDirect ? directUrl : null,
     };
 
     try {
@@ -756,6 +852,60 @@ try {
       });
     });
   }
+
+  // ===== Link Settings (Mega Menu vs Direct Link) =====
+  const lsModal = document.getElementById('link-settings-modal');
+  const lsTypeRadios = () => document.querySelectorAll('input[name="ls-type"]');
+  const lsUrlRow = document.getElementById('ls-direct-url-row');
+
+  function lsSyncUrlRow() {
+    const checked = document.querySelector('input[name="ls-type"]:checked');
+    lsUrlRow.classList.toggle('hidden', !checked || checked.value !== 'direct');
+  }
+
+  document.querySelectorAll('.link-settings-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+      const directUrl = btn.dataset.directUrl || '';
+      document.getElementById('ls-menu-id').value = id;
+      document.getElementById('ls-menu-name').textContent = name;
+      document.getElementById('ls-direct-url').value = directUrl;
+      // Pre-select the right radio
+      lsTypeRadios().forEach(r => { r.checked = (directUrl ? r.value === 'direct' : r.value === 'mega'); });
+      lsSyncUrlRow();
+      lsModal.classList.remove('hidden');
+    });
+  });
+
+  lsTypeRadios().forEach(r => r.addEventListener('change', lsSyncUrlRow));
+  document.getElementById('ls-cancel').addEventListener('click', () => lsModal.classList.add('hidden'));
+  document.getElementById('link-settings-backdrop').addEventListener('click', () => lsModal.classList.add('hidden'));
+
+  document.getElementById('link-settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('ls-menu-id').value;
+    const isDirect = document.querySelector('input[name="ls-type"]:checked')?.value === 'direct';
+    const directUrl = document.getElementById('ls-direct-url').value.trim();
+    if (isDirect && !directUrl) {
+      showToast('Direct URL is required when Menu Type is Direct Link', 'error');
+      return;
+    }
+    try {
+      const res = await fetch('/api/mega-menus', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, direct_url: isDirect ? directUrl : null }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Save failed');
+      showToast('Link settings saved');
+      lsModal.classList.add('hidden');
+      setTimeout(() => window.location.reload(), 600);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
 
   // Open mobile links modal
   document.querySelectorAll('.mobile-links-btn').forEach(btn => {

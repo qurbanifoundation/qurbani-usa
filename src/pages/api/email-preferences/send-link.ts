@@ -54,11 +54,11 @@ export const POST: APIRoute = async ({ request }) => {
       },
       body: JSON.stringify({
         from: 'Qurbani Foundation <donations@receipts.qurbani.com>',
-        reply_to: 'donorcare@us.qurbani.com',
+        reply_to: 'donorcare@qurbani.com',
         to: normalizedEmail,
         subject: 'Manage Your Email Preferences',
         html: buildLinkEmail(preferencesUrl),
-        text: `Manage your email preferences: ${preferencesUrl}\n\nThis link will take you to your Qurbani Foundation email preferences page where you can choose which emails you receive.\n\nIf you didn't request this, you can safely ignore this email.\n\nQurbani Foundation USA\n4245 N Central Expy, Dallas, TX 75205\n1-800-900-0027`,
+        text: `Manage your email preferences: ${preferencesUrl}\n\nThis link will take you to your Qurbani Foundation email preferences page where you can choose which emails you receive.\n\nIf you didn't request this, you can safely ignore this email.\n\nQurbani Foundation USA\n5900 Balcones Dr, Suite 100, Austin, TX 78731\n1-800-900-0027`,
       }),
     });
 
@@ -144,13 +144,13 @@ function buildLinkEmail(preferencesUrl: string): string {
                       Qurbani Foundation USA
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
-                      4245 N Central Expy, Dallas, TX 75205
+                      5900 Balcones Dr, Suite 100, Austin, TX 78731
                     </p>
                     <p style="margin: 0 0 4px 0; color: #9ca3af; font-size: 12px;">
                       1-800-900-0027 &middot; +1 989-QURBANI (787-2265)
                     </p>
                     <p style="margin: 0; color: #9ca3af; font-size: 11px;">
-                      Please do not reply to this email. Contact <a href="mailto:donorcare@us.qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@us.qurbani.com</a> for any inquiries.
+                      Please do not reply to this email. Contact <a href="mailto:donorcare@qurbani.com" style="color: #d97706; text-decoration: none;">donorcare@qurbani.com</a> for any inquiries.
                     </p>
                   </td>
                 </tr>

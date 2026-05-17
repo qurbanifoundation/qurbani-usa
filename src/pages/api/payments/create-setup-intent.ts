@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { getStripe } from '../../../lib/stripe-cache';
+import { verifyTurnstileToken, getClientIp } from '../../../lib/turnstile';
 
 export const prerender = false;
 
@@ -20,7 +21,19 @@ export const prerender = false;
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { customer, billingAddress, resumeToken } = body;
+    const { customer, billingAddress, resumeToken, turnstileToken } = body;
+
+    // Bot-protection: verify Turnstile token. Soft-fail mode — donor proceeds
+    // even if Turnstile fails. Status flagged in SetupIntent metadata so the
+    // resulting subscription can be reviewed if needed.
+    const turnstileResult = await verifyTurnstileToken(turnstileToken, getClientIp(request));
+    const turnstileStatus: 'verified' | 'bypassed_no_token' | 'bypassed_failed' =
+      turnstileResult.success
+        ? 'verified'
+        : (turnstileToken ? 'bypassed_failed' : 'bypassed_no_token');
+    if (!turnstileResult.success) {
+      console.warn('[create-setup-intent] Turnstile soft-fail — proceeding without verification:', turnstileResult.error, turnstileResult.codes, '| status:', turnstileStatus);
+    }
 
     // Validate customer email
     if (!customer?.email?.trim()) {
@@ -78,6 +91,7 @@ export const POST: APIRoute = async ({ request }) => {
       metadata: {
         customer_email: customer.email,
         customer_name: `${customer.firstName} ${customer.lastName}`,
+        turnstile_status: turnstileStatus,
         ...(resumeToken ? { resume_token: resumeToken } : {}),
       },
     });

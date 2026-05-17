@@ -1,0 +1,311 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Date windows for analytics
+const now = new Date();
+const startOfTodayET = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+startOfTodayET.setHours(0, 0, 0, 0);
+const startOfTodayUTC = startOfTodayET.toISOString();
+const last24hUTC = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+const last48hUTC = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+const last7dUTC = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+// Parallel data fetches
+const [
+  donationsToday,
+  donations24h,
+  abandoned24h,
+  failedNotifs48h,
+  recentDonations,
+  recentFailures,
+] = await Promise.all([
+  supabaseAdmin
+    .from('donations')
+    .select('id, amount, status, donor_email, donor_name, created_at, completed_at, donation_type, metadata, items')
+    .gte('created_at', startOfTodayUTC)
+    .order('created_at', { ascending: false }),
+
+  supabaseAdmin
+    .from('donations')
+    .select('id, amount, status, created_at, metadata')
+    .gte('created_at', last24hUTC),
+
+  supabaseAdmin
+    .from('abandoned_checkouts')
+    .select('id, email, first_name, last_name, amount, status, checkout_started_at, phone')
+    .gte('checkout_started_at', last24hUTC)
+    .order('checkout_started_at', { ascending: false }),
+
+  supabaseAdmin
+    .from('admin_notifications')
+    .select('id, type, title, message, severity, metadata, created_at')
+    .in('type', ['payment_failed'])
+    .gte('created_at', last48hUTC)
+    .order('created_at', { ascending: false })
+    .limit(20),
+
+  supabaseAdmin
+    .from('donations')
+    .select('id, amount, status, donor_email, donor_name, created_at, donation_type, metadata, items, stripe_payment_intent_id')
+    .order('created_at', { ascending: false })
+    .limit(15),
+
+  supabaseAdmin
+    .from('donations')
+    .select('id, amount, donor_email, donor_name, created_at, error_message, donation_type, items')
+    .eq('status', 'failed')
+    .gte('created_at', last7dUTC)
+    .order('created_at', { ascending: false })
+    .limit(15),
+]);
+
+// ─── Stats today ───
+const todayList = donationsToday.data || [];
+const todayCompleted = todayList.filter(d => d.status === 'completed');
+const todayCompletedCount = todayCompleted.length;
+const todayCompletedAmount = todayCompleted.reduce((s, d) => s + (parseFloat(String(d.amount)) || 0), 0);
+const todayFailed = todayList.filter(d => d.status === 'failed').length;
+const todayPending = todayList.filter(d => d.status === 'pending').length;
+
+// ─── Last 24h stats ───
+const donations24hList = donations24h.data || [];
+const completed24h = donations24hList.filter(d => d.status === 'completed').length;
+const failed24h = donations24hList.filter(d => d.status === 'failed').length;
+const turnstileBypassed24h = donations24hList.filter(d => {
+  const ts = (d.metadata as any)?.turnstile_status;
+  return ts && ts !== 'verified';
+}).length;
+const turnstileVerified24h = donations24hList.filter(d => (d.metadata as any)?.turnstile_status === 'verified').length;
+
+// ─── Abandoned conversion ───
+const abandonedList = abandoned24h.data || [];
+const abandonedStarted = abandonedList.filter(a => a.status === 'started').length;
+const abandonedRecovered = abandonedList.filter(a => a.status === 'recovered' || a.status === 'completed').length;
+const abandonedConversionRate = abandonedList.length > 0
+  ? Math.round((abandonedRecovered / abandonedList.length) * 100)
+  : null;
+
+// ─── Server-error alerts (last 48h) ───
+const serverErrorAlerts = (failedNotifs48h.data || []).filter(n => {
+  return n.message?.includes('Checkout Submit Failed') || n.title?.includes('Server Error');
+});
+
+function formatDate(dateStr: string | null | undefined) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: 'America/New_York',
+  });
+}
+
+function formatAmount(amount: any) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
+}
+
+function statusBadge(status: string) {
+  switch (status) {
+    case 'completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    case 'failed': return 'bg-red-100 text-red-800 border-red-200';
+    case 'pending': return 'bg-amber-100 text-amber-800 border-amber-200';
+    case 'started': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'recovered': return 'bg-green-100 text-green-800 border-green-200';
+    default: return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+}
+
+function turnstileBadge(status: string | undefined) {
+  if (!status) return null;
+  if (status === 'verified') return { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Verified' };
+  if (status === 'bypassed_no_token') return { cls: 'bg-amber-50 text-amber-700 border-amber-200', label: 'No Token' };
+  if (status === 'bypassed_failed') return { cls: 'bg-rose-50 text-rose-700 border-rose-200', label: 'Bypassed' };
+  return { cls: 'bg-gray-100 text-gray-700 border-gray-200', label: status };
+}
+---
+
+<AdminLayout title="Checkout Health">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Checkout Health</h1>
+        <p class="text-sm text-gray-500 mt-1">Real-time donation flow status. Auto-refreshes every 30s.</p>
+      </div>
+      <button id="refresh-btn" class="px-4 py-2 bg-[#d97706] text-white rounded-md hover:bg-[#b45309] text-sm font-semibold">
+        Refresh Now
+      </button>
+    </div>
+
+    <!-- Today's Stats Cards -->
+    <h2 class="text-lg font-semibold text-gray-700 mb-3">Today (Eastern Time)</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Completed</div>
+        <div class="mt-2 text-3xl font-bold text-emerald-600">{todayCompletedCount}</div>
+        <div class="text-sm text-gray-600 mt-1">{formatAmount(todayCompletedAmount)}</div>
+      </div>
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Failed</div>
+        <div class={`mt-2 text-3xl font-bold ${todayFailed > 0 ? 'text-red-600' : 'text-gray-400'}`}>{todayFailed}</div>
+        <div class="text-sm text-gray-600 mt-1">card declines + errors</div>
+      </div>
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pending</div>
+        <div class={`mt-2 text-3xl font-bold ${todayPending > 0 ? 'text-amber-600' : 'text-gray-400'}`}>{todayPending}</div>
+        <div class="text-sm text-gray-600 mt-1">awaiting webhook</div>
+      </div>
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Abandoned (24h)</div>
+        <div class={`mt-2 text-3xl font-bold ${abandonedStarted > 0 ? 'text-orange-600' : 'text-gray-400'}`}>{abandonedStarted}</div>
+        <div class="text-sm text-gray-600 mt-1">
+          {abandonedConversionRate !== null ? `${abandonedConversionRate}% recovered` : 'no data'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Turnstile Health (24h) -->
+    <h2 class="text-lg font-semibold text-gray-700 mb-3">Bot Protection — Last 24 Hours</h2>
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Turnstile Verified</div>
+        <div class="mt-2 text-2xl font-bold text-emerald-600">{turnstileVerified24h}</div>
+      </div>
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bypassed (soft-fail)</div>
+        <div class={`mt-2 text-2xl font-bold ${turnstileBypassed24h > 0 ? 'text-amber-600' : 'text-gray-400'}`}>{turnstileBypassed24h}</div>
+        <div class="text-xs text-gray-500 mt-1">donor proceeded anyway — review if spike</div>
+      </div>
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-5">
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bypass Rate</div>
+        <div class="mt-2 text-2xl font-bold text-gray-700">
+          {donations24hList.length > 0 ? Math.round((turnstileBypassed24h / donations24hList.length) * 100) : 0}%
+        </div>
+        <div class="text-xs text-gray-500 mt-1">of completed donations</div>
+      </div>
+    </div>
+
+    <!-- Server-error alerts (donor blocked by server error) -->
+    <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+      <span>Donors Blocked by Server Errors</span>
+      <span class="text-sm font-normal text-gray-500">(last 48h)</span>
+    </h2>
+    <div class="bg-white rounded-lg shadow border border-gray-200 mb-8 overflow-hidden">
+      {serverErrorAlerts.length === 0 ? (
+        <div class="p-6 text-center text-gray-500 text-sm">No server-error alerts — all donation submits succeeded ✅</div>
+      ) : (
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th class="px-4 py-3">When</th>
+              <th class="px-4 py-3">Donor</th>
+              <th class="px-4 py-3">Email / Phone</th>
+              <th class="px-4 py-3">Amount</th>
+              <th class="px-4 py-3">Error</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {serverErrorAlerts.map((a: any) => (
+              <tr class="hover:bg-amber-50">
+                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDate(a.created_at)}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">{a.metadata?.donor_name || '-'}</td>
+                <td class="px-4 py-3 text-gray-600">
+                  {a.metadata?.donor_email && <div><a href={`mailto:${a.metadata.donor_email}`} class="text-blue-600 hover:underline">{a.metadata.donor_email}</a></div>}
+                  {a.metadata?.donor_phone && <div><a href={`tel:${a.metadata.donor_phone}`} class="text-blue-600 hover:underline">{a.metadata.donor_phone}</a></div>}
+                </td>
+                <td class="px-4 py-3 font-semibold text-gray-900">{formatAmount(a.metadata?.amount)}</td>
+                <td class="px-4 py-3 text-xs text-red-700 font-mono">
+                  {a.metadata?.status} — {a.metadata?.error?.slice(0, 80) || 'unknown'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+
+    <!-- Recent failed donations (card declines etc.) -->
+    <h2 class="text-lg font-semibold text-gray-700 mb-3">Recent Failed Donations <span class="text-sm font-normal text-gray-500">(last 7 days)</span></h2>
+    <div class="bg-white rounded-lg shadow border border-gray-200 mb-8 overflow-hidden">
+      {recentFailures.data?.length === 0 ? (
+        <div class="p-6 text-center text-gray-500 text-sm">No failed donations in the last 7 days</div>
+      ) : (
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th class="px-4 py-3">When</th>
+              <th class="px-4 py-3">Donor</th>
+              <th class="px-4 py-3">Amount</th>
+              <th class="px-4 py-3">Reason</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {recentFailures.data?.map((d: any) => (
+              <tr class="hover:bg-red-50">
+                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDate(d.created_at)}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">
+                  <div>{d.donor_name || '-'}</div>
+                  <div class="text-xs text-gray-500">{d.donor_email}</div>
+                </td>
+                <td class="px-4 py-3 font-semibold text-gray-900">{formatAmount(d.amount)}</td>
+                <td class="px-4 py-3 text-red-700 text-xs">{d.error_message || 'unknown error'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+
+    <!-- Recent donations stream -->
+    <h2 class="text-lg font-semibold text-gray-700 mb-3">Recent Donations</h2>
+    <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <th class="px-4 py-3">When</th>
+            <th class="px-4 py-3">Donor</th>
+            <th class="px-4 py-3">Amount</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Turnstile</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {recentDonations.data?.map((d: any) => {
+            const ts = turnstileBadge((d.metadata as any)?.turnstile_status);
+            return (
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{formatDate(d.created_at)}</td>
+                <td class="px-4 py-3 font-medium text-gray-900">
+                  <div>{d.donor_name || '-'}</div>
+                  <div class="text-xs text-gray-500">{d.donor_email}</div>
+                </td>
+                <td class="px-4 py-3 font-semibold text-gray-900">{formatAmount(d.amount)}</td>
+                <td class="px-4 py-3 text-gray-600 text-xs uppercase">{d.donation_type || 'single'}</td>
+                <td class="px-4 py-3">
+                  <span class={`inline-block px-2 py-0.5 text-xs font-medium rounded border ${statusBadge(d.status)}`}>{d.status}</span>
+                </td>
+                <td class="px-4 py-3">
+                  {ts ? (
+                    <span class={`inline-block px-2 py-0.5 text-xs font-medium rounded border ${ts.cls}`}>{ts.label}</span>
+                  ) : (
+                    <span class="text-xs text-gray-400">-</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    // Auto-refresh every 30s — guard so we don't refresh when admin is mid-action
+    setTimeout(function() { window.location.reload(); }, 30000);
+    document.getElementById('refresh-btn')?.addEventListener('click', function() { window.location.reload(); });
+  </script>
+</AdminLayout>

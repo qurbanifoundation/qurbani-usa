@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
-import { trackDonation, markReceiptSent, moveDonationThroughPipeline } from '../../../lib/ghl-advanced';
+import { trackDonation, markReceiptSent, moveDonationThroughPipeline, createDonationOpportunity, findContactByEmail } from '../../../lib/ghl-advanced';
 import { notifyDonationReceived } from '../../../lib/notifications';
 import { sendDonationReceipt } from '../../../lib/donor-emails';
 import Stripe from 'stripe';
@@ -28,11 +28,22 @@ const STRIPE_INTERVALS: Record<string, Stripe.Price.Recurring.Interval> = {
 function getNextFriday(): Date {
   const now = new Date();
   const dayOfWeek = now.getDay();
-  const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
-  const nextFriday = new Date(now);
-  nextFriday.setDate(now.getDate() + daysUntilFriday);
-  nextFriday.setHours(12, 0, 0, 0);
-  return nextFriday;
+  // Days until upcoming Friday — if today IS Friday, use today (NOT next week).
+  // If we forced 7 days when today=Friday, the noon-anchor could overshoot Stripe's
+  // "natural billing date" (creation + 7d), which Stripe rejects. With proration_behavior:'none',
+  // a same-day anchor (even slightly in the past) is fine.
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+  const candidate = new Date(now);
+  candidate.setDate(now.getDate() + daysUntilFriday);
+  candidate.setHours(12, 0, 0, 0);
+
+  // Hard safety: Stripe rejects billing_cycle_anchor strictly later than now + interval.
+  // Cap at now + 7d - 1 minute to guarantee we're inside the window.
+  const maxAnchor = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000 - 60 * 1000);
+  if (candidate.getTime() > maxAnchor.getTime()) {
+    return maxAnchor;
+  }
+  return candidate;
 }
 
 /**
@@ -211,6 +222,11 @@ export const POST: APIRoute = async ({ request }) => {
       donation_items: recurringItemsJson,
       interval_type: interval,
       is_jummah: isWeekly ? 'true' : 'false',
+      // Signals to the Stripe webhook that create-subscription.ts is sending
+      // the combined donor receipt + admin notification. Prevents duplicate
+      // emails when payment_intent.succeeded / subscription.created webhooks
+      // fire in parallel with this endpoint.
+      receipt_handled: 'create_endpoint',
     };
 
     if (customer) {
@@ -391,6 +407,9 @@ export const POST: APIRoute = async ({ request }) => {
         items: recurringItemsWithMetadata,
         campaign_slug: recurringCampaignSlug,
         next_billing_date: nextBillingDate.toISOString(),
+        // Signal to the Stripe webhook that this endpoint is handling the
+        // combined receipt + combined GHL opp for the first charge.
+        metadata: { receipt_handled: 'create_endpoint' },
       })
       .select()
       .single();
@@ -424,6 +443,10 @@ export const POST: APIRoute = async ({ request }) => {
           is_recurring: true,
           is_jummah: isWeekly,
           subscription_id: subscriptionRecord?.id,
+          // Signal to webhooks that this endpoint is sending the combined
+          // receipt + creating the combined GHL opp. Prevents duplicate emails
+          // when payment_intent.succeeded fires for the recurring invoice's PI.
+          receipt_handled: 'create_endpoint',
           ...(resumeToken ? { resume_token: resumeToken } : {}),
           ...(checkout_source ? { checkout_source } : {}),
           ...(ga_client_id ? { ga_client_id } : {}),
@@ -478,6 +501,8 @@ export const POST: APIRoute = async ({ request }) => {
         fee_amount: singleFee.toString(),
         base_amount: singleTotal.toString(),
         items: singleItemsJson,
+        // Combined receipt is sent by create-subscription.ts; skip in webhook.
+        receipt_handled: 'create_endpoint',
       };
       if (customer) {
         singleMetadata.customer_email = customer.email;
@@ -548,6 +573,8 @@ export const POST: APIRoute = async ({ request }) => {
             billing_address: billingAddress || null,
             is_recurring: false,
             linked_subscription_id: subscription.id,
+            // Combined receipt is sent by create-subscription.ts; webhook skips.
+            receipt_handled: 'create_endpoint',
             ...(resumeToken ? { resume_token: resumeToken } : {}),
             ...(checkout_source ? { checkout_source } : {}),
             ...(ga_client_id ? { ga_client_id } : {}),
@@ -602,7 +629,13 @@ export const POST: APIRoute = async ({ request }) => {
     const donorEmail = customer?.email;
 
     if (donorEmail && donorName) {
-      // --- Sync RECURRING donation to GHL ---
+      // --- Sync donation(s) to GHL ---
+      // One checkout = one opportunity. For mixed carts (recurring + one-time),
+      // both trackDonation calls skip opp creation; a single combined opp is
+      // created below with all items, the grand total, and both payment IDs.
+      const isMixedCart = !!(singleDonationId && singlePaymentIntentId) && !!recurringDonation;
+      let ghlContactId: string | null = null;
+
       if (recurringDonation && (effectivePaymentStatus === 'succeeded' || subscription.status === 'active')) {
         try {
           const campaignSlug = recurringItems[0]?.campaign || 'general';
@@ -625,22 +658,19 @@ export const POST: APIRoute = async ({ request }) => {
             stripePaymentId: effectivePaymentIntentId || subscription.id,
             donationId: recurringDonation.id,
             currency: currency.toUpperCase(),
+            skipOpportunity: isMixedCart,
           });
 
-          console.log('[create-subscription] Recurring donation synced to GHL:', {
-            contactId: ghlResult.contactId,
-            lifetimeGiving: ghlResult.lifetimeGiving,
-            donationCount: ghlResult.donationCount,
-            donorTier: ghlResult.donorTier,
-          });
+          ghlContactId = ghlResult.contactId || null;
 
-          // Move pipeline
-          await moveDonationThroughPipeline(donorEmail, 'payment received')
-            .catch(err => console.error('[create-subscription] GHL pipeline error:', err));
-          await moveDonationThroughPipeline(donorEmail, 'active subscriber')
-            .catch(err => console.error('[create-subscription] GHL pipeline error:', err));
+          if (!isMixedCart) {
+            const recurringPaymentId = effectivePaymentIntentId || subscription.id;
+            await moveDonationThroughPipeline(donorEmail, 'payment received', recurringPaymentId)
+              .catch(err => console.error('[create-subscription] GHL pipeline error:', err));
+            await moveDonationThroughPipeline(donorEmail, 'active subscriber', recurringPaymentId)
+              .catch(err => console.error('[create-subscription] GHL pipeline error:', err));
+          }
 
-          // Mark donation as GHL-synced (prevents double-sync from webhook)
           await supabaseAdmin
             .from('donations')
             .update({ metadata: { ...recurringDonation.metadata, ghl_synced_at: new Date().toISOString() } })
@@ -650,7 +680,6 @@ export const POST: APIRoute = async ({ request }) => {
         }
       }
 
-      // --- Sync ONE-TIME donation to GHL (if mixed cart) ---
       if (singleDonationId && singlePaymentIntentId) {
         try {
           const campaignSlug = singleItems[0]?.campaign || 'general';
@@ -673,20 +702,59 @@ export const POST: APIRoute = async ({ request }) => {
             stripePaymentId: singlePaymentIntentId,
             donationId: singleDonationId,
             currency: currency.toUpperCase(),
+            skipOpportunity: isMixedCart,
           });
 
-          console.log('[create-subscription] One-time donation synced to GHL:', {
-            contactId: ghlResult.contactId,
-            lifetimeGiving: ghlResult.lifetimeGiving,
-          });
+          ghlContactId = ghlContactId || ghlResult.contactId || null;
 
-          // Mark as GHL-synced
           await supabaseAdmin
             .from('donations')
             .update({ metadata: { ghl_synced_at: new Date().toISOString() } })
             .eq('id', singleDonationId);
         } catch (ghlError) {
           console.error('[create-subscription] GHL sync error (one-time):', ghlError);
+        }
+      }
+
+      if (isMixedCart) {
+        try {
+          const contactId = ghlContactId || (await findContactByEmail(donorEmail))?.id as string | undefined;
+          if (contactId) {
+            const combinedItems = [
+              ...recurringItems.map((i: any) => ({
+                name: `${i.name || 'Donation'} (${interval})`,
+                amount: typeof i.amount === 'string' ? parseFloat(i.amount) : (i.amount || 0),
+              })),
+              ...singleItems.map((i: any) => ({
+                name: `${i.name || 'Donation'} (one-time)`,
+                amount: typeof i.amount === 'string' ? parseFloat(i.amount) : (i.amount || 0),
+              })),
+            ];
+            const combinedAmount = subscriptionAmount + oneTimeAmount;
+            const recurringPaymentId = effectivePaymentIntentId || subscription.id;
+            const combinedPaymentId = `${recurringPaymentId} ${singlePaymentIntentId}`.trim();
+            const combinedCampaignName = `${recurringItems[0]?.name || 'Recurring'} + ${singleItems[0]?.name || 'One-time'}`;
+
+            await createDonationOpportunity(
+              contactId,
+              {
+                email: donorEmail,
+                name: donorName,
+                amount: combinedAmount,
+                campaignName: combinedCampaignName,
+                items: combinedItems,
+                stripePaymentId: combinedPaymentId,
+              },
+              `Mixed (${interval} + one-time)`,
+            );
+
+            await moveDonationThroughPipeline(donorEmail, 'payment received', recurringPaymentId)
+              .catch(err => console.error('[create-subscription] GHL combined move error:', err));
+            await moveDonationThroughPipeline(donorEmail, 'active subscriber', recurringPaymentId)
+              .catch(err => console.error('[create-subscription] GHL combined move error:', err));
+          }
+        } catch (ghlError) {
+          console.error('[create-subscription] GHL combined opp error:', ghlError);
         }
       }
 
@@ -717,7 +785,6 @@ export const POST: APIRoute = async ({ request }) => {
         console.error('[create-subscription] Error fetching donor history:', historyError);
       }
 
-      // Build attribution from the full journey data for the admin email
       await notifyDonationReceived({
         amount: subscriptionAmount + oneTimeAmount,
         donorName,
@@ -738,7 +805,6 @@ export const POST: APIRoute = async ({ request }) => {
       }).catch(err => console.error('[create-subscription] Admin notification error:', err));
 
       // --- Donor receipt email ---
-      // Fetch subscription management URL
       let managementUrl: string | undefined;
       try {
         const { data: sub } = await supabaseAdmin
@@ -775,7 +841,6 @@ export const POST: APIRoute = async ({ request }) => {
           .update({ receipt_sent: true })
           .eq('id', recurringDonation.id);
       }
-      // Also mark one-time donation as receipt sent (prevents duplicate email from webhook)
       if (singleDonationId) {
         await supabaseAdmin
           .from('donations')
@@ -785,8 +850,6 @@ export const POST: APIRoute = async ({ request }) => {
       await markReceiptSent(donorEmail).catch(err =>
         console.error('[create-subscription] GHL markReceiptSent error:', err)
       );
-      await moveDonationThroughPipeline(donorEmail, 'receipt sent')
-        .catch(err => console.error('[create-subscription] GHL pipeline receipt sent error:', err));
     }
 
     // Return combined result — primary IDs come from the subscription

@@ -8,7 +8,7 @@ const settings = await getSettings();
 
 // Fetch all navbar data from cache (single optimized call)
 const navbarData = await getNavbarData();
-const { menuOrder, menuNames, menuColors, mobileLinks, categories: dbCategories, campaignsByCategory: rawCampaigns, widgets } = navbarData;
+const { menuOrder, menuNames, menuColors, menuDirectUrls = {}, mobileLinks, categories: dbCategories, campaignsByCategory: rawCampaigns, widgets } = navbarData;
 
 // Check which menus have custom widgets configured
 const useCustomWidgets = {
@@ -26,6 +26,7 @@ const extraMenus = menuOrder
     id: menuId,
     name: menuNames[menuId] || menuId,
     color: menuColors[menuId] || '#01534d',
+    directUrl: menuDirectUrls[menuId] || null,
     hasWidgets: hasWidgets(widgets, menuId),
     order: menuOrder.indexOf(menuId)
   }));
@@ -35,6 +36,7 @@ const allMenusSorted = menuOrder.map(menuId => ({
   id: menuId,
   name: menuNames[menuId] || menuId,
   color: menuColors[menuId] || '#01534d',
+  directUrl: menuDirectUrls[menuId] || null,
   isHardcoded: hardcodedMenus.includes(menuId),
   hasWidgets: hasWidgets(widgets, menuId)
 }));
@@ -128,7 +130,7 @@ function getMobileIconHtml(iconKey: string): string {
     <div class="flex">
       <!-- Logo -->
       <a href="/" class="flex items-center flex-shrink-0">
-        <img src={settings.site_logo} alt={settings.site_name} class="h-16 w-auto" />
+        <img src={settings.site_logo} alt={settings.site_name} width="180" height="64" decoding="async" class="h-16 w-auto" />
       </a>
 
       <!-- Desktop Nav -->
@@ -150,7 +152,7 @@ function getMobileIconHtml(iconKey: string): string {
             <!-- Language Selector -->
             <div class="relative" id="language-dropdown">
               <button type="button" id="language-trigger" class="flex items-center gap-1 text-white/80 hover:text-white transition" aria-label="Select language" aria-expanded="false" aria-haspopup="true">
-                <img id="current-flag" src="https://flagcdn.com/w20/us.png" alt="EN" class="w-5 h-3 object-cover rounded-sm" />
+                <img id="current-flag" src="https://flagcdn.com/w20/us.png" alt="EN" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" />
                 <span id="current-language">English</span>
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -158,25 +160,25 @@ function getMobileIconHtml(iconKey: string): string {
               </button>
               <div id="language-menu" class="hidden absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[160px] z-[9999]">
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="en" data-flag="us" data-name="English">
-                  <img src="https://flagcdn.com/w20/us.png" alt="EN" class="w-5 h-3 object-cover rounded-sm" /> English
+                  <img src="https://flagcdn.com/w20/us.png" alt="EN" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> English
                 </button>
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="ar" data-flag="sa" data-name="العربية">
-                  <img src="https://flagcdn.com/w20/sa.png" alt="AR" class="w-5 h-3 object-cover rounded-sm" /> العربية
+                  <img src="https://flagcdn.com/w20/sa.png" alt="AR" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> العربية
                 </button>
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="ur" data-flag="pk" data-name="اردو">
-                  <img src="https://flagcdn.com/w20/pk.png" alt="UR" class="w-5 h-3 object-cover rounded-sm" /> اردو
+                  <img src="https://flagcdn.com/w20/pk.png" alt="UR" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> اردو
                 </button>
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="fr" data-flag="fr" data-name="Français">
-                  <img src="https://flagcdn.com/w20/fr.png" alt="FR" class="w-5 h-3 object-cover rounded-sm" /> Français
+                  <img src="https://flagcdn.com/w20/fr.png" alt="FR" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> Français
                 </button>
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="es" data-flag="es" data-name="Español">
-                  <img src="https://flagcdn.com/w20/es.png" alt="ES" class="w-5 h-3 object-cover rounded-sm" /> Español
+                  <img src="https://flagcdn.com/w20/es.png" alt="ES" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> Español
                 </button>
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="tr" data-flag="tr" data-name="Türkçe">
-                  <img src="https://flagcdn.com/w20/tr.png" alt="TR" class="w-5 h-3 object-cover rounded-sm" /> Türkçe
+                  <img src="https://flagcdn.com/w20/tr.png" alt="TR" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> Türkçe
                 </button>
                 <button type="button" class="language-option w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm" data-lang="bn" data-flag="bd" data-name="বাংলা">
-                  <img src="https://flagcdn.com/w20/bd.png" alt="BN" class="w-5 h-3 object-cover rounded-sm" /> বাংলা
+                  <img src="https://flagcdn.com/w20/bd.png" alt="BN" width="20" height="12" loading="lazy" decoding="async" class="w-5 h-3 object-cover rounded-sm" /> বাংলা
                 </button>
               </div>
             </div>
@@ -695,29 +697,42 @@ function getMobileIconHtml(iconKey: string): string {
 
             {/* Dynamic Extra Menus - for any menus created beyond the 4 hardcoded ones */}
             {extraMenus.map(menu => (
-              <div class="relative" id={`${menu.id}-trigger`} style={`order: ${menu.order}`}>
-                <button type="button" class="nav-link flex items-center gap-2 dynamic-menu-btn" id={`${menu.id}-btn`} data-menu-id={menu.id}>
-                  {menu.name.toUpperCase()}
-                  <svg class="w-3 h-3 transition-transform dynamic-menu-arrow" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                  </svg>
-                </button>
-
-                {/* Dynamic Mega Menu */}
-                <div id={`${menu.id}-mega-menu`} class="mega-menu-panel dynamic-mega-menu fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
-                  {menu.hasWidgets ? (
-                    <DynamicMegaMenu menuId={menu.id} menuColor={menu.color} widgets={getMenuWidgets(widgets, menu.id)} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu(menu.id)} />
-                  ) : (
-                    <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
-                      <div class="h-1" style={`background-color: ${menu.color}`}></div>
-                      <div class="p-8 text-center">
-                        <p class="text-gray-500 mb-4">No widgets configured for this menu yet.</p>
-                        <a href="/admin/menu-builder" class="text-[#01534d] hover:underline">Configure in Menu Builder →</a>
-                      </div>
-                    </div>
-                  )}
+              menu.directUrl ? (
+                <div class="relative" style={`order: ${menu.order}`}>
+                  <a href={menu.directUrl} class="nav-link relative flex items-center gap-2">
+                    {menu.name.toUpperCase()}
+                    {menu.id === 'Qurbani-udhiya' && (
+                      <span class="qf-new-badge absolute -top-1 -right-1 text-[9px] font-extrabold text-white px-1.5 py-[1px] rounded-md uppercase shadow-md pointer-events-none" style="background: linear-gradient(135deg, #ef7c01, #d97706); letter-spacing: 0.08em; font-family: 'Signika', sans-serif; line-height: 1.3;" aria-label="New">
+                        New
+                      </span>
+                    )}
+                  </a>
                 </div>
-              </div>
+              ) : (
+                <div class="relative" id={`${menu.id}-trigger`} style={`order: ${menu.order}`}>
+                  <button type="button" class="nav-link flex items-center gap-2 dynamic-menu-btn" id={`${menu.id}-btn`} data-menu-id={menu.id}>
+                    {menu.name.toUpperCase()}
+                    <svg class="w-3 h-3 transition-transform dynamic-menu-arrow" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                  </button>
+
+                  {/* Dynamic Mega Menu */}
+                  <div id={`${menu.id}-mega-menu`} class="mega-menu-panel dynamic-mega-menu fixed left-0 right-0 z-[9999] hidden w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8" style="top: var(--menu-top, 72px);">
+                    {menu.hasWidgets ? (
+                      <DynamicMegaMenu menuId={menu.id} menuColor={menu.color} widgets={getMenuWidgets(widgets, menu.id)} campaignsByCategory={rawCampaigns} dbCategories={getCategoriesForMenu(menu.id)} />
+                    ) : (
+                      <div class="bg-[#f8f6f2] shadow-[0_25px_80px_rgba(0,0,0,0.2)] rounded-b-xl overflow-hidden">
+                        <div class="h-1" style={`background-color: ${menu.color}`}></div>
+                        <div class="p-8 text-center">
+                          <p class="text-gray-500 mb-4">No widgets configured for this menu yet.</p>
+                          <a href="/admin/menu-builder" class="text-[#01534d] hover:underline">Configure in Menu Builder →</a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
             ))}
           </div>
 
@@ -789,8 +804,15 @@ function getMobileIconHtml(iconKey: string): string {
                   </svg>
                 </button>
               ) : (
-                <a href={`/${menu.id}`} class="mobile-menu-item flex items-center justify-between py-5 border-b border-gray-200/80 text-[#333]">
-                  <span class="text-lg font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
+                <a href={menu.directUrl || `/${menu.id}`} class="mobile-menu-item flex items-center justify-between py-5 border-b border-gray-200/80 text-[#333]">
+                  <span class="flex items-center gap-2">
+                    <span class="text-lg font-semibold" style="font-family: 'Oswald', sans-serif; letter-spacing: 0.5px;">{menu.name.toUpperCase()}</span>
+                    {menu.id === 'Qurbani-udhiya' && (
+                      <span class="qf-new-badge inline-flex items-center text-[10px] font-extrabold text-white px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm" style="background: linear-gradient(135deg, #ef7c01, #d97706); letter-spacing: 0.08em; font-family: 'Signika', sans-serif;" aria-label="New">
+                        New
+                      </span>
+                    )}
+                  </span>
                   <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
@@ -1147,6 +1169,13 @@ function getMobileIconHtml(iconKey: string): string {
     transition: color 0.2s;
     display: flex;
     align-items: center;
+  }
+
+  /* "NEW" badge for Qurbani 2026 nav item — static, no infinite animation
+     (an infinite transform+box-shadow animation here was causing iOS Safari to
+     lose paint on fast scrolls due to a persistent compositing layer). */
+  .qf-new-badge {
+    transform-origin: center;
   }
 
   .nav-link:hover {
@@ -1629,7 +1658,7 @@ function getMobileIconHtml(iconKey: string): string {
         ourWorkMegaMenu?.classList.add('hidden');
         ourWorkArrow?.style.setProperty('transform', 'rotate(0deg)');
         isMenuOpen = false;
-      }, 150);
+      }, 300);
     }
 
     ourWorkTrigger?.addEventListener('mouseenter', openOurWorkMenu);
@@ -1696,7 +1725,7 @@ function getMobileIconHtml(iconKey: string): string {
           menuEl.classList.add('hidden');
           arrowEl?.style.setProperty('transform', 'rotate(0deg)');
           isOpen = false;
-        }, 150);
+        }, 300);
       }
 
       // Track if menu was opened by hover (vs click)
@@ -1761,7 +1790,7 @@ function getMobileIconHtml(iconKey: string): string {
           menuEl.classList.add('hidden');
           if (arrowEl) arrowEl.style.transform = 'rotate(0deg)';
           isOpen = false;
-        }, 150);
+        }, 300);
       }
 
       // Track if menu was opened by hover (vs click)
@@ -2267,7 +2296,7 @@ function getMobileIconHtml(iconKey: string): string {
         const allResults = [...pageResults, ...campaignResults].slice(0, 8);
 
         showResults(allResults);
-      }, 150);
+      }, 300);
     }
 
     // Event Listeners
