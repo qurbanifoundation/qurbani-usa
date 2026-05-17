@@ -1,0 +1,202 @@
+name: Sync code to sister sites (Canada / UK / etc.)
+
+# Every push to USA's main: open an automated PR on each sister-site repo
+# with CODE changes (UI templates, components, libs, API routes, admin).
+# Site-specific files (prices, env, brand config, currency, Stripe keys,
+# logos, phone, address, GHL location, Supabase URL, etc.) are NEVER synced
+# — those live in src/config/site.ts and src/data/settings.json per site.
+#
+# PRs land on the sister site's `dev` branch (matching the USA repo's
+# branching discipline: dev = working, main = production).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-to-sister-sites
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        site:
+          # transforms = path to a .sed file in .github/sync-transforms/.
+          # Leave as empty string ('') to disable transforms for a site.
+          - { name: 'Canada', repo: 'qurbanica/qurbani-ca', branch: 'dev', transforms: '.github/sync-transforms/canada.sed' }
+          # Add more sister sites here as they come online, e.g.:
+          # - { name: 'UK', repo: 'qurbanica/qurbani-uk', branch: 'dev', transforms: '.github/sync-transforms/uk.sed' }
+
+    steps:
+      # 1) Check out the source (this repo)
+      - name: Checkout source (USA)
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      # 2) Check out the target (sister site)
+      - name: Checkout target (${{ matrix.site.name }})
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.site.repo }}
+          ref: ${{ matrix.site.branch }}
+          token: ${{ secrets.SISTER_SITES_PAT }}
+          path: target
+
+      # 3) Copy only the files that should be shared.
+      #    Anything missing here stays per-site (prices, env, brand, etc.).
+      #    NOTE: rsync runs WITHOUT --delete — Canada repo has divergent
+      #    history and may have CA-only files inside src/lib, src/pages/api,
+      #    etc. that we must not nuke. If USA removes a file, delete it on
+      #    Canada manually.
+      - name: Copy shared code
+        run: |
+          set -euo pipefail
+          cd source
+
+          # ─── Whitelist of paths to sync ─────────────────────────────────
+          # Each entry can be a directory OR a single file.
+          PATHS=(
+            "src/components"
+            "src/templates"
+            "src/layouts"
+            "src/lib"
+            "src/pages/admin"
+            "src/pages/api"
+            "src/pages/[slug].astro"
+            "src/pages/[category]"
+            "public/_redirects"
+          )
+
+          for p in "${PATHS[@]}"; do
+            if [ -d "$p" ]; then
+              echo "sync dir:  $p"
+              mkdir -p "../target/$p"
+              rsync -a "$p/" "../target/$p/"
+            elif [ -f "$p" ]; then
+              echo "sync file: $p"
+              mkdir -p "../target/$(dirname "$p")"
+              cp "$p" "../target/$p"
+            else
+              echo "skip (not found in USA): $p"
+            fi
+          done
+
+      # 3b) Apply per-site transform rules (USA branding → sister branding).
+      #     Operates ONLY on target/, never on the source. The script is
+      #     idempotent — running it twice on the same file is a no-op.
+      - name: Apply branding transforms for ${{ matrix.site.name }}
+        if: matrix.site.transforms != ''
+        run: |
+          set -euo pipefail
+          TRANSFORMS="source/${{ matrix.site.transforms }}"
+          if [ ! -f "$TRANSFORMS" ]; then
+            echo "transforms file not found: $TRANSFORMS"
+            exit 1
+          fi
+
+          echo "applying transforms from $TRANSFORMS"
+
+          # Run sed against text files only inside the synced paths. We restrict
+          # to the same whitelist used above (plus a couple of safety filters)
+          # so the transform pass can't accidentally hit untracked Canada files.
+          SYNCED_DIRS=(
+            "target/src/components"
+            "target/src/templates"
+            "target/src/layouts"
+            "target/src/lib"
+            "target/src/pages/admin"
+            "target/src/pages/api"
+            "target/src/pages/[category]"
+          )
+          SYNCED_FILES=(
+            "target/src/pages/[slug].astro"
+            "target/public/_redirects"
+          )
+
+          # Build a single find command across the synced dirs.
+          for d in "${SYNCED_DIRS[@]}"; do
+            if [ -d "$d" ]; then
+              find "$d" -type f \
+                \( -name '*.astro' -o -name '*.ts' -o -name '*.tsx' \
+                   -o -name '*.js' -o -name '*.jsx' -o -name '*.mjs' \
+                   -o -name '*.html' -o -name '*.css' -o -name '*.json' \
+                   -o -name '*.md' -o -name '_redirects' \) \
+                -print0 \
+                | xargs -0 -r sed -i -f "$TRANSFORMS"
+            fi
+          done
+          for f in "${SYNCED_FILES[@]}"; do
+            if [ -f "$f" ]; then
+              sed -i -f "$TRANSFORMS" "$f"
+            fi
+          done
+
+          echo "transforms applied."
+
+          # ─── Files we never sync (intentionally excluded):
+          # - .env, .env.*                            (per-site secrets)
+          # - astro.config.*                          (per-site adapter config)
+          # - wrangler.toml / wrangler.jsonc          (per-site Cloudflare project + dev port)
+          # - package.json / package-lock.json        (may diverge — different deploy targets)
+          # - src/config/                             (per-site brand/currency/Stripe/GHL/GA4)
+          # - src/data/settings.json                  (per-site display settings)
+          # - scripts/                                (one-shot migration scripts)
+          # - supabase/                               (per-site DB config + migrations)
+          # - emails/                                 (per-site copy + branding)
+          # - public/images/                          (per-site logos, flags, brand assets)
+          # - CLAUDE.md / README.md                   (per-site notes)
+          # - .github/workflows/deploy.yml            (per-site Cloudflare project name)
+          # - .github/workflows/sync-to-sister-sites.yml (only source repo runs the syncer)
+
+      # 4) Open a pull request on the sister site
+      - name: Create PR on ${{ matrix.site.repo }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: target
+          token: ${{ secrets.SISTER_SITES_PAT }}
+          commit-message: 'sync: code from USA repo (${{ github.sha }})'
+          branch: 'sync/from-usa-${{ github.run_number }}'
+          delete-branch: true
+          title: 'Sync from USA · run #${{ github.run_number }} · ${{ github.event.head_commit.message && github.event.head_commit.message || github.sha }}'
+          body: |
+            Automated code sync from the USA repo (`qurbani-usa`).
+
+            **Source commit:** [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** ${{ github.event_name }}
+            **Target branch:** `${{ matrix.site.branch }}`
+
+            This PR contains **code-only** changes — UI templates, components, layouts, libs, API routes, admin pages, and `_redirects`.
+
+            ### Branding transforms applied
+            Before this PR was opened, the workflow ran `${{ matrix.site.transforms }}` against the synced files. Patterns include: organization name, email addresses, domain, currency, country flags, GHL location ID, GA4 ID, Supabase logo URL, phone (3 format variants), checkout country dropdown defaults, and mailing address. See the file in this repo (or in the USA repo at the same path) for the full, ordered rule list.
+
+            ### Never synced (per-site, stays on this repo)
+            - `src/config/` — brand, currency, Stripe keys, GHL location, GA4 ID, domain
+            - `src/data/settings.json` — display settings
+            - `.env`, `.env.*` — secrets
+            - `astro.config.*`, `wrangler.*` — deploy config
+            - `package.json` / lockfile — different ports & deploy targets
+            - `scripts/`, `supabase/` — per-site DB and migration tooling
+            - `emails/` — per-site copy and branding
+            - `public/images/` — per-site logos and brand assets
+            - `CLAUDE.md`, `README.md` — per-site notes
+            - `.github/workflows/deploy.yml` — per-site Cloudflare project
+
+            ### Review checklist before merging
+
+            The branding transforms above should have rewritten most US-specific strings to CA equivalents. **Scan the diff anyway** for anything the sed pass missed — particularly:
+
+            - **US-only content blocks** that should be removed entirely on Canada: `501(c)(3)` mentions, `EIN: 38-4109146`, the "Established 1999" badge, and the "Real Stories" section on `/impact`. The sed pass intentionally does NOT delete these (too fragile). Either delete them manually in this PR, or push a refactor on the USA repo that wraps them in `{siteConfig.features.show501c3 && ...}` etc.
+            - **Multi-line addresses** that the single-line address patterns missed.
+            - **Comments** that mention "USA" or "United States" but were left alone (intentional — comments rarely need rewriting).
+            - **Any new hard-coded US value** that the USA repo introduced since the last sync — add a corresponding rule to `.github/sync-transforms/canada.sed` in the USA repo for next time.
+
+            > **Note:** `--delete` is intentionally off. Canada-only files inside synced dirs (e.g., `src/lib/ca-*.ts`) are preserved. If USA removes a file, delete it on this repo manually.
+          labels: |
+            sync
+            automated
