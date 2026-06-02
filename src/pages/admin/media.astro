@@ -1029,14 +1029,63 @@ export const prerender = false;
     }
   }
 
+  // Resize + convert to WebP in the browser BEFORE upload, so we never store a
+  // heavy original on Supabase. Cloudflare Workers can't run an image library,
+  // so this is done client-side via canvas. Vectors/animations are left as-is.
+  async function optimizeImageFile(file: File): Promise<File> {
+    const type = file.type || '';
+    if (!type.startsWith('image/') || type === 'image/svg+xml' || type === 'image/gif') {
+      return file; // don't touch SVG (vector) or GIF (animation)
+    }
+    const MAX_DIM = 1600;
+    const QUALITY = 0.8;
+    try {
+      const bitmap = await createImageBitmap(file);
+      let width = bitmap.width;
+      let height = bitmap.height;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const scale = Math.min(MAX_DIM / width, MAX_DIM / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      if (bitmap.close) bitmap.close();
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/webp', QUALITY)
+      );
+      // Only use the optimized version if it's actually smaller.
+      if (!blob || blob.size >= file.size) return file;
+      const webpName = file.name.replace(/\.(png|jpe?g|bmp|tiff?|webp)$/i, '') + '.webp';
+      return new File([blob], webpName, { type: 'image/webp' });
+    } catch (e) {
+      console.warn('Image optimization failed, uploading original:', e);
+      return file; // graceful fallback — never block an upload
+    }
+  }
+
   async function handleFileUpload() {
     if (!selectedFile) return;
     uploadSubmitBtn.disabled = true;
+
+    let fileToUpload = selectedFile;
+    if (autoConvertWebp.checked) {
+      uploadBtnText.textContent = 'Optimizing...';
+      const original = selectedFile.size;
+      fileToUpload = await optimizeImageFile(selectedFile);
+      if (fileToUpload !== selectedFile) {
+        console.log(`Optimized ${formatSize(original)} -> ${formatSize(fileToUpload.size)} (${fileToUpload.name})`);
+      }
+    }
     uploadBtnText.textContent = 'Uploading...';
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('convertToWebp', String(autoConvertWebp.checked));
+    formData.append('file', fileToUpload);
+    formData.append('convertToWebp', 'false'); // already optimized client-side
     formData.append('quality', '80');
 
     try {
