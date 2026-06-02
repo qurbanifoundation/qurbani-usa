@@ -103,7 +103,7 @@ function buildLinkEmail(preferencesUrl: string): string {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #01534d 0%, #016d5b 100%); padding: 32px; text-align: center;">
-              <img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png" alt="Qurbani Foundation" width="220" style="max-width: 220px; height: auto; display: inline-block;" />
+              <img src="https://www.qurbani.com/images/qurbani-logo.png" alt="Qurbani Foundation" width="220" style="max-width: 220px; height: auto; display: inline-block;" />
             </td>
           </tr>
 

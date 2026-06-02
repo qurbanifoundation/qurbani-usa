@@ -43,7 +43,7 @@ function buildZakatEmail(data: {
   utm_content?: string;
   utm_term?: string;
 }): string {
-  const logoUrl = 'https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png';
+  const logoUrl = 'https://www.qurbani.com/images/qurbani-logo.png';
   const name = data.firstName || 'there';
   const zakatDue = data.zakatAmount > 0;
   // Build pay URL with UTM attribution for tracking continuity

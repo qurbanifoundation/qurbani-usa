@@ -16,6 +16,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { generateAqiqahCertificate } from '../../../lib/aqiqah-certificate';
+import { mediaUrlAbsolute } from '../../../lib/media-url';
 import { siteConfig } from '../../../config/site';
 
 export const prerender = false;
@@ -83,7 +84,7 @@ async function uploadCertificate(donationId: string, pdfBytes: Uint8Array) {
   }
 
   const { data: urlData } = supabaseAdmin.storage.from('media').getPublicUrl(fileName);
-  return { path: fileName, url: urlData.publicUrl };
+  return { path: fileName, url: mediaUrlAbsolute(urlData.publicUrl, 'https://www.qurbani.com') };
 }
 
 // ─── Email ────────────────────────────────────────────────────────────────────
@@ -108,7 +109,7 @@ function buildCertificateEmail(
 
 <!-- Header -->
 <tr><td style="background:linear-gradient(135deg,#1a5632 0%,#0d3b1f 100%);padding:35px 40px;text-align:center;">
-<img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png" alt="Qurbani Foundation USA" width="180" style="display:block;margin:0 auto 15px;">
+<img src="https://www.qurbani.com/images/qurbani-logo.png" alt="Qurbani Foundation USA" width="180" style="display:block;margin:0 auto 15px;">
 <h1 style="color:#ffffff;font-size:26px;margin:0;font-family:Georgia,serif;letter-spacing:1px;">Certificate of Aqiqah</h1>
 <p style="color:#c5d9c5;font-size:14px;margin:8px 0 0;font-family:Georgia,serif;">شهادة العقيقة</p>
 </td></tr>

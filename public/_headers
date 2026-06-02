@@ -1,0 +1,10 @@
+# Long-lived caching for static assets and the Supabase media proxy.
+# These are served by Cloudflare (not Supabase), so caching here cuts
+# repeat requests and keeps things fast. /cdn/media also sets its own
+# immutable cache-control in the proxy endpoint; this is belt-and-suspenders.
+
+/cdn/media/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/images/*
+  Cache-Control: public, max-age=604800

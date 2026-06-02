@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { siteConfig } from '../../../config/site';
+import { mediaUrlAbsolute } from '../../../lib/media-url';
 
 export const prerender = false;
 
@@ -46,7 +47,7 @@ function buildCertificateEmail(donorName: string, childName: string, sheepText: 
 <tr><td align="center" style="padding:30px 15px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
 <tr><td style="background:linear-gradient(135deg,#1a5632 0%,#0d3b1f 100%);padding:35px 40px;text-align:center;">
-<img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815889576-drvcgb.png" alt="Qurbani Foundation USA" width="180" style="display:block;margin:0 auto 15px;">
+<img src="https://www.qurbani.com/images/qurbani-logo.png" alt="Qurbani Foundation USA" width="180" style="display:block;margin:0 auto 15px;">
 <h1 style="color:#ffffff;font-size:26px;margin:0;font-family:Georgia,serif;letter-spacing:1px;">Certificate of Aqiqah</h1>
 <p style="color:#c5d9c5;font-size:14px;margin:8px 0 0;font-family:Georgia,serif;">شهادة العقيقة</p>
 </td></tr>
@@ -262,7 +263,7 @@ export const POST: APIRoute = async ({ request }) => {
     await supabaseAdmin
       .from('donations')
       .update({
-        certificate_url: urlData.publicUrl,
+        certificate_url: mediaUrlAbsolute(urlData.publicUrl, 'https://www.qurbani.com'),
         certificate_storage_path: storagePath,
         certificate_sent_at: new Date().toISOString(),
       })

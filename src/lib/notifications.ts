@@ -164,7 +164,7 @@ async function sendEmail(data: NotificationData, config: { emoji: string; color:
                       <tr>
                         <td align="left" valign="middle" style="width: 50%;">
                           <a href="https://www.qurbani.com" style="text-decoration: none;">
-                            <img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815947323-nkje6c.png"
+                            <img src="https://www.qurbani.com/images/qurbani-logo-alt.png"
                                  alt="Qurbani Foundation" width="160" style="max-width: 160px; height: auto; display: inline-block;" />
                           </a>
                         </td>

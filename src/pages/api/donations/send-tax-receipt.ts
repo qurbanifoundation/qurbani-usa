@@ -138,7 +138,7 @@ function buildTaxReceiptHtml(donation: Record<string, unknown>): string {
           <!-- Header -->
           <tr>
             <td style="padding: 32px 40px 24px; text-align: center; border-bottom: 2px solid #1f2937;">
-              <img src="https://epsjdbnxhmeprjrgcbyw.supabase.co/storage/v1/object/public/media/1771815947323-nkje6c.png" alt="Qurbani Foundation USA" width="180" style="display: inline-block; max-width: 180px; height: auto; margin-bottom: 16px;">
+              <img src="https://www.qurbani.com/images/qurbani-logo-alt.png" alt="Qurbani Foundation USA" width="180" style="display: inline-block; max-width: 180px; height: auto; margin-bottom: 16px;">
               <h1 style="margin: 0 0 4px; font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: bold; color: #1f2937; letter-spacing: 0.5px;">OFFICIAL DONATION RECEIPT</h1>
               <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">For Tax Purposes</p>
             </td>

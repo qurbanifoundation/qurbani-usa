@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { generateSessionToken, PUBLIC_API_ROUTES, PUBLIC_GET_ONLY_ROUTES, SELF_AUTHED_ROUTES } from './lib/auth';
+import { rewriteHtmlMediaUrls } from './lib/media-url';
 
 // Admin password from env var — NEVER hardcoded
 const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || '';
@@ -20,9 +21,11 @@ function isSelfAuthedRoute(pathname: string): boolean {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
-  // Don't protect non-admin, non-API routes
+  // Don't protect non-admin, non-API routes. Rewrite any Supabase Storage
+  // media URLs in the HTML to our edge-cached /cdn/media proxy (no-op for
+  // non-HTML responses like the proxied images themselves).
   if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/')) {
-    return next();
+    return rewriteHtmlMediaUrls(await next());
   }
 
   // Public API routes — no auth needed
