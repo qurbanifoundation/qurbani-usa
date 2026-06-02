@@ -7,6 +7,8 @@
  * Follows RamadanPopup.astro pattern: is:inline script, IIFE, localStorage cooldown.
  */
 import { siteConfig } from '../config/site';
+import { MEDIA_MANIFEST } from '../lib/media-manifest';
+import { SUPABASE_MEDIA_PREFIX } from '../lib/media-url';
 ---
 
 <!-- Social Proof Notification Container -->
@@ -445,6 +447,18 @@ import { siteConfig } from '../config/site';
     )}
   </div>
 </div>
+
+<script define:vars={{ __qManifest: MEDIA_MANIFEST, __qPrefix: SUPABASE_MEDIA_PREFIX }}>
+  // Rewrite Supabase media URLs (delivered via /api/* JSON) to Cloudflare-served
+  // assets, so client-rendered images don't pull from Supabase. Mirrors the
+  // server-side mediaUrl() in src/lib/media-url.ts.
+  window.__qMediaUrl = function (u) {
+    if (!u || !__qPrefix || u.indexOf(__qPrefix) !== 0) return u;
+    var key = u.slice(__qPrefix.length);
+    var local = __qManifest[key];
+    return local ? '/images/media/' + local : '/cdn/media/' + key;
+  };
+</script>
 
 <script is:inline>
 (function() {
@@ -1505,9 +1519,11 @@ import { siteConfig } from '../config/site';
 
   function populateModal(campaign, notif) {
     // Image — prefer notif.image (from API, always correct), then campaign lookup, then fallback
-    var img = notif.image
+    var img = (window.__qMediaUrl || function (x) { return x; })(
+      notif.image
       || (campaign && (campaign.featured_image || campaign.hero_image_url || campaign.image_url))
-      || DEFAULT_IMAGE;
+      || DEFAULT_IMAGE
+    );
     if (mImage) mImage.style.backgroundImage = 'url(' + img + ')';
 
     // Title & description
