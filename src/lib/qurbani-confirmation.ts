@@ -233,13 +233,23 @@ export async function sendQurbaniConfirmation(
   hijriDay: 10 | 11 | 12,
   options: { force?: boolean } = {}
 ): Promise<{ sent: boolean; reason?: string; emailId?: string }> {
-  const result = await sendQurbaniConfirmationInner(donationId, hijriDay, options);
-  // Persist every attempt outcome so admin can see WHY a row failed
-  // (without this, failure reasons only exist in the batch toast UI).
-  await recordAttempt(donationId, result);
-  // Also log to qurbani_send_log so admin can later look up exactly which
-  // donor got which outcome in any given batch.
-  await logSendOutcome(donationId, hijriDay, result);
+  let result: { sent: boolean; reason?: string; emailId?: string };
+  try {
+    result = await sendQurbaniConfirmationInner(donationId, hijriDay, options);
+  } catch (e: any) {
+    // Even if the inner function throws unexpectedly, log it and return a result.
+    result = { sent: false, reason: `Inner threw: ${e?.message || e}` };
+  }
+
+  // Run logging in parallel via allSettled so neither path can block the other.
+  // Critical: previously these were sequential awaits, and an issue in the first
+  // could silently prevent the second from running. allSettled guarantees both
+  // attempts fire regardless of what happens individually.
+  await Promise.allSettled([
+    recordAttempt(donationId, result),
+    logSendOutcome(donationId, hijriDay, result),
+  ]);
+
   return result;
 }
 
