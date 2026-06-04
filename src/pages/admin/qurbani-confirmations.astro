@@ -1,0 +1,1090 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+
+export const prerender = false;
+
+// Fetch Eid al-Adha start date from site_settings — used to auto-derive the
+// Hijri day from whatever cutoff date the admin picks.
+let eidStartIso = '2026-05-26';
+try {
+  const { data } = await supabaseAdmin
+    .from('site_settings')
+    .select('eid_ul_adha_start')
+    .eq('id', 'main')
+    .maybeSingle();
+  if (data?.eid_ul_adha_start) {
+    eidStartIso = String(data.eid_ul_adha_start);
+  }
+} catch {
+  // fall back to default constant above
+}
+---
+
+<AdminLayout title="Qurbani Confirmations" activeNav="qurbani-confirmations">
+  <div class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="mb-6 flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Qurbani Confirmations</h1>
+        <p class="text-sm text-gray-500 mt-1">Send "Your Qurbani Has Been Performed" emails after each day of Eid al-Adha.</p>
+      </div>
+      <a href="/admin/donations" class="text-sm text-[#01534d] hover:underline">← Back to Donations</a>
+    </div>
+
+    <!-- Day picker + cutoff -->
+    <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+      <!-- Eid start date picker (inline, saves to site_settings) -->
+      <div class="mb-4 px-3 py-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <strong>Eid al-Adha 2026 begins:</strong>
+          <input
+            id="eid-start-input"
+            type="date"
+            class="border border-blue-300 rounded-md px-2 py-1 text-xs bg-white text-blue-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-500 outline-none"
+          />
+          <button id="eid-start-save" class="px-2.5 py-1 bg-blue-700 text-white text-xs font-medium rounded-md hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition" disabled>Save</button>
+          <span id="eid-start-status" class="text-[11px] text-blue-700"></span>
+        </div>
+        <div class="text-blue-700 text-[11px]">Hijri date is auto-derived from your cutoff below.</div>
+      </div>
+
+      <!-- Flex row at desktop, stacked on mobile. items-end keeps every control
+           bottom-aligned regardless of label height, so dropdown, input and
+           button always sit on the same baseline. -->
+      <div class="flex flex-col md:flex-row md:items-end gap-4">
+        <div class="md:flex-1 min-w-0">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+            Hijri Date
+            <span class="text-[10px] font-normal text-gray-400 normal-case tracking-normal">(auto-detected)</span>
+          </label>
+          <select id="hijri-day" disabled class="w-full h-[42px] border border-gray-300 rounded-lg px-3 text-sm bg-gray-50 text-gray-700 focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none cursor-not-allowed">
+            <option value="10">10 Dhul Hijjah, 1447 AH</option>
+            <option value="11">11 Dhul Hijjah, 1447 AH</option>
+            <option value="12">12 Dhul Hijjah, 1447 AH</option>
+          </select>
+        </div>
+        <div class="md:flex-1 min-w-0">
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 whitespace-nowrap overflow-hidden text-ellipsis">Cutoff <span class="font-normal normal-case text-gray-400">(orders placed before · defaults to 11:59 PM)</span></label>
+          <input id="cutoff" type="datetime-local" class="w-full h-[42px] border border-gray-300 rounded-lg px-3 text-sm focus:ring-2 focus:ring-[#01534d]/20 focus:border-[#01534d] outline-none" />
+        </div>
+        <div class="flex items-center gap-3 md:flex-shrink-0">
+          <button id="reload-btn" class="h-[42px] px-5 bg-[#01534d] text-white text-sm font-medium rounded-lg hover:bg-[#013d39] transition whitespace-nowrap">Load Orders</button>
+          <label class="flex items-center gap-1.5 text-xs text-gray-600 whitespace-nowrap">
+            <input type="checkbox" id="include-sent" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+            <span>Include sent</span>
+          </label>
+        </div>
+      </div>
+      <!-- Hijri auto-detect helper sits BELOW the row so it doesn't push anything around -->
+      <p id="hijri-day-helper" class="mt-2 text-[11px] text-gray-500"></p>
+      <div class="mt-3 text-xs text-gray-500">
+        <strong>How to use:</strong> Set the cutoff to the date/time of your last Qurbani slaughter for that day. The Hijri day is selected automatically based on your Eid start date. Orders placed before the cutoff that have not received a confirmation are listed. Review, then click "Send Selected".
+      </div>
+    </div>
+
+    <!-- Stats summary -->
+    <div id="stats-row" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5 hidden">
+      <div class="bg-white border border-gray-200 rounded-lg p-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Orders</p>
+        <p id="stat-orders" class="text-xl font-bold text-gray-900">0</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Total Qurbanis</p>
+        <p id="stat-qurbanis" class="text-xl font-bold text-gray-900">0</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Selected</p>
+        <p id="stat-selected" class="text-xl font-bold text-[#01534d]">0</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-3">
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Already Sent</p>
+        <p id="stat-sent" class="text-xl font-bold text-gray-500">0</p>
+      </div>
+      <div id="stat-bad-card" class="bg-red-50 border border-red-300 rounded-lg p-3 hidden">
+        <p class="text-xs text-red-700 uppercase tracking-wider font-semibold">Needs Email Fix</p>
+        <p id="stat-bad" class="text-xl font-bold text-red-700">0</p>
+      </div>
+    </div>
+
+    <!-- Search bar -->
+    <div id="search-bar" class="hidden mb-3">
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Search by donor name, email, or order number..."
+          class="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent"
+          autocomplete="off"
+        />
+        <button id="search-clear" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700" title="Clear search">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <p id="search-result-count" class="text-xs text-gray-500 mt-1 hidden"></p>
+    </div>
+
+    <!-- Bulk action bar -->
+    <div id="bulk-bar" class="hidden bg-[#01534d]/5 border border-[#01534d]/20 rounded-lg p-3 mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-800 cursor-pointer">
+          <input type="checkbox" id="select-all" class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+          <span>Select all</span>
+        </label>
+        <span id="selected-summary" class="text-sm text-gray-600"></span>
+      </div>
+      <button id="send-selected-btn" class="px-4 py-2 bg-[#01534d] text-white text-sm font-medium rounded-lg hover:bg-[#013d39] transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        Send Selected
+      </button>
+    </div>
+
+    <!-- Orders table -->
+    <div id="orders-section" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div id="loading-state" class="hidden p-12 text-center text-gray-400">
+        <svg class="w-8 h-8 mx-auto animate-spin text-[#01534d]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        <p class="mt-2 text-sm">Loading orders...</p>
+      </div>
+      <div id="empty-state" class="hidden p-12 text-center">
+        <p class="text-gray-500">No qurbani orders match the current filter.</p>
+        <p class="text-xs text-gray-400 mt-1">Try a later cutoff or check "Include sent" to see already-confirmed orders.</p>
+      </div>
+      <div id="orders-list" class="divide-y divide-gray-100">
+      </div>
+    </div>
+
+    <!-- Preview modal -->
+    <div id="preview-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-lg font-bold text-gray-900">Email Preview</h3>
+          <div class="flex items-center gap-2">
+            <button id="send-test-btn" class="px-3 py-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 transition">Send to me first</button>
+            <button id="send-now-btn" class="px-3 py-1.5 text-xs bg-[#01534d] text-white rounded hover:bg-[#013d39] transition">Send to donor</button>
+            <button id="close-preview" class="text-gray-400 hover:text-gray-600 ml-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="p-2 bg-gray-100 flex-1 overflow-hidden">
+          <iframe id="preview-iframe" class="w-full h-full bg-white rounded" style="min-height: 60vh;"></iframe>
+        </div>
+        <div id="preview-meta" class="p-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-600"></div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 text-sm font-medium"></div>
+
+    <!-- Edit Email Modal -->
+    <div id="edit-email-modal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="p-5 border-b border-gray-200">
+          <h3 class="text-lg font-bold text-gray-900">Fix Donor Email</h3>
+          <p class="text-sm text-gray-500 mt-1" id="edit-email-donor-name">—</p>
+        </div>
+        <div class="p-5 space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Email (incorrect)</label>
+            <div id="edit-email-current" class="font-mono text-sm bg-red-50 border border-red-200 text-red-900 rounded-lg px-3 py-2 mt-1 break-all">—</div>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Suggested correction</label>
+            <div id="edit-email-suggestion-row" class="hidden mt-1">
+              <button id="edit-email-use-suggestion" type="button" class="inline-flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg hover:bg-emerald-100 transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Use: <span id="edit-email-suggestion" class="font-mono"></span>
+              </button>
+            </div>
+            <div id="edit-email-no-suggestion" class="hidden text-xs text-gray-400 italic mt-1">No automatic correction available — enter manually.</div>
+          </div>
+          <div>
+            <label for="edit-email-new" class="text-xs font-semibold text-gray-500 uppercase tracking-wider">New Email</label>
+            <input id="edit-email-new" type="email" class="w-full font-mono text-sm bg-white border border-gray-300 rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#01534d] focus:border-transparent" placeholder="correct.email@gmail.com" />
+            <p class="text-xs text-gray-500 mt-1">This will update the email on ALL donations from this donor and re-queue this confirmation for sending.</p>
+          </div>
+          <div class="flex items-center gap-2 pt-2">
+            <input id="edit-email-update-all" type="checkbox" checked class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+            <label for="edit-email-update-all" class="text-sm text-gray-700">Update email on all donations from this donor</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="edit-email-reset-confirmation" type="checkbox" checked class="rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" />
+            <label for="edit-email-reset-confirmation" class="text-sm text-gray-700">Clear the Qurbani confirmation flag so it can be re-sent</label>
+          </div>
+        </div>
+        <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+          <button id="edit-email-cancel" type="button" class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
+          <button id="edit-email-save" type="button" class="px-4 py-2 text-sm text-white bg-[#01534d] rounded-lg hover:bg-[#013d39]">Save Email</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Progress Overlay -->
+    <div id="batch-progress" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="p-5 border-b border-gray-200">
+          <h3 class="text-lg font-bold text-gray-900">Sending Qurbani Confirmations</h3>
+          <p class="text-sm text-gray-500 mt-1" id="batch-subtitle">Day <span id="batch-day">10</span> Dhul Hijjah</p>
+        </div>
+        <div class="p-5">
+          <!-- Progress bar -->
+          <div class="mb-3">
+            <div class="flex justify-between text-sm mb-1">
+              <span class="font-semibold text-gray-800"><span id="batch-done">0</span> / <span id="batch-total">0</span> sent</span>
+              <span id="batch-percent" class="text-gray-500">0%</span>
+            </div>
+            <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div id="batch-bar" class="h-full bg-[#01534d] transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="grid grid-cols-3 gap-2 text-center text-sm">
+            <div class="bg-green-50 rounded-lg p-2">
+              <div class="font-bold text-green-700" id="batch-success">0</div>
+              <div class="text-xs text-green-600">Sent</div>
+            </div>
+            <div class="bg-amber-50 rounded-lg p-2" title="Already received the email earlier — duplicate prevented">
+              <div class="font-bold text-amber-700" id="batch-skipped">0</div>
+              <div class="text-xs text-amber-600">Already Sent<br/><span class="text-[10px]">(duplicate prevented)</span></div>
+            </div>
+            <div class="bg-red-50 rounded-lg p-2">
+              <div class="font-bold text-red-700" id="batch-failed">0</div>
+              <div class="text-xs text-red-600">Failed</div>
+            </div>
+          </div>
+
+          <p id="batch-status" class="text-xs text-gray-500 mt-4 text-center italic">Starting...</p>
+
+          <!-- Per-row breakdown (revealed when complete) -->
+          <div id="batch-breakdown" class="hidden mt-4 max-h-64 overflow-y-auto border-t border-gray-200 pt-3">
+            <button id="batch-breakdown-toggle" class="text-xs font-semibold text-[#01534d] hover:underline">
+              Show per-row details ▾
+            </button>
+            <div id="batch-breakdown-content" class="hidden mt-2 space-y-1 text-xs"></div>
+          </div>
+
+          <!-- Action buttons (revealed when complete) -->
+          <div id="batch-actions" class="hidden mt-4 flex gap-2">
+            <button id="batch-retry-btn" class="hidden flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium">Retry Failed</button>
+            <button id="batch-close-btn" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-medium">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script is:inline define:vars={{ EID_START_ISO: eidStartIso }}>
+    (function() {
+      // ─── State ───
+      let orders = [];
+      let selected = new Set();
+      let currentPreviewId = null;
+
+      const $ = (id) => document.getElementById(id);
+
+      // ─── Eid date helpers ───
+      const pad = (n) => String(n).padStart(2, '0');
+      const formatDatePart = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+      // Parse "YYYY-MM-DD" as a LOCAL date (no timezone shift).
+      function parseLocalIsoDate(iso) {
+        if (!iso) return null;
+        const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return null;
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      }
+
+      function daysBetween(a, b) {
+        const msPerDay = 24 * 60 * 60 * 1000;
+        return Math.round((a.getTime() - b.getTime()) / msPerDay);
+      }
+
+      function formatHumanDate(d) {
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      }
+
+      // Current Eid start date (mutable — updated when admin saves a new date inline).
+      let EID_START = parseLocalIsoDate(EID_START_ISO);
+      let eidStartIsoCurrent = EID_START_ISO;
+
+      // Initialize the inline date picker with current value.
+      if (EID_START_ISO) $('eid-start-input').value = EID_START_ISO;
+
+      // Derive Hijri date from cutoff date based on the Eid start date.
+      // Returns { hijriDay: 10|11|12|null, warning?: string }
+      function deriveHijriDay(cutoffIso) {
+        const cutoffDate = parseLocalIsoDate(cutoffIso);
+        if (!cutoffDate || !EID_START) {
+          return { hijriDay: null, warning: 'Set Eid start date above.' };
+        }
+        const diff = daysBetween(cutoffDate, EID_START);
+        if (diff < 0) {
+          return {
+            hijriDay: null,
+            warning: `Cutoff is ${Math.abs(diff)} day(s) BEFORE Eid (${formatHumanDate(EID_START)}). Cannot confirm Qurbani yet.`,
+          };
+        }
+        if (diff === 0) return { hijriDay: 10 };
+        if (diff === 1) return { hijriDay: 11 };
+        if (diff === 2) return { hijriDay: 12 };
+        return {
+          hijriDay: null,
+          warning: `Cutoff is ${diff + 1} days past Eid start. Qurbani is performed only on 10, 11, 12 Dhul Hijjah.`,
+        };
+      }
+
+      function applyHijriFromCutoff() {
+        const v = $('cutoff').value;
+        if (!v) return;
+        const result = deriveHijriDay(v.slice(0, 10));
+        const sel = $('hijri-day');
+        const helper = $('hijri-day-helper');
+
+        if (result.hijriDay) {
+          sel.value = String(result.hijriDay);
+          helper.classList.remove('text-red-600');
+          helper.classList.add('text-green-700');
+          helper.innerHTML = `<strong>✓ Auto-detected:</strong> ${result.hijriDay} Dhul Hijjah, 1447 AH`;
+        } else {
+          helper.classList.remove('text-green-700');
+          helper.classList.add('text-red-600');
+          helper.innerHTML = `<strong>⚠ ${result.warning}</strong>`;
+        }
+      }
+
+      // ─── Inline Eid start date save ───
+      $('eid-start-input').addEventListener('input', () => {
+        const newVal = $('eid-start-input').value;
+        $('eid-start-save').disabled = !newVal || newVal === eidStartIsoCurrent;
+        $('eid-start-status').textContent = newVal && newVal !== eidStartIsoCurrent ? 'Unsaved change' : '';
+        $('eid-start-status').className = 'text-[11px] text-amber-700';
+      });
+
+      $('eid-start-save').addEventListener('click', async () => {
+        const newVal = $('eid-start-input').value;
+        if (!newVal || newVal === eidStartIsoCurrent) return;
+        const btn = $('eid-start-save');
+        const status = $('eid-start-status');
+        btn.disabled = true;
+        status.textContent = 'Saving…';
+        status.className = 'text-[11px] text-blue-700';
+        try {
+          const r = await fetch('/api/settings/fulfillment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eid_ul_adha_start: newVal }),
+          });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(j.error || 'Save failed');
+          eidStartIsoCurrent = newVal;
+          EID_START = parseLocalIsoDate(newVal);
+          status.textContent = '✓ Saved';
+          status.className = 'text-[11px] text-green-700 font-semibold';
+          // Re-derive Hijri date with the new Eid start.
+          applyHijriFromCutoff();
+          setTimeout(() => { status.textContent = ''; }, 2500);
+        } catch (err) {
+          status.textContent = '✗ ' + (err && err.message ? err.message : 'Save failed');
+          status.className = 'text-[11px] text-red-700 font-semibold';
+          btn.disabled = false;
+        }
+      });
+
+      // ─── Init cutoff: prefer Eid Day 1 if "today" matches an Eid day; else today @ 23:59 ───
+      let prevDatePart = null;
+      const setDefaultCutoff = () => {
+        const now = new Date();
+        let target = now;
+        if (EID_START) {
+          const diff = daysBetween(now, EID_START);
+          // If today is before Eid, default cutoff to Eid Day 1
+          if (diff < 0) target = EID_START;
+          // If today is during Eid (Day 1-3), keep today
+          // If today is more than 2 days past Eid start, still keep today
+        }
+        const datePart = formatDatePart(target);
+        $('cutoff').value = `${datePart}T23:59`;
+        prevDatePart = datePart;
+        applyHijriFromCutoff();
+      };
+      setDefaultCutoff();
+
+      // When the user picks a new date, snap time to 23:59 AND auto-derive Hijri day.
+      $('cutoff').addEventListener('change', () => {
+        const v = $('cutoff').value;
+        if (!v) return;
+        const datePart = v.slice(0, 10);
+        if (datePart !== prevDatePart) {
+          $('cutoff').value = `${datePart}T23:59`;
+          prevDatePart = datePart;
+        }
+        applyHijriFromCutoff();
+      });
+
+      $('cutoff').addEventListener('input', applyHijriFromCutoff);
+
+      // ─── Toast helper ───
+      function toast(msg, type = 'success') {
+        const t = $('toast');
+        t.textContent = msg;
+        t.className = 'fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 text-sm font-medium ' +
+          (type === 'success' ? 'bg-green-600 text-white' :
+           type === 'error' ? 'bg-red-600 text-white' :
+           'bg-gray-800 text-white');
+        t.classList.remove('hidden');
+        setTimeout(() => t.classList.add('hidden'), 3500);
+      }
+
+      // ─── Load orders ───
+      async function loadOrders() {
+        const cutoffLocal = $('cutoff').value;
+        const includeSent = $('include-sent').checked;
+        if (!cutoffLocal) {
+          toast('Please pick a cutoff time', 'error');
+          return;
+        }
+        const cutoffIso = new Date(cutoffLocal).toISOString();
+
+        $('loading-state').classList.remove('hidden');
+        $('empty-state').classList.add('hidden');
+        $('orders-list').innerHTML = '';
+        $('stats-row').classList.add('hidden');
+        $('bulk-bar').classList.add('hidden');
+
+        try {
+          const res = await fetch(`/api/donations/qurbani-pending?cutoff=${encodeURIComponent(cutoffIso)}&includeSent=${includeSent}`, { credentials: 'include' });
+          const data = await res.json();
+          $('loading-state').classList.add('hidden');
+
+          if (!data.success) {
+            toast(data.error || 'Failed to load', 'error');
+            return;
+          }
+
+          orders = data.donations || [];
+          // Sort: NEEDS-FIX bad-email rows first (admin should fix them immediately),
+          // then unsent rows by created_at ASC, then already-sent rows at the bottom.
+          orders.sort((a, b) => {
+            const aBad = a.email_valid === false ? 0 : 1;
+            const bBad = b.email_valid === false ? 0 : 1;
+            if (aBad !== bBad) return aBad - bBad;
+            const aSent = a.already_sent ? 1 : 0;
+            const bSent = b.already_sent ? 1 : 0;
+            if (aSent !== bSent) return aSent - bSent;
+            return (a.created_at || '').localeCompare(b.created_at || '');
+          });
+          selected.clear();
+          render();
+        } catch (e) {
+          $('loading-state').classList.add('hidden');
+          toast('Failed to load: ' + (e.message || e), 'error');
+        }
+      }
+
+      // ─── Search filter ───
+      let searchQuery = '';
+
+      function applySearchFilter(arr) {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return arr;
+        return arr.filter(o => {
+          const name = (o.donor_name || '').toLowerCase();
+          const email = (o.donor_email || '').toLowerCase();
+          const orderNum = (o.order_number || '').toLowerCase();
+          return name.includes(q) || email.includes(q) || orderNum.includes(q);
+        });
+      }
+
+      // ─── Render ───
+      function render() {
+        const list = $('orders-list');
+        list.innerHTML = '';
+
+        if (!orders.length) {
+          $('empty-state').classList.remove('hidden');
+          $('stats-row').classList.add('hidden');
+          $('bulk-bar').classList.add('hidden');
+          $('search-bar').classList.add('hidden');
+          return;
+        }
+
+        $('search-bar').classList.remove('hidden');
+
+        $('empty-state').classList.add('hidden');
+        $('stats-row').classList.remove('hidden');
+        $('bulk-bar').classList.remove('hidden');
+
+        // Stats
+        const totalQurbanis = orders.reduce((s, o) => s + o.total_qurbanis, 0);
+        const sentCount = orders.filter(o => o.already_sent).length;
+        const badEmailCount = orders.filter(o => o.email_valid === false).length;
+        $('stat-orders').textContent = orders.length;
+        $('stat-qurbanis').textContent = totalQurbanis;
+        $('stat-sent').textContent = sentCount;
+        $('stat-bad').textContent = badEmailCount;
+        $('stat-bad-card').classList.toggle('hidden', badEmailCount === 0);
+
+        // Rows — apply search filter
+        const visibleOrders = applySearchFilter(orders);
+        const totalCount = orders.length;
+        const shownCount = visibleOrders.length;
+        const resultCountEl = $('search-result-count');
+        if (searchQuery.trim()) {
+          resultCountEl.textContent = shownCount === 0
+            ? `No matches for "${searchQuery}"`
+            : `Showing ${shownCount} of ${totalCount} orders`;
+          resultCountEl.classList.remove('hidden');
+        } else {
+          resultCountEl.classList.add('hidden');
+        }
+        if (shownCount === 0 && searchQuery.trim()) {
+          const empty = document.createElement('div');
+          empty.className = 'p-8 text-center text-gray-500 text-sm italic';
+          empty.textContent = `No orders match your search.`;
+          list.appendChild(empty);
+        }
+        visibleOrders.forEach(o => {
+          const row = document.createElement('div');
+          const isBadEmail = o.email_valid === false;
+          row.className = isBadEmail
+            ? 'p-4 bg-red-50 border-l-4 border-red-500 hover:bg-red-100 transition'
+            : 'p-4 hover:bg-gray-50 transition';
+          const itemsHtml = o.items_preview.map(it => {
+            const onBehalf = it.behalfOf ? ` <em class="text-orange-600">(for ${escapeHtml(it.behalfOf)})</em>` : '';
+            return `<div class="text-xs text-gray-600">${it.quantity}× ${escapeHtml(it.animal || 'Qurbani')} — ${escapeHtml(it.country || '')}${onBehalf}</div>`;
+          }).join('');
+
+          const sentBadge = o.already_sent
+            ? `<span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-100 text-green-700">Sent · ${o.sent_hijri_day} Dhul Hijjah</span>`
+            : '';
+
+          const needsFixBadge = isBadEmail
+            ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-red-600 text-white" title="${escapeHtml(o.email_invalid_reason || 'Invalid email')}">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Needs Fix
+              </span>`
+            : '';
+
+          // Last-error pill — shows reason previous send attempt failed
+          const lastErrorPill = (o.last_error && !o.already_sent && !isBadEmail)
+            ? `<span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300" title="${escapeHtml(o.last_error)}">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Failed ${o.attempt_count}× — ${escapeHtml((o.last_error || '').slice(0, 60))}${(o.last_error || '').length > 60 ? '…' : ''}
+              </span>`
+            : '';
+
+          const sendBtnDisabled = isBadEmail || o.already_sent;
+          const sendBtnHtml = o.already_sent
+            ? ''
+            : isBadEmail
+              ? `<button data-send="${o.id}" class="send-one-btn px-3 py-1 text-xs bg-gray-300 text-gray-500 rounded cursor-not-allowed" disabled title="Fix the email first">Send</button>`
+              : `<button data-send="${o.id}" class="send-one-btn px-3 py-1 text-xs bg-[#01534d] text-white rounded hover:bg-[#013d39] transition">Send</button>`;
+
+          row.innerHTML = `
+            <div class="flex items-start gap-3">
+              <input type="checkbox" data-id="${o.id}" class="row-cb mt-1 rounded border-gray-300 text-[#01534d] focus:ring-[#01534d]" ${sendBtnDisabled ? 'disabled' : ''} />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <span class="font-mono text-xs text-gray-500">${escapeHtml(o.order_number)}</span>
+                  <span class="font-medium text-gray-900">${escapeHtml(o.donor_name || 'Unknown')}</span>
+                  <span class="text-xs ${isBadEmail ? 'text-red-700 font-mono font-semibold' : 'text-gray-500'} inline-flex items-center gap-1.5">
+                    ${escapeHtml(o.donor_email || '')}
+                    <button data-edit-email="${o.id}" class="edit-email-btn inline-flex items-center gap-1 px-2 py-0.5 rounded ${isBadEmail ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'} transition text-[10px] font-semibold uppercase tracking-wider" title="Fix typo or change donor email">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                      Edit
+                    </button>
+                  </span>
+                  ${needsFixBadge}
+                  ${lastErrorPill}
+                  ${sentBadge}
+                </div>
+                <div class="text-xs text-gray-500 mb-2">${new Date(o.created_at).toLocaleString()}  ·  $${Number(o.amount).toFixed(2)}  ·  ${o.total_qurbanis} qurbani${o.total_qurbanis > 1 ? 's' : ''}  ·  On behalf of: ${escapeHtml(o.on_behalf_of)}</div>
+                ${itemsHtml}
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button data-preview="${o.id}" class="preview-btn px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition">Preview</button>
+                ${sendBtnHtml}
+              </div>
+            </div>
+          `;
+          list.appendChild(row);
+        });
+
+        bindRowEvents();
+        updateSelectedSummary();
+      }
+
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function bindRowEvents() {
+        document.querySelectorAll('.row-cb').forEach(cb => {
+          cb.addEventListener('change', () => {
+            const id = cb.getAttribute('data-id');
+            if (cb.checked) selected.add(id); else selected.delete(id);
+            updateSelectedSummary();
+          });
+        });
+        document.querySelectorAll('.preview-btn').forEach(btn => {
+          btn.addEventListener('click', () => previewOrder(btn.getAttribute('data-preview')));
+        });
+        document.querySelectorAll('.send-one-btn').forEach(btn => {
+          btn.addEventListener('click', () => sendOne(btn.getAttribute('data-send'), btn));
+        });
+      }
+
+      function updateSelectedSummary() {
+        // Eligible = not already sent AND has valid email (bad-email rows must be fixed first)
+        const eligible = orders.filter(o => !o.already_sent && o.email_valid !== false).length;
+        $('stat-selected').textContent = selected.size;
+        $('selected-summary').textContent = selected.size
+          ? `${selected.size} of ${eligible} eligible selected`
+          : `${eligible} eligible — select to send`;
+        $('send-selected-btn').disabled = selected.size === 0;
+        const allCb = $('select-all');
+        if (allCb) allCb.checked = selected.size > 0 && selected.size === eligible;
+      }
+
+      // ─── Preview ───
+      async function previewOrder(id) {
+        const o = orders.find(x => x.id === id);
+        if (!o) return;
+        currentPreviewId = id;
+        const hijriDay = $('hijri-day').value;
+        const iframe = $('preview-iframe');
+        iframe.src = `/api/donations/qurbani-confirmation-preview?donationId=${encodeURIComponent(id)}&hijriDay=${hijriDay}`;
+        $('preview-meta').innerHTML = `<strong>${escapeHtml(o.donor_name)}</strong> — ${escapeHtml(o.donor_email)} · ${escapeHtml(o.order_number)} · Day ${hijriDay} Dhul Hijjah`;
+        $('preview-modal').classList.remove('hidden');
+      }
+
+      $('close-preview').addEventListener('click', () => {
+        $('preview-modal').classList.add('hidden');
+        currentPreviewId = null;
+      });
+
+      // ─── Send actions ───
+      async function callSend(donationIds, hijriDay) {
+        const payload = donationIds.length === 1
+          ? { donationId: donationIds[0], hijriDay: Number(hijriDay) }
+          : { donationIds, hijriDay: Number(hijriDay) };
+        const res = await fetch('/api/donations/send-qurbani-confirmation', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        return res.json();
+      }
+
+      async function sendOne(id, btn) {
+        const hijriDay = $('hijri-day').value;
+        const o = orders.find(x => x.id === id);
+        if (!o) return;
+        if (!confirm(`Send "Qurbani Performed" email to ${o.donor_name} (${o.donor_email}) for Day ${hijriDay}?`)) return;
+        btn.disabled = true; btn.textContent = 'Sending...';
+        try {
+          const data = await callSend([id], hijriDay);
+          if (data.success) {
+            toast('Email sent!');
+            await loadOrders();
+          } else {
+            toast(data.reason || data.error || 'Failed', 'error');
+            btn.disabled = false; btn.textContent = 'Send';
+          }
+        } catch (e) {
+          toast('Failed: ' + (e.message || e), 'error');
+          btn.disabled = false; btn.textContent = 'Send';
+        }
+      }
+
+      // ─── Edit Donor Email modal ───
+      // Common email-domain typos and their corrections.
+      const EMAIL_TYPO_FIXES = {
+        'gmail.vom': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.cm': 'gmail.com',
+        'gmail.co': 'gmail.com', 'gmail.om': 'gmail.com', 'gmal.com': 'gmail.com',
+        'gmial.com': 'gmail.com', 'gnail.com': 'gmail.com', 'gmail.coom': 'gmail.com',
+        'yahoo.vom': 'yahoo.com', 'yahoo.con': 'yahoo.com', 'yahoo.cm': 'yahoo.com',
+        'yahoo.co': 'yahoo.com', 'yhoo.com': 'yahoo.com', 'yaho.com': 'yahoo.com',
+        'hotmail.vom': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotmail.cm': 'hotmail.com',
+        'hotmail.co': 'hotmail.com', 'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com',
+        'outlook.vom': 'outlook.com', 'outlook.con': 'outlook.com', 'outlook.cm': 'outlook.com',
+        'icloud.vom': 'icloud.com', 'icloud.con': 'icloud.com', 'icloud.cm': 'icloud.com',
+        'aol.vom': 'aol.com', 'aol.con': 'aol.com',
+      };
+
+      function suggestEmailFix(email) {
+        if (!email || !email.includes('@')) return null;
+        const at = email.lastIndexOf('@');
+        const local = email.slice(0, at);
+        const domain = email.slice(at + 1).toLowerCase().trim();
+        if (EMAIL_TYPO_FIXES[domain]) {
+          return local + '@' + EMAIL_TYPO_FIXES[domain];
+        }
+        return null;
+      }
+
+      let editEmailDonationId = null;
+
+      function openEditEmail(donationId) {
+        const o = orders.find(x => x.id === donationId);
+        if (!o) return;
+        editEmailDonationId = donationId;
+        $('edit-email-donor-name').textContent = (o.donor_name || 'Unknown') + ' · ' + (o.order_number || '');
+        $('edit-email-current').textContent = o.donor_email || '(none)';
+        const suggestion = suggestEmailFix(o.donor_email || '');
+        if (suggestion) {
+          $('edit-email-suggestion').textContent = suggestion;
+          $('edit-email-suggestion-row').classList.remove('hidden');
+          $('edit-email-no-suggestion').classList.add('hidden');
+          $('edit-email-new').value = suggestion;
+        } else {
+          $('edit-email-suggestion-row').classList.add('hidden');
+          $('edit-email-no-suggestion').classList.remove('hidden');
+          $('edit-email-new').value = o.donor_email || '';
+        }
+        $('edit-email-update-all').checked = true;
+        $('edit-email-reset-confirmation').checked = true;
+        $('edit-email-modal').classList.remove('hidden');
+        setTimeout(() => $('edit-email-new').focus(), 50);
+      }
+
+      function closeEditEmail() {
+        $('edit-email-modal').classList.add('hidden');
+        editEmailDonationId = null;
+      }
+
+      $('edit-email-cancel').addEventListener('click', closeEditEmail);
+
+      $('edit-email-use-suggestion').addEventListener('click', () => {
+        $('edit-email-new').value = $('edit-email-suggestion').textContent;
+      });
+
+      $('edit-email-save').addEventListener('click', async () => {
+        if (!editEmailDonationId) return;
+        const newEmail = $('edit-email-new').value.trim();
+        if (!newEmail) { toast('Enter a new email', 'error'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+          toast('Email format looks invalid — please check', 'error'); return;
+        }
+
+        const btn = $('edit-email-save');
+        const orig = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        try {
+          const res = await fetch('/api/donations/fix-donor-email', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              donationId: editEmailDonationId,
+              newEmail,
+              updateAllFromSameDonor: $('edit-email-update-all').checked,
+              resetQurbaniConfirmation: $('edit-email-reset-confirmation').checked,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            toast(data.error || 'Failed to update email', 'error');
+            btn.disabled = false; btn.textContent = orig;
+            return;
+          }
+          toast(data.message || 'Email updated');
+          closeEditEmail();
+          await loadOrders();
+        } catch (e) {
+          toast('Failed: ' + (e.message || e), 'error');
+        } finally {
+          btn.disabled = false; btn.textContent = orig;
+        }
+      });
+
+      // Delegate click on edit-email buttons
+      document.addEventListener('click', (e) => {
+        const target = e.target.closest('.edit-email-btn');
+        if (target) {
+          e.preventDefault();
+          const id = target.getAttribute('data-edit-email');
+          if (id) openEditEmail(id);
+        }
+      });
+
+      // ─── Batch send with progress overlay ───
+      const BATCH_SIZE = 20; // Server caps at 25; we send 20 per request for safety margin
+      let failedIds = [];
+
+      function openProgress(total, hijriDay) {
+        $('batch-total').textContent = String(total);
+        $('batch-done').textContent = '0';
+        $('batch-success').textContent = '0';
+        $('batch-skipped').textContent = '0';
+        $('batch-failed').textContent = '0';
+        $('batch-percent').textContent = '0%';
+        $('batch-bar').style.width = '0%';
+        $('batch-status').textContent = 'Starting...';
+        $('batch-day').textContent = String(hijriDay);
+        $('batch-actions').classList.add('hidden');
+        $('batch-retry-btn').classList.add('hidden');
+        $('batch-breakdown').classList.add('hidden');
+        $('batch-breakdown-content').classList.add('hidden');
+        $('batch-breakdown-content').innerHTML = '';
+        $('batch-breakdown-toggle').textContent = 'Show per-row details ▾';
+        $('batch-progress').classList.remove('hidden');
+      }
+
+      // After a batch completes, fetch the qurbani_send_log entries from the
+      // last few minutes so we can show admin exactly which donor got which
+      // outcome — including "Already Sent" reasons.
+      async function loadBatchBreakdown(hijriDay) {
+        const breakdown = $('batch-breakdown');
+        const content = $('batch-breakdown-content');
+        try {
+          const r = await fetch(`/api/donations/qurbani-send-log?minutes=5&hijri_day=${hijriDay}`);
+          if (!r.ok) throw new Error('Failed to load breakdown');
+          const j = await r.json();
+          const entries = j.entries || [];
+          if (!entries.length) {
+            breakdown.classList.add('hidden');
+            return;
+          }
+          // Group by outcome
+          const groups = { sent: [], already_sent: [], failed: [], invalid: [] };
+          entries.forEach(e => { (groups[e.outcome] || groups.failed).push(e); });
+          const renderGroup = (title, color, rows) => {
+            if (!rows.length) return '';
+            return `
+              <div>
+                <div class="text-[11px] font-semibold uppercase tracking-wider ${color} mb-1">${title} (${rows.length})</div>
+                ${rows.map(r => `
+                  <div class="flex items-start gap-2 py-1 border-b border-gray-100 last:border-0">
+                    <span class="font-mono text-gray-500 shrink-0">QF-${(r.order_number ?? 0) + 12000}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-gray-900 truncate">${escapeHtml(r.donor_name || '')} <span class="text-gray-500">${escapeHtml(r.donor_email || '')}</span></div>
+                      ${r.reason ? `<div class="text-gray-500 text-[10px] truncate">${escapeHtml(r.reason)}</div>` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          };
+          content.innerHTML = [
+            renderGroup('Sent', 'text-green-700', groups.sent),
+            renderGroup('Already Sent (duplicate prevented)', 'text-amber-700', groups.already_sent),
+            renderGroup('Failed', 'text-red-700', groups.failed),
+            renderGroup('Invalid', 'text-gray-600', groups.invalid),
+          ].filter(Boolean).join('<div class="my-2"></div>');
+          breakdown.classList.remove('hidden');
+        } catch (e) {
+          console.error('Failed to load batch breakdown:', e);
+          breakdown.classList.add('hidden');
+        }
+      }
+
+      function updateProgress(done, total, success, skipped, failed) {
+        $('batch-done').textContent = String(done);
+        $('batch-success').textContent = String(success);
+        $('batch-skipped').textContent = String(skipped);
+        $('batch-failed').textContent = String(failed);
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        $('batch-percent').textContent = pct + '%';
+        $('batch-bar').style.width = pct + '%';
+        if (done < total) {
+          $('batch-status').textContent = `Sending batch ${Math.ceil(done / BATCH_SIZE) + 1}...`;
+        } else {
+          // Build a precise summary so the admin understands every number.
+          const parts = [];
+          if (success > 0) parts.push(`${success} new emails sent`);
+          if (skipped > 0) parts.push(`${skipped} already had their email (duplicate prevented)`);
+          if (failed > 0) parts.push(`${failed} failed (will retry)`);
+          $('batch-status').innerHTML = parts.length
+            ? `<strong>Complete.</strong> ${parts.join(' · ')}`
+            : 'Complete.';
+          $('batch-actions').classList.remove('hidden');
+          if (failed > 0) $('batch-retry-btn').classList.remove('hidden');
+          // Pull per-row details so admin can see exactly which donor got which outcome.
+          const hijriDay = $('hijri-day').value;
+          loadBatchBreakdown(hijriDay);
+        }
+      }
+
+      async function sendBatched(ids, hijriDay) {
+        const total = ids.length;
+        let done = 0, success = 0, skipped = 0, failed = 0;
+        failedIds = [];
+
+        for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+          const slice = ids.slice(i, i + BATCH_SIZE);
+          try {
+            const data = await callSend(slice, hijriDay);
+            if (data && Array.isArray(data.results)) {
+              data.results.forEach((r) => {
+                if (r.sent) {
+                  success++;
+                } else if (r.reason && /already|no qurbani items|donor email missing|donation not found/i.test(r.reason)) {
+                  // Intentional skips — not failures worth retrying
+                  skipped++;
+                } else {
+                  failed++;
+                  failedIds.push(r.id);
+                }
+              });
+            } else {
+              // Endpoint returned unexpected shape — treat whole batch as failed
+              failed += slice.length;
+              failedIds.push(...slice);
+            }
+          } catch (e) {
+            failed += slice.length;
+            failedIds.push(...slice);
+          }
+          done += slice.length;
+          updateProgress(done, total, success, skipped, failed);
+        }
+
+        return { done, success, skipped, failed };
+      }
+
+      $('send-selected-btn').addEventListener('click', async () => {
+        if (!selected.size) return;
+        const hijriDay = $('hijri-day').value;
+        const count = selected.size;
+        if (!confirm(`Send "Qurbani Performed" emails to ${count} donors for Day ${hijriDay} Dhul Hijjah?\n\nThis will send in batches of ${BATCH_SIZE} and may take ~${Math.ceil(count * 0.15 / 60)} min for ${count} emails.`)) return;
+
+        const ids = Array.from(selected);
+        const btn = $('send-selected-btn');
+        btn.disabled = true;
+
+        openProgress(ids.length, hijriDay);
+        const r = await sendBatched(ids, hijriDay);
+
+        if (r.failed === 0) {
+          toast(`All ${r.success} emails sent successfully!`);
+        } else {
+          toast(`${r.success} sent, ${r.failed} failed`, r.failed === ids.length ? 'error' : 'warn');
+        }
+
+        btn.disabled = false;
+        selected.clear();
+        await loadOrders();
+      });
+
+      $('batch-close-btn').addEventListener('click', () => {
+        $('batch-progress').classList.add('hidden');
+      });
+
+      $('batch-breakdown-toggle').addEventListener('click', () => {
+        const c = $('batch-breakdown-content');
+        const t = $('batch-breakdown-toggle');
+        if (c.classList.contains('hidden')) {
+          c.classList.remove('hidden');
+          t.textContent = 'Hide per-row details ▴';
+        } else {
+          c.classList.add('hidden');
+          t.textContent = 'Show per-row details ▾';
+        }
+      });
+
+      // ─── Search ───
+      let searchDebounceTimer = null;
+      $('search-input').addEventListener('input', (e) => {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          searchQuery = e.target.value || '';
+          $('search-clear').classList.toggle('hidden', !searchQuery);
+          render();
+        }, 120);
+      });
+      $('search-clear').addEventListener('click', () => {
+        $('search-input').value = '';
+        searchQuery = '';
+        $('search-clear').classList.add('hidden');
+        render();
+        $('search-input').focus();
+      });
+      // Keyboard shortcut: Cmd/Ctrl+F focuses the search bar instead of browser search
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+          const si = $('search-input');
+          if (si && !$('search-bar').classList.contains('hidden')) {
+            e.preventDefault();
+            si.focus();
+            si.select();
+          }
+        }
+        if (e.key === 'Escape' && document.activeElement === $('search-input')) {
+          $('search-input').value = '';
+          searchQuery = '';
+          $('search-clear').classList.add('hidden');
+          render();
+        }
+      });
+
+      $('batch-retry-btn').addEventListener('click', async () => {
+        if (!failedIds.length) return;
+        const hijriDay = $('batch-day').textContent;
+        const ids = [...failedIds];
+        openProgress(ids.length, hijriDay);
+        const r = await sendBatched(ids, hijriDay);
+        if (r.failed === 0) toast(`Retried successfully. All ${r.success} sent.`);
+        else toast(`${r.success} sent on retry, ${r.failed} still failing`, 'warn');
+        await loadOrders();
+      });
+
+      $('select-all').addEventListener('change', (e) => {
+        selected.clear();
+        if (e.target.checked) {
+          orders.forEach(o => {
+            // Skip already-sent and skip orders with invalid emails — they need a fix first
+            if (!o.already_sent && o.email_valid !== false) selected.add(o.id);
+          });
+        }
+        document.querySelectorAll('.row-cb').forEach(cb => {
+          if (!cb.disabled) cb.checked = e.target.checked;
+        });
+        updateSelectedSummary();
+      });
+
+      $('send-now-btn').addEventListener('click', async () => {
+        if (!currentPreviewId) return;
+        const hijriDay = $('hijri-day').value;
+        const o = orders.find(x => x.id === currentPreviewId);
+        if (!confirm(`Send to ${o.donor_email}?`)) return;
+        try {
+          const data = await callSend([currentPreviewId], hijriDay);
+          if (data.success) {
+            toast('Sent!');
+            $('preview-modal').classList.add('hidden');
+            await loadOrders();
+          } else {
+            toast(data.reason || data.error || 'Failed', 'error');
+          }
+        } catch (e) {
+          toast('Failed: ' + (e.message || e), 'error');
+        }
+      });
+
+      $('send-test-btn').addEventListener('click', async () => {
+        // Send a test of this preview to the admin email
+        if (!currentPreviewId) return;
+        const hijriDay = $('hijri-day').value;
+        const res = await fetch('/api/donations/qurbani-confirmation-test', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ donationId: currentPreviewId, hijriDay: Number(hijriDay) }),
+        });
+        const data = await res.json();
+        if (data.success) toast('Test sent to admin email'); else toast(data.reason || data.error || 'Failed', 'error');
+      });
+
+      $('reload-btn').addEventListener('click', loadOrders);
+    })();
+  </script>
+</AdminLayout>

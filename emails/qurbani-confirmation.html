@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Qurbani Has Been Performed</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .email-body { padding: 28px 18px !important; }
+      .email-title { font-size: 28px !important; line-height: 1.2 !important; }
+      .email-subtitle { font-size: 18px !important; }
+      .email-text { font-size: 16px !important; line-height: 1.7 !important; }
+      .cta-primary { padding: 16px 24px !important; font-size: 16px !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+      .header-logo img { width: 140px !important; max-width: 140px !important; }
+      .footer-text { font-size: 11px !important; }
+      .confirmation-block { padding: 20px 18px !important; }
+      .details-row td { padding: 10px 16px !important; font-size: 14px !important; }
+      .day-badge { font-size: 11px !important; padding: 6px 14px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f3ef; font-family: Georgia, 'Times New Roman', serif;">
+
+  <!-- Preheader -->
+  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #f5f3ef;">
+    Alhamdulillah, your Qurbani has been performed on {{hijri_date}} in {{country}}. May Allah accept it from you.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f3ef;">
+    <tr>
+      <td align="center" style="padding: 30px 15px;">
+        <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width: 580px; width: 100%;">
+
+          <!-- HEADER: Logo + Donate -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 16px 24px; border-radius: 8px 8px 0 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="left" valign="middle" class="header-logo" style="width: 50%;">
+                    <a href="https://www.qurbani.com" style="text-decoration: none;">
+                      <img src="https://www.qurbani.com/images/qurbani-logo-alt.png" alt="Qurbani Foundation" width="180" style="max-width: 180px; height: auto; display: inline-block;" />
+                    </a>
+                  </td>
+                  <td align="right" valign="middle" style="width: 50%;">
+                    <a href="https://www.qurbani.com/qurbani"
+                       style="display: inline-block; background-color: #01534d; color: #ffffff; text-decoration: none; padding: 10px 22px; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; border-radius: 6px;">
+                      Give Again
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- HERO BANNER -->
+          <tr>
+            <td style="background-color: #01534d; padding: 36px 24px; text-align: center;">
+              <!-- Day Badge -->
+              <span class="day-badge" style="display: inline-block; background-color: #ef7c01; color: #ffffff; padding: 8px 18px; border-radius: 20px; font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 18px;">
+                {{hijri_date}}
+              </span>
+              <h1 class="email-title" style="margin: 0 0 8px; font-family: Georgia, 'Times New Roman', serif; font-size: 32px; font-weight: 700; color: #ffffff; line-height: 1.2;">
+                Your Qurbani Has Been Performed
+              </h1>
+              <p class="email-subtitle" style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 18px; color: #ffd687; font-style: italic;">
+                Alhamdulillah — May Allah accept it from you
+              </p>
+            </td>
+          </tr>
+
+          <!-- ARABIC DUA -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 32px 36px 16px; text-align: center;">
+              <p style="margin: 0 0 8px; font-family: 'Traditional Arabic', 'Noto Naskh Arabic', serif; font-size: 26px; color: #01534d; line-height: 1.6; direction: rtl;">
+                تَقَبَّلَ اللهُ مِنَّا وَمِنْكُمْ
+              </p>
+              <p style="margin: 0; font-family: Georgia, serif; font-size: 14px; color: #6b7280; font-style: italic;">
+                "May Allah accept it from us and from you"
+              </p>
+            </td>
+          </tr>
+
+          <!-- GREETING -->
+          <tr>
+            <td class="email-body" style="background-color: #ffffff; padding: 8px 36px 24px;">
+
+              <p class="email-text" style="margin: 0 0 20px; font-size: 17px; color: #374151; line-height: 1.8;">
+                As-Salaamu Alaikum {{donor_first_name}},
+              </p>
+
+              <p class="email-text" style="margin: 0 0 20px; font-size: 17px; color: #374151; line-height: 1.8;">
+                We are honored to confirm that <strong style="color: #01534d;">your Qurbani has been successfully performed</strong> on your behalf on <strong>{{hijri_date}}</strong>.
+              </p>
+
+              <p class="email-text" style="margin: 0 0 20px; font-size: 17px; color: #374151; line-height: 1.8;">
+                The fresh meat has been distributed to families in need — bringing joy, nourishment, and the blessings of Eid to homes that needed it most. None of this would have been possible without your trust and generosity.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- QURBANI DETAILS BLOCK -->
+          <tr>
+            <td class="email-body" style="background-color: #ffffff; padding: 0 36px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px;">
+                <tr>
+                  <td class="confirmation-block" style="background-color: #fef9ee; border: 2px solid #ef7c01; border-radius: 12px; padding: 24px;">
+                    <h3 style="margin: 0 0 16px; font-family: Georgia, serif; font-size: 16px; color: #01534d; text-transform: uppercase; letter-spacing: 1px; text-align: center; border-bottom: 1px solid #ef7c01; padding-bottom: 10px;">
+                      Qurbani Confirmation
+                    </h3>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family: Arial, Helvetica, sans-serif;">
+                      <tr class="details-row">
+                        <td style="padding: 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 45%;">Order Number</td>
+                        <td style="padding: 8px 0; font-size: 15px; color: #1a1a1a; font-weight: 700;">{{order_number}}</td>
+                      </tr>
+                      <tr class="details-row">
+                        <td style="padding: 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid #f3e8d4;">Performed On</td>
+                        <td style="padding: 8px 0; font-size: 15px; color: #1a1a1a; font-weight: 700; border-top: 1px solid #f3e8d4;">{{hijri_date}}</td>
+                      </tr>
+                      <tr class="details-row">
+                        <td style="padding: 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid #f3e8d4;">On Behalf Of</td>
+                        <td style="padding: 8px 0; font-size: 15px; color: #ef7c01; font-weight: 700; border-top: 1px solid #f3e8d4;">{{on_behalf_of}}</td>
+                      </tr>
+                    </table>
+
+                    <!-- Qurbanis Performed (list of items) -->
+                    <div style="margin-top: 22px;">
+                      <p style="margin: 0 0 12px; font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #01534d; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Qurbanis Performed</p>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #f3e8d4; border-radius: 8px; overflow: hidden;">
+                        {{qurbani_items_html}}
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- HADITH BLOCK -->
+          <tr>
+            <td class="email-body" style="background-color: #ffffff; padding: 0 36px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px;">
+                <tr>
+                  <td class="confirmation-block" style="background-color: #f8faf9; border-left: 4px solid #01534d; padding: 22px 24px; border-radius: 0 8px 8px 0;">
+                    <p style="margin: 0 0 12px; font-family: Georgia, serif; font-size: 16px; color: #1a1a1a; line-height: 1.7; font-style: italic;">
+                      "It is neither their meat nor their blood that reaches Allah, but it is your piety that reaches Him."
+                    </p>
+                    <p style="margin: 0; font-family: Arial, sans-serif; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px;">
+                      — Quran 22:37
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- IMPACT MESSAGE -->
+          <tr>
+            <td class="email-body" style="background-color: #ffffff; padding: 0 36px 8px;">
+              <p class="email-text" style="margin: 0 0 18px; font-size: 18px; color: #1a1a1a; line-height: 1.6; font-weight: 700; text-align: center;">
+                Because of you, families gathered around a meal this Eid.
+              </p>
+              <p class="email-text" style="margin: 0 0 20px; font-size: 17px; color: #374151; line-height: 1.8;">
+                Your Qurbani reached widows, orphans, refugees, and families who would otherwise have gone without meat this Eid. Some hadn't tasted meat in months. Because of you, today they did.
+              </p>
+              <p class="email-text" style="margin: 0 0 28px; font-size: 17px; color: #374151; line-height: 1.8;">
+                We pray that Allah accepts your Qurbani, multiplies your reward, and blesses you and your family with health, barakah, and unwavering faith.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA: GIVE AGAIN (Optional) -->
+          <tr>
+            <td class="email-body" style="background-color: #ffffff; padding: 0 36px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://www.qurbani.com/qurbani?utm_source=email&utm_medium=transactional&utm_campaign=qurbani-confirmation-{{hijri_day}}-dhul-hijjah" class="cta-primary"
+                       style="display: inline-block; background-color: #ef7c01; color: #ffffff; text-decoration: none; padding: 16px 40px; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 700; border-radius: 8px;">
+                      Give Another Qurbani
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- SIGNATURE -->
+          <tr>
+            <td class="email-body" style="background-color: #ffffff; padding: 0 36px 36px; border-radius: 0 0 8px 8px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top: 1px solid #e5e7eb; padding: 24px 0 0;">
+                    <p style="margin: 0 0 4px; font-size: 16px; color: #374151; line-height: 1.6; font-family: Georgia, serif;">
+                      With gratitude and du'a,
+                    </p>
+                    <p style="margin: 0 0 4px; font-size: 16px; color: #1a1a1a; font-weight: 700; line-height: 1.6; font-family: Georgia, serif;">
+                      The Qurbani Foundation Family
+                    </p>
+                    <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6; font-family: Arial, sans-serif;">
+                      Eid al-Adha · 10-12 Dhul Hijjah, 1447 AH
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding: 28px 20px; text-align: left;">
+              <p class="footer-text" style="margin: 0 0 4px; color: #999; font-size: 12px; font-family: Arial, sans-serif; line-height: 1.6;">
+                <strong>Qurbani Foundation USA</strong> &nbsp; 5900 Balcones Dr, Suite 100, Austin, TX 78731
+              </p>
+              <p class="footer-text" style="margin: 0 0 4px; color: #999; font-size: 12px; font-family: Arial, sans-serif; line-height: 1.6;">
+                1-800-900-0027 &middot; info@qurbani.com &middot; www.qurbani.com
+              </p>
+              <p class="footer-text" style="margin: 0 0 10px; color: #999; font-size: 11px; font-family: Arial, sans-serif; line-height: 1.6;">
+                Please do not reply to this email. Contact <a href="mailto:info@qurbani.com" style="color: #999; text-decoration: underline;">info@qurbani.com</a> for any inquiries.
+              </p>
+              <p class="footer-text" style="margin: 0; color: #bbb; font-size: 11px; font-family: Arial, sans-serif; line-height: 1.6;">
+                You received this email because you placed a Qurbani order with us.
+                <a href="https://www.qurbani.com/email-preferences" style="color: #999; text-decoration: underline;">Update preferences</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
